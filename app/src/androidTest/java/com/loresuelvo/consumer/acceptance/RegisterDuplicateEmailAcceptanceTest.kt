@@ -15,24 +15,27 @@ import org.junit.Ignore
 
 @RunWith(AndroidJUnit4::class)
 @Ignore("Por implementar")
-class RegisterAcceptanceTest {
+class RegisterDuplicateEmailAcceptance {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
-    // Scenario: 01-RCN Registrar una cuenta nueva correctamente
+    // Rule: No se puede registrar con un correo electrónico que ya esté en uso
+    // Scenario: 05-RCN Rechazar un registro con correo ya existente
     @Test
-    fun register_successfully() {
-        fillForm("Ana", "Perez", "ana@example.com", "Segura12345?")
+    fun show_error_when_email_is_already_registered() {
+        // Nota: El "Given" se implementará más adelante inyectando un estado al sistema
+
+        fillForm(name = "Carla", last = "Gomez", email = "carla@example.com")
         composeTestRule.onNodeWithTag("register_button").performClick()
 
-        composeTestRule.onNodeWithText("Registro exitoso").assertIsDisplayed()
+        composeTestRule.onNodeWithText("El correo electrónico ya está registrado").assertIsDisplayed()
     }
 
-    private fun fillForm(name: String, last: String, email: String, pass: String) {
+    private fun fillForm(name: String, last: String, email: String) {
         composeTestRule.onNodeWithTag("name_input").performTextInput(name)
         composeTestRule.onNodeWithTag("lastname_input").performTextInput(last)
         composeTestRule.onNodeWithTag("email_input").performTextInput(email)
-        composeTestRule.onNodeWithTag("password_input").performTextInput(pass)
+        composeTestRule.onNodeWithTag("password_input").performTextInput("Segura12345?")
     }
 }
