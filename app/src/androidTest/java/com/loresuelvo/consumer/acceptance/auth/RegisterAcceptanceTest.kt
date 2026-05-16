@@ -15,7 +15,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
-@Ignore("Pendiente integración real con Auth0")
 class RegisterWithAuth0AcceptanceTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
@@ -35,6 +34,7 @@ class RegisterWithAuth0AcceptanceTest {
 
     // Scenario: 02-RCN Registro exitoso
     @Test
+    @Ignore("Pending scenario 02-RCN")
     fun register_successfully_with_auth0() {
 
         mockAuthenticatedUser("Andres")
@@ -46,6 +46,7 @@ class RegisterWithAuth0AcceptanceTest {
 
     // Scenario: 03-RCN Verificación de sesión persistente
     @Test
+    @Ignore("Pending scenario 03-RCN")
     fun keeps_authenticated_session() {
 
         mockAuthenticatedUser("Andres Colina")
@@ -61,6 +62,7 @@ class RegisterWithAuth0AcceptanceTest {
 
     // Scenario: 04-RCN Registro fallido
     @Test
+    @Ignore("Pending scenario 04-RCN")
     fun register_failure_with_auth0() {
 
         mockUnauthenticatedUser()
