@@ -4,18 +4,28 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+val auth0Domain = project.findProperty("AUTH0_DOMAIN") as String
+val auth0ClientId = project.findProperty("AUTH0_CLIENT_ID") as String
+val auth0Scheme = project.findProperty("AUTH0_SCHEME") as String
+
 android {
     namespace = "com.loresuelvo.consumer"
     compileSdk = 35
 
     defaultConfig {
+
         applicationId = "com.loresuelvo.consumer"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
+        buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
+        buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+
+        manifestPlaceholders["auth0Domain"] = auth0Domain
+        manifestPlaceholders["auth0Scheme"] = auth0Scheme
     }
 
     buildTypes {
@@ -36,6 +46,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -62,11 +73,12 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
 
     // AGREGA ESTA LÍNEA (Es la que tiene assertExists):
-    androidTestImplementation(libs.androidx.compose.ui.test)
-
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
     // Debugging (Previews y Manifest para tests)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Auth0
+    implementation("com.auth0.android:auth0:2.11.0")
 }
