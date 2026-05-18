@@ -1,5 +1,8 @@
 package com.loresuelvo.consumer.acceptance.auth
 
+import android.app.Activity
+import android.app.Instrumentation
+import android.content.Intent
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -7,8 +10,18 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.espresso.intent.Intents
+import androidx.test.espresso.intent.Intents.intended
+import androidx.test.espresso.intent.Intents.intending
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasDataString
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.containsString
+import org.junit.After
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -19,6 +32,19 @@ class RegisterWithAuth0AcceptanceTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
+    @Before
+    fun setUp() {
+        Intents.init()
+        intending(hasAction(Intent.ACTION_VIEW)).respondWith(
+            Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
+        )
+    }
+
+    @After
+    fun tearDown() {
+        Intents.release()
+    }
+
     // Scenario: 01-RCN Redirección al portal de registro de Auth0
     @Test
     fun redirects_to_auth0_signup() {
@@ -28,8 +54,14 @@ class RegisterWithAuth0AcceptanceTest {
             .assertHasClickAction()
             .performClick()
 
-        // TODO:
-        // Validar apertura de Universal Login
+        intended(
+            allOf(
+                hasAction(Intent.ACTION_VIEW),
+                hasDataString(containsString(BuildConfig.AUTH0_DOMAIN)),
+                hasDataString(containsString("/authorize")),
+                hasDataString(containsString("screen_hint=signup"))
+            )
+        )
     }
 
     // Scenario: 02-RCN Registro exitoso
