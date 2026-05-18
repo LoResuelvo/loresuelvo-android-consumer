@@ -31,11 +31,13 @@ import com.loresuelvo.consumer.ui.theme.AppBackgroundBottom
 import com.loresuelvo.consumer.ui.theme.AppBackgroundMiddle
 import com.loresuelvo.consumer.ui.theme.AppBackgroundTop
 import com.loresuelvo.consumer.ui.theme.DividerGray
+import com.loresuelvo.consumer.ui.theme.PrimaryBlue
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
 
 @Composable
 fun WelcomeScreen(
+    authenticatedUserName: String? = null,
     onRegisterClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {}
@@ -96,28 +98,38 @@ fun WelcomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
 
-                PrimaryButton(
-                    text = "Registrarse",
-                    onClick = onRegisterClick
-                )
+                if (authenticatedUserName != null) {
+                    Text(
+                        text = authenticatedUserName,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = PrimaryBlue,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } else {
+                    PrimaryButton(
+                        text = "Registrarse",
+                        onClick = onRegisterClick
+                    )
 
-                Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                SecondaryButton(
-                    text = "Iniciar Sesión",
-                    onClick = onLoginClick
-                )
+                    SecondaryButton(
+                        text = "Iniciar Sesión",
+                        onClick = onLoginClick
+                    )
 
-                Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
-                DividerWithLabel(label = "o")
+                    DividerWithLabel(label = "o")
 
-                Spacer(modifier = Modifier.height(22.dp))
+                    Spacer(modifier = Modifier.height(22.dp))
 
-                GoogleButton(
-                    text = "Continuar con Google",
-                    onClick = onGoogleClick
-                )
+                    GoogleButton(
+                        text = "Continuar con Google",
+                        onClick = onGoogleClick
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(18.dp))
 

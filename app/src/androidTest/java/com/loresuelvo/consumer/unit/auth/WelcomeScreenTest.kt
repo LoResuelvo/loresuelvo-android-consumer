@@ -58,4 +58,18 @@ class WelcomeScreenTest {
 
         Assert.assertTrue(registerClicked)
     }
+
+    @Test
+    fun authenticated_user_sees_their_name() {
+
+        composeTestRule.setContent {
+            WelcomeScreen(
+                authenticatedUserName = "Andres"
+            )
+        }
+
+        composeTestRule
+            .onNodeWithText("Andres")
+            .assertIsDisplayed()
+    }
 }
