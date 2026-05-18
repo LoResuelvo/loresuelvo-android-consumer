@@ -19,6 +19,8 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasDataString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
@@ -111,7 +113,9 @@ class RegisterWithAuth0AcceptanceTest {
         composeTestRule.runOnUiThread {
             composeTestRule.activity.setContent {
                 WelcomeScreen(
-                    authenticatedUserName = name
+                    authSession = AuthSession(
+                        user = User(displayName = name)
+                    )
                 )
             }
         }

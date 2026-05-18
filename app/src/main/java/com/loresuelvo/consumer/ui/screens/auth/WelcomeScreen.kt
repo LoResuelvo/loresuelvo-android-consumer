@@ -18,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.ui.components.branding.AppLogo
 import com.loresuelvo.consumer.ui.components.branding.VerifiedProfessionalsStrip
 import com.loresuelvo.consumer.ui.components.buttons.GoogleButton
@@ -31,13 +33,12 @@ import com.loresuelvo.consumer.ui.theme.AppBackgroundBottom
 import com.loresuelvo.consumer.ui.theme.AppBackgroundMiddle
 import com.loresuelvo.consumer.ui.theme.AppBackgroundTop
 import com.loresuelvo.consumer.ui.theme.DividerGray
-import com.loresuelvo.consumer.ui.theme.PrimaryBlue
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
 
 @Composable
 fun WelcomeScreen(
-    authenticatedUserName: String? = null,
+    authSession: AuthSession? = null,
     onRegisterClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {}
@@ -63,50 +64,49 @@ fun WelcomeScreen(
                 .blur(12.dp)
         )
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            AppLogo()
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Text(
-                text = "LoResuelvo",
-                style = MaterialTheme.typography.displaySmall,
-                color = TextWhite,
-                textAlign = TextAlign.Center
+        if (authSession != null) {
+            AuthenticatedHeader(
+                displayName = authSession.user.displayName,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(horizontal = 24.dp, vertical = 32.dp)
             )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Expertos en el cuidado de tu hogar, a un toque de distancia.",
-                style = MaterialTheme.typography.titleMedium,
-                color = TextWhite.copy(alpha = 0.85f),
-                textAlign = TextAlign.Center,
-                lineHeight = 24.sp
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            AuthCard(
-                modifier = Modifier.fillMaxWidth()
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
 
-                if (authenticatedUserName != null) {
-                    Text(
-                        text = authenticatedUserName,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = PrimaryBlue,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                } else {
+                AppLogo()
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Text(
+                    text = "LoResuelvo",
+                    style = MaterialTheme.typography.displaySmall,
+                    color = TextWhite,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Expertos en el cuidado de tu hogar, a un toque de distancia.",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextWhite.copy(alpha = 0.85f),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(28.dp))
+
+                AuthCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+
                     PrimaryButton(
                         text = "Registrarse",
                         onClick = onRegisterClick
@@ -129,23 +129,51 @@ fun WelcomeScreen(
                         text = "Continuar con Google",
                         onClick = onGoogleClick
                     )
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    Text(
+                        text = "Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SubtitleGray,
+                        textAlign = TextAlign.Center,
+                        lineHeight = 16.sp
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                Text(
-                    text = "Al continuar, aceptas nuestros Términos de Servicio y Política de Privacidad.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SubtitleGray,
-                    textAlign = TextAlign.Center,
-                    lineHeight = 16.sp
-                )
+                VerifiedProfessionalsStrip()
             }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            VerifiedProfessionalsStrip()
         }
+    }
+}
+
+@Composable
+private fun AuthenticatedHeader(
+    displayName: String,
+    modifier: Modifier = Modifier
+) {
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.Start
+    ) {
+
+        Text(
+            text = "Hola,",
+            style = MaterialTheme.typography.titleMedium,
+            color = TextWhite.copy(alpha = 0.82f)
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = displayName,
+            style = MaterialTheme.typography.headlineMedium,
+            color = TextWhite,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

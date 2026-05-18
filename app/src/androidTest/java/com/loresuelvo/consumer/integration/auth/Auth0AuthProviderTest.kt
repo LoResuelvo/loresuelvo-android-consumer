@@ -5,10 +5,10 @@ import android.util.Base64
 import androidx.test.core.app.ApplicationProvider
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
+import com.auth0.android.result.Credentials
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.Auth0WebAuthLauncher
-import com.auth0.android.result.Credentials
-import com.loresuelvo.consumer.domain.auth.AuthenticatedUser
+import com.loresuelvo.consumer.domain.auth.AuthSession
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,13 +34,13 @@ class Auth0AuthProviderTest {
     @Test
     fun signup_success_notifies_authenticated_user() {
 
-        var authenticatedUser: AuthenticatedUser? = null
+        var authSession: AuthSession? = null
         val launcher = FakeAuth0WebAuthLauncher()
         val context = ApplicationProvider.getApplicationContext<Context>()
         val authProvider = Auth0AuthProvider(
             context = context,
-            onAuthenticated = { user ->
-                authenticatedUser = user
+            onAuthenticated = { session ->
+                authSession = session
             },
             webAuthLauncher = launcher
         )
@@ -48,7 +48,7 @@ class Auth0AuthProviderTest {
         authProvider.signup()
         launcher.succeedWith(credentialsWithName("Andres"))
 
-        assertEquals("Andres", authenticatedUser?.name)
+        assertEquals("Andres", authSession?.user?.displayName)
     }
 
     private class FakeAuth0WebAuthLauncher : Auth0WebAuthLauncher {

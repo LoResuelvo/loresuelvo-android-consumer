@@ -8,6 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
+import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
+import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 
 class MainActivity : ComponentActivity() {
@@ -16,20 +18,26 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            var authenticatedUserName by remember { mutableStateOf<String?>(null) }
+            val sessionStore = remember {
+                SharedPreferencesAuthSessionStore(this)
+            }
+            var authSession by remember {
+                mutableStateOf<AuthSession?>(sessionStore.getSession())
+            }
             val authProvider = remember {
                 Auth0AuthProvider(
                     context = this,
-                    onAuthenticated = { user ->
+                    onAuthenticated = { session ->
+                        sessionStore.saveSession(session)
                         runOnUiThread {
-                            authenticatedUserName = user.name
+                            authSession = session
                         }
                     }
                 )
             }
 
             WelcomeScreen(
-                authenticatedUserName = authenticatedUserName,
+                authSession = authSession,
                 onRegisterClick = authProvider::signup
             )
         }

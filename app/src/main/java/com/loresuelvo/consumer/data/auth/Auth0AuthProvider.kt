@@ -7,12 +7,13 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.result.Credentials
 import com.loresuelvo.consumer.BuildConfig
-import com.loresuelvo.consumer.domain.auth.AuthenticatedUser
 import com.loresuelvo.consumer.domain.auth.AuthProvider
+import com.loresuelvo.consumer.domain.auth.AuthSession
 
 class Auth0AuthProvider(
     private val context: Context,
-    private val onAuthenticated: (AuthenticatedUser) -> Unit = {},
+    private val onAuthenticated: (AuthSession) -> Unit = {},
+    private val credentialsMapper: Auth0CredentialsMapper = Auth0CredentialsMapper(),
     private val webAuthLauncher: Auth0WebAuthLauncher = Auth0SdkWebAuthLauncher(
         account = Auth0(
             BuildConfig.AUTH0_CLIENT_ID,
@@ -23,23 +24,23 @@ class Auth0AuthProvider(
 ) : AuthProvider {
 
     override fun signup() {
-        webAuthLauncher.startSignup(context, Auth0SignupCallback(onAuthenticated))
+        webAuthLauncher.startSignup(
+            context,
+            Auth0SignupCallback(
+                credentialsMapper = credentialsMapper,
+                onAuthenticated = onAuthenticated
+            )
+        )
     }
 }
 
 private class Auth0SignupCallback(
-    private val onAuthenticated: (AuthenticatedUser) -> Unit
+    private val credentialsMapper: Auth0CredentialsMapper,
+    private val onAuthenticated: (AuthSession) -> Unit
 ) : Callback<Credentials, AuthenticationException> {
 
     override fun onSuccess(result: Credentials) {
-        val profile = result.user
-        val name = profile.name
-            ?: profile.nickname
-            ?: profile.email
-
-        if (name != null) {
-            onAuthenticated(AuthenticatedUser(name = name))
-        }
+        credentialsMapper.toSession(result)?.let(onAuthenticated)
 
         Log.d("Auth0AuthProvider", "Auth0 authentication succeeded")
     }
