@@ -101,7 +101,6 @@ class RegisterWithAuth0AcceptanceTest {
 
     // Scenario: 04-RCN Registro fallido
     @Test
-    @Ignore("Pending scenario 04-RCN")
     fun register_failure_with_auth0() {
 
         composeTestRule.runOnUiThread {
