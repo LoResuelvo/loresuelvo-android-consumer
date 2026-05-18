@@ -19,6 +19,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasDataString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
@@ -42,10 +43,14 @@ class RegisterWithAuth0AcceptanceTest {
         intending(hasAction(Intent.ACTION_VIEW)).respondWith(
             Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
         )
+        SharedPreferencesAuthSessionStore(composeTestRule.activity).clearSession()
+        composeTestRule.activityRule.scenario.recreate()
+        composeTestRule.waitForIdle()
     }
 
     @After
     fun tearDown() {
+        SharedPreferencesAuthSessionStore(composeTestRule.activity).clearSession()
         Intents.release()
     }
 
@@ -84,7 +89,7 @@ class RegisterWithAuth0AcceptanceTest {
     @Ignore("Pending scenario 03-RCN")
     fun keeps_authenticated_session() {
 
-        mockAuthenticatedUser("Andres Colina")
+        persistAuthenticatedUser("Andres Colina")
 
         composeTestRule
             .onNodeWithText("Cerrar sesión")
@@ -119,6 +124,21 @@ class RegisterWithAuth0AcceptanceTest {
                 )
             }
         }
+        composeTestRule.waitForIdle()
+    }
+
+    private fun persistAuthenticatedUser(
+        name: String
+    ) {
+        composeTestRule.runOnUiThread {
+            SharedPreferencesAuthSessionStore(composeTestRule.activity).saveSession(
+                AuthSession(
+                    user = User(displayName = name)
+                )
+            )
+        }
+
+        composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
     }
 

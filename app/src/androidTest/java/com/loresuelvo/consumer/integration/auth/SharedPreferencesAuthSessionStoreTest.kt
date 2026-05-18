@@ -5,7 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.User
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -15,11 +17,12 @@ class SharedPreferencesAuthSessionStoreTest {
 
     @Before
     fun setUp() {
-        context
-            .getSharedPreferences("auth_session", Context.MODE_PRIVATE)
-            .edit()
-            .clear()
-            .commit()
+        clearSessionPreferences()
+    }
+
+    @After
+    fun tearDown() {
+        clearSessionPreferences()
     }
 
     @Test
@@ -40,5 +43,28 @@ class SharedPreferencesAuthSessionStoreTest {
 
         assertEquals("Andres", restoredSession?.user?.displayName)
         assertEquals("andres@example.com", restoredSession?.user?.email)
+    }
+
+    @Test
+    fun clears_authenticated_session() {
+
+        val store = SharedPreferencesAuthSessionStore(context)
+        store.saveSession(
+            AuthSession(
+                user = User(displayName = "Andres")
+            )
+        )
+
+        store.clearSession()
+
+        assertNull(store.getSession())
+    }
+
+    private fun clearSessionPreferences() {
+        context
+            .getSharedPreferences("auth_session", Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .commit()
     }
 }

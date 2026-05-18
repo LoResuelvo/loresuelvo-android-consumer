@@ -38,7 +38,11 @@ class MainActivity : ComponentActivity() {
 
             WelcomeScreen(
                 authSession = authSession,
-                onRegisterClick = authProvider::signup
+                onRegisterClick = authProvider::signup,
+                onLogoutClick = {
+                    sessionStore.clearSession()
+                    authSession = null
+                }
             )
         }
     }

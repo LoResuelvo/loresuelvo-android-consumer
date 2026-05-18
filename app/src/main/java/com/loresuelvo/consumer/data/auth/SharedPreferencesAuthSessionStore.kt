@@ -35,6 +35,13 @@ class SharedPreferencesAuthSessionStore(
             .apply()
     }
 
+    override fun clearSession() {
+        preferences
+            .edit()
+            .clear()
+            .apply()
+    }
+
     private companion object {
         const val KEY_DISPLAY_NAME = "display_name"
         const val KEY_EMAIL = "email"

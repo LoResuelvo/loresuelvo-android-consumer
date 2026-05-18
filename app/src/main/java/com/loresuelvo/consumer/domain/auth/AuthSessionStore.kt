@@ -5,4 +5,6 @@ interface AuthSessionStore {
     fun getSession(): AuthSession?
 
     fun saveSession(session: AuthSession)
+
+    fun clearSession()
 }

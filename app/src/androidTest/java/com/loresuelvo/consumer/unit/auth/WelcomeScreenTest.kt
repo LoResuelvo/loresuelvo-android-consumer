@@ -1,8 +1,10 @@
 package com.loresuelvo.consumer.unit.auth
 
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.loresuelvo.consumer.domain.auth.AuthSession
@@ -79,5 +81,13 @@ class WelcomeScreenTest {
         composeTestRule
             .onNodeWithText("Andres")
             .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("Cerrar sesión")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onAllNodesWithText("Registrarse")
+            .assertCountEquals(0)
     }
 }

@@ -6,10 +6,11 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.junit.Ignore
 
 @RunWith(AndroidJUnit4::class)
 
@@ -17,6 +18,13 @@ class WelcomeScreenAcceptanceTest {
 
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun setUp() {
+        SharedPreferencesAuthSessionStore(composeTestRule.activity).clearSession()
+        composeTestRule.activityRule.scenario.recreate()
+        composeTestRule.waitForIdle()
+    }
 
     // Scenario: 01-CPI Mostrar nombre y branding de LoResuelvo
     @Test

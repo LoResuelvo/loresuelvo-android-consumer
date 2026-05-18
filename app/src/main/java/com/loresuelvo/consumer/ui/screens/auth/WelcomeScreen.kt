@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +42,8 @@ fun WelcomeScreen(
     authSession: AuthSession? = null,
     onRegisterClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
-    onGoogleClick: () -> Unit = {}
+    onGoogleClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
 ) {
 
     Box(
@@ -67,6 +69,7 @@ fun WelcomeScreen(
         if (authSession != null) {
             AuthenticatedHeader(
                 displayName = authSession.user.displayName,
+                onLogoutClick = onLogoutClick,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(horizontal = 24.dp, vertical = 32.dp)
@@ -152,6 +155,7 @@ fun WelcomeScreen(
 @Composable
 private fun AuthenticatedHeader(
     displayName: String,
+    onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
 
@@ -174,6 +178,17 @@ private fun AuthenticatedHeader(
             color = TextWhite,
             fontWeight = FontWeight.Bold
         )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        TextButton(
+            onClick = onLogoutClick
+        ) {
+            Text(
+                text = "Cerrar sesión",
+                color = TextWhite.copy(alpha = 0.9f)
+            )
+        }
     }
 }
 
