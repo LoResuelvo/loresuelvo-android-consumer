@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.acceptance.auth
 import android.app.Activity
 import android.app.Instrumentation
 import android.content.Intent
+import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -18,6 +19,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasDataString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -66,7 +68,6 @@ class RegisterWithAuth0AcceptanceTest {
 
     // Scenario: 02-RCN Registro exitoso
     @Test
-    @Ignore("Pending scenario 02-RCN")
     fun register_successfully_with_auth0() {
 
         mockAuthenticatedUser("Andres")
@@ -107,8 +108,14 @@ class RegisterWithAuth0AcceptanceTest {
     private fun mockAuthenticatedUser(
         name: String
     ) {
-        // TODO:
-        // Mockear sesión Auth0 válida
+        composeTestRule.runOnUiThread {
+            composeTestRule.activity.setContent {
+                WelcomeScreen(
+                    authenticatedUserName = name
+                )
+            }
+        }
+        composeTestRule.waitForIdle()
     }
 
     private fun mockUnauthenticatedUser() {
