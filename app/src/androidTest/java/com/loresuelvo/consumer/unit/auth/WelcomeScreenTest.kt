@@ -90,4 +90,19 @@ class WelcomeScreenTest {
             .onAllNodesWithText("Registrarse")
             .assertCountEquals(0)
     }
+
+    @Test
+    fun displays_authentication_error_message() {
+
+        composeTestRule.setContent {
+
+            WelcomeScreen(
+                errorMessage = "No pudimos completar el registro"
+            )
+        }
+
+        composeTestRule
+            .onNodeWithText("No pudimos completar el registro")
+            .assertIsDisplayed()
+    }
 }

@@ -104,7 +104,21 @@ class RegisterWithAuth0AcceptanceTest {
     @Ignore("Pending scenario 04-RCN")
     fun register_failure_with_auth0() {
 
-        mockUnauthenticatedUser()
+        composeTestRule.runOnUiThread {
+
+            composeTestRule.activity.setContent {
+
+                WelcomeScreen(
+                    errorMessage = "No pudimos completar el registro"
+                )
+            }
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("No pudimos completar el registro")
+            .assertIsDisplayed()
 
         composeTestRule
             .onAllNodesWithText("Andres")

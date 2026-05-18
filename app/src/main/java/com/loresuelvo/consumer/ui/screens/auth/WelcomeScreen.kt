@@ -39,6 +39,7 @@ import com.loresuelvo.consumer.ui.theme.TextWhite
 
 @Composable
 fun WelcomeScreen(
+    errorMessage: String? = null,
     authSession: AuthSession? = null,
     onRegisterClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
@@ -109,6 +110,19 @@ fun WelcomeScreen(
                 AuthCard(
                     modifier = Modifier.fillMaxWidth()
                 ) {
+
+                    if (errorMessage != null) {
+
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
 
                     PrimaryButton(
                         text = "Registrarse",
