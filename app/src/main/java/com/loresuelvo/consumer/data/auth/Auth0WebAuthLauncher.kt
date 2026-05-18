@@ -1,7 +1,6 @@
 package com.loresuelvo.consumer.data.auth
 
 import android.content.Context
-import android.util.Log
 import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
@@ -10,7 +9,10 @@ import com.auth0.android.result.Credentials
 
 interface Auth0WebAuthLauncher {
 
-    fun startSignup(context: Context)
+    fun startSignup(
+        context: Context,
+        callback: Callback<Credentials, AuthenticationException>
+    )
 }
 
 class Auth0SdkWebAuthLauncher(
@@ -18,23 +20,15 @@ class Auth0SdkWebAuthLauncher(
     private val scheme: String
 ) : Auth0WebAuthLauncher {
 
-    override fun startSignup(context: Context) {
+    override fun startSignup(
+        context: Context,
+        callback: Callback<Credentials, AuthenticationException>
+    ) {
         WebAuthProvider
             .login(account)
             .withScheme(scheme)
             .withScreenHint("signup")
-            .start(context, LoggingAuthCallback)
-    }
-}
-
-private object LoggingAuthCallback : Callback<Credentials, AuthenticationException> {
-
-    override fun onSuccess(result: Credentials) {
-        Log.d("Auth0AuthProvider", "Auth0 authentication succeeded")
-    }
-
-    override fun onFailure(error: AuthenticationException) {
-        Log.w("Auth0AuthProvider", "Auth0 authentication failed", error)
+            .start(context, callback)
     }
 }
 
