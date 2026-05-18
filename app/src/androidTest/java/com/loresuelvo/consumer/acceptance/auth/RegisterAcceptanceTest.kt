@@ -86,7 +86,6 @@ class RegisterWithAuth0AcceptanceTest {
 
     // Scenario: 03-RCN Verificación de sesión persistente
     @Test
-    @Ignore("Pending scenario 03-RCN")
     fun keeps_authenticated_session() {
 
         persistAuthenticatedUser("Andres Colina")
