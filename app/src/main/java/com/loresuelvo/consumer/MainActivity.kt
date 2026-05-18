@@ -11,6 +11,7 @@ import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
+import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 
 class MainActivity : ComponentActivity() {
 
@@ -36,14 +37,22 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            WelcomeScreen(
-                authSession = authSession,
-                onRegisterClick = authProvider::signup,
-                onLogoutClick = {
-                    sessionStore.clearSession()
-                    authSession = null
-                }
-            )
+            if (authSession == null) {
+
+                WelcomeScreen(
+                    onRegisterClick = authProvider::signup
+                )
+
+            } else {
+
+                HomeScreen(
+                    authSession = authSession!!,
+                    onLogoutClick = {
+                        sessionStore.clearSession()
+                        authSession = null
+                    }
+                )
+            }
         }
     }
 }
