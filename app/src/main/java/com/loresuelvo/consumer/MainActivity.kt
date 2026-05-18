@@ -19,19 +19,40 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+
             val sessionStore = remember {
                 SharedPreferencesAuthSessionStore(this)
             }
+
             var authSession by remember {
-                mutableStateOf<AuthSession?>(sessionStore.getSession())
+                mutableStateOf<AuthSession?>(
+                    sessionStore.getSession()
+                )
             }
+
+            var authError by remember {
+                mutableStateOf<String?>(null)
+            }
+
             val authProvider = remember {
+
                 Auth0AuthProvider(
                     context = this,
+
                     onAuthenticated = { session ->
+
                         sessionStore.saveSession(session)
+
                         runOnUiThread {
+                            authError = null
                             authSession = session
+                        }
+                    },
+
+                    onAuthenticationError = { message ->
+
+                        runOnUiThread {
+                            authError = message
                         }
                     }
                 )
@@ -40,6 +61,7 @@ class MainActivity : ComponentActivity() {
             if (authSession == null) {
 
                 WelcomeScreen(
+                    errorMessage = authError,
                     onRegisterClick = authProvider::signup
                 )
 
@@ -48,7 +70,10 @@ class MainActivity : ComponentActivity() {
                 HomeScreen(
                     authSession = authSession!!,
                     onLogoutClick = {
+
                         sessionStore.clearSession()
+
+                        authError = null
                         authSession = null
                     }
                 )

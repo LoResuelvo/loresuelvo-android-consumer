@@ -51,6 +51,37 @@ class Auth0AuthProviderTest {
         assertEquals("Andres", authSession?.user?.displayName)
     }
 
+    @Test
+    fun signup_failure_notifies_authentication_error() {
+
+        var authenticationError: String? = null
+
+        val launcher = FakeAuth0WebAuthLauncher()
+
+        val context = ApplicationProvider.getApplicationContext<Context>()
+
+        val authProvider = Auth0AuthProvider(
+            context = context,
+            onAuthenticationError = { message ->
+                authenticationError = message
+            },
+            webAuthLauncher = launcher
+        )
+
+        authProvider.signup()
+
+        launcher.failWith(
+            AuthenticationException(
+                "Auth0 unavailable"
+            )
+        )
+
+        assertEquals(
+            "No pudimos completar el registro",
+            authenticationError
+        )
+    }
+
     private class FakeAuth0WebAuthLauncher : Auth0WebAuthLauncher {
 
         var signupStarted = false
@@ -67,6 +98,10 @@ class Auth0AuthProviderTest {
 
         fun succeedWith(credentials: Credentials) {
             callback?.onSuccess(credentials)
+        }
+
+        fun failWith(error: AuthenticationException) {
+            callback?.onFailure(error)
         }
     }
 
