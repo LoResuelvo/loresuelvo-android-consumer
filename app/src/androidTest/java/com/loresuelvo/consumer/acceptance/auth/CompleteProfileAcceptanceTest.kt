@@ -2,6 +2,10 @@ package com.loresuelvo.consumer.acceptance.auth
 
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithText
+import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
 import com.loresuelvo.consumer.MainActivity
 import org.junit.Ignore
 import org.junit.Rule
@@ -19,13 +23,27 @@ class CompleteProfileAcceptanceTest {
     // Scenario: 01-CPC Mostrar formulario de completar perfil
     @Test
     fun displays_complete_profile_form() {
-        // Given que estoy autenticado
-        // And mi perfil está incompleto
-        // When ingreso a la aplicación
-        // Then veo la pantalla "Completar perfil"
-        // And veo el campo "Nombre"
-        // And veo el campo "Apellido"
-        // And veo el botón "Continuar"
+
+        composeTestRule.setContent {
+            CompleteProfileScreen()
+        }
+
+        composeTestRule
+            .onNodeWithText("Te damos la bienvenida a LoResuelvo")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("Nombre")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("Apellido")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("Continuar")
+            .assertIsDisplayed()
+            .assertHasClickAction()
     }
 
     // Scenario: 02-CPC Completar perfil exitosamente

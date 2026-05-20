@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 
@@ -58,25 +59,34 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            if (authSession == null) {
+            when {
 
-                WelcomeScreen(
-                    errorMessage = authError,
-                    onRegisterClick = authProvider::signup
-                )
+                authSession == null -> {
 
-            } else {
+                    WelcomeScreen(
+                        errorMessage = authError,
+                        onRegisterClick = authProvider::signup
+                    )
+                }
 
-                HomeScreen(
-                    authSession = authSession!!,
-                    onLogoutClick = {
+                !authSession!!.user.isProfileComplete() -> {
 
-                        sessionStore.clearSession()
+                    CompleteProfileScreen()
+                }
 
-                        authError = null
-                        authSession = null
-                    }
-                )
+                else -> {
+
+                    HomeScreen(
+                        authSession = authSession!!,
+                        onLogoutClick = {
+
+                            sessionStore.clearSession()
+
+                            authError = null
+                            authSession = null
+                        }
+                    )
+                }
             }
         }
     }

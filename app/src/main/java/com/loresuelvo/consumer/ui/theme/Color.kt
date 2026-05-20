@@ -20,3 +20,6 @@ val AvatarDarkBlue = Color(0xFF0B6E99)
 
 val DividerGray = Color(0xFFD9D9D9)
 val SubtitleGray = Color(0xFF7A7A7A)
+
+val ScreenBackground = Color(0xFFF4F1EC)
+val CardBackground = Color(0xFFFCFCFC)
