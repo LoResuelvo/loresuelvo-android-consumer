@@ -11,13 +11,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.ui.theme.DividerGray
+import androidx.compose.ui.platform.testTag
 
 @Composable
 fun PrimaryTextField(
     value: String,
     label: String,
     placeholder: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    testTag: String = ""
 ) {
 
     Column {
@@ -30,7 +32,9 @@ fun PrimaryTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(testTag),
             placeholder = {
                 Text(placeholder)
             },

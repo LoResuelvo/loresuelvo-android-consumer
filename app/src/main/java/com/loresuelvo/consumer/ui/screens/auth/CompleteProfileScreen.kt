@@ -29,7 +29,13 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
 
 @Composable
-fun CompleteProfileScreen() {
+fun CompleteProfileScreen(
+    firstName: String,
+    lastName: String,
+    onFirstNameChange: (String) -> Unit,
+    onLastNameChange: (String) -> Unit,
+    onContinueClick: () -> Unit
+) {
 
     Column(
         modifier = Modifier
@@ -76,26 +82,28 @@ fun CompleteProfileScreen() {
         ) {
 
             PrimaryTextField(
-                value = "",
+                value = firstName,
                 label = "Nombre",
                 placeholder = "Ej. Juan",
-                onValueChange = {}
+                onValueChange = onFirstNameChange,
+                testTag = "first-name"
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryTextField(
-                value = "",
+                value = lastName,
                 label = "Apellido",
                 placeholder = "Ej. Pérez",
-                onValueChange = {}
+                onValueChange = onLastNameChange,
+                testTag = "last-name"
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
             PrimaryButton(
                 text = "Continuar",
-                onClick = {}
+                onClick = onContinueClick
             )
 
             Spacer(modifier = Modifier.height(12.dp))

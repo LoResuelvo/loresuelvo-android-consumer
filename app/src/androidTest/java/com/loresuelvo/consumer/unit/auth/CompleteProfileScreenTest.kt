@@ -17,7 +17,13 @@ class CompleteProfileScreenTest {
     fun displays_complete_profile_form() {
 
         composeTestRule.setContent {
-            CompleteProfileScreen()
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onContinueClick = {}
+            )
         }
 
         composeTestRule

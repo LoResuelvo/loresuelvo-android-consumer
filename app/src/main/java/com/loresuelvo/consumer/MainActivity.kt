@@ -31,6 +31,18 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            var firstName by remember {
+                mutableStateOf(
+                    authSession?.user?.firstName ?: ""
+                )
+            }
+
+            var lastName by remember {
+                mutableStateOf(
+                    authSession?.user?.lastName ?: ""
+                )
+            }
+
             var authError by remember {
                 mutableStateOf<String?>(null)
             }
@@ -71,7 +83,34 @@ class MainActivity : ComponentActivity() {
 
                 !authSession!!.user.isProfileComplete() -> {
 
-                    CompleteProfileScreen()
+                    CompleteProfileScreen(
+                        firstName = firstName,
+                        lastName = lastName,
+
+                        onFirstNameChange = {
+                            firstName = it
+                        },
+
+                        onLastNameChange = {
+                            lastName = it
+                        },
+
+                        onContinueClick = {
+
+                            val updatedSession = authSession!!.copy(
+                                user = authSession!!.user.copy(
+                                    firstName = firstName,
+                                    lastName = lastName
+                                )
+                            )
+
+                            sessionStore.saveSession(
+                                updatedSession
+                            )
+
+                            authSession = updatedSession
+                        }
+                    )
                 }
 
                 else -> {
