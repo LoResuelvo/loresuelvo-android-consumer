@@ -63,6 +63,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.junit.ktx)
 
     // Unit Testing (Capa de Dominio - src/test)
     testImplementation(libs.junit)
@@ -82,4 +83,5 @@ dependencies {
 
     // Auth0
     implementation("com.auth0.android:auth0:2.11.0")
+    testImplementation(kotlin("test"))
 }
