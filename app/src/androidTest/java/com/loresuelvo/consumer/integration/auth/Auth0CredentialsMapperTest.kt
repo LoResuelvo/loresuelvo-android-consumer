@@ -1,68 +1,92 @@
-package com.loresuelvo.consumer.integration.auth
+package com.loresuelvo.consumer.data.auth
 
 import android.util.Base64
 import com.auth0.android.result.Credentials
-import com.loresuelvo.consumer.data.auth.Auth0CredentialsMapper
+import com.loresuelvo.consumer.domain.auth.User
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.util.Date
 
 class Auth0CredentialsMapperTest {
 
-    @Test
-    fun maps_profile_name_as_display_name() {
+    private val mapper = Auth0CredentialsMapper()
 
-        val session = Auth0CredentialsMapper().toSession(
-            credentialsWithClaims(
-                """"name":"Andres Colina","email":"andres@example.com""""
+    @Test
+    fun maps_first_name_last_name_and_email_from_auth0_profile() {
+
+        val session = mapper.toSession(
+            credentialsWithProfile(
+                givenName = "Andres",
+                familyName = "Colina",
+                email = "andy@pro.com"
             )
         )
 
-        assertEquals("Andres Colina", session?.user?.displayName)
-        assertEquals("andres@example.com", session?.user?.email)
+        requireNotNull(session)
+
+        assertEquals("Andres", session.user.firstName)
+        assertEquals("Colina", session.user.lastName)
+        assertEquals("andy@pro.com", session.user.email)
+
+        assertTrue(session.user.isProfileComplete())
     }
 
     @Test
-    fun uses_given_name_before_email_when_name_is_missing() {
+    fun profile_is_incomplete_when_last_name_is_missing() {
 
-        val session = Auth0CredentialsMapper().toSession(
-            credentialsWithClaims(
-                """"given_name":"Andres","email":"andres@example.com""""
-            )
+        val user = User(
+            displayName = "Andres",
+            firstName = "Andres",
+            lastName = null
         )
 
-        assertEquals("Andres", session?.user?.displayName)
+        assertFalse(user.isProfileComplete())
+    }
+    private fun credentialsWithProfile(
+        givenName: String,
+        familyName: String,
+        email: String
+    ): Credentials {
+
+        return Credentials(
+            idToken = idToken(
+                givenName,
+                familyName,
+                email
+            ),
+            accessToken = "access-token",
+            type = "Bearer",
+            refreshToken = null,
+            expiresAt = Date(System.currentTimeMillis() + 60_000),
+            scope = "openid profile email"
+        )
     }
 
-    @Test
-    fun does_not_use_email_as_display_name() {
+    private fun idToken(
+        givenName: String,
+        familyName: String,
+        email: String
+    ): String {
 
-        val session = Auth0CredentialsMapper().toSession(
-            credentialsWithClaims(
-                """"email":"andres@example.com""""
-            )
+        val header = encode("""{"alg":"none"}""")
+
+        val payload = encode(
+            """
+            {
+              "sub":"auth0|123",
+              "given_name":"$givenName",
+              "family_name":"$familyName",
+              "email":"$email"
+            }
+            """.trimIndent()
         )
 
-        assertEquals("Usuario", session?.user?.displayName)
-        assertEquals("andres@example.com", session?.user?.email)
-    }
-
-    private fun credentialsWithClaims(claims: String): Credentials = Credentials(
-        idToken = idTokenWithClaims(claims),
-        accessToken = "access-token",
-        type = "Bearer",
-        refreshToken = null,
-        expiresAt = Date(System.currentTimeMillis() + 60_000),
-        scope = "openid profile email"
-    )
-
-    private fun idTokenWithClaims(claims: String): String {
-        val header = encodeJwtPart("""{"alg":"none"}""")
-        val payload = encodeJwtPart("""{"sub":"auth0|123",$claims}""")
         return "$header.$payload."
     }
 
-    private fun encodeJwtPart(value: String): String =
+    private fun encode(value: String): String =
         Base64.encodeToString(
             value.toByteArray(),
             Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
