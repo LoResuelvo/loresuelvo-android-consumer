@@ -94,7 +94,7 @@ class CompleteProfileScreenAcceptanceTest {
             .onNodeWithText("El nombre es obligatorio")
             .assertIsDisplayed()
     }
-    @Ignore("Peding")
+
     // Scenario: 04-CPC Apellido obligatorio
     @Test
     fun requires_last_name() {

@@ -63,4 +63,23 @@ class CompleteProfileScreenTest {
             .onNodeWithText("El nombre es obligatorio")
             .assertIsDisplayed()
     }
+
+    @Test
+    fun displays_last_name_validation_error() {
+
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                errorMessage = "El apellido es obligatorio",
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onContinueClick = {}
+            )
+        }
+
+        composeTestRule
+            .onNodeWithText("El apellido es obligatorio")
+            .assertIsDisplayed()
+    }
 }
