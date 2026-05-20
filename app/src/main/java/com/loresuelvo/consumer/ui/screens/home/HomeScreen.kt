@@ -30,10 +30,12 @@ fun HomeScreen(
             style = MaterialTheme.typography.titleMedium
         )
 
-        Text(
-            text = authSession.user.displayName,
-            style = MaterialTheme.typography.headlineMedium
-        )
+        authSession.user.firstName?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.headlineMedium
+            )
+        }
 
         Button(
             onClick = onLogoutClick
