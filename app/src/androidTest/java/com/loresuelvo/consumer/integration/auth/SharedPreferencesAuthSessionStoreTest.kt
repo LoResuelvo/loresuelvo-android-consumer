@@ -31,11 +31,14 @@ class SharedPreferencesAuthSessionStoreTest {
         val store = SharedPreferencesAuthSessionStore(context)
 
         store.saveSession(
-            AuthSession(
+            session = AuthSession(
                 user = User(
                     displayName = "Andres",
-                    email = "andres@example.com"
-                )
+                    firstName = "Andres",
+                    lastName = "Colina",
+                    email = "andy@pro.com"
+                ),
+                accessToken = "fake-token"
             )
         )
 
@@ -51,9 +54,15 @@ class SharedPreferencesAuthSessionStoreTest {
         val store = SharedPreferencesAuthSessionStore(context)
         store.saveSession(
             AuthSession(
-                user = User(displayName = "Andres")
+                    user = User(
+                        displayName = "Andres",
+                        firstName = "Andres",
+                        lastName = "Colina",
+                        email = "andy@pro.com"
+                    ),
+                    accessToken = "fake-token"
+                )
             )
-        )
 
         store.clearSession()
 

@@ -15,17 +15,17 @@ class Auth0CredentialsMapper {
             profile.nickname
         ) ?: DEFAULT_DISPLAY_NAME
 
-        Log.d("Auth0", "name=${profile.name}")
-        Log.d("Auth0", "givenName=${profile.givenName}")
-        Log.d("Auth0", "familyName=${profile.familyName}")
-        Log.d("Auth0", "nickname=${profile.nickname}")
-        Log.d("Auth0", "email=${profile.email}")
+        Log.d("Auth0Profile", "givenName=${profile.givenName}")
+        Log.d("Auth0Profile", "familyName=${profile.familyName}")
 
         return AuthSession(
             user = User(
                 displayName = displayName,
+                firstName = profile.givenName,
+                lastName = profile.familyName,
                 email = profile.email
-            )
+            ),
+            accessToken = credentials.accessToken
         )
     }
 

@@ -69,7 +69,13 @@ class WelcomeScreenTest {
         composeTestRule.setContent {
             WelcomeScreen(
                 authSession = AuthSession(
-                    user = User(displayName = "Andres")
+                    user = User(
+                        displayName = "Andres",
+                        firstName = "Andres",
+                        lastName = "Colina",
+                        email = "andy@pro.com"
+                    ),
+                    accessToken = "fake-token"
                 )
             )
         }

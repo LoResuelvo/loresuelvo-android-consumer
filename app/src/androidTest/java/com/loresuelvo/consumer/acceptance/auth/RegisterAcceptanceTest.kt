@@ -131,7 +131,13 @@ class RegisterWithAuth0AcceptanceTest {
             composeTestRule.activity.setContent {
                 WelcomeScreen(
                     authSession = AuthSession(
-                        user = User(displayName = name)
+                        user = User(
+                            displayName = "Andres",
+                            firstName = "Andres",
+                            lastName = "Colina",
+                            email = "andy@pro.com"
+                        ),
+                        accessToken = "fake-token"
                     )
                 )
             }
@@ -145,7 +151,13 @@ class RegisterWithAuth0AcceptanceTest {
         composeTestRule.runOnUiThread {
             SharedPreferencesAuthSessionStore(composeTestRule.activity).saveSession(
                 AuthSession(
-                    user = User(displayName = name)
+                        user = User(
+                            displayName = "Andres",
+                            firstName = "Andres",
+                            lastName = "Colina",
+                            email = "andy@pro.com"
+                        ),
+                        accessToken = "fake-token"
                 )
             )
         }
