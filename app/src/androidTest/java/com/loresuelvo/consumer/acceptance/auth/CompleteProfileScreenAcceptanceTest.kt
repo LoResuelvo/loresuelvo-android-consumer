@@ -17,6 +17,8 @@ import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.User
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
 
 @RunWith(AndroidJUnit4::class)
 
@@ -113,14 +115,43 @@ class CompleteProfileScreenAcceptanceTest {
             .onNodeWithText("El apellido es obligatorio")
             .assertIsDisplayed()
     }
-    @Ignore("Peding")
+
     // Scenario: 05-CPC Persistir perfil completado
     @Test
     fun keeps_completed_profile_after_reopening_app() {
-        // Given que completé mi perfil correctamente
-        // When vuelvo a abrir la aplicación
-        // Then no veo la pantalla "Completar perfil"
-        // And veo la pantalla principal
+
+        persistIncompleteAuthenticatedUser()
+
+        composeTestRule
+            .onNodeWithTag("first-name")
+            .performTextInput("Andres")
+
+        composeTestRule
+            .onNodeWithTag("last-name")
+            .performTextInput("Colina")
+
+        composeTestRule
+            .onNodeWithText("Continuar")
+            .performClick()
+
+        composeTestRule
+            .activityRule
+            .scenario
+            .recreate()
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onAllNodesWithText("Completa tu perfil")
+            .assertCountEquals(0)
+
+        composeTestRule
+            .onNodeWithText("Hola,")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("Andres")
+            .assertIsDisplayed()
     }
 
     private fun persistIncompleteAuthenticatedUser() {
