@@ -28,6 +28,9 @@ import com.loresuelvo.consumer.ui.theme.AppBackgroundTop
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.imePadding
 
 @Composable
 fun CompleteProfileScreen(
@@ -51,7 +54,14 @@ fun CompleteProfileScreen(
                     )
                 )
             )
-            .padding(horizontal = 24.dp, vertical = 24.dp),
+            .verticalScroll(
+                rememberScrollState()
+            )
+            .imePadding()
+            .padding(
+                horizontal = 24.dp,
+                vertical = 24.dp
+            ),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
