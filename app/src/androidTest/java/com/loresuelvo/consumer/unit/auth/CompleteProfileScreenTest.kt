@@ -20,6 +20,7 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "",
                 lastName = "",
+                errorMessage = null,
                 onFirstNameChange = {},
                 onLastNameChange = {},
                 onContinueClick = {}
@@ -27,7 +28,7 @@ class CompleteProfileScreenTest {
         }
 
         composeTestRule
-            .onNodeWithText("Te damos la bienvenida a LoResuelvo")
+            .onNodeWithText("Completa tu perfil")
             .assertIsDisplayed()
 
         composeTestRule
@@ -42,5 +43,24 @@ class CompleteProfileScreenTest {
             .onNodeWithText("Continuar")
             .assertIsDisplayed()
             .assertHasClickAction()
+    }
+
+    @Test
+    fun displays_validation_error_message() {
+
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                errorMessage = "El nombre es obligatorio",
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onContinueClick = {}
+            )
+        }
+
+        composeTestRule
+            .onNodeWithText("El nombre es obligatorio")
+            .assertIsDisplayed()
     }
 }

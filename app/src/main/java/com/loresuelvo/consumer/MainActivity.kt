@@ -43,6 +43,10 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            var profileError by remember {
+                mutableStateOf<String?>(null)
+            }
+
             var authError by remember {
                 mutableStateOf<String?>(null)
             }
@@ -86,29 +90,35 @@ class MainActivity : ComponentActivity() {
                     CompleteProfileScreen(
                         firstName = firstName,
                         lastName = lastName,
+                        errorMessage = profileError,
 
                         onFirstNameChange = {
                             firstName = it
+                            profileError = null
                         },
 
                         onLastNameChange = {
                             lastName = it
+                            profileError = null
                         },
 
                         onContinueClick = {
 
-                            val updatedSession = authSession!!.copy(
-                                user = authSession!!.user.copy(
-                                    firstName = firstName,
-                                    lastName = lastName
-                                )
-                            )
+                            completeProfile(
+                                authSession = authSession!!,
+                                firstName = firstName,
+                                lastName = lastName,
+                                sessionStore = sessionStore,
 
-                            sessionStore.saveSession(
-                                updatedSession
-                            )
+                                onValidationError = {
+                                    profileError = it
+                                },
 
-                            authSession = updatedSession
+                                onProfileCompleted = {
+                                    profileError = null
+                                    authSession = it
+                                }
+                            )
                         }
                     )
                 }
@@ -122,11 +132,46 @@ class MainActivity : ComponentActivity() {
                             sessionStore.clearSession()
 
                             authError = null
+                            profileError = null
                             authSession = null
                         }
                     )
                 }
             }
         }
+    }
+
+    private fun completeProfile(
+        authSession: AuthSession,
+        firstName: String,
+        lastName: String,
+        sessionStore: SharedPreferencesAuthSessionStore,
+        onValidationError: (String) -> Unit,
+        onProfileCompleted: (AuthSession) -> Unit
+    ) {
+
+        when {
+
+            firstName.isBlank() -> {
+                onValidationError("El nombre es obligatorio")
+                return
+            }
+
+            lastName.isBlank() -> {
+                onValidationError("El apellido es obligatorio")
+                return
+            }
+        }
+
+        val updatedSession = authSession.copy(
+            user = authSession.user.copy(
+                firstName = firstName,
+                lastName = lastName
+            )
+        )
+
+        sessionStore.saveSession(updatedSession)
+
+        onProfileCompleted(updatedSession)
     }
 }

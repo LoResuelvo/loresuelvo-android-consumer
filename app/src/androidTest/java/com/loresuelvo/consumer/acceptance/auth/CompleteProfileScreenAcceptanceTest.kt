@@ -75,27 +75,43 @@ class CompleteProfileScreenAcceptanceTest {
             .onNodeWithText("Andres")
             .assertIsDisplayed()
     }
-    @Ignore("Peding")
+
     // Scenario: 03-CPC Nombre obligatorio
     @Test
     fun requires_first_name() {
-        // Given que estoy autenticado
-        // And mi perfil está incompleto
-        // When dejo vacío el campo "Nombre"
-        // And ingreso "Colina" como apellido
-        // And presiono "Continuar"
-        // Then veo el mensaje "El nombre es obligatorio"
+
+        persistIncompleteAuthenticatedUser()
+
+        composeTestRule
+            .onNodeWithTag("last-name")
+            .performTextInput("Colina")
+
+        composeTestRule
+            .onNodeWithText("Continuar")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText("El nombre es obligatorio")
+            .assertIsDisplayed()
     }
     @Ignore("Peding")
     // Scenario: 04-CPC Apellido obligatorio
     @Test
     fun requires_last_name() {
-        // Given que estoy autenticado
-        // And mi perfil está incompleto
-        // When ingreso "Andres" como nombre
-        // And dejo vacío el campo "Apellido"
-        // And presiono "Continuar"
-        // Then veo el mensaje "El apellido es obligatorio"
+
+        persistIncompleteAuthenticatedUser()
+
+        composeTestRule
+            .onNodeWithTag("first-name")
+            .performTextInput("Andres")
+
+        composeTestRule
+            .onNodeWithText("Continuar")
+            .performClick()
+
+        composeTestRule
+            .onNodeWithText("El apellido es obligatorio")
+            .assertIsDisplayed()
     }
     @Ignore("Peding")
     // Scenario: 05-CPC Persistir perfil completado

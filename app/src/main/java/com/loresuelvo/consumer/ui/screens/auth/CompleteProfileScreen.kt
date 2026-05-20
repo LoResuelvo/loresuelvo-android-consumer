@@ -27,11 +27,13 @@ import com.loresuelvo.consumer.ui.theme.AppBackgroundMiddle
 import com.loresuelvo.consumer.ui.theme.AppBackgroundTop
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun CompleteProfileScreen(
     firstName: String,
     lastName: String,
+    errorMessage: String?,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
     onContinueClick: () -> Unit
@@ -80,6 +82,21 @@ fun CompleteProfileScreen(
         AuthCard(
             modifier = Modifier.fillMaxWidth()
         ) {
+
+            errorMessage?.let {
+
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+            }
 
             PrimaryTextField(
                 value = firstName,
