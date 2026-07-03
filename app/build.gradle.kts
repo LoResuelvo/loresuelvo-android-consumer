@@ -85,7 +85,7 @@ android {
 
             val auth0Domain = envVar("AUTH0_DOMAIN_STAGING")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID_STAGING")
-            val auth0Scheme = envVar("AUTH0_SCHEME_STAGING")
+            val auth0Scheme = envVar("AUTH0_SCHEME_STAGING", "com.loresuelvo.consumer.staging")
             val apiUrl = envVar("API_URL_STAGING")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
@@ -103,7 +103,7 @@ android {
 
             val auth0Domain = envVar("AUTH0_DOMAIN_PROD")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID_PROD")
-            val auth0Scheme = envVar("AUTH0_SCHEME_PROD")
+             val auth0Scheme = envVar("AUTH0_SCHEME_PROD", "com.loresuelvo.consumer.prod")
             val apiUrl = envVar("API_URL_PROD")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
