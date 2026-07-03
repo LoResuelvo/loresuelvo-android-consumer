@@ -1,31 +1,39 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
-val auth0Domain = project.findProperty("AUTH0_DOMAIN") as String
-val auth0ClientId = project.findProperty("AUTH0_CLIENT_ID") as String
-val auth0Scheme = project.findProperty("AUTH0_SCHEME") as String
+// ==========================================
+// Lectura segura de variables de entorno
+// Prioridad: local.properties (dev) > gradle.properties global (CI) > default
+// ==========================================
+val localProperties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+
+fun envVar(name: String, default: String = ""): String {
+    return localProperties.getProperty(name)
+        ?: (project.findProperty(name) as String?)
+        ?: System.getenv(name)
+        ?: default
+}
 
 android {
+    flavorDimensions += "environment"
     namespace = "com.loresuelvo.consumer"
     compileSdk = 35
 
     defaultConfig {
-
         applicationId = "com.loresuelvo.consumer"
         minSdk = 24
         targetSdk = 35
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-
-        buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
-        buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
-        buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
-
-        manifestPlaceholders["auth0Domain"] = auth0Domain
-        manifestPlaceholders["auth0Scheme"] = auth0Scheme
+        testInstrumentationRunner =
+            "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -47,6 +55,93 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    productFlavors {
+
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+
+            val auth0Domain = envVar("AUTH0_DOMAIN", "loresuelvo-dev.auth0.com")
+            val auth0ClientId = envVar("AUTH0_CLIENT_ID")
+            val auth0Scheme = envVar("AUTH0_SCHEME", "com.loresuelvo.consumer")
+            val apiUrl = envVar("API_URL", "http://10.0.2.2:8080")
+
+            buildConfigField("String", "API_URL", "\"$apiUrl\"")
+            buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
+            buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
+            buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+
+            manifestPlaceholders["auth0Domain"] = auth0Domain
+            manifestPlaceholders["auth0Scheme"] = auth0Scheme
+        }
+
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+
+            val auth0Domain = envVar("AUTH0_DOMAIN_STAGING")
+            val auth0ClientId = envVar("AUTH0_CLIENT_ID_STAGING")
+            val auth0Scheme = envVar("AUTH0_SCHEME_STAGING")
+            val apiUrl = envVar("API_URL_STAGING")
+
+            buildConfigField("String", "API_URL", "\"$apiUrl\"")
+            buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
+            buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
+            buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+
+            manifestPlaceholders["auth0Domain"] = auth0Domain
+            manifestPlaceholders["auth0Scheme"] = auth0Scheme
+        }
+
+        create("prod") {
+            dimension = "environment"
+            // sin suffix: este va a Play Store
+
+            val auth0Domain = envVar("AUTH0_DOMAIN_PROD")
+            val auth0ClientId = envVar("AUTH0_CLIENT_ID_PROD")
+            val auth0Scheme = envVar("AUTH0_SCHEME_PROD")
+            val apiUrl = envVar("API_URL_PROD")
+
+            buildConfigField("String", "API_URL", "\"$apiUrl\"")
+            buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
+            buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
+            buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+
+            manifestPlaceholders["auth0Domain"] = auth0Domain
+            manifestPlaceholders["auth0Scheme"] = auth0Scheme
+        }
+    }
+}
+
+// ==========================================
+// Validación fail-fast: solo exige las vars
+// del flavor que realmente se está compilando
+// ==========================================
+gradle.taskGraph.whenReady {
+    val runningTasks = allTasks.map { it.name }
+
+    val requiredForStaging = listOf(
+        "AUTH0_DOMAIN_STAGING", "AUTH0_CLIENT_ID_STAGING",
+        "AUTH0_SCHEME_STAGING", "API_URL_STAGING"
+    )
+    val requiredForProd = listOf(
+        "AUTH0_DOMAIN_PROD", "AUTH0_CLIENT_ID_PROD",
+        "AUTH0_SCHEME_PROD", "API_URL_PROD"
+    )
+
+    if (runningTasks.any { it.contains("Staging") }) {
+        requiredForStaging.forEach {
+            check(envVar(it).isNotBlank()) { "Falta la variable $it para build de STAGING" }
+        }
+    }
+    if (runningTasks.any { it.contains("Prod") }) {
+        requiredForProd.forEach {
+            check(envVar(it).isNotBlank()) { "Falta la variable $it para build de PROD" }
+        }
     }
 }
 
@@ -73,8 +168,6 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
-
-    // AGREGA ESTA LÍNEA (Es la que tiene assertExists):
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
 
     // Debugging (Previews y Manifest para tests)

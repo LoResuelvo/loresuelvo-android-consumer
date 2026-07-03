@@ -1,12 +1,13 @@
 #!/bin/bash
-
 set -e
 
+FLAVOR="${1:-Dev}"
+
 echo "======================================="
-echo "Running Acceptance Tests"
+echo "Running Acceptance Tests (flavor: $FLAVOR)"
 echo "======================================="
 
-./gradlew connectedDebugAndroidTest \
+./gradlew "connected${FLAVOR}DebugAndroidTest" \
   -Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.acceptance
 
 echo ""
