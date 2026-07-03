@@ -1,0 +1,66 @@
+name: Android CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    env:
+      AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+      AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+      AUTH0_SCHEME: ${{ secrets.AUTH0_SCHEME }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run Unit Tests
+        run: |
+          ./gradlew test
+
+  acceptance-tests:
+
+    runs-on: ubuntu-latest
+
+    env:
+      AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
+      AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
+      AUTH0_SCHEME: ${{ secrets.AUTH0_SCHEME }}
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Run Acceptance Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          profile: Nexus 6
+          script: |
+            chmod +x scripts/run_acceptance_tests.sh
+            ./scripts/run_acceptance_tests.sh
