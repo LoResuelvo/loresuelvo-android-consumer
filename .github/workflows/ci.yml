@@ -26,17 +26,13 @@ jobs:
       - name: Configurar Gradle
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Preparar variables de entorno (staging)
-        run: |
-          mkdir -p ~/.gradle
-          cat > ~/.gradle/gradle.properties <<EOF
-          AUTH0_DOMAIN_STAGING=${{ secrets.AUTH0_DOMAIN_STAGING }}
-          AUTH0_CLIENT_ID_STAGING=${{ secrets.AUTH0_CLIENT_ID_STAGING }}
-          AUTH0_SCHEME_STAGING=${{ secrets.AUTH0_SCHEME_STAGING }}
-          API_URL_STAGING=${{ secrets.API_URL_STAGING }}
-          EOF
-
       - name: Ejecutar Lint y Unit Tests
+        # Aquí inyectamos los secretos como variables de entorno reales del sistema
+        env:
+          AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
+          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_SCHEME_STAGING: ${{ secrets.AUTH0_SCHEME_STAGING }}
+          API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
         run: |
           make lint FLAVOR=Staging
           make test FLAVOR=Staging
@@ -49,6 +45,12 @@ jobs:
 
       - name: Ejecutar E2E (Android Instrumented Tests)
         uses: ReactiveCircus/android-emulator-runner@v2
+        # El emulador también necesita las variables para compilar la app de test
+        env:
+          AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
+          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_SCHEME_STAGING: ${{ secrets.AUTH0_SCHEME_STAGING }}
+          API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
         with:
           api-level: 34
           arch: x86_64
@@ -56,4 +58,9 @@ jobs:
           script: make e2e FLAVOR=Staging
 
       - name: Build APK Staging (verificación)
+        env:
+          AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
+          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_SCHEME_STAGING: ${{ secrets.AUTH0_SCHEME_STAGING }}
+          API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
         run: make build FLAVOR=Staging
