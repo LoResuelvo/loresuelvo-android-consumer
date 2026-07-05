@@ -1,20 +1,19 @@
 package com.loresuelvo.consumer.ui.auth
 
 import androidx.lifecycle.ViewModel
-import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class CompleteProfileViewModel(
-    private val authSession: AuthSession,
-    private val onProfileCompleted: (AuthSession) -> Unit,
+    private val sessionStore: AuthSessionStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
         CompleteProfileUiState(
-            firstName = authSession.user.firstName.orEmpty(),
-            lastName = authSession.user.lastName.orEmpty(),
+            firstName = sessionStore.sessionFlow.value?.user?.firstName.orEmpty(),
+            lastName = sessionStore.sessionFlow.value?.user?.lastName.orEmpty(),
         )
     )
     val uiState: StateFlow<CompleteProfileUiState> = _uiState.asStateFlow()
@@ -41,13 +40,14 @@ class CompleteProfileViewModel(
             }
         }
 
-        val updatedSession = authSession.copy(
-            user = authSession.user.copy(
+        val currentSession = sessionStore.sessionFlow.value ?: return
+        val updatedSession = currentSession.copy(
+            user = currentSession.user.copy(
                 firstName = state.firstName,
                 lastName = state.lastName,
             )
         )
 
-        onProfileCompleted(updatedSession)
+        sessionStore.saveSession(updatedSession)
     }
 }

@@ -7,15 +7,13 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.rememberNavController
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
-import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.navigation.LoResuelvoNavHost
@@ -31,7 +29,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            val sessionStore = remember {
+            val sessionStore: AuthSessionStore = remember {
                 SharedPreferencesAuthSessionStore(this)
             }
 
@@ -39,18 +37,12 @@ class MainActivity : ComponentActivity() {
                 factoryProducer = {
                     viewModelFactory {
                         initializer {
-                            SessionViewModel(sessionStore)
+                            SessionViewModel(application)
                         }
                     }
                 }
             )
             val sessionState by sessionViewModel.uiState.collectAsState()
-
-            var authSession by remember {
-                mutableStateOf<AuthSession?>(
-                    sessionStore.getSession()
-                )
-            }
 
             val authProvider = remember {
                 Auth0AuthProvider(context = this)
@@ -65,8 +57,6 @@ class MainActivity : ComponentActivity() {
                                 onAuthenticated = { session ->
                                     runOnUiThread {
                                         sessionStore.saveSession(session)
-                                        authSession = session
-                                        sessionViewModel.refresh()
                                     }
                                 }
                             )
@@ -77,10 +67,6 @@ class MainActivity : ComponentActivity() {
             val welcomeState by welcomeViewModel.uiState.collectAsState()
 
             val navController = rememberNavController()
-
-            LaunchedEffect(Unit) {
-                sessionViewModel.refresh()
-            }
 
             val currentRoute = when {
                 !sessionState.authenticated -> Route.Welcome.path
@@ -109,19 +95,14 @@ class MainActivity : ComponentActivity() {
                     )
                 },
                 completeProfile = {
-                    val activeSession = authSession
+                    val activeSession = sessionStore.sessionFlow.value
                     if (activeSession != null) {
                         val completeProfileViewModel: CompleteProfileViewModel by viewModels(
                             factoryProducer = {
                                 viewModelFactory {
                                     initializer {
                                         CompleteProfileViewModel(
-                                            authSession = activeSession,
-                                            onProfileCompleted = { updatedSession ->
-                                                sessionStore.saveSession(updatedSession)
-                                                authSession = updatedSession
-                                                sessionViewModel.refresh()
-                                            }
+                                            sessionStore = sessionStore,
                                         )
                                     }
                                 }
@@ -145,11 +126,7 @@ class MainActivity : ComponentActivity() {
                         HomeScreen(
                             authSession = activeSession,
                             onLogoutClick = {
-
                                 sessionStore.clearSession()
-
-                                authSession = null
-                                sessionViewModel.refresh()
                             }
                         )
                     }
