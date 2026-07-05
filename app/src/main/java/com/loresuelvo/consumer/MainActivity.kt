@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.navigation.LoResuelvoNavHost
 import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
@@ -66,34 +67,29 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<String?>(null)
             }
 
-            var authError by remember {
-                mutableStateOf<String?>(null)
+            val authProvider = remember {
+                Auth0AuthProvider(context = this)
             }
 
-            val authProvider = remember {
-
-                Auth0AuthProvider(
-                    context = this,
-
-                    onAuthenticated = { session ->
-
-                        sessionStore.saveSession(session)
-
-                        runOnUiThread {
-                            authError = null
-                            authSession = session
-                            sessionViewModel.refresh()
-                        }
-                    },
-
-                    onAuthenticationError = { message ->
-
-                        runOnUiThread {
-                            authError = message
+            val welcomeViewModel: WelcomeViewModel by viewModels(
+                factoryProducer = {
+                    viewModelFactory {
+                        initializer {
+                            WelcomeViewModel(
+                                authProvider = authProvider,
+                                onAuthenticated = { session ->
+                                    runOnUiThread {
+                                        sessionStore.saveSession(session)
+                                        authSession = session
+                                        sessionViewModel.refresh()
+                                    }
+                                }
+                            )
                         }
                     }
-                )
-            }
+                }
+            )
+            val welcomeState by welcomeViewModel.uiState.collectAsState()
 
             val navController = rememberNavController()
 
@@ -123,8 +119,8 @@ class MainActivity : ComponentActivity() {
                 startDestination = startDestination,
                 welcome = {
                     WelcomeScreen(
-                        errorMessage = authError,
-                        onRegisterClick = authProvider::signup
+                        errorMessage = welcomeState.error,
+                        onRegisterClick = welcomeViewModel::signup
                     )
                 },
                 completeProfile = {
@@ -175,7 +171,6 @@ class MainActivity : ComponentActivity() {
 
                                 sessionStore.clearSession()
 
-                                authError = null
                                 profileError = null
                                 authSession = null
                                 sessionViewModel.refresh()
