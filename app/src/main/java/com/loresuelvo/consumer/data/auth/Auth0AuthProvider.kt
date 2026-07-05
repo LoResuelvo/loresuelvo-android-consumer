@@ -9,11 +9,12 @@ import com.auth0.android.result.Credentials
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 class Auth0AuthProvider(
     private val context: Context,
-    override var onAuthenticated: (AuthSession) -> Unit = {},
-    override var onAuthenticationError: (String) -> Unit = {},
     private val credentialsMapper: Auth0CredentialsMapper = Auth0CredentialsMapper(),
     private val webAuthLauncher: Auth0WebAuthLauncher = Auth0SdkWebAuthLauncher(
         account = Auth0(
@@ -24,25 +25,28 @@ class Auth0AuthProvider(
     )
 ) : AuthProvider {
 
-    override fun signup() {
+    override suspend fun signup(): SignupOutcome = suspendCancellableCoroutine { cont ->
         webAuthLauncher.startSignup(
             context,
             Auth0SignupCallback(
-                provider = this,
-                credentialsMapper = credentialsMapper
+                credentialsMapper = credentialsMapper,
+                cont = cont
             )
         )
     }
 }
 
 private class Auth0SignupCallback(
-    private val provider: Auth0AuthProvider,
-    private val credentialsMapper: Auth0CredentialsMapper
+    private val credentialsMapper: Auth0CredentialsMapper,
+    private val cont: kotlinx.coroutines.CancellableContinuation<SignupOutcome>,
 ) : Callback<Credentials, AuthenticationException> {
 
     override fun onSuccess(result: Credentials) {
-        credentialsMapper.toSession(result)?.let { session ->
-            provider.onAuthenticated(session)
+        val session = credentialsMapper.toSession(result)
+        if (session != null) {
+            cont.resume(SignupOutcome.Success(session))
+        } else {
+            cont.resume(SignupOutcome.Failed("No pudimos completar el registro"))
         }
 
         Log.d("Auth0AuthProvider", "Auth0 authentication succeeded")
@@ -52,11 +56,9 @@ private class Auth0SignupCallback(
         Log.w("Auth0AuthProvider", "Auth0 authentication failed", error)
 
         if (error.getCode() == "a0.authentication_canceled") {
-            return
+            cont.resume(SignupOutcome.Cancelled)
+        } else {
+            cont.resume(SignupOutcome.Failed("No pudimos completar el registro"))
         }
-
-        provider.onAuthenticationError(
-            "No pudimos completar el registro"
-        )
     }
 }

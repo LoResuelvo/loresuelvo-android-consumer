@@ -8,7 +8,10 @@ import com.auth0.android.callback.Callback
 import com.auth0.android.result.Credentials
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.Auth0WebAuthLauncher
-import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,8 +20,7 @@ import java.util.Date
 class Auth0AuthProviderTest {
 
     @Test
-    fun signup_opens_auth0_signup() {
-
+    fun signup_opens_auth0_signup() = runBlocking {
         val launcher = FakeAuth0WebAuthLauncher()
         val context = ApplicationProvider.getApplicationContext<Context>()
         val authProvider = Auth0AuthProvider(
@@ -26,59 +28,61 @@ class Auth0AuthProviderTest {
             webAuthLauncher = launcher
         )
 
-        authProvider.signup()
+        val result = async { authProvider.signup() }
+
+        while (!launcher.signupStarted) yield()
+
+        launcher.succeedWith(credentialsWithName("Andres"))
+
+        result.await()
 
         assertTrue(launcher.signupStarted)
     }
 
     @Test
-    fun signup_success_notifies_authenticated_user() {
-
-        var authSession: AuthSession? = null
+    fun signup_success_notifies_authenticated_user() = runBlocking {
         val launcher = FakeAuth0WebAuthLauncher()
         val context = ApplicationProvider.getApplicationContext<Context>()
         val authProvider = Auth0AuthProvider(
             context = context,
-            onAuthenticated = { session ->
-                authSession = session
-            },
             webAuthLauncher = launcher
         )
 
-        authProvider.signup()
+        val result = async { authProvider.signup() }
+
+        while (!launcher.signupStarted) yield()
+
         launcher.succeedWith(credentialsWithName("Andres"))
 
-        assertEquals("Andres", authSession?.user?.displayName)
+        val outcome = result.await()
+
+        assertTrue(outcome is SignupOutcome.Success)
+        assertEquals("Andres", (outcome as SignupOutcome.Success).session.user.displayName)
     }
 
     @Test
-    fun signup_failure_notifies_authentication_error() {
-
-        var authenticationError: String? = null
-
+    fun signup_failure_notifies_authentication_error() = runBlocking {
         val launcher = FakeAuth0WebAuthLauncher()
-
         val context = ApplicationProvider.getApplicationContext<Context>()
-
         val authProvider = Auth0AuthProvider(
             context = context,
-            onAuthenticationError = { message ->
-                authenticationError = message
-            },
             webAuthLauncher = launcher
         )
 
-        authProvider.signup()
+        val result = async { authProvider.signup() }
+
+        while (!launcher.signupStarted) yield()
 
         launcher.failWith(
-            AuthenticationException(
-                "Auth0 unavailable"
-            )
+            AuthenticationException("Auth0 unavailable")
         )
 
+        val outcome = result.await()
+
+        assertTrue(outcome is SignupOutcome.Failed)
         assertEquals(
             "No pudimos completar el registro",
-            authenticationError
+            (outcome as SignupOutcome.Failed).message
         )
     }
 

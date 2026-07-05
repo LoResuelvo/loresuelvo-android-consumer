@@ -54,11 +54,7 @@ class MainActivity : ComponentActivity() {
                         initializer {
                             WelcomeViewModel(
                                 authProvider = authProvider,
-                                onAuthenticated = { session ->
-                                    runOnUiThread {
-                                        sessionStore.saveSession(session)
-                                    }
-                                }
+                                sessionStore = sessionStore,
                             )
                         }
                     }
