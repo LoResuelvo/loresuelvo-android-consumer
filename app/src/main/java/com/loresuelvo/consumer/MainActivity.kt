@@ -3,11 +3,15 @@ package com.loresuelvo.consumer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.rememberNavController
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
@@ -17,6 +21,7 @@ import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
+import com.loresuelvo.consumer.ui.session.SessionViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -27,6 +32,17 @@ class MainActivity : ComponentActivity() {
             val sessionStore = remember {
                 SharedPreferencesAuthSessionStore(this)
             }
+
+            val sessionViewModel: SessionViewModel by viewModels(
+                factoryProducer = {
+                    viewModelFactory {
+                        initializer {
+                            SessionViewModel(sessionStore)
+                        }
+                    }
+                }
+            )
+            val sessionState by sessionViewModel.uiState.collectAsState()
 
             var authSession by remember {
                 mutableStateOf<AuthSession?>(
@@ -66,6 +82,7 @@ class MainActivity : ComponentActivity() {
                         runOnUiThread {
                             authError = null
                             authSession = session
+                            sessionViewModel.refresh()
                         }
                     },
 
@@ -80,9 +97,13 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
 
+            LaunchedEffect(Unit) {
+                sessionViewModel.refresh()
+            }
+
             val currentRoute = when {
-                authSession == null -> Route.Welcome.path
-                !authSession!!.user.isProfileComplete() -> Route.CompleteProfile.path
+                !sessionState.authenticated -> Route.Welcome.path
+                !sessionState.profileCompleted -> Route.CompleteProfile.path
                 else -> Route.Home.path
             }
 
@@ -139,6 +160,7 @@ class MainActivity : ComponentActivity() {
                                     onProfileCompleted = {
                                         profileError = null
                                         authSession = it
+                                        sessionViewModel.refresh()
                                     }
                                 )
                             }
@@ -156,6 +178,7 @@ class MainActivity : ComponentActivity() {
                                 authError = null
                                 profileError = null
                                 authSession = null
+                                sessionViewModel.refresh()
                             }
                         )
                     }
