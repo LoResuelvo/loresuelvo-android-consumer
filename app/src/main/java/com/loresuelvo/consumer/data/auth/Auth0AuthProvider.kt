@@ -12,8 +12,8 @@ import com.loresuelvo.consumer.domain.auth.AuthSession
 
 class Auth0AuthProvider(
     private val context: Context,
-    private val onAuthenticated: (AuthSession) -> Unit = {},
-    private val onAuthenticationError: (String) -> Unit = {},
+    override var onAuthenticated: (AuthSession) -> Unit = {},
+    override var onAuthenticationError: (String) -> Unit = {},
     private val credentialsMapper: Auth0CredentialsMapper = Auth0CredentialsMapper(),
     private val webAuthLauncher: Auth0WebAuthLauncher = Auth0SdkWebAuthLauncher(
         account = Auth0(
@@ -28,22 +28,22 @@ class Auth0AuthProvider(
         webAuthLauncher.startSignup(
             context,
             Auth0SignupCallback(
-                credentialsMapper = credentialsMapper,
-                onAuthenticated = onAuthenticated,
-                onAuthenticationError = onAuthenticationError
+                provider = this,
+                credentialsMapper = credentialsMapper
             )
         )
     }
 }
 
 private class Auth0SignupCallback(
-    private val credentialsMapper: Auth0CredentialsMapper,
-    private val onAuthenticated: (AuthSession) -> Unit,
-    private val onAuthenticationError: (String) -> Unit
+    private val provider: Auth0AuthProvider,
+    private val credentialsMapper: Auth0CredentialsMapper
 ) : Callback<Credentials, AuthenticationException> {
 
     override fun onSuccess(result: Credentials) {
-        credentialsMapper.toSession(result)?.let(onAuthenticated)
+        credentialsMapper.toSession(result)?.let { session ->
+            provider.onAuthenticated(session)
+        }
 
         Log.d("Auth0AuthProvider", "Auth0 authentication succeeded")
     }
@@ -55,7 +55,7 @@ private class Auth0SignupCallback(
             return
         }
 
-        onAuthenticationError(
+        provider.onAuthenticationError(
             "No pudimos completar el registro"
         )
     }
