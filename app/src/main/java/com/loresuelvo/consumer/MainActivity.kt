@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.navigation.LoResuelvoNavHost
 import com.loresuelvo.consumer.ui.navigation.Route
@@ -49,22 +50,6 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf<AuthSession?>(
                     sessionStore.getSession()
                 )
-            }
-
-            var firstName by remember {
-                mutableStateOf(
-                    authSession?.user?.firstName ?: ""
-                )
-            }
-
-            var lastName by remember {
-                mutableStateOf(
-                    authSession?.user?.lastName ?: ""
-                )
-            }
-
-            var profileError by remember {
-                mutableStateOf<String?>(null)
             }
 
             val authProvider = remember {
@@ -126,52 +111,43 @@ class MainActivity : ComponentActivity() {
                 completeProfile = {
                     val activeSession = authSession
                     if (activeSession != null) {
-                        CompleteProfileScreen(
-                            firstName = firstName,
-                            lastName = lastName,
-                            errorMessage = profileError,
-
-                            onFirstNameChange = {
-                                firstName = it
-                                profileError = null
-                            },
-
-                            onLastNameChange = {
-                                lastName = it
-                                profileError = null
-                            },
-
-                            onContinueClick = {
-
-                                completeProfile(
-                                    authSession = activeSession,
-                                    firstName = firstName,
-                                    lastName = lastName,
-                                    sessionStore = sessionStore,
-
-                                    onValidationError = {
-                                        profileError = it
-                                    },
-
-                                    onProfileCompleted = {
-                                        profileError = null
-                                        authSession = it
-                                        sessionViewModel.refresh()
+                        val completeProfileViewModel: CompleteProfileViewModel by viewModels(
+                            factoryProducer = {
+                                viewModelFactory {
+                                    initializer {
+                                        CompleteProfileViewModel(
+                                            authSession = activeSession,
+                                            onProfileCompleted = { updatedSession ->
+                                                sessionStore.saveSession(updatedSession)
+                                                authSession = updatedSession
+                                                sessionViewModel.refresh()
+                                            }
+                                        )
                                     }
-                                )
+                                }
                             }
+                        )
+                        val completeProfileState by completeProfileViewModel.uiState.collectAsState()
+
+                        CompleteProfileScreen(
+                            firstName = completeProfileState.firstName,
+                            lastName = completeProfileState.lastName,
+                            errorMessage = completeProfileState.error,
+
+                            onFirstNameChange = completeProfileViewModel::onFirstNameChange,
+                            onLastNameChange = completeProfileViewModel::onLastNameChange,
+                            onContinueClick = completeProfileViewModel::onContinueClick,
                         )
                     }
                 },
                 home = {
-                    authSession?.let { activeSession ->
+                    sessionStore.getSession()?.let { activeSession ->
                         HomeScreen(
                             authSession = activeSession,
                             onLogoutClick = {
 
                                 sessionStore.clearSession()
 
-                                profileError = null
                                 authSession = null
                                 sessionViewModel.refresh()
                             }
@@ -180,39 +156,5 @@ class MainActivity : ComponentActivity() {
                 }
             )
         }
-    }
-
-    private fun completeProfile(
-        authSession: AuthSession,
-        firstName: String,
-        lastName: String,
-        sessionStore: SharedPreferencesAuthSessionStore,
-        onValidationError: (String) -> Unit,
-        onProfileCompleted: (AuthSession) -> Unit
-    ) {
-
-        when {
-
-            firstName.isBlank() -> {
-                onValidationError("El nombre es obligatorio")
-                return
-            }
-
-            lastName.isBlank() -> {
-                onValidationError("El apellido es obligatorio")
-                return
-            }
-        }
-
-        val updatedSession = authSession.copy(
-            user = authSession.user.copy(
-                firstName = firstName,
-                lastName = lastName
-            )
-        )
-
-        sessionStore.saveSession(updatedSession)
-
-        onProfileCompleted(updatedSession)
     }
 }

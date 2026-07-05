@@ -69,6 +69,8 @@ class CompleteProfileScreenAcceptanceTest {
             .onNodeWithText("Continuar")
             .performClick()
 
+        composeTestRule.waitForIdle()
+
         composeTestRule
             .onNodeWithText("Hola,")
             .assertIsDisplayed()
