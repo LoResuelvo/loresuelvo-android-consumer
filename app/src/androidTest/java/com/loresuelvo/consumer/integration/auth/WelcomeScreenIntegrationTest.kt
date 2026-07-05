@@ -4,8 +4,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.loresuelvo.consumer.domain.auth.AuthProvider
-import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.SignupOutcome
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
@@ -22,20 +23,17 @@ class WelcomeScreenIntegrationTest {
 
         val fakeAuthProvider = object : AuthProvider {
 
-            override fun signup() {
+            override suspend fun signup(): SignupOutcome {
                 signupCalled = true
+                return SignupOutcome.Cancelled
             }
-
-            override var onAuthenticated: (AuthSession) -> Unit = {}
-
-            override var onAuthenticationError: (String) -> Unit = {}
         }
 
         composeTestRule.setContent {
 
             WelcomeScreen(
                 onRegisterClick = {
-                    fakeAuthProvider.signup()
+                    runBlocking { fakeAuthProvider.signup() }
                 }
             )
         }
