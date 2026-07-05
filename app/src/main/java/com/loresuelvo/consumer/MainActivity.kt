@@ -91,7 +91,7 @@ class MainActivity : ComponentActivity() {
                     )
                 },
                 completeProfile = {
-                    val activeSession = sessionStore.sessionFlow.value
+                    val activeSession by sessionStore.sessionFlow.collectAsState()
                     if (activeSession != null) {
                         val completeProfileViewModel: CompleteProfileViewModel by viewModels(
                             factoryProducer = {
@@ -118,9 +118,10 @@ class MainActivity : ComponentActivity() {
                     }
                 },
                 home = {
-                    sessionStore.getSession()?.let { activeSession ->
+                    val activeSession by sessionStore.sessionFlow.collectAsState()
+                    activeSession?.let { session ->
                         HomeScreen(
-                            authSession = activeSession,
+                            authSession = session,
                             onLogoutClick = {
                                 sessionStore.clearSession()
                             }
