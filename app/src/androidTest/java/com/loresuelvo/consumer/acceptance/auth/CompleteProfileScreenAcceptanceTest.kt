@@ -13,7 +13,8 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
+import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
+import com.loresuelvo.consumer.data.auth.createEncryptedSessionPrefs
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.User
 import androidx.compose.ui.test.onNodeWithTag
@@ -160,8 +161,8 @@ class CompleteProfileScreenAcceptanceTest {
 
         composeTestRule.runOnUiThread {
 
-            SharedPreferencesAuthSessionStore(
-                composeTestRule.activity
+            EncryptedAuthSessionStore(
+                createEncryptedSessionPrefs(composeTestRule.activity)
             ).saveSession(
                 AuthSession(
                     user = User(

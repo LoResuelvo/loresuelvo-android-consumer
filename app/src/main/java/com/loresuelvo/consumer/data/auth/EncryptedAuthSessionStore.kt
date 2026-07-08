@@ -1,32 +1,19 @@
 package com.loresuelvo.consumer.data.auth
 
-import android.content.Context
 import android.content.SharedPreferences
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
-class SharedPreferencesAuthSessionStore(
-    context: Context
+class EncryptedAuthSessionStore(
+    private val preferences: SharedPreferences
 ) : AuthSessionStore {
 
-    private val preferences = context.getSharedPreferences(
-        "auth_session",
-        Context.MODE_PRIVATE
-    )
-
-    private val _sessionFlow = MutableStateFlow<AuthSession?>(readSession())
-    override val sessionFlow: StateFlow<AuthSession?> = _sessionFlow.asStateFlow()
-
-    private val prefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
-        _sessionFlow.value = readSession()
-    }
+    override val sessionFlow: StateFlow<AuthSession?> = SessionStateHolder.state
 
     init {
-        preferences.registerOnSharedPreferenceChangeListener(prefsListener)
+        SessionStateHolder.set(readSession())
     }
 
     override fun getSession(): AuthSession? = readSession()
@@ -41,6 +28,8 @@ class SharedPreferencesAuthSessionStore(
             .putString(KEY_EMAIL, session.user.email)
             .putString(KEY_ACCESS_TOKEN, session.accessToken)
             .commit()
+
+        SessionStateHolder.set(session)
     }
 
     override fun clearSession() {
@@ -49,6 +38,8 @@ class SharedPreferencesAuthSessionStore(
             .edit()
             .clear()
             .commit()
+
+        SessionStateHolder.set(null)
     }
 
     private fun readSession(): AuthSession? {

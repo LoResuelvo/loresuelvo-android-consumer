@@ -12,7 +12,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.compose.rememberNavController
 import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
-import com.loresuelvo.consumer.data.auth.SharedPreferencesAuthSessionStore
+import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
+import com.loresuelvo.consumer.data.auth.createEncryptedSessionPrefs
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
@@ -29,15 +30,19 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val encryptedPrefs = remember {
+                createEncryptedSessionPrefs(this)
+            }
+
             val sessionStore: AuthSessionStore = remember {
-                SharedPreferencesAuthSessionStore(this)
+                EncryptedAuthSessionStore(encryptedPrefs)
             }
 
             val sessionViewModel: SessionViewModel by viewModels(
                 factoryProducer = {
                     viewModelFactory {
                         initializer {
-                            SessionViewModel(application)
+                            SessionViewModel()
                         }
                     }
                 }

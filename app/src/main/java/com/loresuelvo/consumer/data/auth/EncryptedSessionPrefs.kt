@@ -6,11 +6,12 @@ import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
 internal fun createEncryptedSessionPrefs(context: Context): SharedPreferences {
-    val masterKey = MasterKey.Builder(context)
+    val appContext = context.applicationContext
+    val masterKey = MasterKey.Builder(appContext)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
     return EncryptedSharedPreferences.create(
-        context,
+        appContext,
         PREFS_NAME,
         masterKey,
         EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
