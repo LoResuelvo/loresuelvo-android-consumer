@@ -162,6 +162,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.junit.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.security.crypto)
 
     // Unit Testing (Capa de Dominio - src/test)
     testImplementation(libs.junit)
