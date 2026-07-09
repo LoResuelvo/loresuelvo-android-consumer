@@ -8,20 +8,26 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.data.auth.createEncryptedSessionPrefs
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
+@HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
-
 class WelcomeScreenAcceptanceTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Before
     fun setUp() {
+        hiltRule.inject()
         EncryptedAuthSessionStore(createEncryptedSessionPrefs(composeTestRule.activity)).clearSession()
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()

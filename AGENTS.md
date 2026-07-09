@@ -194,8 +194,15 @@ README.md                                    # Setup + comandos + troubleshootin
       }
   }
   ```
+- **`@AndroidEntryPoint` es OBLIGATORIO.** Sin él, el primer `hiltViewModel()` que se invoque desde el composable (es decir, en producción: la smart-router; en instrumentación: la primera línea de `LoResuelvoNav`) crashea el proceso con `IllegalStateException: Given component holder class MainActivity does not implement interface dagger.hilt.internal.GeneratedComponent`. No tiene derivación a runtime tolerable: o está la anotación o la app no arranca.
 - Toda la lógica de composición (NavHost, decisión de `startDestination`, `composable` con `hiltViewModel()`) vive en `LoResuelvoNav` (en `ui/navigation/`).
 - Si `MainActivity` crece más de 15 líneas, falla el code review.
+
+### Tests instrumentados (`androidTest/`)
+
+- `HiltTestRunner` (configurado en `build.gradle.kts` como `testInstrumentationRunner`) hace `AndroidJUnitRunner.newApplication()` retorne `HiltTestApplication` en lugar de `LoresuelvoApp`. `HiltTestApplication.generatedComponent()` **no inicializa el component graph** — eso solo ocurre cuando un test class declara `@HiltAndroidTest` + `@get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)` (y la regla está pensada para correr antes que la regla de Compose).
+- Toda acceptance test que levante `MainActivity` (vía `createAndroidComposeRule<MainActivity>()`) **debe** declarar ambas cosas, o el proceso crashea con `IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.` apenas se carga la Activity.
+- Si el test necesita overrides de Hilt modules, agregarlos vía `@TestInstallIn(...) replaces = [...]`. Los tests que actualmente viven en `androidTest/acceptance/auth/` no los necesitan — usan la producción graph — pero esto queda documentado para la próxima acceptance test que agregue deps que no deban tocar la red real.
 
 ### DI (Hilt)
 

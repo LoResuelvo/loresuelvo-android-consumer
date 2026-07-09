@@ -9,6 +9,9 @@ import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import com.loresuelvo.consumer.MainActivity
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
+import org.junit.Before
 import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
@@ -22,11 +25,20 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 
 @RunWith(AndroidJUnit4::class)
-
+@HiltAndroidTest
 class CompleteProfileScreenAcceptanceTest {
 
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
+
+    @Before
+    fun setUp() {
+        hiltRule.inject()
+        EncryptedAuthSessionStore(createEncryptedSessionPrefs(composeTestRule.activity)).clearSession()
+    }
 
     // Scenario: 01-CPC Mostrar formulario de completar perfil
     @Test

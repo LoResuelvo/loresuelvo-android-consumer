@@ -24,6 +24,8 @@ import com.loresuelvo.consumer.data.auth.createEncryptedSessionPrefs
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
+import dagger.hilt.android.testing.HiltAndroidRule
+import dagger.hilt.android.testing.HiltAndroidTest
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -34,12 +36,17 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
+@HiltAndroidTest
 class RegisterWithAuth0AcceptanceTest {
-    @get:Rule
+    @get:Rule(order = 0)
+    val hiltRule = HiltAndroidRule(this)
+
+    @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     @Before
     fun setUp() {
+        hiltRule.inject()
         Intents.init()
         intending(hasAction(Intent.ACTION_VIEW)).respondWith(
             Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
