@@ -115,6 +115,41 @@ Suele indicar que falta `@HiltAndroidApp` en `LoresuelvoApp` o que no registrast
 
 Archivo guardado en CP1252 en vez de UTF-8. Forzar `org.gradle.jvmargs=-Dfile.encoding=UTF-8` en `gradle.properties` y re-escribir el archivo con tu editor en UTF-8 sin BOM.
 
+### `make up` o `make test` fallan con `ERROR: JAVA_HOME is not set and no 'java' command could be found in your PATH`
+
+Falta el JDK en el entorno donde se corre el build. En WSL Ubuntu:
+
+```bash
+sudo apt update
+sudo apt install -y openjdk-17-jdk
+echo 'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+java -version   # debe decir "openjdk version 17.x"
+```
+
+Si usás Windows nativo (PowerShell), instalá [Eclipse Temurin 17](https://adoptium.net/) o [`openjdk-17-jdk` desde Chocolatey](https://chocolatey.org/packages/openjdk17) y setea `JAVA_HOME` en las variables de entorno del sistema.
+
+Verificá que el `JAVA_HOME` apunte a un directorio que contenga `bin/java` (`bin/java.exe` en Windows).
+
+### `Build-tool 35.0.0 is missing AAPT` o `Installed Build Tools revision X is corrupted` corriendo desde WSL contra un SDK de Android instalado en Windows
+
+El SDK de Android tiene binarios distintos por plataforma. WSL espera binarios Linux (sin `.exe`); el SDK de Windows tiene `.exe`. El error aparece porque Gradle busca `aapt` (Linux) pero solo existe `aapt.exe` (Windows). Tres opciones:
+
+- **Más rápido (recomendado para setup actual)**: compilá desde **Git Bash / PowerShell en Windows**, no desde WSL. El SDK ya está en `C:\Users\ASUS\AppData\Local\Android\Sdk` y todo el toolchain funciona ahí.
+- **Más limpio a largo plazo**: instalá un SDK Android Linux en WSL con `cmdline-tools` y `build-tools;35.0.0` (binarios Linux). ~5 GB de descarga.
+- **Híbrido (no recomendado)**: usá Git Bash para `make up` / `make test` y WSL solo para la webapp. Cada shell necesita su `local.properties` con el formato de path correcto (Windows para Git Bash, `/mnt/c/...` para WSL).
+
+### `:app:hiltAggregateDepsDevDebug FAILED` con `NoSuchMethodError: 'java.lang.String com.squareup.javapoet.ClassName.canonicalName()'`
+
+Bug conocido de Hilt 2.51+ con KSP 2.0.21-1.0.28. El fix está aplicado en `build.gradle.kts` (raíz) cargando Hilt y KSP desde `buildscript { classpath(...) }` con un `force("com.squareup:javapoet:1.13.0")` en la classpath, y Hilt pinneado en `2.50`. Si reaparece tras un update, revisar:
+
+- `gradle/libs.versions.toml`: `hilt = "2.50"` (no `2.51+` hasta que saquen fix).
+- `build.gradle.kts` (raíz): `buildscript { configurations.all { resolutionStrategy { force("com.squareup:javapoet:1.13.0") } }; dependencies { classpath("com.google.dagger:hilt-android-gradle-plugin:2.50"); classpath("com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin:2.0.21-1.0.28") } }`.
+- `app/build.gradle.kts`: `id("com.google.dagger.hilt.android")` y `id("com.google.devtools.ksp")` (no `alias`).
+
+Ver `https://github.com/google/dagger/issues/3965` para el detalle.
+
 ### `kotlin-serialization` plugin no resuelve
 
 Verificar que el plugin está declarado en el `plugins` block con la misma versión de Kotlin. Si choca con `kotlin-compose`, considerar usar `kotlinx-serialization` runtime con `Json {}` en vez del plugin (workaround documentado en `AGENTS.md`).
