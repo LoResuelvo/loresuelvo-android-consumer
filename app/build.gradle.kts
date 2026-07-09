@@ -5,10 +5,21 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     // Added in Fase 1
-    alias(libs.plugins.hilt.android)
-    alias(libs.plugins.ksp)
+    // Hilt and KSP are loaded from buildscript classpath in the root
+    // build.gradle.kts so we can force com.squareup:javapoet:1.13.0
+    // on the plugin classpath. Both plugins are applied here with
+    // `id(...)` to share the classloader. See the comment in
+    // build.gradle.kts (root) for context.
+    id("com.google.dagger.hilt.android")
+    id("com.google.devtools.ksp")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.navigation.safeargs)
+    // Fix: Hilt 2.50 + KSP 2.0.21-1.0.28 incompatibility. KAPT is used
+    // for the Hilt annotation processor instead of KSP, even though
+    // the KSP plugin is applied. The combination works because Hilt's
+    // processor runs through KAPT (kapt configuration) while KSP is
+    // used for kotlinx-serialization and any future code generators.
+    id("org.jetbrains.kotlin.kapt")
 }
 
 // ==========================================
@@ -158,6 +169,16 @@ gradle.taskGraph.whenReady {
     }
 }
 
+// ==========================================
+// Fix: Hilt 2.51.1 + KSP 2.0.21-1.0.28 are incompatible with newer
+// JavaPoet versions. Force 1.13.0 across the build so Hilt's
+// AggregateDepsTask can find com.squareup.javapoet.ClassName.canonicalName().
+// Remove this block once Hilt or KSP ships a compatible release.
+// ==========================================
+// (force removed in this iteration; pinning Hilt to 2.50 below is the
+// durable fix. Keep the section header as a marker for future regressions.)
+// ==========================================
+
 dependencies {
     // Icons & Core
     implementation(libs.androidx.compose.material.icons.extended)
@@ -180,7 +201,7 @@ dependencies {
     // Hilt (added in Fase 1)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
-    ksp(libs.hilt.android.compiler)
+    kapt(libs.hilt.android.compiler)
 
     // Networking (added in Fase 1)
     implementation(libs.retrofit)
@@ -207,7 +228,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     // Hilt testing (added in Fase 1)
     androidTestImplementation(libs.hilt.android.testing)
-    kspAndroidTest(libs.hilt.android.compiler)
+    kaptAndroidTest(libs.hilt.android.compiler)
 
     // Debugging (Previews y Manifest para tests)
     debugImplementation(libs.androidx.compose.ui.tooling)
