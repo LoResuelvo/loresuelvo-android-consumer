@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-07-09 (Fase 7: BDD con Cucumber JVM)
+Última actualización: 2026-07-09 (Fase 8: topología minimal + DI housekeeping)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -153,7 +153,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - Tipos explícitos en fronteras de API, auth y datos compartidos.
 - Preferir `sealed interface` para outcomes de use cases y errores de UI.
 - **Patrón UDF**: `UiState` inmutable, eventos como `sealed interface XxxEvent` emitidos por `Channel` o `SharedFlow`. **Nunca** meter flags mutables en `UiState`.
-- **No** introducir `object` global mutable nuevo. El existente `SessionStateHolder` se mantiene y se migra a `@Singleton @Inject` (Fase 8).
+- **No** introducir `object` global mutable nuevo. La última (`SessionStateHolder`) se migró a `@Singleton @Inject` en Fase 8 del plan maestro y ya no existe en producción.
 
 ### Use cases y errores
 
