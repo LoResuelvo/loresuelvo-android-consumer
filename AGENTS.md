@@ -1,0 +1,257 @@
+# AGENTS.md — LoResuelvo Android Consumer
+
+Última actualización: 2026-07-08
+
+Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
+
+## Modo skills-first
+
+1. Leer las reglas globales de este archivo.
+2. Elegir la skill adecuada del índice de skills.
+3. Cargar solo `skills/<skill>/SKILL.md` y referencias puntuales cuando apliquen.
+4. Evitar abrir documentación o código no relacionado con la tarea.
+
+## Stack tecnológico
+
+- **Lenguaje/Build**: Kotlin 2.0.21, AGP 8.13.2, Gradle Wrapper, `libs.versions.toml` como catálogo de versiones.
+- **UI**: Jetpack Compose (BOM 2024.09), Material 3, Navigation Compose, `minSdk 24` / `targetSdk 35`.
+- **Estado**: StateFlow + UDF. Los `UiState` son `data class` inmutables; los `ViewModel` exponen `StateFlow<UiState>`.
+- **DI**: Hilt + `hilt-navigation-compose` para `hiltViewModel()` en composables. `LoresuelvoApp` con `@HiltAndroidApp`. `MainActivity` con `@AndroidEntryPoint`.
+- **Auth**: Auth0 SDK 2.11.0.
+- **Networking** (en roadmap): Retrofit + OkHttp + `kotlinx-serialization` (a partir de Fase 1).
+- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM para BDD.
+
+## Arquitectura y capas (Clean Architecture liviana + Ports & Adapters)
+
+El proyecto sigue una estructura limpia de capas desacopladas, protegiendo el dominio de la infraestructura y de la UI.
+
+```mermaid
+graph TD
+  subgraph Capa de Presentación
+    UI[ui/ Composables + ViewModels + Navigation]
+  end
+
+  subgraph Capa de Aplicación
+    UC[domain/usecase/ Casos de Uso]
+  end
+
+  subgraph Capa de Dominio
+    D[domain/ Entidades + Puertos + Use Cases]
+  end
+
+  subgraph Capa de Infraestructura
+    I[data/ Adapters + DTOs + Mappers + ApiClient + Auth0]
+  end
+
+  UI --> UC
+  UI --> D
+  UC --> D
+  I -.->|Implementa| D
+  I --> D
+```
+
+- **Capa de Dominio (`domain/`)**: tipos puros, entidades, value objects, **puertos** (interfaces) y casos de uso. **PURO**: no importa `data/`, `ui/`, `android.*`, ni libs externas (`okhttp3`, `retrofit2`, `kotlinx.serialization`, `dagger`, `hilt`). Validar con grep.
+- **Capa de Infraestructura (`data/`)**: adapters que implementan los puertos del dominio. DTOs snake_case del backend con `@SerialName`, mappers DTO↔dominio, `ApiClient`, `Auth0AuthProvider`, `EncryptedAuthSessionStore`, etc. **Único lugar donde pueden vivir DTOs.**
+- **Capa de Aplicación (`domain/usecase/` o `application/`)**: casos de uso que orquestan puertos. Sin estado. **No** tragan errores: propagan excepciones o traducen a `sealed interface XxxOutcome` con `Success`/`Failure` tipados.
+- **Capa de Presentación (`ui/`)**: composables, `ViewModel`s, navegación, theme, componentes reutilizables. Los `ViewModel` orquestan use cases; los composables solo observan `StateFlow<UiState>` y disparan callbacks.
+
+### Patrones aplicados explícitamente
+
+- **Observer**: `StateFlow` + `collectAsState()` en composables; `viewModelScope.launch` en ViewModels. Ver `ui/session/SessionViewModel.kt:18-23` (collect del `state`) y `MainActivity.kt:50` (`collectAsState`).
+- **Adapter**: `ApiUserRepository` adapta el cliente HTTP al puerto `UserRepository`; `Auth0AuthProvider` adapta el SDK de Auth0 al puerto `AuthProvider`. Ver `data/auth/Auth0AuthProvider.kt:16-26`.
+- **Factory**: Hilt actúa como factory de dependencias. Complementariamente, los ViewModels se obtienen con `hiltViewModel()` en composables. No usar `viewModelFactory { initializer { ... } }` en producción.
+- **Dependency Injection**: Hilt. **Cero** `object` global mutable nuevo. Excepción documentada: `SessionStateHolder` (migración planificada a `@Singleton @Inject`, ver Fase 8).
+
+### Regla de dependencia estricta
+
+**Las capas internas nunca dependen de capas externas.** `domain/` y `domain/usecase/` no deben importar nada de `data/`, `ui/`, `android.*`, ni libs externas. Si un test falla, el build falla.
+
+```bash
+# Validación rápida (debe devolver 0 líneas)
+grep -RInE "import (com\.loresuelvo\.consumer\.(data|application|ui)|android\.|dagger|hilt|okhttp3|retrofit2|kotlinx\.serialization)" \
+  app/src/main/java/com/loresuelvo/consumer/domain/
+```
+
+### Regla de pureza del dominio
+
+Los tipos en `domain/` siempre son **camelCase**. Si el backend devuelve `given_name` o `profile_photo_url`, el dominio define `givenName` y `profilePhotoUrl`. La conversión ocurre exclusivamente en mappers dentro de `data/` (ej: `data/api/mapper/UserDtoMapper.kt` cuando exista).
+
+### Regla de DTOs
+
+DTOs del backend (snake_case, anotados con `@SerialName`) **solo** viven en `data/api/dto/`. Nunca se filtran a `domain/` ni a `ui/`. Mapeo en `data/api/mapper/`.
+
+---
+
+## Estructura de carpetas
+
+```txt
+app/
+  src/
+    main/
+      java/com/loresuelvo/consumer/
+        MainActivity.kt                       # @AndroidEntryPoint, setContent { LoResuelvoNav() }
+        LoresuelvoApp.kt                      # @HiltAndroidApp Application class
+        data/                                 # Adapters, DTOs, mappers, ApiClient, Auth0
+        domain/                               # PURO: entidades, puertos, casos de uso
+          auth/                               # User, AuthProvider, AuthSessionStore, etc.
+          usecase/auth/                       # RegisterConsumerUseCase, etc.
+          api/                                # ApiError (sealed)
+        ui/                                  # Composables, ViewModels, Navigation
+          auth/                              # WelcomeVM/State, CompleteProfileVM/State
+          components/                        # Botones, inputs, cards, branding
+          navigation/                        # LoResuelvoNav, LoResuelvoNavHost, Route
+          screens/                           # auth/Welcome, auth/CompleteProfile, home/Home
+          session/                           # SessionViewModel, SessionUiState
+          theme/                             # Color.kt, Theme.kt
+      res/
+        values/strings.xml                    # Strings de UI en español (default)
+        values-en/strings.xml                 # Strings en inglés
+        xml/                                 # Network security config, etc.
+    test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine)
+    androidTest/
+      assets/features/                       # .feature BDD de Cucumber
+      java/.../bdd/steps/                    # Step definitions
+      java/.../acceptance/                   # Acceptance con Compose-test o Espresso
+skills/                                      # Skills locales para agentes
+AGENTS.md                                    # Este archivo (canónico)
+CLAUDE.md                                    # Apunta a AGENTS.md
+README.md                                    # Setup + comandos + troubleshooting
+```
+
+---
+
+## Índice de skills locales
+
+- `skills/android-clean-architecture` — Aplicar reglas de capas y pureza del dominio.
+- `skills/android-bdd-tdd-process` — Ciclo BDD (Gherkin primero) y TDD (RED/GREEN/REFACTOR).
+- `skills/android-testing-gates` — Validaciones de cierre: unit, integration, e2e, build.
+- `skills/android-api-client-governance` — DTOs, mappers, `ApiClient`, `AuthInterceptor`, `ApiError`.
+- `skills/android-hilt-governance` — Módulos, scopes, `@HiltViewModel`, `hiltViewModel()`, tests con Hilt.
+- `skills/android-doc-governance` — Mantenimiento de `AGENTS.md`, `CLAUDE.md`, `README.md`, skills.
+- `skills/android-commit-governance` — Conventional Commits en inglés, PRs atómicos.
+
+---
+
+## Mapa rápido de decisión
+
+- "Toco una capa o import entre capas": `android-clean-architecture`.
+- "Voy a escribir código con tests": `android-bdd-tdd-process`.
+- "Estoy por cerrar un PR / quiero validar antes de pushear": `android-testing-gates`.
+- "Voy a tocar el cliente HTTP, DTOs, mappers, interceptors": `android-api-client-governance`.
+- "Voy a agregar un módulo Hilt, un `@HiltViewModel`, o un test con Hilt": `android-hilt-governance`.
+- "Voy a tocar `AGENTS.md`, `CLAUDE.md`, skills o `README.md`": `android-doc-governance`.
+- "Voy a hacer commit o PR": `android-commit-governance`.
+
+---
+
+## Reglas críticas
+
+### Calidad
+
+- Alta cohesión, bajo acoplamiento, estricto desacoplamiento de capas (Clean Architecture liviana).
+- **Una responsabilidad por archivo**. No agrupar `WelcomeScreen` + `CompleteProfileScreen` en un solo `AuthScreens.kt`.
+- Tipos explícitos en fronteras de API, auth y datos compartidos.
+- Preferir `sealed interface` para outcomes de use cases y errores de UI.
+- **Patrón UDF**: `UiState` inmutable, eventos como `sealed interface XxxEvent` emitidos por `Channel` o `SharedFlow`. **Nunca** meter flags mutables en `UiState`.
+- **No** introducir `object` global mutable nuevo. El existente `SessionStateHolder` se mantiene y se migra a `@Singleton @Inject` (Fase 8).
+
+### Use cases y errores
+
+- Los use cases **no** tragan errores. Traducen `ApiError` a `XxxOutcome.Failure.*` tipado, o propagan la excepción. **Nunca** `try { ... } catch (e: Exception) { Log.e(...); return Failure("Algo salió mal") }` con string genérico.
+- Cada use case es una clase con un solo `operator fun invoke(...)`. Nombre: `VerbSubjectUseCase` (ej: `RegisterConsumerUseCase`).
+- Los `Outcome.Failure` deben ser `sealed interface` con subclases tipadas (`Network(cause)`, `Server(code, message)`, `Unauthorized`, etc.), no strings.
+
+### i18n
+
+- **Todo** texto visible al usuario debe estar en `app/src/main/res/values/strings.xml` (es) y `values-en/strings.xml` (en).
+- Cero literales en español en `app/src/main/java/.../`. Validar con grep antes de PR:
+  ```bash
+  grep -RIn '"[A-ZÁÉÍÓÚÑ][a-záéíóúñ ]\+[a-záéíóúúñ]"' app/src/main/java/ | grep -v "Log\\."
+  ```
+  Solo debería devolver mensajes de error de Auth0 mapeados a `R.string.*`.
+
+### Logging
+
+- **Cero** `Log.d/w/e` directo en `app/src/main/`. Usar `Logger.*` (gated por `BuildConfig.DEBUG`).
+- No loguear payloads ni tokens. Ni siquiera en debug.
+- Excepción transitoria: durante desarrollo inicial, `Log.d` está permitido **solo** en clases del paquete `data/` y siempre con `BuildConfig.DEBUG` como guard. Migrar a `Logger` antes de PR.
+
+### Seguridad
+
+- Cero secretos en código. Las credenciales de Auth0 (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_SCHEME`) se leen de `BuildConfig` con fallbacks vacíos; los valores reales vienen de `local.properties` o del pipeline.
+- No commitear `local.properties`. Está en `.gitignore`.
+- Tokens: nunca se loguean, nunca se persisten en `SharedPreferences` plano. `EncryptedAuthSessionStore` usa `EncryptedSharedPreferences` (AES256_GCM/SIV). Ver `data/auth/EncryptedSessionPrefs.kt:8-20`.
+
+### Topología (regla de `MainActivity`)
+
+- `MainActivity.onCreate` debe ser **≤ 15 líneas** y limitarse a:
+  ```kotlin
+  @AndroidEntryPoint
+  class MainActivity : ComponentActivity() {
+      override fun onCreate(savedInstanceState: Bundle?) {
+          super.onCreate(savedInstanceState)
+          setContent { LoResuelvoNav() }
+      }
+  }
+  ```
+- Toda la lógica de composición (NavHost, decisión de `startDestination`, `composable` con `hiltViewModel()`) vive en `LoResuelvoNav` (en `ui/navigation/`).
+- Si `MainActivity` crece más de 15 líneas, falla el code review.
+
+### DI (Hilt)
+
+- `@HiltAndroidApp` en `LoresuelvoApp`. `@AndroidEntryPoint` en `MainActivity`. `@HiltViewModel` en todos los ViewModels.
+- Módulos: `di/NetworkModule`, `di/RepositoryModule`, `di/UseCaseModule`. Cada uno con `@InstallIn(SingletonComponent::class)` o `@InstallIn(ViewModelComponent::class)` según el scope.
+- Repositorios: `@Binds @Singleton` en `RepositoryModule`. No instanciar repos a mano.
+- ViewModels: `hiltViewModel<T>()` en composables. **No** usar `viewModelFactory { initializer { ... } }` en producción.
+- Tests con Hilt: `@HiltAndroidTest` + `@UninstallModules(...)` + `@TestInstallIn(..., replaces = [...])` que provee fakes. Ver `skills/android-hilt-governance`.
+
+### Idioma y estilo
+
+- Texto visible para usuarios: español, centralizado en `strings.xml`.
+- Código, tests, nombres de variables, comentarios técnicos: inglés.
+- Steps de BDD: español (alineado con el webapp).
+- Commits y mensajes de PR: inglés, Conventional Commits.
+- Comentarios explicativos (que agreguen info, no describan lo obvio) en español.
+
+---
+
+## Comandos de validación
+
+Comandos actuales del repo:
+
+```bash
+make help
+make build         # assembleDevDebug
+make lint          # lintDevDebug
+make test          # testDevDebugUnitTest
+make e2e           # connectedDevDebugAndroidTest con package=...acceptance
+make test-all-once # test + e2e
+make ci            # build + lint + test-all-once
+make clean
+make devices
+```
+
+Variables: `FLAVOR=Dev|Staging|Prod` (default: `Dev`).
+
+### Política
+
+1. **TDD/BDD primero**: el test se escribe antes del impl. RED local, GREEN local, REFACTOR. Sin acoplar a red real en tests unitarios.
+2. **Durante iteración**: ejecutar pruebas focalizadas (`./gradlew :app:testDevDebugUnitTest --tests *CompleteProfileViewModelTest*`).
+3. **Antes de PR**: `make lint && make test && make build` verde. Si cambió un flujo BDD, también `make e2e`.
+4. **Antes de merge a `main`**: `make ci` verde completo.
+5. **Fail-fast**: detenerse en la primera falla, corregir y re-ejecutar.
+
+---
+
+## Checklist final para agentes
+
+1. Skill correcta cargada y aplicada.
+2. Tests escritos **antes** del impl (TDD). BDD `.feature` escrito antes de los steps.
+3. Diff revisado: sin archivos generados accidentales, sin archivos debug.
+4. Sin secretos, sin logs sensibles, sin literales en español en código.
+5. Cero `Log.d/e/w` directo en código de producción.
+6. Strings de UI en `strings.xml` (es + en).
+7. `make lint && make test && make build` verde.
+8. Si cambió un flujo con `.feature`, `make e2e` verde.
+9. `AGENTS.md` actualizado si cambió arquitectura, convención, o comandos.
+10. Resumen final conciso con archivos tocados, validación y riesgos residuales.
