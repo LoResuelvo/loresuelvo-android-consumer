@@ -213,6 +213,10 @@ dependencies {
     // Unit Testing (Capa de Dominio - src/test)
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
+    // Compose UI testing in src/test/ via Robolectric.
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.androidx.compose.ui.test.manifest)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)

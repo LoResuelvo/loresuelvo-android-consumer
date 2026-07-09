@@ -1,3 +1,22 @@
 <resources>
     <string name="app_name">loresuelvo-android-consumer</string>
+
+    <!-- CompleteProfile screen -->
+    <string name="complete_profile_title">Completa tu perfil</string>
+    <string name="complete_profile_subtitle">Necesitamos algunos datos para continuar.</string>
+    <string name="complete_profile_field_first_name">Nombre</string>
+    <string name="complete_profile_field_last_name">Apellido</string>
+    <string name="complete_profile_field_first_name_placeholder">Ej. Juan</string>
+    <string name="complete_profile_field_last_name_placeholder">Ej. Pérez</string>
+    <string name="complete_profile_button_continue">Continuar</string>
+    <string name="complete_profile_footer">Tus datos serán visibles para los profesionales que acepten tus solicitudes.</string>
+
+    <!-- CompleteProfile errors -->
+    <string name="complete_profile_error_missing_first_name">El nombre es obligatorio</string>
+    <string name="complete_profile_error_missing_last_name">El apellido es obligatorio</string>
+    <string name="complete_profile_error_network">No pudimos contactar al servidor. Revisá tu conexión e intentá de nuevo.</string>
+    <!-- Generic server error: %1$s is the HTTP code, %2$s is the message. -->
+    <string name="complete_profile_error_server">No pudimos completar el registro (%1$d). %2$s</string>
+    <!-- Unauthorized: %1$s is the message from the server. -->
+    <string name="complete_profile_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión. (%1$s)</string>
 </resources>

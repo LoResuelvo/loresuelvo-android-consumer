@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">loresuelvo-android-consumer</string>
+
+    <!-- CompleteProfile screen -->
+    <string name="complete_profile_title">Complete your profile</string>
+    <string name="complete_profile_subtitle">We need a few details to continue.</string>
+    <string name="complete_profile_field_first_name">First name</string>
+    <string name="complete_profile_field_last_name">Last name</string>
+    <string name="complete_profile_field_first_name_placeholder">e.g. John</string>
+    <string name="complete_profile_field_last_name_placeholder">e.g. Smith</string>
+    <string name="complete_profile_button_continue">Continue</string>
+    <string name="complete_profile_footer">Your details will be visible to the professionals who accept your requests.</string>
+
+    <!-- CompleteProfile errors -->
+    <string name="complete_profile_error_missing_first_name">First name is required</string>
+    <string name="complete_profile_error_missing_last_name">Last name is required</string>
+    <string name="complete_profile_error_network">We could not reach the server. Check your connection and try again.</string>
+    <string name="complete_profile_error_server">We could not complete the registration (%1$d). %2$s</string>
+    <string name="complete_profile_error_unauthorized">Your session expired. Please sign in again. (%1$s)</string>
+</resources>
