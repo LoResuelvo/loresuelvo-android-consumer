@@ -4,6 +4,11 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Added in Fase 1
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.navigation.safeargs)
 }
 
 // ==========================================
@@ -32,8 +37,8 @@ android {
         minSdk = 24
         targetSdk = 35
 
-        testInstrumentationRunner =
-            "androidx.test.runner.AndroidJUnitRunner"
+        // Added in Fase 1: HiltTestRunner for instrumented tests with Hilt
+        testInstrumentationRunner = "com.loresuelvo.consumer.HiltTestRunner"
     }
 
     buildTypes {
@@ -55,6 +60,14 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+
+    // Added in Fase 1: enable Robolectric + Android resources in unit tests.
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
     }
 
     productFlavors {
@@ -164,8 +177,27 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.security.crypto)
 
+    // Hilt (added in Fase 1)
+    implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
+    ksp(libs.hilt.android.compiler)
+
+    // Networking (added in Fase 1)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization.converter)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.kotlinx.serialization.json)
+
     // Unit Testing (Capa de Dominio - src/test)
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.turbine)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.cucumber.java)
+    testImplementation(libs.cucumber.junit)
 
     // UI Testing (Capa de Aceptación/UI - src/androidTest)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -173,6 +205,9 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    // Hilt testing (added in Fase 1)
+    androidTestImplementation(libs.hilt.android.testing)
+    kspAndroidTest(libs.hilt.android.compiler)
 
     // Debugging (Previews y Manifest para tests)
     debugImplementation(libs.androidx.compose.ui.tooling)
