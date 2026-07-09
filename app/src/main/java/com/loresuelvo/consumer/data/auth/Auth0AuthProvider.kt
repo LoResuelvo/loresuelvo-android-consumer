@@ -1,39 +1,37 @@
 package com.loresuelvo.consumer.data.auth
 
 import android.content.Context
-import android.util.Log
-import com.auth0.android.Auth0
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.result.Credentials
-import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.domain.auth.AuthProvider
-import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
 
-class Auth0AuthProvider(
-    private val context: Context,
-    private val credentialsMapper: Auth0CredentialsMapper = Auth0CredentialsMapper(),
-    private val webAuthLauncher: Auth0WebAuthLauncher = Auth0SdkWebAuthLauncher(
-        account = Auth0(
-            BuildConfig.AUTH0_CLIENT_ID,
-            BuildConfig.AUTH0_DOMAIN
-        ),
-        scheme = BuildConfig.AUTH0_SCHEME
-    )
+/**
+ * Auth0-backed [AuthProvider]. The Activity [Context] is supplied by
+ * the call site (the [com.loresuelvo.consumer.ui.auth.WelcomeViewModel]
+ * receives it from `LocalContext.current`); the SDK config
+ * ([Auth0SdkWebAuthLauncher], [Auth0CredentialsMapper]) comes through
+ * the Hilt graph. No `Context` is captured at construction time, so the
+ * provider is `@Singleton`-safe.
+ */
+@Singleton
+class Auth0AuthProvider @Inject constructor(
+    private val credentialsMapper: Auth0CredentialsMapper,
+    private val webAuthLauncher: Auth0WebAuthLauncher,
 ) : AuthProvider {
 
-    override suspend fun signup(): SignupOutcome = suspendCancellableCoroutine { cont ->
-        webAuthLauncher.startSignup(
-            context,
-            Auth0SignupCallback(
-                credentialsMapper = credentialsMapper,
-                cont = cont
+    override suspend fun signup(context: Context): SignupOutcome =
+        suspendCancellableCoroutine { cont ->
+            webAuthLauncher.startSignup(
+                context = context,
+                callback = Auth0SignupCallback(credentialsMapper, cont),
             )
-        )
-    }
+        }
 }
 
 private class Auth0SignupCallback(
@@ -48,13 +46,9 @@ private class Auth0SignupCallback(
         } else {
             cont.resume(SignupOutcome.Failed("No pudimos completar el registro"))
         }
-
-        Log.d("Auth0AuthProvider", "Auth0 authentication succeeded")
     }
 
     override fun onFailure(error: AuthenticationException) {
-        Log.w("Auth0AuthProvider", "Auth0 authentication failed", error)
-
         if (error.getCode() == "a0.authentication_canceled") {
             cont.resume(SignupOutcome.Cancelled)
         } else {

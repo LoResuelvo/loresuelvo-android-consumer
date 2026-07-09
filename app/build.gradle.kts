@@ -65,8 +65,14 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
+    // Kotlin 2.0+ deprecates the `kotlinOptions {}` block in favour of
+    // the typed `kotlin { compilerOptions { ... } }` API. JVM target
+    // here MUST match `compileOptions` above so the same bytecode
+    // version is produced across the entire module (Java 11).
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
     }
     buildFeatures {
         compose = true

@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.data.auth
 
 import android.content.Context
-import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import android.content.SharedPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -10,15 +10,20 @@ import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 /**
- * Hilt module that binds [AuthSessionStore] to its
- * [EncryptedAuthSessionStore] implementation. Lives in `data/auth/`
- * so it can call the internal `createEncryptedSessionPrefs`
- * without widening the visibility of that helper.
+ * Hilt module that provides the [SharedPreferences] instance the
+ * [EncryptedAuthSessionStore] reads from / writes to. Lives in
+ * `data/auth/` so it can call the internal
+ * `createEncryptedSessionPrefs(context)` helper (which builds an
+ * AES256_GCM/SIV-encrypted blob) without widening that helper's
+ * visibility to `di/`.
  *
- * The `SessionStateHolder` `object` referenced by the implementation
- * remains a process-wide singleton in this phase; Fase 8 of the
- * master plan will migrate it to a Hilt-provided `@Singleton` class
- * so the binding can be fully replaced in tests.
+ * The repository binding to `AuthSessionStore` lives in
+ * `di/RepositoryModule.kt`. The previously-bundled
+ * `@Provides fun provideAuthSessionStore(...)` factory was removed
+ * in Fase 8 of the master plan: `EncryptedAuthSessionStore` is now
+ * Hilt-injectable via `@Inject constructor(prefs)`, which removes
+ * the last process-wide `object` global mutable (`SessionStateHolder`)
+ * from the production graph.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -26,7 +31,7 @@ object SessionStoreModule {
 
     @Provides
     @Singleton
-    fun provideAuthSessionStore(
+    fun provideSessionPrefs(
         @ApplicationContext context: Context,
-    ): AuthSessionStore = EncryptedAuthSessionStore(createEncryptedSessionPrefs(context))
+    ): SharedPreferences = createEncryptedSessionPrefs(context)
 }
