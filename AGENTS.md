@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-07-08
+Última actualización: 2026-07-09 (Fase 7: BDD con Cucumber JVM)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -19,7 +19,7 @@ Fuente canónica para agentes. Leer este archivo primero y cargar skills locales
 - **DI**: Hilt + `hilt-navigation-compose` para `hiltViewModel()` en composables. `LoresuelvoApp` con `@HiltAndroidApp`. `MainActivity` con `@AndroidEntryPoint`.
 - **Auth**: Auth0 SDK 2.11.0.
 - **Networking** (en roadmap): Retrofit + OkHttp + `kotlinx-serialization` (a partir de Fase 1).
-- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM para BDD.
+- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD.
 
 ## Arquitectura y capas (Clean Architecture liviana + Ports & Adapters)
 
@@ -107,10 +107,10 @@ app/
         values/strings.xml                    # Strings de UI en español (default)
         values-en/strings.xml                 # Strings en inglés
         xml/                                 # Network security config, etc.
-    test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine)
+    test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine + Cucumber JVM)
+      resources/features/                    # .feature BDD de Cucumber (JVM, no androidTest)
+      java/.../bdd/                          # Step definitions + CucumberWorld + fakes
     androidTest/
-      assets/features/                       # .feature BDD de Cucumber
-      java/.../bdd/steps/                    # Step definitions
       java/.../acceptance/                   # Acceptance con Compose-test o Espresso
 skills/                                      # Skills locales para agentes
 AGENTS.md                                    # Este archivo (canónico)
@@ -212,6 +212,32 @@ README.md                                    # Setup + comandos + troubleshootin
 - Steps de BDD: español (alineado con el webapp).
 - Commits y mensajes de PR: inglés, Conventional Commits.
 - Comentarios explicativos (que agreguen info, no describan lo obvio) en español.
+
+---
+
+## BDD con Cucumber JVM
+
+La capa BDD vive **en el source set de JVM** (`src/test/`), no en `androidTest/`:
+
+- `.feature` files: `app/src/test/resources/features/<area>/<user-journey>.feature`
+- Step definitions + CucumberWorld + fakes: `app/src/test/java/com/loresuelvo/consumer/bdd/<area>/<journey>/...`
+- Glue runner: una clase con `@RunWith(io.cucumber.junit.Cucumber.class)` + `@CucumberOptions(features = ["classpath:features/..."], glue = ["..."], plugin = ["pretty", "summary"])`.
+
+**Por qué JVM, no instrumented**:
+
+- Corre en el classpath normal de Gradle sin emulador; el ciclo `test` lo ejecuta sin cost extra.
+- No requiere Robolectric, Hilt ni Auth0 — ejercitamos el `ViewModel` directo contra fakes (`FakeAuthSessionStore`, `FakeUserRepository`) y un `StandardTestDispatcher` que controla `viewModelScope`.
+- Sin Robolectric no hay flakiness de pixel rendering ni lock al `targetSdk` actual.
+
+**Cómo agregar un nuevo escenario**:
+
+1. Editar o crear el `.feature` con Gherkin (español o inglés según público).
+2. Escribir el step exacto (con su `Given/When/Then` + tipos de parámetros `{string}`, `{int}`).
+3. Declarar el step def en `RegisterConsumerSteps.kt` (o el que corresponda). Si la acción dispara coroutines, usar `world.tapContinue()`, `world.setFirstName(...)`, etc. — todos avanzan el `TestCoroutineScheduler` por vos.
+4. Si necesitás un nuevo tipo de outcome (hoy `Success`/`Network`/`Server`/`Unauthorized`), agregalo al `FakeUserRepository` y a `ErrorCategoryMatcher`.
+5. Validar con `./gradlew :app:testDevDebugUnitTest --tests "*<Runner>Test*"`.
+
+**Las palabras del usuario en español** se asertan en el layer de UI (Compose UI tests), no aquí. El BDD asserta el **tipo de error** (`first name required`, `network`, `server`, `session expired`) y los **efectos observables** (session cleared, POST enviado, evento `NavigateToHome`).
 
 ---
 
