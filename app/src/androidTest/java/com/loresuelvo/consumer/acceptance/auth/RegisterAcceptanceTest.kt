@@ -19,13 +19,13 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasDataString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
-import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
-import com.loresuelvo.consumer.data.auth.createEncryptedSessionPrefs
 import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import javax.inject.Inject
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -35,14 +35,18 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
+@RunWith(AndroidJUnit4::class)
 class RegisterWithAuth0AcceptanceTest {
+
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
+
+    @Inject
+    lateinit var sessionStore: AuthSessionStore
 
     @Before
     fun setUp() {
@@ -51,14 +55,14 @@ class RegisterWithAuth0AcceptanceTest {
         intending(hasAction(Intent.ACTION_VIEW)).respondWith(
             Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
         )
-        EncryptedAuthSessionStore(createEncryptedSessionPrefs(composeTestRule.activity)).clearSession()
+        sessionStore.clearSession()
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
     }
 
     @After
     fun tearDown() {
-        EncryptedAuthSessionStore(createEncryptedSessionPrefs(composeTestRule.activity)).clearSession()
+        sessionStore.clearSession()
         Intents.release()
     }
 
@@ -134,7 +138,7 @@ class RegisterWithAuth0AcceptanceTest {
     }
 
     private fun mockAuthenticatedUser(
-        name: String
+        @Suppress("UNUSED_PARAMETER") name: String
     ) {
         composeTestRule.runOnUiThread {
             composeTestRule.activity.setContent {
@@ -155,18 +159,18 @@ class RegisterWithAuth0AcceptanceTest {
     }
 
     private fun persistAuthenticatedUser(
-        name: String
+        @Suppress("UNUSED_PARAMETER") name: String
     ) {
         composeTestRule.runOnUiThread {
-            EncryptedAuthSessionStore(createEncryptedSessionPrefs(composeTestRule.activity)).saveSession(
+            sessionStore.saveSession(
                 AuthSession(
-                        user = User(
-                            displayName = "Andres",
-                            firstName = "Andres",
-                            lastName = "Colina",
-                            email = "andy@pro.com"
-                        ),
-                        accessToken = "fake-token"
+                    user = User(
+                        displayName = "Andres",
+                        firstName = "Andres",
+                        lastName = "Colina",
+                        email = "andy@pro.com"
+                    ),
+                    accessToken = "fake-token"
                 )
             )
         }
@@ -179,5 +183,4 @@ class RegisterWithAuth0AcceptanceTest {
         // TODO:
         // Mockear sesión cancelada o inválida
     }
-
 }

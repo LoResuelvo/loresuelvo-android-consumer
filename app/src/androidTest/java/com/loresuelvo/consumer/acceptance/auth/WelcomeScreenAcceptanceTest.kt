@@ -6,10 +6,10 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
-import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
-import com.loresuelvo.consumer.data.auth.createEncryptedSessionPrefs
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -25,10 +25,22 @@ class WelcomeScreenAcceptanceTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
+    /**
+     * Hilt-injected singleton — THE SAME instance the activity's
+     * `SessionViewModel` is observing. Pre-Fase 8 the tests
+     * constructed a fresh `EncryptedAuthSessionStore` locally and
+     * relied on the process-wide `SessionStateHolder` to keep the
+     * in-memory graph in sync; with Fase 8 that shared state is
+     * gone, so the tests have to mutate the live singleton directly
+     * for `LoResuelvoNav` to pick the right route on `recreate()`.
+     */
+    @Inject
+    lateinit var sessionStore: AuthSessionStore
+
     @Before
     fun setUp() {
         hiltRule.inject()
-        EncryptedAuthSessionStore(createEncryptedSessionPrefs(composeTestRule.activity)).clearSession()
+        sessionStore.clearSession()
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
     }

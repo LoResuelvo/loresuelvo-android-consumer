@@ -204,6 +204,11 @@ README.md                                    # Setup + comandos + troubleshootin
 - Toda acceptance test que levante `MainActivity` (vía `createAndroidComposeRule<MainActivity>()`) **debe** declarar ambas cosas, o el proceso crashea con `IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.` apenas se carga la Activity.
 - Si el test necesita overrides de Hilt modules, agregarlos vía `@TestInstallIn(...) replaces = [...]`. Los tests que actualmente viven en `androidTest/acceptance/auth/` no los necesitan — usan la producción graph — pero esto queda documentado para la próxima acceptance test que agregue deps que no deban tocar la red real.
 
+### Aceptación: mutar el session store desde tests
+
+- Pre-Fase 8 el contrato era "construir un `EncryptedAuthSessionStore` local y `clearSession()` / `saveSession(...)` con él": el `object SessionStateHolder` propagaba el cambio al `MainActivity` que también leía del mismo StateFlow global.
+- Post-Fase 8 ese `object` ya no existe. Las acceptance tests deben `@Inject lateinit var sessionStore: AuthSessionStore` (la MISMA instancia `@Singleton` que la `SessionViewModel` del activity observa) y mutarla vía `sessionStore.clearSession()` / `sessionStore.saveSession(...)`. Construir `EncryptedAuthSessionStore(createEncryptedSessionPrefs(activity))` local escribe a `SharedPreferences` correctamente pero el `StateFlow` del singleton Hilt no se entera → `LoResuelvoNav` enruta con el valor viejo después de `scenario.recreate()`.
+
 ### DI (Hilt)
 
 - `@HiltAndroidApp` en `LoresuelvoApp`. `@AndroidEntryPoint` en `MainActivity`. `@HiltViewModel` en todos los ViewModels.
