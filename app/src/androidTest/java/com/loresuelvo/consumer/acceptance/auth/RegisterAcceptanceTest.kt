@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Activity
+import android.app.Application
 import android.app.Instrumentation
 import android.content.Intent
 import androidx.activity.compose.setContent
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.intent.Intents
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.Intents.intending
@@ -23,9 +25,12 @@ import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import javax.inject.Inject
+import dagger.hilt.components.SingletonComponent
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -45,8 +50,12 @@ class RegisterWithAuth0AcceptanceTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
-    @Inject
-    lateinit var sessionStore: AuthSessionStore
+    private val sessionStore: AuthSessionStore by lazy {
+        EntryPointAccessors.fromApplication(
+            ApplicationProvider.getApplicationContext<Application>(),
+            AuthSessionStoreEntryPoint::class.java,
+        ).authSessionStore()
+    }
 
     @Before
     fun setUp() {
@@ -182,5 +191,11 @@ class RegisterWithAuth0AcceptanceTest {
     private fun mockUnauthenticatedUser() {
         // TODO:
         // Mockear sesión cancelada o inválida
+    }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface AuthSessionStoreEntryPoint {
+        fun authSessionStore(): AuthSessionStore
     }
 }

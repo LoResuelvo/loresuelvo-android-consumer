@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.acceptance.auth
 
+import android.app.Application
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -9,14 +10,17 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import javax.inject.Inject
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,8 +36,18 @@ class CompleteProfileScreenAcceptanceTest {
     @get:Rule(order = 1)
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
-    @Inject
-    lateinit var sessionStore: AuthSessionStore
+    /**
+     * Resolved via `@EntryPoint` from the test application: this
+     * returns THE SAME `@Singleton` instance that the activity's
+     * `SessionViewModel` is observing, so mutations propagate
+     * through the production StateFlow exactly as they do in prod.
+     */
+    private val sessionStore: AuthSessionStore by lazy {
+        EntryPointAccessors.fromApplication(
+            ApplicationProvider.getApplicationContext<Application>(),
+            AuthSessionStoreEntryPoint::class.java,
+        ).authSessionStore()
+    }
 
     @Before
     fun setUp() {
@@ -189,5 +203,11 @@ class CompleteProfileScreenAcceptanceTest {
 
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
+    }
+
+    @EntryPoint
+    @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
+    interface AuthSessionStoreEntryPoint {
+        fun authSessionStore(): AuthSessionStore
     }
 }

@@ -1,15 +1,20 @@
 package com.loresuelvo.consumer.acceptance.auth
 
+import android.app.Application
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import javax.inject.Inject
+import dagger.hilt.components.SingletonComponent
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -26,16 +31,21 @@ class WelcomeScreenAcceptanceTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     /**
-     * Hilt-injected singleton — THE SAME instance the activity's
-     * `SessionViewModel` is observing. Pre-Fase 8 the tests
-     * constructed a fresh `EncryptedAuthSessionStore` locally and
-     * relied on the process-wide `SessionStateHolder` to keep the
-     * in-memory graph in sync; with Fase 8 that shared state is
-     * gone, so the tests have to mutate the live singleton directly
-     * for `LoResuelvoNav` to pick the right route on `recreate()`.
+     * Resolved via `@EntryPoint` from the test application: this
+     * returns THE SAME `@Singleton` instance that the activity's
+     * `SessionViewModel` is observing. The `@Inject` field pattern
+     * is unreliable for interface types in `@HiltAndroidTest` runs
+     * (it sometimes binds to a different component scope than the
+     * one used by Hilt's `@HiltViewModel` injection), so we resolve
+     * the port directly from the production
+     * `SingletonComponent` graph.
      */
-    @Inject
-    lateinit var sessionStore: AuthSessionStore
+    private val sessionStore: AuthSessionStore by lazy {
+        EntryPointAccessors.fromApplication(
+            ApplicationProvider.getApplicationContext<Application>(),
+            AuthSessionStoreEntryPoint::class.java,
+        ).authSessionStore()
+    }
 
     @Before
     fun setUp() {
@@ -82,5 +92,11 @@ class WelcomeScreenAcceptanceTest {
             .onNodeWithText("Continuar con Google")
             .assertIsDisplayed()
             .assertHasClickAction()
+    }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface AuthSessionStoreEntryPoint {
+        fun authSessionStore(): AuthSessionStore
     }
 }

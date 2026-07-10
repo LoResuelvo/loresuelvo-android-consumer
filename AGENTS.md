@@ -207,7 +207,22 @@ README.md                                    # Setup + comandos + troubleshootin
 ### Aceptación: mutar el session store desde tests
 
 - Pre-Fase 8 el contrato era "construir un `EncryptedAuthSessionStore` local y `clearSession()` / `saveSession(...)` con él": el `object SessionStateHolder` propagaba el cambio al `MainActivity` que también leía del mismo StateFlow global.
-- Post-Fase 8 ese `object` ya no existe. Las acceptance tests deben `@Inject lateinit var sessionStore: AuthSessionStore` (la MISMA instancia `@Singleton` que la `SessionViewModel` del activity observa) y mutarla vía `sessionStore.clearSession()` / `sessionStore.saveSession(...)`. Construir `EncryptedAuthSessionStore(createEncryptedSessionPrefs(activity))` local escribe a `SharedPreferences` correctamente pero el `StateFlow` del singleton Hilt no se entera → `LoResuelvoNav` enruta con el valor viejo después de `scenario.recreate()`.
+- Post-Fase 8 ese `object` ya no existe. Las acceptance tests deben pedirle al MISMO `SingletonComponent` que la `SessionViewModel` del activity observa el `AuthSessionStore` real, y mutarlo. **NO** `@Inject lateinit var sessionStore: AuthSessionStore` — el `MembersInjector` puede entregar una instancia distinta a la que la activity ve a través de `createAndroidComposeRule<MainActivity>()` cuando el binding es a una **interfaz**. En su lugar, usá `@EntryPoint`-basado:
+  ```kotlin
+  private val sessionStore: AuthSessionStore by lazy {
+      EntryPointAccessors.fromApplication(
+          ApplicationProvider.getApplicationContext<Application>(),
+          AuthSessionStoreEntryPoint::class.java,
+      ).authSessionStore()
+  }
+
+  @EntryPoint
+  @InstallIn(SingletonComponent::class)
+  interface AuthSessionStoreEntryPoint {
+      fun authSessionStore(): AuthSessionStore
+  }
+  ```
+  Construir `EncryptedAuthSessionStore(createEncryptedSessionPrefs(activity))` local escribe a `SharedPreferences` correctamente pero el `StateFlow` del singleton Hilt no se entera → `LoResuelvoNav` enruta con el valor viejo después de `scenario.recreate()`.
 
 ### DI (Hilt)
 
