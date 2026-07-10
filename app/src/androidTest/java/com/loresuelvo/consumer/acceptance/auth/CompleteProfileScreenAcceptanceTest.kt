@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
@@ -74,19 +75,19 @@ class CompleteProfileScreenAcceptanceTest {
         persistIncompleteAuthenticatedUser()
 
         composeTestRule
-            .onNodeWithText("Completa tu perfil")
+            .onNodeWithText(localizedString(R.string.complete_profile_title))
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Nombre")
+            .onNodeWithText(localizedString(R.string.complete_profile_field_first_name))
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Apellido")
+            .onNodeWithText(localizedString(R.string.complete_profile_field_last_name))
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Continuar")
+            .onNodeWithText(localizedString(R.string.complete_profile_button_continue))
             .assertIsDisplayed()
             .assertHasClickAction()
     }
@@ -106,7 +107,7 @@ class CompleteProfileScreenAcceptanceTest {
             .performTextInput("Colina")
 
         composeTestRule
-            .onNodeWithText("Continuar")
+            .onNodeWithText(localizedString(R.string.complete_profile_button_continue))
             .performClick()
 
         composeTestRule.waitForIdle()
@@ -131,11 +132,11 @@ class CompleteProfileScreenAcceptanceTest {
             .performTextInput("Colina")
 
         composeTestRule
-            .onNodeWithText("Continuar")
+            .onNodeWithText(localizedString(R.string.complete_profile_button_continue))
             .performClick()
 
         composeTestRule
-            .onNodeWithText("El nombre es obligatorio")
+            .onNodeWithText(localizedString(R.string.complete_profile_error_missing_first_name))
             .assertIsDisplayed()
     }
 
@@ -150,11 +151,11 @@ class CompleteProfileScreenAcceptanceTest {
             .performTextInput("Andres")
 
         composeTestRule
-            .onNodeWithText("Continuar")
+            .onNodeWithText(localizedString(R.string.complete_profile_button_continue))
             .performClick()
 
         composeTestRule
-            .onNodeWithText("El apellido es obligatorio")
+            .onNodeWithText(localizedString(R.string.complete_profile_error_missing_last_name))
             .assertIsDisplayed()
     }
 
@@ -173,7 +174,7 @@ class CompleteProfileScreenAcceptanceTest {
             .performTextInput("Colina")
 
         composeTestRule
-            .onNodeWithText("Continuar")
+            .onNodeWithText(localizedString(R.string.complete_profile_button_continue))
             .performClick()
 
         composeTestRule
@@ -184,7 +185,7 @@ class CompleteProfileScreenAcceptanceTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onAllNodesWithText("Completa tu perfil")
+            .onAllNodesWithText(localizedString(R.string.complete_profile_title))
             .assertCountEquals(0)
 
         composeTestRule
@@ -216,6 +217,9 @@ class CompleteProfileScreenAcceptanceTest {
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
     }
+
+    private fun localizedString(resourceId: Int): String =
+        composeTestRule.activity.getString(resourceId)
 
     @EntryPoint
     @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)

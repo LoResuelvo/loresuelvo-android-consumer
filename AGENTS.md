@@ -227,16 +227,17 @@ README.md                                    # Setup + comandos + troubleshootin
 ### Aceptación: Locale del CI
 
 - El emulator del CI bootea con `en-US` por default. `CompleteProfileScreen` (y todos los Composables que usen `stringResource(R.string.*)`) renderizan la versión `values-en/strings.xml` → "Continue", "First name", etc.
-- Los tests de aceptación ASSERTAN strings en ESPAÑOL ("Continuar", "Nombre", "Apellido"). Sin un override explícito de Locale, los assertions no encuentran los nodos. (Antes de Fase 8 esto también fallaba — pero como nadie corría la suite acceptance pre-Fase 8 nadie lo había detectado.)
-- `WelcomeScreen` se salva sólo porque usa literales hardcoded en español; cualquier Composable que se externalice a `stringResource(...)` va a fallar hasta que el CI emulee el locale correcto.
-- `HiltTestRunner.newApplication()` fija `es-AR` sobre los resources del target antes de crear `HiltTestApplication`, JUnit o cualquier Activity. La configuración es global para instrumentación y no debe repetirse dentro de cada test: cambiar `LocaleManager.applicationLocales` desde `@Before` sucede después de que la regla Compose lanzó la Activity y puede crear una carrera de recreaciones con `ActivityScenario`.
+- Los acceptance tests no deben asumir el locale del dispositivo ni forzarlo con `Resources.updateConfiguration(...)`: Android 14 puede ignorar ese override durante la creación de la Activity.
+- Para encontrar texto producido por `stringResource`, resolver el mismo recurso desde la Activity de la regla Compose. Así la prueba valida el contrato UI tanto en `en-US` como en `es-AR`:
   ```kotlin
-  val configuration = Configuration(resources.configuration).apply {
-      setLocale(Locale("es", "AR"))
-  }
-  resources.updateConfiguration(configuration, resources.displayMetrics)
+  private fun localizedString(resourceId: Int): String =
+      composeTestRule.activity.getString(resourceId)
+
+  composeTestRule.onNodeWithText(
+      localizedString(R.string.complete_profile_button_continue),
+  )
   ```
-  Ver `app/src/androidTest/java/com/loresuelvo/consumer/HiltTestRunner.kt`. La app declara los locales soportados en `app/src/main/res/xml/locales_config.xml` y el manifest referencia ese archivo con `android:localeConfig`.
+- Ver `app/src/androidTest/java/com/loresuelvo/consumer/acceptance/auth/CompleteProfileScreenAcceptanceTest.kt`. Los strings visibles siguen definidos en `values/strings.xml` y `values-en/strings.xml`.
 
 ### DI (Hilt)
 
