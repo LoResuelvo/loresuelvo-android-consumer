@@ -1,6 +1,9 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Application
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -15,6 +18,7 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.components.SingletonComponent
+import java.util.Locale
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -50,9 +54,36 @@ class WelcomeScreenAcceptanceTest {
     @Before
     fun setUp() {
         hiltRule.inject()
+        forceSpanishLocale()
         sessionStore.clearSession()
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
+    }
+
+    /**
+     * CI emulators boot in `en-US` by default — but the production UI
+     * ships in Spanish (es-AR). Without this override the screen
+     * would render English resource strings and the hard-coded
+     * Spanish assertions in this class would fail. `Locale.setDefault(...)`
+     * + `resources.updateConfiguration(...)` + a `scenario.recreate()`
+     * guarantees the next composition reads `values/strings.xml`.
+     *
+     * `resources.updateConfiguration(...)` is deprecated in API 25+ but
+     * is still the practical way to push a locale onto an already-
+     * running Activity without recreating the entire Application.
+     */
+    private fun forceSpanishLocale() {
+        Locale.setDefault(Locale("es", "AR"))
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val config = Configuration(context.resources.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.setLocale(Locale("es", "AR"))
+        } else {
+            @Suppress("DEPRECATION")
+            config.locale = Locale("es", "AR")
+        }
+        @Suppress("DEPRECATION")
+        context.resources.updateConfiguration(config, context.resources.displayMetrics)
     }
 
     // Scenario: 01-CPI Mostrar nombre y branding de LoResuelvo

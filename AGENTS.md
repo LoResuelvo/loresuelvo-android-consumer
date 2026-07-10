@@ -224,6 +224,29 @@ README.md                                    # Setup + comandos + troubleshootin
   ```
   Construir `EncryptedAuthSessionStore(createEncryptedSessionPrefs(activity))` local escribe a `SharedPreferences` correctamente pero el `StateFlow` del singleton Hilt no se entera → `LoResuelvoNav` enruta con el valor viejo después de `scenario.recreate()`.
 
+### Aceptación: Locale del CI
+
+- El emulator del CI bootea con `en-US` por default. `CompleteProfileScreen` (y todos los Composables que usen `stringResource(R.string.*)`) renderizan la versión `values-en/strings.xml` → "Continue", "First name", etc.
+- Los tests de aceptación ASSERTAN strings en ESPAÑOL ("Continuar", "Nombre", "Apellido"). Sin un override explícito de Locale, los assertions no encuentran los nodos. (Antes de Fase 8 esto también fallaba — pero como nadie corría la suite acceptance pre-Fase 8 nadie lo había detectado.)
+- `WelcomeScreen` se salva sólo porque usa literales hardcoded en español; cualquier Composable que se externalice a `stringResource(...)` va a fallar hasta que el CI emulee el locale correcto.
+- Cada acceptance test debe forzar el locale al setUp, antes de la primera composition:
+  ```kotlin
+  private fun forceSpanishLocale() {
+      Locale.setDefault(Locale("es", "AR"))
+      val context: Context = ApplicationProvider.getApplicationContext()
+      val config = Configuration(context.resources.configuration)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+          config.setLocale(Locale("es", "AR"))
+      } else {
+          @Suppress("DEPRECATION")
+          config.locale = Locale("es", "AR")
+      }
+      @Suppress("DEPRECATION")
+      context.resources.updateConfiguration(config, context.resources.displayMetrics)
+  }
+  ```
+  El `resources.updateConfiguration(...)` está deprecated en API 25+ pero sigue siendo la única forma práctica de empujar un locale a un Application/Activity ya corriendo sin reiniciar el proceso entero — el `scenario.recreate()` que viene después garantiza que la siguiente composition resuelve los resources correctos.
+
 ### DI (Hilt)
 
 - `@HiltAndroidApp` en `LoresuelvoApp`. `@AndroidEntryPoint` en `MainActivity`. `@HiltViewModel` en todos los ViewModels.

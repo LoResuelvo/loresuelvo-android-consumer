@@ -1,6 +1,9 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Application
+import android.content.Context
+import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,6 +24,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import java.util.Locale
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -52,7 +56,38 @@ class CompleteProfileScreenAcceptanceTest {
     @Before
     fun setUp() {
         hiltRule.inject()
+        forceSpanishLocale()
         sessionStore.clearSession()
+    }
+
+    /**
+     * CI emulators boot in `en-US` by default, but the production UI
+     * deliberately ships in Spanish (es-AR). `CompleteProfileScreen`
+     * uses `stringResource(R.string.*)`, so without this override the
+     * screen renders "Continue" instead of "Continuar" and the
+     * hard-coded Spanish assertions in this class fail. We call
+     * `Locale.setDefault(...)` AND push the new locale onto the
+     * activity's `Configuration` so the next resource lookup hits
+     * `values/strings.xml` instead of `values-en/strings.xml`.
+     *
+     * `resources.updateConfiguration(...)` is deprecated in API 25+
+     * but still the only way to push a locale onto a running
+     * Activity without recreating the entire Application — the
+     * Compose-test rule's `scenario.recreate()` after this call
+     * guarantees the recomposition reads the new locale.
+     */
+    private fun forceSpanishLocale() {
+        Locale.setDefault(Locale("es", "AR"))
+        val context: Context = ApplicationProvider.getApplicationContext()
+        val config = Configuration(context.resources.configuration)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            config.setLocale(Locale("es", "AR"))
+        } else {
+            @Suppress("DEPRECATION")
+            config.locale = Locale("es", "AR")
+        }
+        @Suppress("DEPRECATION")
+        context.resources.updateConfiguration(config, context.resources.displayMetrics)
     }
 
     // Scenario: 01-CPC Mostrar formulario de completar perfil
