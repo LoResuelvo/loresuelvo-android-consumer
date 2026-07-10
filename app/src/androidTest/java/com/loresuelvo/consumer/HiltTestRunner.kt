@@ -2,8 +2,10 @@ package com.loresuelvo.consumer
 
 import android.app.Application
 import android.content.Context
+import android.content.res.Configuration
 import androidx.test.runner.AndroidJUnitRunner
 import dagger.hilt.android.testing.HiltTestApplication
+import java.util.Locale
 
 /**
  * Custom test runner for instrumented tests with Hilt.
@@ -17,13 +19,25 @@ import dagger.hilt.android.testing.HiltTestApplication
  * Wired via `testInstrumentationRunner` in `app/build.gradle.kts`.
  */
 class HiltTestRunner : AndroidJUnitRunner() {
+    @Suppress("DEPRECATION")
     override fun newApplication(
         cl: ClassLoader?,
         name: String?,
         context: Context?,
-    ): Application = super.newApplication(
-        cl,
-        HiltTestApplication::class.java.name,
-        context,
-    )
+    ): Application {
+        val spanishArgentina = Locale("es", "AR")
+        Locale.setDefault(spanishArgentina)
+        context?.resources?.let { resources ->
+            val configuration = Configuration(resources.configuration).apply {
+                setLocale(spanishArgentina)
+            }
+            resources.updateConfiguration(configuration, resources.displayMetrics)
+        }
+
+        return super.newApplication(
+            cl,
+            HiltTestApplication::class.java.name,
+            context,
+        )
+    }
 }

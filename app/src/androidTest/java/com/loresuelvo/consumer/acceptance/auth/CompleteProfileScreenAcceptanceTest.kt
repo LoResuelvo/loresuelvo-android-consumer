@@ -1,9 +1,6 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Application
-import android.content.Context
-import android.content.res.Configuration
-import android.os.Build
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -16,21 +13,32 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
+import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
+import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
+import com.loresuelvo.consumer.domain.auth.UserRepository
+import dagger.Binds
+import dagger.Module
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
-import java.util.Locale
+import dagger.hilt.android.testing.UninstallModules
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Inject
+import javax.inject.Singleton
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @HiltAndroidTest
+@UninstallModules(RepositoryModule::class)
 @RunWith(AndroidJUnit4::class)
 class CompleteProfileScreenAcceptanceTest {
 
@@ -56,38 +64,7 @@ class CompleteProfileScreenAcceptanceTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        forceSpanishLocale()
         sessionStore.clearSession()
-    }
-
-    /**
-     * CI emulators boot in `en-US` by default, but the production UI
-     * deliberately ships in Spanish (es-AR). `CompleteProfileScreen`
-     * uses `stringResource(R.string.*)`, so without this override the
-     * screen renders "Continue" instead of "Continuar" and the
-     * hard-coded Spanish assertions in this class fail. We call
-     * `Locale.setDefault(...)` AND push the new locale onto the
-     * activity's `Configuration` so the next resource lookup hits
-     * `values/strings.xml` instead of `values-en/strings.xml`.
-     *
-     * `resources.updateConfiguration(...)` is deprecated in API 25+
-     * but still the only way to push a locale onto a running
-     * Activity without recreating the entire Application — the
-     * Compose-test rule's `scenario.recreate()` after this call
-     * guarantees the recomposition reads the new locale.
-     */
-    private fun forceSpanishLocale() {
-        Locale.setDefault(Locale("es", "AR"))
-        val context: Context = ApplicationProvider.getApplicationContext()
-        val config = Configuration(context.resources.configuration)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.setLocale(Locale("es", "AR"))
-        } else {
-            @Suppress("DEPRECATION")
-            config.locale = Locale("es", "AR")
-        }
-        @Suppress("DEPRECATION")
-        context.resources.updateConfiguration(config, context.resources.displayMetrics)
     }
 
     // Scenario: 01-CPC Mostrar formulario de completar perfil
@@ -244,5 +221,36 @@ class CompleteProfileScreenAcceptanceTest {
     @dagger.hilt.InstallIn(dagger.hilt.components.SingletonComponent::class)
     interface AuthSessionStoreEntryPoint {
         fun authSessionStore(): AuthSessionStore
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    abstract class CompleteProfileTestRepositoryModule {
+
+        @Binds
+        @Singleton
+        abstract fun bindUserRepository(
+            repository: SuccessfulUserRepository,
+        ): UserRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindAuthSessionStore(
+            store: EncryptedAuthSessionStore,
+        ): AuthSessionStore
+    }
+
+    @Singleton
+    class SuccessfulUserRepository @Inject constructor() : UserRepository {
+        override suspend fun registerConsumer(
+            data: RegisterConsumerData,
+        ): UserRegistrationOutcome = UserRegistrationOutcome.Success(
+            User(
+                displayName = data.firstName,
+                firstName = data.firstName,
+                lastName = data.lastName,
+                email = data.email,
+            )
+        )
     }
 }

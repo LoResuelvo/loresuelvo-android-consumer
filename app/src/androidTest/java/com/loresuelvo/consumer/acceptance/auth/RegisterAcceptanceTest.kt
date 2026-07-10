@@ -3,10 +3,7 @@ package com.loresuelvo.consumer.acceptance.auth
 import android.app.Activity
 import android.app.Application
 import android.app.Instrumentation
-import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
-import android.os.Build
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -34,7 +31,6 @@ import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.components.SingletonComponent
-import java.util.Locale
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -64,7 +60,6 @@ class RegisterWithAuth0AcceptanceTest {
     @Before
     fun setUp() {
         hiltRule.inject()
-        forceSpanishLocale()
         Intents.init()
         intending(hasAction(Intent.ACTION_VIEW)).respondWith(
             Instrumentation.ActivityResult(Activity.RESULT_OK, Intent())
@@ -72,20 +67,6 @@ class RegisterWithAuth0AcceptanceTest {
         sessionStore.clearSession()
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
-    }
-
-    private fun forceSpanishLocale() {
-        Locale.setDefault(Locale("es", "AR"))
-        val context: Context = ApplicationProvider.getApplicationContext()
-        val config = Configuration(context.resources.configuration)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.setLocale(Locale("es", "AR"))
-        } else {
-            @Suppress("DEPRECATION")
-            config.locale = Locale("es", "AR")
-        }
-        @Suppress("DEPRECATION")
-        context.resources.updateConfiguration(config, context.resources.displayMetrics)
     }
 
     @After
