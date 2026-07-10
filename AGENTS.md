@@ -202,7 +202,7 @@ README.md                                    # Setup + comandos + troubleshootin
 
 - `HiltTestRunner` (configurado en `build.gradle.kts` como `testInstrumentationRunner`) hace `AndroidJUnitRunner.newApplication()` retorne `HiltTestApplication` en lugar de `LoresuelvoApp`. `HiltTestApplication.generatedComponent()` **no inicializa el component graph** — eso solo ocurre cuando un test class declara `@HiltAndroidTest` + `@get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)` (y la regla está pensada para correr antes que la regla de Compose).
 - Toda acceptance test que levante `MainActivity` (vía `createAndroidComposeRule<MainActivity>()`) **debe** declarar ambas cosas, o el proceso crashea con `IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.` apenas se carga la Activity.
-- Si el test necesita overrides de Hilt modules, agregarlos vía `@TestInstallIn(...) replaces = [...]`. Los tests que actualmente viven en `androidTest/acceptance/auth/` no los necesitan — usan la producción graph — pero esto queda documentado para la próxima acceptance test que agregue deps que no deban tocar la red real.
+- Si el test necesita overrides de Hilt modules, usar `@UninstallModules(...)` con un módulo `@InstallIn` anidado cuando el fake deba afectar una sola clase, o `@TestInstallIn(...) replaces = [...]` cuando deba aplicar a toda la suite. `CompleteProfileScreenAcceptanceTest` reemplaza `RepositoryModule` sólo en esa clase: conserva el `EncryptedAuthSessionStore` real y sustituye `UserRepository` para que el flujo feliz no dependa del backend ni de un token real.
 
 ### Aceptación: mutar el session store desde tests
 
@@ -229,23 +229,14 @@ README.md                                    # Setup + comandos + troubleshootin
 - El emulator del CI bootea con `en-US` por default. `CompleteProfileScreen` (y todos los Composables que usen `stringResource(R.string.*)`) renderizan la versión `values-en/strings.xml` → "Continue", "First name", etc.
 - Los tests de aceptación ASSERTAN strings en ESPAÑOL ("Continuar", "Nombre", "Apellido"). Sin un override explícito de Locale, los assertions no encuentran los nodos. (Antes de Fase 8 esto también fallaba — pero como nadie corría la suite acceptance pre-Fase 8 nadie lo había detectado.)
 - `WelcomeScreen` se salva sólo porque usa literales hardcoded en español; cualquier Composable que se externalice a `stringResource(...)` va a fallar hasta que el CI emulee el locale correcto.
-- Cada acceptance test debe forzar el locale al setUp, antes de la primera composition:
+- `HiltTestRunner.newApplication()` fija `es-AR` sobre los resources del target antes de crear `HiltTestApplication`, JUnit o cualquier Activity. La configuración es global para instrumentación y no debe repetirse dentro de cada test: cambiar `LocaleManager.applicationLocales` desde `@Before` sucede después de que la regla Compose lanzó la Activity y puede crear una carrera de recreaciones con `ActivityScenario`.
   ```kotlin
-  private fun forceSpanishLocale() {
-      Locale.setDefault(Locale("es", "AR"))
-      val context: Context = ApplicationProvider.getApplicationContext()
-      val config = Configuration(context.resources.configuration)
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-          config.setLocale(Locale("es", "AR"))
-      } else {
-          @Suppress("DEPRECATION")
-          config.locale = Locale("es", "AR")
-      }
-      @Suppress("DEPRECATION")
-      context.resources.updateConfiguration(config, context.resources.displayMetrics)
+  val configuration = Configuration(resources.configuration).apply {
+      setLocale(Locale("es", "AR"))
   }
+  resources.updateConfiguration(configuration, resources.displayMetrics)
   ```
-  El `resources.updateConfiguration(...)` está deprecated en API 25+ pero sigue siendo la única forma práctica de empujar un locale a un Application/Activity ya corriendo sin reiniciar el proceso entero — el `scenario.recreate()` que viene después garantiza que la siguiente composition resuelve los resources correctos.
+  Ver `app/src/androidTest/java/com/loresuelvo/consumer/HiltTestRunner.kt`. La app declara los locales soportados en `app/src/main/res/xml/locales_config.xml` y el manifest referencia ese archivo con `android:localeConfig`.
 
 ### DI (Hilt)
 
