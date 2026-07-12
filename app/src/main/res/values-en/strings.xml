@@ -10,6 +10,9 @@
     <string name="welcome_badge_verified">Verified professionals</string>
     <string name="welcome_title">Professional solutions for your home</string>
     <string name="welcome_subtitle">Tell us what you need and we\'ll connect you with a certified expert in an instant.</string>
+    <string name="welcome_register">Sign up</string>
+    <string name="welcome_google">Continue with Google</string>
+    <string name="welcome_legal">By continuing you accept our Terms of Service and Privacy Policy.</string>
 
     <!-- Welcome · how it works -->
     <string name="welcome_step1_title">Tell us your problem</string>

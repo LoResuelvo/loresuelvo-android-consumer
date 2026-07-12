@@ -149,22 +149,11 @@ class RegisterWithAuth0AcceptanceTest {
     private fun mockAuthenticatedUser(
         @Suppress("UNUSED_PARAMETER") name: String
     ) {
-        composeTestRule.runOnUiThread {
-            composeTestRule.activity.setContent {
-                WelcomeScreen(
-                    authSession = AuthSession(
-                        user = User(
-                            displayName = "Andres",
-                            firstName = "Andres",
-                            lastName = "Colina",
-                            email = "andy@pro.com"
-                        ),
-                        accessToken = "fake-token"
-                    )
-                )
-            }
-        }
-        composeTestRule.waitForIdle()
+        // The authenticated experience lives on the Home screen; the
+        // smart router in LoResuelvoNav routes there once a complete
+        // session is persisted. Welcome no longer renders an
+        // authenticated header, so we exercise the real flow.
+        persistAuthenticatedUser(name)
     }
 
     private fun persistAuthenticatedUser(

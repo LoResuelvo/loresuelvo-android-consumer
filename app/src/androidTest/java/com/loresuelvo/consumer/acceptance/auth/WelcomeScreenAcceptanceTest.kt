@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Application
+import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -8,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -47,6 +49,15 @@ class WelcomeScreenAcceptanceTest {
         ).authSessionStore()
     }
 
+    /**
+     * Resolves a string from the activity so assertions match the
+     * text produced by `stringResource` under the device locale (the
+     * CI emulator boots en-US, local devices may be es-AR). See
+     * AGENTS.md "Aceptación: Locale del CI".
+     */
+    private fun localizedString(@StringRes resourceId: Int): String =
+        composeTestRule.activity.getString(resourceId)
+
     @Before
     fun setUp() {
         hiltRule.inject()
@@ -60,7 +71,24 @@ class WelcomeScreenAcceptanceTest {
     fun displays_loresuelvo_branding() {
 
         composeTestRule
-            .onNodeWithText("LoResuelvo")
+            .onNodeWithText(localizedString(R.string.brand_name))
+            .assertIsDisplayed()
+    }
+
+    // Scenario: Mostrar la propuesta de valor antes de la autenticación
+    @Test
+    fun displays_value_proposition() {
+
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.welcome_badge_verified))
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.welcome_title))
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.welcome_step1_title))
             .assertIsDisplayed()
     }
 
@@ -69,17 +97,17 @@ class WelcomeScreenAcceptanceTest {
     fun displays_register_button() {
 
         composeTestRule
-            .onNodeWithText("Registrarse")
+            .onNodeWithText(localizedString(R.string.welcome_register))
             .assertIsDisplayed()
             .assertHasClickAction()
     }
 
-    // Scenario: 03-CPI Mostrar botón de Iniciar Sesión
+    // Scenario: 03-CPI Mostrar acción de Iniciar Sesión
     @Test
-    fun displays_login_button() {
+    fun displays_login_action() {
 
         composeTestRule
-            .onNodeWithText("Iniciar Sesión")
+            .onNodeWithText(localizedString(R.string.welcome_login))
             .assertIsDisplayed()
             .assertHasClickAction()
     }
@@ -89,7 +117,7 @@ class WelcomeScreenAcceptanceTest {
     fun displays_google_login_button() {
 
         composeTestRule
-            .onNodeWithText("Continuar con Google")
+            .onNodeWithText(localizedString(R.string.welcome_google))
             .assertIsDisplayed()
             .assertHasClickAction()
     }
