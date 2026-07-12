@@ -1,6 +1,9 @@
 <resources>
     <string name="app_name">loresuelvo-android-consumer</string>
 
+    <!-- Branding -->
+    <string name="app_logo_content_description">LoResuelvo logo</string>
+
     <!-- CompleteProfile screen -->
     <string name="complete_profile_title">Complete your profile</string>
     <string name="complete_profile_subtitle">We need a few details to continue.</string>

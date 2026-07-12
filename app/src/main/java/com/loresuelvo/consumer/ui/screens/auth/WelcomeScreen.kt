@@ -30,9 +30,9 @@ import com.loresuelvo.consumer.ui.components.buttons.GoogleButton
 import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
 import com.loresuelvo.consumer.ui.components.buttons.SecondaryButton
 import com.loresuelvo.consumer.ui.components.cards.AuthCard
-import com.loresuelvo.consumer.ui.theme.AppBackgroundBottom
-import com.loresuelvo.consumer.ui.theme.AppBackgroundMiddle
-import com.loresuelvo.consumer.ui.theme.AppBackgroundTop
+import com.loresuelvo.consumer.ui.theme.AuthGradientBottom
+import com.loresuelvo.consumer.ui.theme.AuthGradientMiddle
+import com.loresuelvo.consumer.ui.theme.AuthGradientTop
 import com.loresuelvo.consumer.ui.theme.DividerGray
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
@@ -53,9 +53,9 @@ fun WelcomeScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        AppBackgroundTop,
-                        AppBackgroundMiddle,
-                        AppBackgroundBottom
+                        AuthGradientTop,
+                        AuthGradientMiddle,
+                        AuthGradientBottom
                     )
                 )
             )

@@ -19,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,9 +30,9 @@ import com.loresuelvo.consumer.ui.components.branding.AppLogo
 import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
 import com.loresuelvo.consumer.ui.components.cards.AuthCard
 import com.loresuelvo.consumer.ui.components.inputs.PrimaryTextField
-import com.loresuelvo.consumer.ui.theme.AppBackgroundBottom
-import com.loresuelvo.consumer.ui.theme.AppBackgroundMiddle
-import com.loresuelvo.consumer.ui.theme.AppBackgroundTop
+import com.loresuelvo.consumer.ui.theme.AuthGradientBottom
+import com.loresuelvo.consumer.ui.theme.AuthGradientMiddle
+import com.loresuelvo.consumer.ui.theme.AuthGradientTop
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
 
@@ -67,9 +66,9 @@ fun CompleteProfileScreen(
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(
-                        AppBackgroundTop,
-                        AppBackgroundMiddle,
-                        AppBackgroundBottom
+                        AuthGradientTop,
+                        AuthGradientMiddle,
+                        AuthGradientBottom
                     )
                 )
             )
@@ -106,7 +105,7 @@ fun CompleteProfileScreen(
             errorMessage?.let { message ->
                 Text(
                     text = message,
-                    color = Color.Red,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()

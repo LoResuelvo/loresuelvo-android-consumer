@@ -2,24 +2,31 @@ package com.loresuelvo.consumer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val PrimaryBlue = Color(0xFF001B4E)
-val SecondaryBlue = Color(0xFF163B7A)
+// Brand palette — single source of truth mirrored from the web design
+// system (global.css `--color-brand-*`). Keep hex values in sync.
+val BrandPrimary = Color(0xFF1A2B48)
+val BrandSecondary = Color(0xFF147560)
+val BrandAccept = Color(0xFF1E293B)
+val BrandTertiary = Color(0xFFE9C46A)
+val BrandNeutral = Color(0xFFF4F1EE)
+val BrandDanger = Color(0xFFDC2626)
 
-val AppBackgroundTop = Color(0xFF203A43)
-val AppBackgroundMiddle = Color(0xFF2C5364)
-val AppBackgroundBottom = Color(0xFF0F2027)
+// Auth-screen background gradient derived from BrandPrimary.
+val AuthGradientTop = Color(0xFF24395F)
+val AuthGradientMiddle = Color(0xFF1A2B48)
+val AuthGradientBottom = Color(0xFF101B2E)
 
+// Neutrals & surfaces.
 val TextWhite = Color.White
-
-val GoogleBlue = Color(0xFF4285F4)
-val GoogleText = Color(0xFF202124)
-
-val AvatarBlue = Color(0xFF6A7FDB)
-val AvatarGreen = Color(0xFF2BAE66)
-val AvatarDarkBlue = Color(0xFF0B6E99)
-
+val SurfaceWhite = Color(0xFFFCFCFC)
 val DividerGray = Color(0xFFD9D9D9)
 val SubtitleGray = Color(0xFF7A7A7A)
 
-val ScreenBackground = Color(0xFFF4F1EC)
-val CardBackground = Color(0xFFFCFCFC)
+// Google button branding (fixed by Google's guidelines).
+val GoogleBlue = Color(0xFF4285F4)
+val GoogleText = Color(0xFF202124)
+
+// Verified-professionals avatar cluster.
+val AvatarBlue = Color(0xFF6A7FDB)
+val AvatarGreen = Color(0xFF2BAE66)
+val AvatarDarkBlue = Color(0xFF0B6E99)
