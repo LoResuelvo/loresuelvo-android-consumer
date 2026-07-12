@@ -25,8 +25,3 @@ val SubtitleGray = Color(0xFF7A7A7A)
 // Google button branding (fixed by Google's guidelines).
 val GoogleBlue = Color(0xFF4285F4)
 val GoogleText = Color(0xFF202124)
-
-// Verified-professionals avatar cluster.
-val AvatarBlue = Color(0xFF6A7FDB)
-val AvatarGreen = Color(0xFF2BAE66)
-val AvatarDarkBlue = Color(0xFF0B6E99)
