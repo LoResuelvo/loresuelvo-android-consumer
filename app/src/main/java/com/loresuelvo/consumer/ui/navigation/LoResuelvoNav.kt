@@ -82,6 +82,7 @@ private fun WelcomeRoute() {
     val context = LocalContext.current
     WelcomeScreen(
         errorMessage = state.error,
+        categories = state.categories,
         onRegisterClick = { viewModel.signup(context) },
     )
 }

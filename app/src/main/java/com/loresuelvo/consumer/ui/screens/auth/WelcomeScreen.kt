@@ -3,17 +3,19 @@ package com.loresuelvo.consumer.ui.screens.auth
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.loresuelvo.consumer.R
+import com.loresuelvo.consumer.ui.auth.WelcomeCategoriesUiState
 import com.loresuelvo.consumer.ui.components.buttons.GoogleButton
 import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
 import com.loresuelvo.consumer.ui.screens.auth.components.CategoryChipRow
@@ -37,6 +39,7 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 @Composable
 fun WelcomeScreen(
     errorMessage: String? = null,
+    categories: WelcomeCategoriesUiState = WelcomeCategoriesUiState.Loading,
     onRegisterClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {},
@@ -70,9 +73,7 @@ fun WelcomeScreen(
 
         Spacer(Modifier.height(24.dp))
 
-        CategoryChipRow(
-            categories = stringArrayResource(R.array.welcome_categories).toList(),
-        )
+        CategorySection(state = categories)
 
         Spacer(Modifier.height(28.dp))
 
@@ -112,11 +113,50 @@ fun WelcomeScreen(
     }
 }
 
+/**
+ * Renders the illustrative service-category chips based on the
+ * [WelcomeCategoriesUiState]: a slim progress indicator while
+ * loading, the scrollable chip row when ready, or an error message
+ * when the fetch fails or returns nothing.
+ */
+@Composable
+private fun CategorySection(state: WelcomeCategoriesUiState) {
+    when (state) {
+        WelcomeCategoriesUiState.Loading ->
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
+        is WelcomeCategoriesUiState.Ready ->
+            CategoryChipRow(categories = state.categories.map { it.name })
+
+        WelcomeCategoriesUiState.Error ->
+            Text(
+                text = stringResource(R.string.welcome_categories_error),
+                style = MaterialTheme.typography.bodySmall,
+                color = SubtitleGray,
+                textAlign = TextAlign.Center,
+                lineHeight = 16.sp,
+                modifier = Modifier.fillMaxWidth(),
+            )
+    }
+}
+
 @Preview(showBackground = true, name = "Welcome · phone")
 @Preview(showBackground = true, name = "Welcome · small", heightDp = 640, widthDp = 320)
 @Composable
 private fun WelcomeScreenPreview() {
     LoresuelvoTheme {
-        WelcomeScreen()
+        WelcomeScreen(
+            categories = WelcomeCategoriesUiState.Ready(
+                categories = listOf(
+                    com.loresuelvo.consumer.domain.category.Category(1, "Plomería"),
+                    com.loresuelvo.consumer.domain.category.Category(2, "Electricidad"),
+                    com.loresuelvo.consumer.domain.category.Category(3, "Pintura"),
+                ),
+            ),
+        )
     }
 }

@@ -1,9 +1,11 @@
 package com.loresuelvo.consumer.di
 
+import com.loresuelvo.consumer.data.api.ApiCategoryRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRepository
+import com.loresuelvo.consumer.domain.category.CategoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -30,6 +32,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUserRepository(impl: ApiUserRepository): UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCategoryRepository(impl: ApiCategoryRepository): CategoryRepository
 
     @Binds
     @Singleton

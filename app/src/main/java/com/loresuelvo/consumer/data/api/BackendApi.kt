@@ -1,8 +1,10 @@
 package com.loresuelvo.consumer.data.api
 
+import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.MessageResponseDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.POST
 
 /**
@@ -25,4 +27,14 @@ interface BackendApi {
      */
     @POST("consumers")
     suspend fun registerConsumer(@Body body: RegisterConsumerRequestDto): MessageResponseDto
+
+    /**
+     * `GET /categories` — the platform's service categories. Public
+     * (no auth required), so it can be called before the user signs
+     * in. Returns a JSON array of [CategoryDto]; non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @GET("categories")
+    suspend fun getCategories(): List<CategoryDto>
 }

@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import com.loresuelvo.consumer.domain.category.CategoriesOutcome
+import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +19,8 @@ import kotlinx.coroutines.launch
 /**
  * UDF ViewModel for the `Welcome` screen. Drives the IdP signup flow
  * via [AuthProvider] and persists the result on [AuthSessionStore].
+ * It also loads the public service categories through
+ * [GetCategoriesUseCase] to populate the illustrative chips.
  *
  * The Activity [Context] is supplied per-call by the Composable
  * (via `LocalContext.current`) rather than captured at construction
@@ -26,10 +30,37 @@ import kotlinx.coroutines.launch
 class WelcomeViewModel @Inject constructor(
     private val authProvider: AuthProvider,
     private val sessionStore: AuthSessionStore,
+    private val getCategories: GetCategoriesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WelcomeUiState())
     val uiState: StateFlow<WelcomeUiState> = _uiState.asStateFlow()
+
+    init {
+        loadCategories()
+    }
+
+    /**
+     * Loads the platform's service categories. An empty response or
+     * any failure collapses to [WelcomeCategoriesUiState.Error] so
+     * the screen shows the error state (per product decision) instead
+     * of an empty row.
+     */
+    fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(categories = WelcomeCategoriesUiState.Loading) }
+            val next = when (val outcome = getCategories()) {
+                is CategoriesOutcome.Success ->
+                    if (outcome.categories.isEmpty()) {
+                        WelcomeCategoriesUiState.Error
+                    } else {
+                        WelcomeCategoriesUiState.Ready(outcome.categories)
+                    }
+                is CategoriesOutcome.Failure -> WelcomeCategoriesUiState.Error
+            }
+            _uiState.update { it.copy(categories = next) }
+        }
+    }
 
     fun signup(activityContext: Context) {
         viewModelScope.launch {

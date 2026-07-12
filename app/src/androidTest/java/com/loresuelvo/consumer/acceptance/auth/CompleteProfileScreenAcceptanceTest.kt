@@ -14,6 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
+import com.loresuelvo.consumer.data.api.ApiCategoryRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
@@ -22,6 +23,7 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
+import com.loresuelvo.consumer.domain.category.CategoryRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.EntryPoint
@@ -236,6 +238,12 @@ class CompleteProfileScreenAcceptanceTest {
         abstract fun bindUserRepository(
             repository: SuccessfulUserRepository,
         ): UserRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindCategoryRepository(
+            repository: ApiCategoryRepository,
+        ): CategoryRepository
 
         @Binds
         @Singleton

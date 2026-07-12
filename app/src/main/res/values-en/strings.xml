@@ -13,6 +13,7 @@
     <string name="welcome_register">Sign up</string>
     <string name="welcome_google">Continue with Google</string>
     <string name="welcome_legal">By continuing you accept our Terms of Service and Privacy Policy.</string>
+    <string name="welcome_categories_error">We couldn\'t load the categories. Please try again later.</string>
 
     <!-- Welcome · how it works -->
     <string name="welcome_step1_title">Tell us your problem</string>
