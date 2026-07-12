@@ -3,6 +3,13 @@
 
     <!-- Branding -->
     <string name="app_logo_content_description">LoResuelvo logo</string>
+    <string name="brand_name">LoResuelvo</string>
+
+    <!-- Welcome screen -->
+    <string name="welcome_login">Log in</string>
+    <string name="welcome_badge_verified">Verified professionals</string>
+    <string name="welcome_title">Professional solutions for your home</string>
+    <string name="welcome_subtitle">Tell us what you need and we\'ll connect you with a certified expert in an instant.</string>
 
     <!-- CompleteProfile screen -->
     <string name="complete_profile_title">Complete your profile</string>
