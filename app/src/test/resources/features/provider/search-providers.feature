@@ -31,7 +31,6 @@ Feature: Search providers by category
       | prov-003 | Pedro | Dib     | Plomería      | 1           |
     And I am on the consumer home
 
-  @wip
   Scenario: View providers for a category with one provider
     When I tap the "Electricidad" category card
     Then I am taken to the providers list for category "Electricidad"

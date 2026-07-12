@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.di.RepositoryModule
@@ -16,6 +17,7 @@ import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.EntryPoint
@@ -104,6 +106,12 @@ class WelcomeCategoriesAcceptanceTest {
         abstract fun bindCategoryRepository(
             repository: StubCategoryRepository,
         ): CategoryRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindProviderRepository(
+            repository: ApiProviderRepository,
+        ): ProviderRepository
 
         @Binds
         @Singleton
