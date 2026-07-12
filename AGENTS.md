@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-07-09 (Fase 8: topología minimal + DI housekeeping)
+Última actualización: 2026-07-12 (Welcome consumer-first + recurso `Categories` desde API)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -58,7 +58,7 @@ graph TD
 ### Patrones aplicados explícitamente
 
 - **Observer**: `StateFlow` + `collectAsState()` en composables; `viewModelScope.launch` en ViewModels. Ver `ui/session/SessionViewModel.kt:18-23` (collect del `state`) y `MainActivity.kt:50` (`collectAsState`).
-- **Adapter**: `ApiUserRepository` adapta el cliente HTTP al puerto `UserRepository`; `Auth0AuthProvider` adapta el SDK de Auth0 al puerto `AuthProvider`. Ver `data/auth/Auth0AuthProvider.kt:16-26`.
+- **Adapter**: `ApiUserRepository` adapta el cliente HTTP al puerto `UserRepository`; `ApiCategoryRepository` adapta `GET /categories` al puerto `CategoryRepository`; `Auth0AuthProvider` adapta el SDK de Auth0 al puerto `AuthProvider`. Ver `data/auth/Auth0AuthProvider.kt:16-26` y `data/api/ApiCategoryRepository.kt:16-32`.
 - **Factory**: Hilt actúa como factory de dependencias. Complementariamente, los ViewModels se obtienen con `hiltViewModel()` en composables. No usar `viewModelFactory { initializer { ... } }` en producción.
 - **Dependency Injection**: Hilt. **Cero** `object` global mutable nuevo. Excepción documentada: `SessionStateHolder` (migración planificada a `@Singleton @Inject`, ver Fase 8).
 
@@ -94,19 +94,23 @@ app/
         data/                                 # Adapters, DTOs, mappers, ApiClient, Auth0
         domain/                               # PURO: entidades, puertos, casos de uso
           auth/                               # User, AuthProvider, AuthSessionStore, etc.
+          category/                           # Category, CategoriesOutcome, CategoryRepository
           usecase/auth/                       # RegisterConsumerUseCase, etc.
+          usecase/category/                   # GetCategoriesUseCase
           api/                                # ApiError (sealed)
         ui/                                  # Composables, ViewModels, Navigation
           auth/                              # WelcomeVM/State, CompleteProfileVM/State
           components/                        # Botones, inputs, cards, branding
           navigation/                        # LoResuelvoNav, LoResuelvoNavHost, Route
           screens/                           # auth/Welcome, auth/CompleteProfile, home/Home
+            auth/components/                 # WelcomeScaffold, TopBar, HeroSection, etc.
           session/                           # SessionViewModel, SessionUiState
           theme/                             # Color.kt, Theme.kt
       res/
         values/strings.xml                    # Strings de UI en español (default)
         values-en/strings.xml                 # Strings en inglés
         xml/                                 # Network security config, etc.
+      dev/                                   # Overlays del flavor dev (manifest, res)
     test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine + Cucumber JVM)
       resources/features/                    # .feature BDD de Cucumber (JVM, no androidTest)
       java/.../bdd/                          # Step definitions + CucumberWorld + fakes
@@ -178,9 +182,10 @@ README.md                                    # Setup + comandos + troubleshootin
 
 ### Seguridad
 
-- Cero secretos en código. Las credenciales de Auth0 (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_SCHEME`) se leen de `BuildConfig` con fallbacks vacíos; los valores reales vienen de `local.properties` o del pipeline.
+- Cero secretos en código. Las credenciales de Auth0 (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_SCHEME`) y la URL del backend (`API_URL`) se leen de `BuildConfig` con fallbacks; los valores reales vienen de `local.properties` o del pipeline. Ver `app/build.gradle.kts:34-39` (`envVar(...)` con prioridad `local.properties` > gradle property > env > default).
 - No commitear `local.properties`. Está en `.gitignore`.
 - Tokens: nunca se loguean, nunca se persisten en `SharedPreferences` plano. `EncryptedAuthSessionStore` usa `EncryptedSharedPreferences` (AES256_GCM/SIV). Ver `data/auth/EncryptedSessionPrefs.kt:8-20`.
+- **Cleartext HTTP**: bloqueado por defecto (`targetSdk 35`). Solo el flavor `dev` permite texto plano mediante `app/src/dev/res/xml/network_security_config.xml` (overlay via `app/src/dev/AndroidManifest.xml`). Para apuntar a una API local de LAN, setear `API_URL=http://<ip-de-tu-host>:8080` en `local.properties` y reconstruir el `devDebug`. **Staging/prod quedan HTTPS-only** (no heredan ese config).
 
 ### Topología (regla de `MainActivity`)
 
