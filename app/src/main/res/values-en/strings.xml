@@ -11,6 +11,25 @@
     <string name="welcome_title">Professional solutions for your home</string>
     <string name="welcome_subtitle">Tell us what you need and we\'ll connect you with a certified expert in an instant.</string>
 
+    <!-- Welcome · how it works -->
+    <string name="welcome_step1_title">Tell us your problem</string>
+    <string name="welcome_step1_description">Describe what\'s happening in your home.</string>
+    <string name="welcome_step2_title">AI diagnosis</string>
+    <string name="welcome_step2_description">We identify what you need and who can help.</string>
+    <string name="welcome_step3_title">Verified professional</string>
+    <string name="welcome_step3_description">We connect you and get it solved.</string>
+
+    <!-- Welcome · illustrative service categories -->
+    <string-array name="welcome_categories">
+        <item>Plumbing</item>
+        <item>Electrical</item>
+        <item>Painting</item>
+        <item>Gas</item>
+        <item>Carpentry</item>
+        <item>HVAC</item>
+    </string-array>
+
+
     <!-- CompleteProfile screen -->
     <string name="complete_profile_title">Complete your profile</string>
     <string name="complete_profile_subtitle">We need a few details to continue.</string>

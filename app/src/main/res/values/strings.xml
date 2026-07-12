@@ -11,6 +11,25 @@
     <string name="welcome_title">Soluciones profesionales para tu hogar</string>
     <string name="welcome_subtitle">Contanos qué necesitás y te conectamos con un experto certificado al instante.</string>
 
+    <!-- Welcome · how it works -->
+    <string name="welcome_step1_title">Contá tu problema</string>
+    <string name="welcome_step1_description">Describí qué está pasando en tu hogar.</string>
+    <string name="welcome_step2_title">Diagnóstico con IA</string>
+    <string name="welcome_step2_description">Identificamos qué necesitás y a quién.</string>
+    <string name="welcome_step3_title">Profesional verificado</string>
+    <string name="welcome_step3_description">Te conectamos y resolvés sin vueltas.</string>
+
+    <!-- Welcome · illustrative service categories -->
+    <string-array name="welcome_categories">
+        <item>Plomería</item>
+        <item>Electricidad</item>
+        <item>Pintura</item>
+        <item>Gas</item>
+        <item>Carpintería</item>
+        <item>Climatización</item>
+    </string-array>
+
+
     <!-- CompleteProfile screen -->
     <string name="complete_profile_title">Completa tu perfil</string>
     <string name="complete_profile_subtitle">Necesitamos algunos datos para continuar.</string>
