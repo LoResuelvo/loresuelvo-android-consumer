@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.app.Instrumentation
 import android.content.Intent
+import androidx.annotation.StringRes
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
@@ -21,6 +22,7 @@ import androidx.test.espresso.intent.matcher.IntentMatchers.hasDataString
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
+import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
@@ -75,13 +77,21 @@ class RegisterWithAuth0AcceptanceTest {
         Intents.release()
     }
 
+    /**
+     * The CI emulator boots in en-US while developer devices may use Spanish.
+     * Resolve the same resource used by the composable instead of asserting a
+     * locale-specific literal.
+     */
+    private fun localizedString(@StringRes resourceId: Int): String =
+        composeTestRule.activity.getString(resourceId)
+
     // Scenario: 01-RCN Redirección al portal de registro de Auth0
     @Ignore("Fails in CI because Auth0 launches external activity")
     @Test
     fun redirects_to_auth0_signup() {
 
         composeTestRule
-            .onNodeWithText("Registrarse")
+            .onNodeWithText(localizedString(R.string.welcome_register))
             .assertHasClickAction()
             .performClick()
 
@@ -113,11 +123,11 @@ class RegisterWithAuth0AcceptanceTest {
         persistAuthenticatedUser("Andres Colina")
 
         composeTestRule
-            .onNodeWithText("Cerrar sesión")
+            .onNodeWithText(localizedString(R.string.home_logout))
             .assertIsDisplayed()
 
         composeTestRule
-            .onAllNodesWithText("Registrarse")
+            .onAllNodesWithText(localizedString(R.string.welcome_register))
             .assertCountEquals(0)
     }
 
@@ -138,7 +148,7 @@ class RegisterWithAuth0AcceptanceTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithText("No pudimos completar el registro")
+            .onNodeWithText(localizedString(R.string.welcome_auth_error))
             .assertIsDisplayed()
 
         composeTestRule
