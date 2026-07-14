@@ -30,6 +30,7 @@ jobs:
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
           AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging" 
         run: |
@@ -47,6 +48,7 @@ jobs:
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
           AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging" 
         with:
@@ -59,6 +61,7 @@ jobs:
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
           AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging" 
         run: make build FLAVOR=Staging
