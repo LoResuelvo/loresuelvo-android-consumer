@@ -71,7 +71,7 @@ private fun isRecoverablePrefsError(error: Throwable): Boolean =
     generateSequence(error) { it.cause }.any { candidate ->
         candidate is javax.crypto.AEADBadTagException ||
             candidate is android.security.keystore.KeyPermanentlyInvalidatedException ||
-            candidate is android.security.KeyStoreException ||
+            candidate is java.security.KeyStoreException ||
             candidate is java.security.GeneralSecurityException ||
             candidate is java.io.IOException
     }
