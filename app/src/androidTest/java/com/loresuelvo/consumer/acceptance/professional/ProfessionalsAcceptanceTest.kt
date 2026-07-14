@@ -86,8 +86,8 @@ class ProfessionalsAcceptanceTest {
         ).authSessionStore()
     }
 
-    private fun string(@androidx.annotation.StringRes id: Int): String =
-        ApplicationProvider.getApplicationContext<Application>().getString(id)
+    private fun string(@androidx.annotation.StringRes id: Int, vararg formatArgs: Any): String =
+        ApplicationProvider.getApplicationContext<Application>().getString(id, *formatArgs)
 
     @Before
     fun setUp() {

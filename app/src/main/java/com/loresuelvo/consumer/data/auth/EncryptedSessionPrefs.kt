@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import java.security.KeyStore
 
 /**
  * Opens the encrypted backing storage for
@@ -24,23 +25,17 @@ internal fun createEncryptedSessionPrefs(context: Context): SharedPreferences {
     return try {
         openEncryptedPrefs(appContext)
     } catch (e: Throwable) {
-        // AEADBadTagException (signature mismatch on the master key)
-        // OR KeyPermanentlyInvalidatedException (AndroidKeyStore wipe)
-        // are the two failure modes we recover from. Any other throw
-        // is a genuine bug — surface it.
-        when (e) {
-            is javax.crypto.AEADBadTagException,
-            is android.security.keystore.KeyPermanentlyInvalidatedException -> {
-                Log.w("SessionPrefs", "Master key unusable, wiping and recreating")
-                wipeAndRecreate(appContext)
-            }
-            else -> throw e
+        if (isRecoverablePrefsError(e)) {
+            Log.w("SessionPrefs", "Master key unusable, wiping and recreating")
+            wipeAndRecreate(appContext)
+        } else {
+            throw e
         }
     }
 }
 
 private fun openEncryptedPrefs(appContext: Context): SharedPreferences {
-    val masterKey = MasterKey.Builder(appContext)
+    val masterKey = MasterKey.Builder(appContext, MASTER_KEY_ALIAS)
         .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
         .build()
     return EncryptedSharedPreferences.create(
@@ -58,7 +53,28 @@ private fun wipeAndRecreate(appContext: Context): SharedPreferences {
         "$PREFS_NAME.xml",
     )
     runCatching { prefsFile.delete() }
+    clearMasterKeyAlias()
     return openEncryptedPrefs(appContext)
 }
 
+private fun clearMasterKeyAlias() {
+    runCatching {
+        val keystore = KeyStore.getInstance("AndroidKeyStore")
+        keystore.load(null)
+        if (keystore.containsAlias(MASTER_KEY_ALIAS)) {
+            keystore.deleteEntry(MASTER_KEY_ALIAS)
+        }
+    }
+}
+
+private fun isRecoverablePrefsError(error: Throwable): Boolean =
+    generateSequence(error) { it.cause }.any { candidate ->
+        candidate is javax.crypto.AEADBadTagException ||
+            candidate is android.security.keystore.KeyPermanentlyInvalidatedException ||
+            candidate is android.security.KeyStoreException ||
+            candidate is java.security.GeneralSecurityException ||
+            candidate is java.io.IOException
+    }
+
+private const val MASTER_KEY_ALIAS = "loresuelvo_auth_session_master_key"
 internal const val PREFS_NAME = "auth_session_secure"

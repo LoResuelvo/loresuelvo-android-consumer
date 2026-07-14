@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,19 +12,25 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
+import com.loresuelvo.consumer.data.auth.SessionStoreModule
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.components.SingletonComponent
+import dagger.Module
+import dagger.Provides
+import javax.inject.Singleton
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
 @HiltAndroidTest
+@dagger.hilt.android.testing.UninstallModules(SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
 class WelcomeScreenAcceptanceTest {
 
@@ -120,6 +128,17 @@ class WelcomeScreenAcceptanceTest {
             .onNodeWithText(localizedString(R.string.welcome_google))
             .assertIsDisplayed()
             .assertHasClickAction()
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object TestSessionPrefsModule {
+        @Provides
+        @Singleton
+        fun provideSessionPrefs(
+            @ApplicationContext context: Context,
+        ): SharedPreferences =
+            context.getSharedPreferences("auth_session_secure_test", Context.MODE_PRIVATE)
     }
 
     @EntryPoint

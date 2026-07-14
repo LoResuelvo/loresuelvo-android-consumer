@@ -3,7 +3,9 @@ package com.loresuelvo.consumer.acceptance.auth
 import android.app.Activity
 import android.app.Application
 import android.app.Instrumentation
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.annotation.StringRes
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.assertCountEquals
@@ -23,6 +25,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
+import com.loresuelvo.consumer.data.auth.SessionStoreModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
@@ -30,9 +33,13 @@ import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.components.SingletonComponent
+import dagger.Module
+import dagger.Provides
+import javax.inject.Singleton
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.containsString
 import org.junit.After
@@ -43,6 +50,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @HiltAndroidTest
+@dagger.hilt.android.testing.UninstallModules(SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
 class RegisterWithAuth0AcceptanceTest {
 
@@ -111,6 +119,13 @@ class RegisterWithAuth0AcceptanceTest {
 
         mockAuthenticatedUser("Andres")
 
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule
+                .onAllNodesWithText("Andres")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
         composeTestRule
             .onNodeWithText("Andres")
             .assertIsDisplayed()
@@ -122,8 +137,19 @@ class RegisterWithAuth0AcceptanceTest {
 
         persistAuthenticatedUser("Andres Colina")
 
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule
+                .onAllNodesWithText("Andres")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
         composeTestRule
-            .onNodeWithText(localizedString(R.string.home_logout))
+            .onNodeWithText(localizedString(R.string.home_greeting))
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithText("Andres")
             .assertIsDisplayed()
 
         composeTestRule
@@ -190,6 +216,17 @@ class RegisterWithAuth0AcceptanceTest {
     private fun mockUnauthenticatedUser() {
         // TODO:
         // Mockear sesión cancelada o inválida
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object TestSessionPrefsModule {
+        @Provides
+        @Singleton
+        fun provideSessionPrefs(
+            @ApplicationContext context: Context,
+        ): SharedPreferences =
+            context.getSharedPreferences("auth_session_secure_test", Context.MODE_PRIVATE)
     }
 
     @EntryPoint

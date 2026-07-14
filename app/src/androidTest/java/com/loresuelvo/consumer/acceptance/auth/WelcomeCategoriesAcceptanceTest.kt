@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.acceptance.auth
 
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -11,6 +13,7 @@ import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
+import com.loresuelvo.consumer.data.auth.SessionStoreModule
 import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRepository
@@ -20,9 +23,11 @@ import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import dagger.Binds
 import dagger.Module
+import dagger.Provides
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
@@ -42,7 +47,7 @@ import org.junit.runner.RunWith
  * to Welcome, so the session is cleared before each test.
  */
 @HiltAndroidTest
-@UninstallModules(RepositoryModule::class)
+@UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
 class WelcomeCategoriesAcceptanceTest {
 
@@ -89,6 +94,17 @@ class WelcomeCategoriesAcceptanceTest {
         composeTestRule
             .onNodeWithText(StubCategoryRepository.STREAMER)
             .assertIsDisplayed()
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object TestSessionPrefsModule {
+        @Provides
+        @Singleton
+        fun provideSessionPrefs(
+            @ApplicationContext context: Context,
+        ): SharedPreferences =
+            context.getSharedPreferences("auth_session_secure_test", Context.MODE_PRIVATE)
     }
 
     @EntryPoint
