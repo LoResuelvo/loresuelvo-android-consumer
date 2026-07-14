@@ -97,12 +97,14 @@ android {
             val auth0Domain = envVar("AUTH0_DOMAIN", "loresuelvo-dev.auth0.com")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID")
             val auth0Scheme = envVar("AUTH0_SCHEME", "com.loresuelvo.consumer")
+            val auth0Audience = envVar("AUTH0_AUDIENCE", "http://localhost:8080")
             val apiUrl = envVar("API_URL", "http://10.0.2.2:8080")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+            buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -116,12 +118,14 @@ android {
             val auth0Domain = envVar("AUTH0_DOMAIN_STAGING")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID_STAGING")
             val auth0Scheme = envVar("AUTH0_SCHEME_STAGING", "com.loresuelvo.consumer.staging")
+            val auth0Audience = envVar("AUTH0_AUDIENCE_STAGING")
             val apiUrl = envVar("API_URL_STAGING")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+            buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -133,13 +137,15 @@ android {
 
             val auth0Domain = envVar("AUTH0_DOMAIN_PROD")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID_PROD")
-             val auth0Scheme = envVar("AUTH0_SCHEME_PROD", "com.loresuelvo.consumer.prod")
+            val auth0Scheme = envVar("AUTH0_SCHEME_PROD", "com.loresuelvo.consumer.prod")
+            val auth0Audience = envVar("AUTH0_AUDIENCE_PROD")
             val apiUrl = envVar("API_URL_PROD")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
+            buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -156,11 +162,11 @@ gradle.taskGraph.whenReady {
 
     val requiredForStaging = listOf(
         "AUTH0_DOMAIN_STAGING", "AUTH0_CLIENT_ID_STAGING",
-        "AUTH0_SCHEME_STAGING", "API_URL_STAGING"
+        "AUTH0_SCHEME_STAGING", "AUTH0_AUDIENCE_STAGING", "API_URL_STAGING"
     )
     val requiredForProd = listOf(
         "AUTH0_DOMAIN_PROD", "AUTH0_CLIENT_ID_PROD",
-        "AUTH0_SCHEME_PROD", "API_URL_PROD"
+        "AUTH0_SCHEME_PROD", "AUTH0_AUDIENCE_PROD", "API_URL_PROD"
     )
 
     if (runningTasks.any { it.contains("Staging") }) {
