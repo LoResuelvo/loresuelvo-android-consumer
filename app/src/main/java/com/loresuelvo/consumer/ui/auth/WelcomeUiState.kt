@@ -9,9 +9,16 @@ import com.loresuelvo.consumer.domain.category.Category
  */
 data class WelcomeUiState(
     val loading: Boolean = false,
-    val error: String? = null,
+    val error: WelcomeError? = null,
     val categories: WelcomeCategoriesUiState = WelcomeCategoriesUiState.Loading,
 )
+
+sealed interface WelcomeError {
+    data object Authentication : WelcomeError
+    data object Network : WelcomeError
+    data class Server(val code: Int) : WelcomeError
+    data object Unauthorized : WelcomeError
+}
 
 /**
  * State of the category chips section. Modelled as a sealed type so

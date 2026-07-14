@@ -72,8 +72,8 @@ fun LoResuelvoNav() {
 /**
  * Welcome screen with its Hilt-provided ViewModel. The Composable
  * bridge passes the activity `Context` (`LocalContext.current`) to
- * `viewModel.signup(context)`: `AuthProvider.signup` requires an
- * Activity-bound context to start the in-app WebView flow.
+ * the selected ViewModel action: Auth0 requires an Activity-bound
+ * context to start its browser flow.
  */
 @Composable
 private fun WelcomeRoute() {
@@ -81,9 +81,11 @@ private fun WelcomeRoute() {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     WelcomeScreen(
-        errorMessage = state.error,
+        error = state.error,
         categories = state.categories,
         onRegisterClick = { viewModel.signup(context) },
+        onLoginClick = { viewModel.login(context) },
+        onGoogleClick = { viewModel.loginWithGoogle(context) },
     )
 }
 
@@ -126,17 +128,19 @@ private fun CompleteProfileRoute(
  * Home screen — phase 9 of the master plan will replace this with a
  * real screen. For now we read the current [SessionUiState]
  * (provided by the same `SessionViewModel` the navigation graph
- * uses) and clear the session on logout so the smart-router can
- * demonstrate "back to Welcome".
+ * uses) and performs the Auth0 + local logout sequence.
  */
 @Composable
 private fun HomeRoute() {
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val state by sessionViewModel.uiState.collectAsState()
+    val context = LocalContext.current
     state.session?.let { session ->
         HomeScreen(
             authSession = session,
-            onLogoutClick = sessionViewModel::signOut,
+            signingOut = state.signingOut,
+            logoutError = state.error,
+            onLogoutClick = { sessionViewModel.signOut(context) },
         )
     }
 }

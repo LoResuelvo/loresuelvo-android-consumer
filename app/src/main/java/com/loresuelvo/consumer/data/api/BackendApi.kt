@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
+import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
 import com.loresuelvo.consumer.data.api.dto.MessageResponseDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import retrofit2.http.Body
@@ -17,6 +18,9 @@ import retrofit2.http.POST
  * (registerConsumerRoutes, registerAuthenticatedRoutes).
  */
 interface BackendApi {
+
+    @GET("me")
+    suspend fun getCurrentUser(): CurrentUserDto
 
     /**
      * `POST /consumers` — register the authenticated user as a

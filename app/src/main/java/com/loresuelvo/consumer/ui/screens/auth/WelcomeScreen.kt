@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.auth.WelcomeCategoriesUiState
+import com.loresuelvo.consumer.ui.auth.WelcomeError
 import com.loresuelvo.consumer.ui.components.buttons.GoogleButton
 import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
 import com.loresuelvo.consumer.ui.screens.auth.components.CategoryChipRow
@@ -38,12 +39,13 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
  */
 @Composable
 fun WelcomeScreen(
-    errorMessage: String? = null,
+    error: WelcomeError? = null,
     categories: WelcomeCategoriesUiState = WelcomeCategoriesUiState.Loading,
     onRegisterClick: () -> Unit = {},
     onLoginClick: () -> Unit = {},
     onGoogleClick: () -> Unit = {},
 ) {
+    val errorMessage = error?.let { welcomeErrorMessage(it) }
     WelcomeScaffold {
         WelcomeTopBar(onLoginClick = onLoginClick)
 
@@ -111,6 +113,14 @@ fun WelcomeScreen(
             modifier = Modifier.fillMaxWidth(),
         )
     }
+}
+
+@Composable
+private fun welcomeErrorMessage(error: WelcomeError): String = when (error) {
+    WelcomeError.Authentication -> stringResource(R.string.welcome_auth_error)
+    WelcomeError.Network -> stringResource(R.string.welcome_auth_network_error)
+    is WelcomeError.Server -> stringResource(R.string.welcome_auth_server_error, error.code)
+    WelcomeError.Unauthorized -> stringResource(R.string.welcome_auth_unauthorized_error)
 }
 
 /**

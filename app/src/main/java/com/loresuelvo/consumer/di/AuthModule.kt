@@ -43,6 +43,7 @@ abstract class AuthModule {
             domain = BuildConfig.AUTH0_DOMAIN,
             clientId = BuildConfig.AUTH0_CLIENT_ID,
             scheme = BuildConfig.AUTH0_SCHEME,
+            audience = BuildConfig.AUTH0_AUDIENCE,
         )
 
         /**

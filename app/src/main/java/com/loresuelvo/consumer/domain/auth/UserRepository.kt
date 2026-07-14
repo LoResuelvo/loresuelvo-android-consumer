@@ -7,6 +7,8 @@ package com.loresuelvo.consumer.domain.auth
  */
 interface UserRepository {
 
+    suspend fun getCurrentUser(): CurrentUserOutcome
+
     /**
      * Registers the authenticated user as a consumer in the backend.
      * Returns a [UserRegistrationOutcome] with the updated local

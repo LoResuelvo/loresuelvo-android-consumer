@@ -1,9 +1,12 @@
 package com.loresuelvo.consumer.ui.session
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +31,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val sessionStore: AuthSessionStore,
+    private val authProvider: AuthProvider,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(computeState(sessionStore.sessionFlow.value))
@@ -36,18 +40,32 @@ class SessionViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             sessionStore.sessionFlow.collect { session ->
-                _uiState.update { computeState(session) }
+                _uiState.update { current ->
+                    computeState(session).copy(
+                        signingOut = current.signingOut,
+                        error = current.error,
+                    )
+                }
             }
         }
     }
 
     /**
-     * Clears the cached session. Called from the `Home` screen on
-     * logout; the smart-router in `LoResuelvoNav` reacts to the
+     * Closes the Auth0 SSO session and only then clears the cached
+     * session. The smart-router in `LoResuelvoNav` reacts to the
      * resulting null session and pops back to `Welcome`.
      */
-    fun signOut() {
-        sessionStore.clearSession()
+    fun signOut(activityContext: Context) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(signingOut = true, error = null) }
+            when (authProvider.logout(activityContext)) {
+                LogoutOutcome.Success -> sessionStore.clearSession()
+                LogoutOutcome.Cancelled -> Unit
+                is LogoutOutcome.Failure ->
+                    _uiState.update { it.copy(error = SessionError.Logout) }
+            }
+            _uiState.update { it.copy(signingOut = false) }
+        }
     }
 
     private fun computeState(session: AuthSession?): SessionUiState =

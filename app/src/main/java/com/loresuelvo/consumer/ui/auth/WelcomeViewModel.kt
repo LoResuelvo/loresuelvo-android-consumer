@@ -4,9 +4,10 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.auth.AuthProvider
-import com.loresuelvo.consumer.domain.auth.AuthSessionStore
-import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
+import com.loresuelvo.consumer.domain.auth.SessionSynchronizationOutcome
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
+import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -18,7 +19,8 @@ import kotlinx.coroutines.launch
 
 /**
  * UDF ViewModel for the `Welcome` screen. Drives the IdP signup flow
- * via [AuthProvider] and persists the result on [AuthSessionStore].
+ * via [AuthProvider] and reconciles the result with the backend through
+ * [SyncAuthenticatedSessionUseCase].
  * It also loads the public service categories through
  * [GetCategoriesUseCase] to populate the illustrative chips.
  *
@@ -29,7 +31,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class WelcomeViewModel @Inject constructor(
     private val authProvider: AuthProvider,
-    private val sessionStore: AuthSessionStore,
+    private val syncAuthenticatedSession: SyncAuthenticatedSessionUseCase,
     private val getCategories: GetCategoriesUseCase,
 ) : ViewModel() {
 
@@ -63,23 +65,47 @@ class WelcomeViewModel @Inject constructor(
     }
 
     fun signup(activityContext: Context) {
+        authenticate(activityContext, authProvider::signup)
+    }
+
+    fun login(activityContext: Context) {
+        authenticate(activityContext, authProvider::login)
+    }
+
+    fun loginWithGoogle(activityContext: Context) {
+        authenticate(activityContext, authProvider::loginWithGoogle)
+    }
+
+    private fun authenticate(
+        activityContext: Context,
+        launch: suspend (Context) -> AuthenticationOutcome,
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = null) }
-            val outcome = authProvider.signup(activityContext)
-            when (outcome) {
-                is SignupOutcome.Success -> {
-                    sessionStore.saveSession(outcome.session)
-                    _uiState.update { it.copy(loading = false, error = null) }
-                }
-                SignupOutcome.Cancelled -> {
-                    _uiState.update { it.copy(loading = false, error = null) }
-                }
-                is SignupOutcome.Failed -> {
+            when (val outcome = launch(activityContext)) {
+                is AuthenticationOutcome.Success -> {
+                    val synchronized = syncAuthenticatedSession(outcome.session)
                     _uiState.update {
-                        it.copy(loading = false, error = outcome.message)
+                        it.copy(
+                            loading = false,
+                            error = synchronized.toWelcomeError(),
+                        )
                     }
+                }
+                AuthenticationOutcome.Cancelled -> {
+                    _uiState.update { it.copy(loading = false, error = null) }
+                }
+                is AuthenticationOutcome.Failure -> {
+                    _uiState.update { it.copy(loading = false, error = WelcomeError.Authentication) }
                 }
             }
         }
     }
+}
+
+private fun SessionSynchronizationOutcome.toWelcomeError(): WelcomeError? = when (this) {
+    is SessionSynchronizationOutcome.Success -> null
+    is SessionSynchronizationOutcome.Failure.Network -> WelcomeError.Network
+    is SessionSynchronizationOutcome.Failure.Server -> WelcomeError.Server(code)
+    is SessionSynchronizationOutcome.Failure.Unauthorized -> WelcomeError.Unauthorized
 }

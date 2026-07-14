@@ -19,17 +19,33 @@ data class Auth0Config(
     val domain: String,
     val clientId: String,
     val scheme: String,
+    val audience: String,
 )
 
 /**
- * Port for launching the Auth0 signup WebView. A fake implementation
+ * Port for launching Auth0 authentication and SSO logout. A fake implementation
  * lives in `Auth0AuthProviderTest`; the production implementation
  * [Auth0SdkWebAuthLauncher] is the only consumer in app code.
  */
 interface Auth0WebAuthLauncher {
+    fun startLogin(
+        context: Context,
+        callback: Callback<Credentials, AuthenticationException>,
+    )
+
     fun startSignup(
         context: Context,
         callback: Callback<Credentials, AuthenticationException>,
+    )
+
+    fun startGoogleLogin(
+        context: Context,
+        callback: Callback<Credentials, AuthenticationException>,
+    )
+
+    fun startLogout(
+        context: Context,
+        callback: Callback<Void?, AuthenticationException>,
     )
 }
 
@@ -44,19 +60,74 @@ class Auth0SdkWebAuthLauncher @Inject constructor(
     private val config: Auth0Config,
 ) : Auth0WebAuthLauncher {
 
+    override fun startLogin(
+        context: Context,
+        callback: Callback<Credentials, AuthenticationException>,
+    ) {
+        WebAuthProvider
+            .login(account())
+            .configureLogin(config)
+            .start(context, callback)
+    }
+
     override fun startSignup(
         context: Context,
         callback: Callback<Credentials, AuthenticationException>,
     ) {
-        val account = Auth0(config.clientId, config.domain)
         WebAuthProvider
-            .login(account)
-            .withScheme(config.scheme)
-            .withScreenHint("signup")
+            .login(account())
+            .configureSignup(config)
             .start(context, callback)
     }
+
+    override fun startGoogleLogin(
+        context: Context,
+        callback: Callback<Credentials, AuthenticationException>,
+    ) {
+        WebAuthProvider
+            .login(account())
+            .configureGoogleLogin(config)
+            .start(context, callback)
+    }
+
+    override fun startLogout(
+        context: Context,
+        callback: Callback<Void?, AuthenticationException>,
+    ) {
+        WebAuthProvider
+            .logout(account())
+            .configureLogout(config)
+            .start(context, callback)
+    }
+
+    private fun account(): Auth0 = Auth0(config.clientId, config.domain)
 }
+
+internal fun WebAuthProvider.Builder.configureLogin(
+    config: Auth0Config,
+): WebAuthProvider.Builder =
+    withScheme(config.scheme)
+        .withAudience(config.audience)
+
+internal fun WebAuthProvider.Builder.configureSignup(
+    config: Auth0Config,
+): WebAuthProvider.Builder =
+    withScheme(config.scheme)
+        .withAudience(config.audience)
+        .withScreenHint("signup")
+
+internal fun WebAuthProvider.Builder.configureGoogleLogin(
+    config: Auth0Config,
+): WebAuthProvider.Builder =
+    configureLogin(config)
+        .withConnection(GOOGLE_CONNECTION)
+
+internal fun WebAuthProvider.LogoutBuilder.configureLogout(
+    config: Auth0Config,
+): WebAuthProvider.LogoutBuilder = withScheme(config.scheme)
 
 private fun WebAuthProvider.Builder.withScreenHint(
     screenHint: String,
 ): WebAuthProvider.Builder = withParameters(mapOf("screen_hint" to screenHint))
+
+private const val GOOGLE_CONNECTION = "google-oauth2"

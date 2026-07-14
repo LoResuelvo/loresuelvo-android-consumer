@@ -14,6 +14,13 @@
     <string name="welcome_google">Continuar con Google</string>
     <string name="welcome_legal">Al continuar aceptás nuestros Términos de Servicio y Política de Privacidad.</string>
     <string name="welcome_categories_error">No pudimos cargar las categorías. Intentá de nuevo más tarde.</string>
+    <string name="welcome_auth_error">No pudimos iniciar sesión. Intentá de nuevo.</string>
+    <string name="welcome_auth_network_error">No pudimos conectarnos. Revisá tu conexión e intentá de nuevo.</string>
+    <string name="welcome_auth_server_error">El servicio no está disponible (código %1$d). Intentá más tarde.</string>
+    <string name="welcome_auth_unauthorized_error">Tu sesión no es válida. Volvé a iniciar sesión.</string>
+    <string name="home_greeting">Hola,</string>
+    <string name="home_logout">Cerrar sesión</string>
+    <string name="home_logout_error">No pudimos cerrar la sesión de Auth0. Intentá de nuevo.</string>
 
     <!-- Welcome · how it works -->
     <string name="welcome_step1_title">Contá tu problema</string>

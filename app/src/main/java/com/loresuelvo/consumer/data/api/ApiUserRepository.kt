@@ -1,7 +1,9 @@
 package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.mapper.toDto
+import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import kotlinx.serialization.json.Json
@@ -31,6 +33,25 @@ class ApiUserRepository @Inject constructor(
     private val sessionStore: AuthSessionStore,
     @Suppress("unused") private val json: Json,
 ) : com.loresuelvo.consumer.domain.auth.UserRepository {
+
+    override suspend fun getCurrentUser(): CurrentUserOutcome = try {
+        CurrentUserOutcome.Success(backendApi.getCurrentUser().toDomain())
+    } catch (e: Throwable) {
+        when (val error = e.toApiError()) {
+            is com.loresuelvo.consumer.domain.api.ApiError.Network ->
+                CurrentUserOutcome.Failure.Network(error.networkCause)
+            is com.loresuelvo.consumer.domain.api.ApiError.Unauthorized ->
+                CurrentUserOutcome.Failure.Unauthorized(error.errorMessage)
+            is com.loresuelvo.consumer.domain.api.ApiError.Server ->
+                if (error.code == 404) {
+                    CurrentUserOutcome.NotFound
+                } else {
+                    CurrentUserOutcome.Failure.Server(error.code, error.errorMessage)
+                }
+            is com.loresuelvo.consumer.domain.api.ApiError.Unknown ->
+                CurrentUserOutcome.Failure.Server(0, error.message ?: "Unknown error")
+        }
+    }
 
     override suspend fun registerConsumer(
         data: RegisterConsumerData,

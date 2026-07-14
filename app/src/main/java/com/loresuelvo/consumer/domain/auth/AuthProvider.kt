@@ -14,11 +14,8 @@ import android.content.Context
  * `@HiltViewModel`-clean.
  */
 interface AuthProvider {
-
-    /**
-     * Opens the IdP signup flow on [context]. Returns a typed
-     * [SignupOutcome] when the user dismisses the flow, succeeds, or
-     * the network fails. Never throws.
-     */
-    suspend fun signup(context: Context): SignupOutcome
+    suspend fun login(context: Context): AuthenticationOutcome
+    suspend fun signup(context: Context): AuthenticationOutcome
+    suspend fun loginWithGoogle(context: Context): AuthenticationOutcome
+    suspend fun logout(context: Context): LogoutOutcome
 }

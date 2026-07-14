@@ -16,7 +16,13 @@ import com.loresuelvo.consumer.domain.auth.AuthSession
 data class SessionUiState(
     val loading: Boolean = true,
     val session: AuthSession? = null,
+    val signingOut: Boolean = false,
+    val error: SessionError? = null,
 ) {
     val authenticated: Boolean get() = session != null
     val profileCompleted: Boolean get() = session?.user?.isProfileComplete() == true
+}
+
+sealed interface SessionError {
+    data object Logout : SessionError
 }

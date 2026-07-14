@@ -5,7 +5,8 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.result.Credentials
 import com.loresuelvo.consumer.domain.auth.AuthProvider
-import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
+import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -25,34 +26,66 @@ class Auth0AuthProvider @Inject constructor(
     private val webAuthLauncher: Auth0WebAuthLauncher,
 ) : AuthProvider {
 
-    override suspend fun signup(context: Context): SignupOutcome =
+    override suspend fun login(context: Context): AuthenticationOutcome =
+        authenticate { callback -> webAuthLauncher.startLogin(context, callback) }
+
+    override suspend fun signup(context: Context): AuthenticationOutcome =
+        authenticate { callback -> webAuthLauncher.startSignup(context, callback) }
+
+    override suspend fun loginWithGoogle(context: Context): AuthenticationOutcome =
+        authenticate { callback -> webAuthLauncher.startGoogleLogin(context, callback) }
+
+    override suspend fun logout(context: Context): LogoutOutcome =
         suspendCancellableCoroutine { cont ->
-            webAuthLauncher.startSignup(
+            webAuthLauncher.startLogout(
                 context = context,
-                callback = Auth0SignupCallback(credentialsMapper, cont),
+                callback = Auth0LogoutCallback(cont),
             )
         }
+
+    private suspend fun authenticate(
+        launch: (Callback<Credentials, AuthenticationException>) -> Unit,
+    ): AuthenticationOutcome = suspendCancellableCoroutine { cont ->
+        launch(Auth0AuthenticationCallback(credentialsMapper, cont))
+    }
 }
 
-private class Auth0SignupCallback(
+private class Auth0AuthenticationCallback(
     private val credentialsMapper: Auth0CredentialsMapper,
-    private val cont: kotlinx.coroutines.CancellableContinuation<SignupOutcome>,
+    private val cont: kotlinx.coroutines.CancellableContinuation<AuthenticationOutcome>,
 ) : Callback<Credentials, AuthenticationException> {
 
     override fun onSuccess(result: Credentials) {
         val session = credentialsMapper.toSession(result)
         if (session != null) {
-            cont.resume(SignupOutcome.Success(session))
+            cont.resume(AuthenticationOutcome.Success(session))
         } else {
-            cont.resume(SignupOutcome.Failed("No pudimos completar el registro"))
+            cont.resume(AuthenticationOutcome.Failure.Provider(null))
         }
     }
 
     override fun onFailure(error: AuthenticationException) {
         if (error.getCode() == "a0.authentication_canceled") {
-            cont.resume(SignupOutcome.Cancelled)
+            cont.resume(AuthenticationOutcome.Cancelled)
         } else {
-            cont.resume(SignupOutcome.Failed("No pudimos completar el registro"))
+            cont.resume(AuthenticationOutcome.Failure.Provider(error))
+        }
+    }
+}
+
+private class Auth0LogoutCallback(
+    private val cont: kotlinx.coroutines.CancellableContinuation<LogoutOutcome>,
+) : Callback<Void?, AuthenticationException> {
+
+    override fun onSuccess(result: Void?) {
+        cont.resume(LogoutOutcome.Success)
+    }
+
+    override fun onFailure(error: AuthenticationException) {
+        if (error.getCode() == "a0.authentication_canceled") {
+            cont.resume(LogoutOutcome.Cancelled)
+        } else {
+            cont.resume(LogoutOutcome.Failure.Provider(error))
         }
     }
 }
