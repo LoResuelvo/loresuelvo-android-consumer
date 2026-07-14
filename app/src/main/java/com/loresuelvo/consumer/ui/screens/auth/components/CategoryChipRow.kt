@@ -19,6 +19,8 @@ import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
  * Horizontally scrollable row of illustrative service categories.
  * Chips are display-only (disabled) on the Welcome screen: they make
  * the product scope tangible without promising pre-login navigation.
+ * The interactive grid lives on the Home screen — see
+ * `ui/screens/home/components/CategoryGrid.kt`.
  */
 @Composable
 fun CategoryChipRow(

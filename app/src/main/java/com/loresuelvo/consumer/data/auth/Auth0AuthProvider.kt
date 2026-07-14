@@ -56,6 +56,7 @@ private class Auth0AuthenticationCallback(
 ) : Callback<Credentials, AuthenticationException> {
 
     override fun onSuccess(result: Credentials) {
+        android.util.Log.i("Auth0Sdk", "onSuccess idToken len=${result.idToken?.length} accessToken len=${result.accessToken?.length}")
         val session = credentialsMapper.toSession(result)
         if (session != null) {
             cont.resume(AuthenticationOutcome.Success(session))
@@ -65,6 +66,11 @@ private class Auth0AuthenticationCallback(
     }
 
     override fun onFailure(error: AuthenticationException) {
+        android.util.Log.e(
+            "Auth0Sdk",
+            "onFailure code=${error.getCode()} description=${error.getDescription()} " +
+                "message=${error.message} cause=${error.cause}",
+        )
         if (error.getCode() == "a0.authentication_canceled") {
             cont.resume(AuthenticationOutcome.Cancelled)
         } else {

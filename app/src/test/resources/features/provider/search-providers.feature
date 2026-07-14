@@ -36,7 +36,6 @@ Feature: Search providers by category
     Then I am taken to the providers list for category "Electricidad"
     And I see the provider "Laura Gómez" for category "Electricidad"
 
-  @wip
   Scenario: View providers for a category with multiple providers
     When I tap the "Plomería" category card
     Then I am taken to the providers list for category "Plomería"

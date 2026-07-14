@@ -3,10 +3,12 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
 import com.loresuelvo.consumer.data.api.dto.MessageResponseDto
+import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 /**
  * Retrofit-typed contract for the backend's consumer endpoints. The
@@ -41,4 +43,14 @@ interface BackendApi {
      */
     @GET("categories")
     suspend fun getCategories(): List<CategoryDto>
+
+    /**
+     * `GET /providers?category_id=X` — public service providers for
+     * a category (no auth required, same as `/categories`). Returns a
+     * JSON array of [ProviderDto]; non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @GET("providers")
+    suspend fun getProviders(@Query("category_id") categoryId: Int): List<ProviderDto>
 }

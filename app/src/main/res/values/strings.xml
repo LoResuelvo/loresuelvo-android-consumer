@@ -18,7 +18,6 @@
     <string name="welcome_auth_network_error">No pudimos conectarnos. Revisá tu conexión e intentá de nuevo.</string>
     <string name="welcome_auth_server_error">El servicio no está disponible (código %1$d). Intentá más tarde.</string>
     <string name="welcome_auth_unauthorized_error">Tu sesión no es válida. Volvé a iniciar sesión.</string>
-    <string name="home_greeting">Hola,</string>
     <string name="home_logout">Cerrar sesión</string>
     <string name="home_logout_error">No pudimos cerrar la sesión de Auth0. Intentá de nuevo.</string>
 
@@ -59,4 +58,23 @@
     <string name="complete_profile_error_server">No pudimos completar el registro (%1$d). %2$s</string>
     <!-- Unauthorized: %1$s is the message from the server. -->
     <string name="complete_profile_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión. (%1$s)</string>
+    <!-- Providers screen -->
+    <string name="professionals_empty_title">Sin profesionales en %1$s</string>
+    <string name="professionals_empty_body">Todavía no hay técnicos disponibles para esta categoría. Probá con otra.</string>
+    <string name="professionals_error_title">No pudimos cargar los profesionales</string>
+    <string name="professionals_error_body">Revisá tu conexión e intentá de nuevo.</string>
+    <string name="professionals_retry">Reintentar</string>
+    <!-- Home screen -->
+    <string name="home_greeting">Hola,</string>
+    <string name="home_ai_search_hint">Informar tu problema a la IA</string>
+    <string name="home_section_categories">¿Qué necesitás arreglar?</string>
+    <string name="home_section_categories_link">Ver todas</string>
+    <string name="home_section_requests">Solicitudes en curso</string>
+    <string name="home_section_requests_link">Ver todas</string>
+    <string name="home_section_diagnoses">Diagnósticos recientes</string>
+    <string name="home_diagnoses_empty">Sin diagnósticos recientes</string>
+    <string name="home_request_status_on_the_way">En camino</string>
+    <string name="home_request_rating">★ %1$.1f (%2$d reseñas)</string>
+    <string name="home_notifications_content_description">Notificaciones</string>
+    <string name="home_search_send_content_description">Enviar problema</string>
 </resources>

@@ -14,7 +14,7 @@ package com.loresuelvo.consumer.domain.provider
  * round-trip to the categories endpoint.
  */
 data class Provider(
-    val id: String,
+    val id: Int,
     val name: String,
     val surname: String,
     val categoryId: Int,

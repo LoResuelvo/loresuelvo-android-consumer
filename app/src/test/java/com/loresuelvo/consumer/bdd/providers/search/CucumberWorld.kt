@@ -11,7 +11,6 @@ import com.loresuelvo.consumer.domain.provider.ProvidersOutcome
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.domain.usecase.provider.GetProvidersByCategoryUseCase
-import com.loresuelvo.consumer.ui.auth.CompleteProfileSessionStoreStub
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -116,8 +115,11 @@ class CucumberWorld : AutoCloseable {
 
     fun loadProviders(table: List<Map<String, String>>) {
         providers.clear()
+        val idMap = mutableMapOf<String, Int>()
+        var nextId = 1
         for (row in table) {
-            val id = row.getValue("id")
+            val seedId = row.getValue("id")
+            val id = idMap.getOrPut(seedId) { nextId++ }
             val name = row.getValue("name")
             val surname = row.getValue("surname")
             val categoryName = row.getValue("category_name")

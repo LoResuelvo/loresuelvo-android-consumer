@@ -42,13 +42,12 @@ import java.util.concurrent.TimeUnit
 class ApiUserRepositoryIntegrationTest {
 
     private lateinit var server: MockWebServer
-    private lateinit var repository: ApiUserRepository
-    private lateinit var sessionStore: AuthSessionStore
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
     }
-
+    private lateinit var repository: ApiUserRepository
+    private lateinit var sessionStore: AuthSessionStore
     @Before
     fun setUp() {
         server = MockWebServer()
@@ -81,7 +80,6 @@ class ApiUserRepositoryIntegrationTest {
         repository = ApiUserRepository(
             backendApi = backendApi,
             sessionStore = sessionStore,
-            json = json,
         )
     }
 

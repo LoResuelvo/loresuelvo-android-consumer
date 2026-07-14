@@ -18,7 +18,6 @@
     <string name="welcome_auth_network_error">We couldn\'t connect. Check your connection and try again.</string>
     <string name="welcome_auth_server_error">The service is unavailable (code %1$d). Try again later.</string>
     <string name="welcome_auth_unauthorized_error">Your session is invalid. Please sign in again.</string>
-    <string name="home_greeting">Hello,</string>
     <string name="home_logout">Sign out</string>
     <string name="home_logout_error">We couldn\'t sign you out of Auth0. Please try again.</string>
 
@@ -57,4 +56,23 @@
     <string name="complete_profile_error_network">We could not reach the server. Check your connection and try again.</string>
     <string name="complete_profile_error_server">We could not complete the registration (%1$d). %2$s</string>
     <string name="complete_profile_error_unauthorized">Your session expired. Please sign in again. (%1$s)</string>
+    <!-- Providers screen -->
+    <string name="professionals_empty_title">No professionals in %1$s</string>
+    <string name="professionals_empty_body">There are no pros available in this category yet. Try another one.</string>
+    <string name="professionals_error_title">We couldn\'t load the professionals</string>
+    <string name="professionals_error_body">Check your connection and try again.</string>
+    <string name="professionals_retry">Retry</string>
+    <!-- Home screen -->
+    <string name="home_greeting">Hi,</string>
+    <string name="home_ai_search_hint">Describe your problem to the AI</string>
+    <string name="home_section_categories">What do you need fixed?</string>
+    <string name="home_section_categories_link">See all</string>
+    <string name="home_section_requests">Active requests</string>
+    <string name="home_section_requests_link">See all</string>
+    <string name="home_section_diagnoses">Recent diagnoses</string>
+    <string name="home_diagnoses_empty">No recent diagnoses</string>
+    <string name="home_request_status_on_the_way">On the way</string>
+    <string name="home_request_rating">★ %1$.1f (%2$d reviews)</string>
+    <string name="home_notifications_content_description">Notifications</string>
+    <string name="home_search_send_content_description">Send problem</string>
 </resources>

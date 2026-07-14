@@ -31,7 +31,6 @@ import javax.inject.Singleton
 class ApiUserRepository @Inject constructor(
     private val backendApi: BackendApi,
     private val sessionStore: AuthSessionStore,
-    @Suppress("unused") private val json: Json,
 ) : com.loresuelvo.consumer.domain.auth.UserRepository {
 
     override suspend fun getCurrentUser(): CurrentUserOutcome = try {

@@ -13,6 +13,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -53,6 +54,19 @@ object NetworkModule {
         .writeTimeout(ApiConfig.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .callTimeout(ApiConfig.CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .addInterceptor(authInterceptor)
+        .also {
+            // Body-level logging in debug builds. Without this interceptor
+            // we'd have no visibility into what /consumers actually sent or
+            // got back when debugging Auth0 + JWT issues in the welcome
+            // flow. Throttled to debug builds (BuildConfig.DEBUG is
+            // generated; missing here would be a compile error).
+            if (BuildConfig.DEBUG) {
+                val logger = HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                }
+                it.addInterceptor(logger)
+            }
+        }
         .authenticator(retryAuthenticator)
         .build()
 

@@ -16,9 +16,11 @@ import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.ui.auth.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
+import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
+import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import com.loresuelvo.consumer.ui.session.SessionViewModel
 
 /**
@@ -65,7 +67,8 @@ fun LoResuelvoNav() {
         startDestination = Route.Welcome.path,
         welcome = { WelcomeRoute() },
         completeProfile = { CompleteProfileRoute(navController = navController) },
-        home = { HomeRoute() },
+        home = { HomeRoute(navController = navController) },
+        professionals = { categoryId, categoryName -> ProfessionalsRoute(categoryId, categoryName) },
     )
 }
 
@@ -125,22 +128,55 @@ private fun CompleteProfileRoute(
 }
 
 /**
- * Home screen — phase 9 of the master plan will replace this with a
- * real screen. For now we read the current [SessionUiState]
- * (provided by the same `SessionViewModel` the navigation graph
- * uses) and performs the Auth0 + local logout sequence.
+ * Provider list for a single category. Reads the `categoryId` and
+ * `categoryName` from the back-stack entry and forwards them to the
+ * [ProfessionalsViewModel] on first composition; subsequent
+ * navigation to the same category reuses the same VM instance.
  */
 @Composable
-private fun HomeRoute() {
-    val sessionViewModel: SessionViewModel = hiltViewModel()
-    val state by sessionViewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    state.session?.let { session ->
-        HomeScreen(
-            authSession = session,
-            signingOut = state.signingOut,
-            logoutError = state.error,
-            onLogoutClick = { sessionViewModel.signOut(context) },
-        )
+private fun ProfessionalsRoute(categoryId: Int, categoryName: String) {
+    val viewModel: ProfessionalsViewModel = hiltViewModel()
+    androidx.compose.runtime.LaunchedEffect(categoryId, categoryName) {
+        viewModel.loadProviders(categoryId, categoryName)
     }
+    val state by viewModel.uiState.collectAsState()
+    com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreen(
+        state = state,
+        onRetryClick = { viewModel.loadProviders(categoryId, categoryName) },
+    )
+}
+
+/**
+ * Home screen — entry point of the authenticated consumer. Reads the
+ * navigation session (via `SessionViewModel`) and delegates it to the
+ * new `HomeScreen` as a plain `displayName`. Category clicks navigate
+ * to the [Route.Professionals] route; the rest of the actions are
+ * placeholders for upcoming features (AI search, notifications,
+ * logout).
+ */
+@Composable
+private fun HomeRoute(
+    navController: androidx.navigation.NavHostController,
+) {
+    val sessionViewModel: SessionViewModel = hiltViewModel()
+    val homeViewModel: HomeViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val sessionState by sessionViewModel.uiState.collectAsState()
+    // HomeViewModel kicks off `loadCategories()` in its `init { }`
+    // block, so we don't repeat it via LaunchedEffect here.
+    val homeState by homeViewModel.uiState.collectAsState()
+
+    HomeScreen(
+        state = homeState,
+        displayName = sessionState.session?.user?.firstName,
+        onCategoryClick = { categoryId, categoryName ->
+            navController.navigate(
+                Route.Professionals.buildPath(categoryId, categoryName),
+            )
+        },
+        onNotificationsClick = { /* TODO */ },
+        onAiSendClick = { /* TODO */ },
+        onRetryClick = { homeViewModel.loadCategories() },
+        onLogoutClick = { sessionViewModel.signOut(context) },
+    )
 }
