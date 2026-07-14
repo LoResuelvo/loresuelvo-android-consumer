@@ -117,7 +117,7 @@ class CompleteProfileScreenAcceptanceTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithText("Hola,")
+            .onNodeWithText(localizedString(R.string.home_greeting))
             .assertIsDisplayed()
 
         composeTestRule
@@ -193,7 +193,7 @@ class CompleteProfileScreenAcceptanceTest {
             .assertCountEquals(0)
 
         composeTestRule
-            .onNodeWithText("Hola,")
+            .onNodeWithText(localizedString(R.string.home_greeting))
             .assertIsDisplayed()
 
         composeTestRule
@@ -262,6 +262,9 @@ class CompleteProfileScreenAcceptanceTest {
 
     @Singleton
     class SuccessfulUserRepository @Inject constructor() : UserRepository {
+        override suspend fun getCurrentUser(): com.loresuelvo.consumer.domain.auth.CurrentUserOutcome =
+            com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.NotFound
+
         override suspend fun registerConsumer(
             data: RegisterConsumerData,
         ): UserRegistrationOutcome = UserRegistrationOutcome.Success(

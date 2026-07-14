@@ -5,7 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.result.Credentials
-import com.loresuelvo.consumer.domain.auth.SignupOutcome
+import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
+import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
@@ -70,8 +71,8 @@ class Auth0AuthProviderTest {
 
         val outcome = result.await()
 
-        assertTrue("expected SignupOutcome.Success, got $outcome", outcome is SignupOutcome.Success)
-        val session = (outcome as SignupOutcome.Success).session
+        assertTrue("expected AuthenticationOutcome.Success, got $outcome", outcome is AuthenticationOutcome.Success)
+        val session = (outcome as AuthenticationOutcome.Success).session
         assertEquals("Andres", session.user.displayName)
         assertEquals("fake-access", session.accessToken)
     }
@@ -92,14 +93,32 @@ class Auth0AuthProviderTest {
 
         val outcome = result.await()
 
-        assertTrue("expected SignupOutcome.Failed, got $outcome", outcome is SignupOutcome.Failed)
+        assertTrue(
+            "expected AuthenticationOutcome.Failure.Provider, got $outcome",
+            outcome is AuthenticationOutcome.Failure.Provider,
+        )
         assertEquals(
-            "No pudimos completar el registro",
-            (outcome as SignupOutcome.Failed).message,
+            "Auth0 unavailable",
+            (outcome as AuthenticationOutcome.Failure.Provider).cause?.message,
         )
     }
 
-    // The `SignupOutcome.Cancelled` branch is reached only when
+    @Test
+    fun logout_success_notifies_completed_logout() = runBlocking {
+        val launcher = FakeAuth0WebAuthLauncher()
+        val authProvider = Auth0AuthProvider(
+            credentialsMapper = Auth0CredentialsMapper(),
+            webAuthLauncher = launcher,
+        )
+
+        val result = async { authProvider.logout(context) }
+        while (!launcher.logoutStarted) yield()
+        launcher.succeedLogout()
+
+        assertEquals(LogoutOutcome.Success, result.await())
+    }
+
+    // The `AuthenticationOutcome.Cancelled` branch is reached only when
     // `AuthenticationException.getCode() == "a0.authentication_canceled"`,
     // which Auth0 SDK sets internally on user-cancel. The SDK does
     // not expose a constructor that lets us set that code, so the
@@ -109,7 +128,18 @@ class Auth0AuthProviderTest {
 
         var signupStarted = false
             private set
+        var logoutStarted = false
+            private set
         private var callback: Callback<Credentials, AuthenticationException>? = null
+        private var logoutCallback: Callback<Void?, AuthenticationException>? = null
+
+        override fun startLogin(
+            context: Context,
+            callback: Callback<Credentials, AuthenticationException>,
+        ) {
+            signupStarted = true
+            this.callback = callback
+        }
 
         override fun startSignup(
             context: Context,
@@ -119,12 +149,32 @@ class Auth0AuthProviderTest {
             this.callback = callback
         }
 
+        override fun startGoogleLogin(
+            context: Context,
+            callback: Callback<Credentials, AuthenticationException>,
+        ) {
+            signupStarted = true
+            this.callback = callback
+        }
+
+        override fun startLogout(
+            context: Context,
+            callback: Callback<Void?, AuthenticationException>,
+        ) {
+            logoutStarted = true
+            logoutCallback = callback
+        }
+
         fun succeedWith(credentials: Credentials) {
             callback?.onSuccess(credentials)
         }
 
         fun failWith(error: AuthenticationException) {
             callback?.onFailure(error)
+        }
+
+        fun succeedLogout() {
+            logoutCallback?.onSuccess(null)
         }
     }
 

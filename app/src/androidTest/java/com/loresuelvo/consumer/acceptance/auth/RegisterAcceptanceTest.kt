@@ -130,7 +130,7 @@ class RegisterWithAuth0AcceptanceTest {
             composeTestRule.activity.setContent {
 
                 WelcomeScreen(
-                    errorMessage = "No pudimos completar el registro"
+                    error = com.loresuelvo.consumer.ui.auth.WelcomeError.Authentication
                 )
             }
         }

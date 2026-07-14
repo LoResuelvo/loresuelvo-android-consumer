@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
@@ -87,6 +88,63 @@ class ApiUserRepositoryIntegrationTest {
     @After
     fun tearDown() {
         server.shutdown()
+    }
+
+    @Test
+    fun get_current_user_200_returns_persisted_backend_profile() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """{"AuthID":"auth0|123","Name":"Ana","Surname":"Perez","Email":"ana@example.com","Role":"consumer"}""",
+                ),
+        )
+
+        val outcome = repository.getCurrentUser()
+
+        val recorded = server.takeRequest()
+        assertEquals("GET", recorded.method)
+        assertEquals("/me", recorded.path)
+        assertEquals("Bearer test-token", recorded.getHeader("Authorization"))
+        assertTrue(outcome is CurrentUserOutcome.Success)
+        val user = (outcome as CurrentUserOutcome.Success).user
+        assertEquals("Ana Perez", user.displayName)
+        assertEquals("Ana", user.firstName)
+        assertEquals("Perez", user.lastName)
+        assertEquals("ana@example.com", user.email)
+    }
+
+    @Test
+    fun get_current_user_404_returns_NotFound_for_new_account() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(404)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"error":"user not found"}"""),
+        )
+
+        val outcome = repository.getCurrentUser()
+
+        assertEquals(CurrentUserOutcome.NotFound, outcome)
+    }
+
+    @Test
+    fun get_current_user_401_returns_Unauthorized() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(401)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"error":"invalid_token","message":"Failed to validate JWT."}"""),
+        )
+
+        val outcome = repository.getCurrentUser()
+
+        assertTrue(outcome is CurrentUserOutcome.Failure.Unauthorized)
+        assertEquals(
+            "Failed to validate JWT.",
+            (outcome as CurrentUserOutcome.Failure.Unauthorized).message,
+        )
     }
 
     @Test

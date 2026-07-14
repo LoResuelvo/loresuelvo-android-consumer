@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.bdd.onboarding.registerconsumer
 
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
+import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
@@ -14,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * layer to assert that the right body — and only one — was sent.
  */
 class FakeUserRepository : UserRepository {
+
+    override suspend fun getCurrentUser(): CurrentUserOutcome = CurrentUserOutcome.NotFound
 
     val invocations: AtomicInteger = AtomicInteger(0)
     private val _captured: MutableList<RegisterConsumerData> = mutableListOf()

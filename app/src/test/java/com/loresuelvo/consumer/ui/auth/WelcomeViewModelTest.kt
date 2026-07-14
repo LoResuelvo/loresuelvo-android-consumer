@@ -1,11 +1,17 @@
 package com.loresuelvo.consumer.ui.auth
 
+import android.content.Context
+import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
 import com.loresuelvo.consumer.domain.auth.AuthProvider
-import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.SessionSynchronizationOutcome
+import com.loresuelvo.consumer.domain.auth.User
+import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -32,8 +38,9 @@ class WelcomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val authProvider = mockk<AuthProvider>(relaxed = true)
-    private val sessionStore = mockk<AuthSessionStore>(relaxed = true)
     private val getCategories = mockk<GetCategoriesUseCase>()
+    private val syncSession = mockk<SyncAuthenticatedSessionUseCase>()
+    private val context = mockk<Context>()
 
     @Before
     fun setUp() {
@@ -46,7 +53,63 @@ class WelcomeViewModelTest {
     }
 
     private fun createViewModel() =
-        WelcomeViewModel(authProvider, sessionStore, getCategories)
+        WelcomeViewModel(authProvider, syncSession, getCategories)
+
+    private val authenticatedSession = AuthSession(
+        user = User(displayName = "Ana", email = "ana@example.com"),
+        accessToken = "access-token",
+    )
+
+    @Test
+    fun login_uses_login_flow_and_synchronizes_backend_profile() = runTest {
+        coEvery { getCategories() } returns CategoriesOutcome.Success(emptyList())
+        coEvery { authProvider.login(context) } returns
+            AuthenticationOutcome.Success(authenticatedSession)
+        coEvery { syncSession(authenticatedSession) } returns
+            SessionSynchronizationOutcome.Success(authenticatedSession)
+
+        val viewModel = createViewModel()
+        viewModel.login(context)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { authProvider.login(context) }
+        coVerify(exactly = 0) { authProvider.signup(any()) }
+        coVerify(exactly = 1) { syncSession(authenticatedSession) }
+        assertEquals(false, viewModel.uiState.value.loading)
+    }
+
+    @Test
+    fun signup_uses_signup_flow_and_synchronizes_backend_profile() = runTest {
+        coEvery { getCategories() } returns CategoriesOutcome.Success(emptyList())
+        coEvery { authProvider.signup(context) } returns
+            AuthenticationOutcome.Success(authenticatedSession)
+        coEvery { syncSession(authenticatedSession) } returns
+            SessionSynchronizationOutcome.Success(authenticatedSession)
+
+        val viewModel = createViewModel()
+        viewModel.signup(context)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { authProvider.signup(context) }
+        coVerify(exactly = 0) { authProvider.login(any()) }
+        coVerify(exactly = 1) { syncSession(authenticatedSession) }
+    }
+
+    @Test
+    fun google_action_uses_google_authentication_flow() = runTest {
+        coEvery { getCategories() } returns CategoriesOutcome.Success(emptyList())
+        coEvery { authProvider.loginWithGoogle(context) } returns
+            AuthenticationOutcome.Success(authenticatedSession)
+        coEvery { syncSession(authenticatedSession) } returns
+            SessionSynchronizationOutcome.Success(authenticatedSession)
+
+        val viewModel = createViewModel()
+        viewModel.loginWithGoogle(context)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { authProvider.loginWithGoogle(context) }
+        coVerify(exactly = 1) { syncSession(authenticatedSession) }
+    }
 
     @Test
     fun loads_categories_into_Ready_state_on_success() = runTest {
