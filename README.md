@@ -42,9 +42,12 @@ sdkmanager --version
    AUTH0_DOMAIN=loresuelvo-dev.auth0.com
    AUTH0_CLIENT_ID=tu_client_id_dev
    AUTH0_SCHEME=com.loresuelvo.consumer
+   AUTH0_AUDIENCE=http://localhost:8080
    API_URL=http://10.0.2.2:8080
    ```
-   Para `staging` y `prod`, usar `AUTH0_DOMAIN_STAGING`, `AUTH0_CLIENT_ID_STAGING`, `AUTH0_SCHEME_STAGING`, `API_URL_STAGING`, etc.
+   `AUTH0_AUDIENCE` es el identificador lógico de la API registrado en Auth0; no tiene que ser una URL alcanzable. En un teléfono físico, `API_URL` sí debe apuntar a una dirección alcanzable de la PC, por ejemplo `http://192.168.1.41:8080`.
+
+   Para `staging` y `prod`, usar `AUTH0_DOMAIN_STAGING`, `AUTH0_CLIENT_ID_STAGING`, `AUTH0_SCHEME_STAGING`, `AUTH0_AUDIENCE_STAGING`, `API_URL_STAGING`, etc.
 3. `./gradlew :app:assembleDevDebug` para verificar que compila.
 
 ---
@@ -88,6 +91,22 @@ Con la PC y el celular en la misma red Wi-Fi:
    adb devices
    ```
 5. Instalar: `./gradlew installDevDebug` o `make build && adb install -r app/build/outputs/apk/dev/debug/app-dev-debug.apk`.
+
+### API local desde un teléfono físico
+
+Con el teléfono conectado por ADB, la opción más simple evita configurar firewall o port forwarding en Windows:
+
+```bash
+adb reverse tcp:8080 tcp:8080
+```
+
+Luego usar en `local.properties`:
+
+```properties
+API_URL=http://127.0.0.1:8080
+```
+
+La regla `adb reverse` dura mientras siga activa la conexión ADB y debe repetirse después de reconectar o reiniciar el dispositivo. La API debe estar escuchando en el puerto `8080` de la máquina de desarrollo.
 
 Desconectar: `adb disconnect` (o `adb disconnect <IP>:<PUERTO>`).
 

@@ -182,10 +182,12 @@ README.md                                    # Setup + comandos + troubleshootin
 
 ### Seguridad
 
-- Cero secretos en código. Las credenciales de Auth0 (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_SCHEME`) y la URL del backend (`API_URL`) se leen de `BuildConfig` con fallbacks; los valores reales vienen de `local.properties` o del pipeline. Ver `app/build.gradle.kts:34-39` (`envVar(...)` con prioridad `local.properties` > gradle property > env > default).
+- Cero secretos en código. La configuración pública de Auth0 (`AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, `AUTH0_SCHEME`, `AUTH0_AUDIENCE`) y la URL del backend (`API_URL`) se leen de `BuildConfig` con fallbacks; los valores reales vienen de `local.properties` o del pipeline. `AUTH0_AUDIENCE` debe coincidir exactamente con el Identifier lógico de la API que valida Go, mientras `API_URL` es el endpoint de red alcanzable desde el dispositivo. Ver `app/build.gradle.kts` (`envVar(...)` con prioridad `local.properties` > gradle property > env > default).
 - No commitear `local.properties`. Está en `.gitignore`.
 - Tokens: nunca se loguean, nunca se persisten en `SharedPreferences` plano. `EncryptedAuthSessionStore` usa `EncryptedSharedPreferences` (AES256_GCM/SIV). Ver `data/auth/EncryptedSessionPrefs.kt:8-20`.
-- **Cleartext HTTP**: bloqueado por defecto (`targetSdk 35`). Solo el flavor `dev` permite texto plano mediante `app/src/dev/res/xml/network_security_config.xml` (overlay via `app/src/dev/AndroidManifest.xml`). Para apuntar a una API local de LAN, setear `API_URL=http://<ip-de-tu-host>:8080` en `local.properties` y reconstruir el `devDebug`. **Staging/prod quedan HTTPS-only** (no heredan ese config).
+- **Fuente de verdad del perfil**: después de cada autenticación exitosa con Auth0, sincronizar contra `GET /me`. Un `200` reemplaza los claims provisionales por el perfil persistido de la API; un `404` identifica una cuenta nueva que debe completar onboarding. No inferir que falta el perfil solo porque el ID token no incluya nombre/apellido.
+- **Logout completo**: cerrar primero la sesión SSO de Auth0 mediante Universal Login y limpiar la sesión local solo si ese cierre finaliza correctamente. Si se cancela o falla, conservar la sesión local y mostrar un error reintentable.
+- **Cleartext HTTP**: bloqueado por defecto (`targetSdk 35`). Solo el flavor `dev` permite texto plano mediante `app/src/dev/res/xml/network_security_config.xml` (overlay via `app/src/dev/AndroidManifest.xml`). Para un teléfono físico conectado por ADB, preferir `adb reverse tcp:8080 tcp:8080` + `API_URL=http://127.0.0.1:8080`; la regla debe recrearse después de reconectar. Para una API local de LAN, usar `API_URL=http://<ip-de-tu-host>:8080`. Reconstruir siempre `devDebug` después de cambiar la URL. **Staging/prod quedan HTTPS-only** (no heredan ese config).
 
 ### Topología (regla de `MainActivity`)
 
