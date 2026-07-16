@@ -31,7 +31,7 @@ fun CategoryGrid(
         items(items = categories, key = { it.id }) { category ->
             CategoryGridItem(
                 name = category.name,
-                iconResId = categoryIconRes(category),
+                icon = categoryIconRes(category),
                 onClick = { onCategoryClick(category.id, category.name) },
             )
         }
