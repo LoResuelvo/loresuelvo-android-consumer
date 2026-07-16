@@ -75,7 +75,7 @@ fun HomeScreen(
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         HomeHeader(
             displayName = displayName,
