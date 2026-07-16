@@ -18,13 +18,12 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.components.branding.AppLogo
 
 /**
- * Header block for the CompleteProfile screen: a small logo at the
- * top and the hero copy (title + subtitle) that frames the form.
+ * Header block for the CompleteProfile screen: a 96dp logo and
+ * the hero copy (title + subtitle) that frames the form.
  *
  * Stateless: every value comes from `strings.xml` (es + en). Colors
  * follow the active MaterialTheme so the header reads correctly on
- * the light surface that the screen now uses (replacing the
- * pre-redesign dark gradient).
+ * the light surface that the screen uses after the redesign.
  */
 @Composable
 fun ProfileHeader(modifier: Modifier = Modifier) {
@@ -33,13 +32,13 @@ fun ProfileHeader(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        AppLogo(size = 48.dp)
+        AppLogo(size = 96.dp)
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(6.dp))
 
         Text(
             text = stringResource(R.string.complete_profile_hero_title),
-            style = MaterialTheme.typography.displaySmall,
+            style = MaterialTheme.typography.headlineMedium,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
@@ -48,10 +47,10 @@ fun ProfileHeader(modifier: Modifier = Modifier) {
 
         Text(
             text = stringResource(R.string.complete_profile_hero_subtitle),
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
-            lineHeight = 24.sp,
+            lineHeight = 22.sp,
         )
     }
 }

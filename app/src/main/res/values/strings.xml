@@ -41,14 +41,12 @@
 
 
     <!-- CompleteProfile screen -->
-    <string name="complete_profile_hero_title">Ya casi estamos 👋</string>
-    <string name="complete_profile_hero_subtitle">Contanos cómo querés que te llamen para encontrar profesionales cerca tuyo.</string>
+    <string name="complete_profile_hero_title">Ya casi estamos.</string>
+    <string name="complete_profile_hero_subtitle">Necesitamos algunos datos para completar tu perfil.</string>
     <string name="complete_profile_field_first_name">Nombre</string>
     <string name="complete_profile_field_last_name">Apellido</string>
-    <string name="complete_profile_field_first_name_placeholder">Ej. Juan</string>
-    <string name="complete_profile_field_last_name_placeholder">Ej. Pérez</string>
     <string name="complete_profile_button_continue">Continuar</string>
-    <string name="complete_profile_footer">Tus datos serán visibles para los profesionales que acepten tus solicitudes.</string>
+    <string name="complete_profile_footer">Tu nombre será visible para los profesionales que acepten tus solicitudes.</string>
 
     <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">El nombre es obligatorio</string>

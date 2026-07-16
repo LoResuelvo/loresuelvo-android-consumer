@@ -41,14 +41,12 @@
 
 
     <!-- CompleteProfile screen -->
-    <string name="complete_profile_hero_title">Almost there 👋</string>
-    <string name="complete_profile_hero_subtitle">Tell us how you\'d like to be addressed so we can match you with pros nearby.</string>
+    <string name="complete_profile_hero_title">Almost there.</string>
+    <string name="complete_profile_hero_subtitle">We need a few details to complete your profile.</string>
     <string name="complete_profile_field_first_name">First name</string>
     <string name="complete_profile_field_last_name">Last name</string>
-    <string name="complete_profile_field_first_name_placeholder">e.g. John</string>
-    <string name="complete_profile_field_last_name_placeholder">e.g. Smith</string>
     <string name="complete_profile_button_continue">Continue</string>
-    <string name="complete_profile_footer">Your details will be visible to the professionals who accept your requests.</string>
+    <string name="complete_profile_footer">Your name will be visible to the professionals who accept your requests.</string>
 
     <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">First name is required</string>
