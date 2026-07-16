@@ -62,7 +62,8 @@
     <string name="professionals_retry">Retry</string>
     <!-- Home screen -->
     <string name="home_greeting">Hi,</string>
-    <string name="home_ai_search_hint">Describe your problem to the AI</string>
+    <string name="home_ai_search_hint">Describe your problem</string>
+    <string name="home_ai_search_microcopy">Takes 30 seconds and helps you find the right professional.</string>
     <string name="home_section_categories">What do you need fixed?</string>
     <string name="home_section_categories_link">See all</string>
     <string name="home_section_requests">Active requests</string>

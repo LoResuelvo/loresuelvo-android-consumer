@@ -71,12 +71,23 @@ fun AiSearchBar(
                 }
             }
 
-            Text(
-                text = stringResource(R.string.home_ai_search_hint),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+            androidx.compose.foundation.layout.Column(
                 modifier = Modifier.weight(1f),
-            )
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.home_ai_search_hint),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.home_ai_search_microcopy),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                    maxLines = 2,
+                )
+            }
 
             Surface(
                 shape = RoundedCornerShape(50),
