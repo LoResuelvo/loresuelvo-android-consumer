@@ -43,7 +43,7 @@ fun ProfileHeader(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = stringResource(R.string.complete_profile_title),
+            text = stringResource(R.string.complete_profile_hero_title),
             style = MaterialTheme.typography.displaySmall,
             color = TextWhite,
             textAlign = TextAlign.Center,
@@ -52,7 +52,7 @@ fun ProfileHeader(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = stringResource(R.string.complete_profile_subtitle),
+            text = stringResource(R.string.complete_profile_hero_subtitle),
             style = MaterialTheme.typography.titleMedium,
             color = TextWhite.copy(alpha = 0.85f),
             textAlign = TextAlign.Center,

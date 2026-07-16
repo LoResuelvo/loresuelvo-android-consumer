@@ -41,8 +41,6 @@
 
 
     <!-- CompleteProfile screen -->
-    <string name="complete_profile_title">Completa tu perfil</string>
-    <string name="complete_profile_subtitle">Necesitamos algunos datos para continuar.</string>
     <string name="complete_profile_hero_title">Ya casi estamos 👋</string>
     <string name="complete_profile_hero_subtitle">Contanos cómo querés que te llamen para encontrar profesionales cerca tuyo.</string>
     <string name="complete_profile_field_first_name">Nombre</string>

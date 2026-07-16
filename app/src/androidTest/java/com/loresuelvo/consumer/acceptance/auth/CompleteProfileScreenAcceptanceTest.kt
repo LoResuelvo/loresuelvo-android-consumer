@@ -84,7 +84,7 @@ class CompleteProfileScreenAcceptanceTest {
         persistIncompleteAuthenticatedUser()
 
         composeTestRule
-            .onNodeWithText(localizedString(R.string.complete_profile_title))
+            .onNodeWithText(localizedString(R.string.complete_profile_hero_title))
             .assertIsDisplayed()
 
         composeTestRule
@@ -194,7 +194,7 @@ class CompleteProfileScreenAcceptanceTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onAllNodesWithText(localizedString(R.string.complete_profile_title))
+            .onAllNodesWithText(localizedString(R.string.complete_profile_hero_title))
             .assertCountEquals(0)
 
         composeTestRule

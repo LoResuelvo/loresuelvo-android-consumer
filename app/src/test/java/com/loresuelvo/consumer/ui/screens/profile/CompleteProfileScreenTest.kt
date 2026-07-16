@@ -53,7 +53,7 @@ class CompleteProfileScreenTest {
         // assertExists (not assertIsDisplayed) so the assertion does
         // not depend on the small Robolectric viewport; we only care
         // that the labels are present in the tree.
-        composeTestRule.onNodeWithText("Completa tu perfil").assertExists()
+        composeTestRule.onNodeWithText("Ya casi estamos 👋").assertExists()
         composeTestRule.onNodeWithText("Nombre").assertExists()
         composeTestRule.onNodeWithText("Apellido").assertExists()
         composeTestRule.onNodeWithText("Continuar")
