@@ -43,6 +43,8 @@
     <!-- CompleteProfile screen -->
     <string name="complete_profile_title">Complete your profile</string>
     <string name="complete_profile_subtitle">We need a few details to continue.</string>
+    <string name="complete_profile_hero_title">Almost there 👋</string>
+    <string name="complete_profile_hero_subtitle">Tell us how you\'d like to be addressed so we can match you with pros nearby.</string>
     <string name="complete_profile_field_first_name">First name</string>
     <string name="complete_profile_field_last_name">Last name</string>
     <string name="complete_profile_field_first_name_placeholder">e.g. John</string>
