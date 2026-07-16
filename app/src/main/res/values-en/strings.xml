@@ -71,6 +71,7 @@
     <string name="home_section_requests_link">See all</string>
     <string name="home_section_diagnoses">Recent diagnoses</string>
     <string name="home_diagnoses_empty">No recent diagnoses</string>
+    <string name="home_requests_empty">You have no active requests.</string>
     <string name="home_request_status_on_the_way">On the way</string>
     <string name="home_request_rating">★ %1$.1f (%2$d reviews)</string>
     <string name="home_notifications_content_description">Notifications</string>
