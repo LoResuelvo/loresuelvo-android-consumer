@@ -73,6 +73,9 @@
     <string name="home_section_diagnoses">Diagnósticos recientes</string>
     <string name="home_diagnoses_empty">Sin diagnósticos recientes</string>
     <string name="home_requests_empty">No tienes ninguna solicitud en curso.</string>
+    <string name="home_requests_empty_title">Todavía no realizaste ninguna solicitud.</string>
+    <string name="home_requests_empty_body">Elegí una categoría y encontrá un profesional en minutos.</string>
+    <string name="home_requests_empty_cta">Ver categorías</string>
     <string name="home_request_status_on_the_way">En camino</string>
     <string name="home_request_rating">★ %1$.1f (%2$d reseñas)</string>
     <string name="home_notifications_content_description">Notificaciones</string>

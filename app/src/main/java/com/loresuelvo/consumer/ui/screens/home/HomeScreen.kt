@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,6 +33,7 @@ import com.loresuelvo.consumer.ui.screens.home.components.HomeHeader
 import com.loresuelvo.consumer.ui.screens.home.components.RecentDiagnosesEmpty
 import com.loresuelvo.consumer.ui.screens.home.components.SectionTitle
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
+import kotlinx.coroutines.launch
 
 /**
  * Home screen for the authenticated consumer. The layout follows
@@ -58,10 +60,14 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
 
     // Active requests list comes from the caller (HomeViewModel once
     // `/requests` exists). Empty by default today, which surfaces the
     // empty-state copy "No tienes ninguna solicitud en curso."
+    val scrollToCategories: () -> Unit = {
+        scope.launch { scrollState.animateScrollTo(0) }
+    }
 
     Column(
         modifier = modifier
@@ -93,7 +99,10 @@ fun HomeScreen(
             text = stringResource(R.string.home_section_requests),
             link = stringResource(R.string.home_section_requests_link),
         )
-        ActiveRequestsSection(requests = activeRequests)
+        ActiveRequestsSection(
+            requests = activeRequests,
+            onEmptyCtaClick = scrollToCategories,
+        )
 
         Text(
             text = stringResource(R.string.home_section_diagnoses),

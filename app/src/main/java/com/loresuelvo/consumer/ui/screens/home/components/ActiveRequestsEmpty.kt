@@ -2,11 +2,15 @@ package com.loresuelvo.consumer.ui.screens.home.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,34 +25,65 @@ import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
- * Empty-state row for the "Solicitudes en curso" section. Shown
- * when the consumer has no in-flight requests. Distinct from
- * [RecentDiagnosesEmpty] because the copy is different and the
- * source of truth will be a different backend resource.
+ * Educational empty-state for the "Solicitudes en curso" section.
+ *
+ * Replaces the passive "you have nothing" copy with a 3-line
+ * guidance pattern: short title (why there's nothing), one-line
+ * body (what to do about it), and a text-button CTA that
+ * navigates back to the categories grid so the user can act on
+ * the prompt without scrolling manually.
+ *
+ * Stateless: the parent (typically [ActiveRequestsSection]) wires
+ * the click; this composable only renders.
  */
 @Composable
-fun ActiveRequestsEmpty(modifier: Modifier = Modifier) {
+fun ActiveRequestsEmpty(
+    onCtaClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
         tonalElevation = 1.dp,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        Column(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = "\uD83D\uDEE0",
-                style = MaterialTheme.typography.titleMedium,
+                text = stringResource(R.string.home_requests_empty_title),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = stringResource(R.string.home_requests_empty),
+                text = stringResource(R.string.home_requests_empty_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = SubtitleGray,
-                fontWeight = FontWeight.Medium,
             )
+            OutlinedButton(
+                onClick = onCtaClick,
+                shape = RoundedCornerShape(50),
+                modifier = Modifier
+                    .padding(top = 8.dp)
+                    .align(Alignment.CenterHorizontally),
+            ) {
+                Text(
+                    text = stringResource(R.string.home_requests_empty_cta),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(18.dp),
+                )
+            }
         }
     }
 }
@@ -58,7 +93,7 @@ fun ActiveRequestsEmpty(modifier: Modifier = Modifier) {
 private fun ActiveRequestsEmptyPreview() {
     LoresuelvoTheme {
         Column(modifier = Modifier.padding(24.dp)) {
-            ActiveRequestsEmpty()
+            ActiveRequestsEmpty(onCtaClick = {})
         }
     }
 }

@@ -71,6 +71,9 @@
     <string name="home_section_diagnoses">Recent diagnoses</string>
     <string name="home_diagnoses_empty">No recent diagnoses</string>
     <string name="home_requests_empty">You have no active requests.</string>
+    <string name="home_requests_empty_title">You haven\'t made any requests yet.</string>
+    <string name="home_requests_empty_body">Pick a category and we\'ll match you with a pro in minutes.</string>
+    <string name="home_requests_empty_cta">See categories</string>
     <string name="home_request_status_on_the_way">On the way</string>
     <string name="home_request_rating">★ %1$.1f (%2$d reviews)</string>
     <string name="home_notifications_content_description">Notifications</string>

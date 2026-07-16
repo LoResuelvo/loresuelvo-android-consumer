@@ -12,10 +12,14 @@ import androidx.compose.ui.Modifier
 @Composable
 fun ActiveRequestsSection(
     requests: List<ActiveRequest>,
+    onEmptyCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (requests.isEmpty()) {
-        ActiveRequestsEmpty(modifier = modifier)
+        ActiveRequestsEmpty(
+            onCtaClick = onEmptyCtaClick,
+            modifier = modifier,
+        )
     } else {
         ActiveRequestCard(request = requests.first())
     }
