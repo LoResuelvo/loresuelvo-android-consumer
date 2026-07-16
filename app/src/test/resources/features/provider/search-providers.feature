@@ -48,7 +48,6 @@ Feature: Search providers by category
     Then I am taken to the providers list for category "Gas"
     And I see the empty message "No se encontraron profesionales especializados en esta categoría"
 
-  @wip
   Scenario: Error when the providers endpoint fails
     Given the providers endpoint will fail with a network error
     When I tap the "Electricidad" category card
