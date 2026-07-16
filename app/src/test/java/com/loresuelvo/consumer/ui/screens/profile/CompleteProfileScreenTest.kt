@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.auth
+package com.loresuelvo.consumer.ui.screens.profile
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,7 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

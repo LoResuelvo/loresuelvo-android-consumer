@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.auth
+package com.loresuelvo.consumer.ui.screens.profile
 
 import app.cash.turbine.test
 import com.loresuelvo.consumer.domain.auth.AuthSession

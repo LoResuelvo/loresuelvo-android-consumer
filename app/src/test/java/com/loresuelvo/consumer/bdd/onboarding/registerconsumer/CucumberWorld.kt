@@ -5,9 +5,9 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerUseCase
-import com.loresuelvo.consumer.ui.auth.CompleteProfileEvent
-import com.loresuelvo.consumer.ui.auth.CompleteProfileUiState
-import com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileUiState
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers

@@ -1,114 +1,63 @@
-package com.loresuelvo.consumer.ui.screens.auth
+package com.loresuelvo.consumer.ui.screens.profile.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.ui.auth.CompleteProfileError
-import com.loresuelvo.consumer.ui.auth.CompleteProfileEvent
-import com.loresuelvo.consumer.ui.components.branding.AppLogo
 import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
-import com.loresuelvo.consumer.ui.components.cards.AuthCard
 import com.loresuelvo.consumer.ui.components.inputs.PrimaryTextField
-import com.loresuelvo.consumer.ui.theme.AuthGradientBottom
-import com.loresuelvo.consumer.ui.theme.AuthGradientMiddle
-import com.loresuelvo.consumer.ui.theme.AuthGradientTop
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.theme.TextWhite
 
 /**
- * Composable for the `CompleteProfile` screen. Stateless: every
- * value the screen renders is passed in. The host ([com.loresuelvo.consumer.MainActivity])
- * collects the [com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel]
- * state and forwards user input back.
+ * Form block for the CompleteProfile screen: optional error
+ * banner, two text fields (first / last name), the continue button,
+ * an inline progress indicator while submitting, and the privacy
+ * note at the bottom.
  *
- * Strings are externalized to `strings.xml` (es + en) per the
- * `i18n` rule in AGENTS.md. The error-to-message mapping is the
- * only place where typed [CompleteProfileError] values become
- * localized strings.
+ * Stateless: every value the user types and every callback the
+ * parent invokes is passed in. Error-to-message mapping lives in
+ * the parent screen so this component stays presentation-only.
  */
 @Composable
-fun CompleteProfileScreen(
+fun ProfileForm(
     firstName: String,
     lastName: String,
     loading: Boolean,
-    error: CompleteProfileError?,
+    errorMessage: String?,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
     onContinueClick: () -> Unit,
-    onEvent: (CompleteProfileEvent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val errorMessage = error?.let { errorToMessage(it) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        AuthGradientTop,
-                        AuthGradientMiddle,
-                        AuthGradientBottom
-                    )
-                )
-            )
-            .verticalScroll(rememberScrollState())
-            .imePadding()
-            .padding(horizontal = 24.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        color = MaterialTheme.colorScheme.surface,
     ) {
-        AppLogo()
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            text = stringResource(R.string.complete_profile_title),
-            style = MaterialTheme.typography.displaySmall,
-            color = TextWhite,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.complete_profile_subtitle),
-            style = MaterialTheme.typography.titleMedium,
-            color = TextWhite.copy(alpha = 0.85f),
-            textAlign = TextAlign.Center,
-            lineHeight = 24.sp
-        )
-
-        Spacer(modifier = Modifier.height(28.dp))
-
-        AuthCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(28.dp)) {
             errorMessage?.let { message ->
                 Text(
                     text = message,
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -118,7 +67,7 @@ fun CompleteProfileScreen(
                 label = stringResource(R.string.complete_profile_field_first_name),
                 placeholder = stringResource(R.string.complete_profile_field_first_name_placeholder),
                 onValueChange = onFirstNameChange,
-                testTag = "first-name"
+                testTag = "first-name",
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -128,7 +77,7 @@ fun CompleteProfileScreen(
                 label = stringResource(R.string.complete_profile_field_last_name),
                 placeholder = stringResource(R.string.complete_profile_field_last_name_placeholder),
                 onValueChange = onLastNameChange,
-                testTag = "last-name"
+                testTag = "last-name",
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -145,7 +94,7 @@ fun CompleteProfileScreen(
                     color = TextWhite,
                     modifier = Modifier
                         .height(32.dp)
-                        .align(Alignment.CenterHorizontally)
+                        .align(Alignment.CenterHorizontally),
                 )
             }
 
@@ -156,20 +105,20 @@ fun CompleteProfileScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = SubtitleGray,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
 }
 
 /**
- * Maps a typed [CompleteProfileError] to a localized message. The
- * composable layer never sees the typed error directly; it only
- * sees a String, which keeps the screen test simple and the
- * translation boundary clean.
+ * Typed error → localized message bridge. Lives next to the form
+ * because it's a UI concern (it consumes `stringResource`); the
+ * screen-level orchestrator calls into it before rendering the
+ * form, so the form itself stays presentation-only.
  */
 @Composable
-private fun errorToMessage(error: CompleteProfileError): String = when (error) {
+internal fun errorToMessage(error: CompleteProfileError): String = when (error) {
     is CompleteProfileError.MissingFirstName ->
         stringResource(R.string.complete_profile_error_missing_first_name)
     is CompleteProfileError.MissingLastName ->

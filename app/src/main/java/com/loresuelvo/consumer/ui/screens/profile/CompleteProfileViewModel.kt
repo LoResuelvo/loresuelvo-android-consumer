@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.auth
+package com.loresuelvo.consumer.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

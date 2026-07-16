@@ -1,8 +1,8 @@
 package com.loresuelvo.consumer.bdd.onboarding.registerconsumer
 
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
-import com.loresuelvo.consumer.ui.auth.CompleteProfileError
-import com.loresuelvo.consumer.ui.auth.CompleteProfileEvent
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import io.cucumber.java.After
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given

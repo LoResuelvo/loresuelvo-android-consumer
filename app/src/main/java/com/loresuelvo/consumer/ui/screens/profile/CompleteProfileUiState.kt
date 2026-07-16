@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.auth
+package com.loresuelvo.consumer.ui.screens.profile
 
 /**
  * UDF state for the `CompleteProfile` screen.

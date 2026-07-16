@@ -13,14 +13,14 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
-import com.loresuelvo.consumer.ui.auth.CompleteProfileEvent
-import com.loresuelvo.consumer.ui.auth.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
-import com.loresuelvo.consumer.ui.screens.auth.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.session.SessionViewModel
 
 /**

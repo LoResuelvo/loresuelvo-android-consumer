@@ -1,6 +1,6 @@
 package com.loresuelvo.consumer.bdd.onboarding.registerconsumer
 
-import com.loresuelvo.consumer.ui.auth.CompleteProfileError
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
 
 /**
  * Maps the Gherkin-level error category labels used in
