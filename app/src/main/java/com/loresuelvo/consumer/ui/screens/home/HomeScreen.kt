@@ -24,8 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.ui.screens.home.components.ActiveRequestCard
-import com.loresuelvo.consumer.ui.screens.home.components.ActiveRequestMock
+import com.loresuelvo.consumer.ui.screens.home.components.ActiveRequest
+import com.loresuelvo.consumer.ui.screens.home.components.ActiveRequestsSection
 import com.loresuelvo.consumer.ui.screens.home.components.AiSearchBar
 import com.loresuelvo.consumer.ui.screens.home.components.CategoryGrid
 import com.loresuelvo.consumer.ui.screens.home.components.HomeHeader
@@ -49,6 +49,7 @@ import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 fun HomeScreen(
     state: HomeUiState,
     displayName: String?,
+    activeRequests: List<ActiveRequest> = emptyList(),
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
     onNotificationsClick: () -> Unit,
     onAiSendClick: () -> Unit,
@@ -58,16 +59,9 @@ fun HomeScreen(
 ) {
     val scrollState = rememberScrollState()
 
-    // Active requests mock data — replaced once /requests exists.
-    val activeRequest = ActiveRequestMock(
-        title = "Fuga en lavamanos",
-        time = "Hoy 14:30",
-        status = "En camino",
-        proName = "Carlos M.",
-        proInitial = "C",
-        rating = 4.9,
-        reviewCount = 120,
-    )
+    // Active requests list comes from the caller (HomeViewModel once
+    // `/requests` exists). Empty by default today, which surfaces the
+    // empty-state copy "No tienes ninguna solicitud en curso."
 
     Column(
         modifier = modifier
@@ -99,7 +93,7 @@ fun HomeScreen(
             text = stringResource(R.string.home_section_requests),
             link = stringResource(R.string.home_section_requests_link),
         )
-        ActiveRequestCard(request = activeRequest)
+        ActiveRequestsSection(requests = activeRequests)
 
         Text(
             text = stringResource(R.string.home_section_diagnoses),
@@ -185,6 +179,17 @@ private fun HomeScreenReadyPreview() {
                 ),
             ),
             displayName = "Matias",
+            activeRequests = listOf(
+                ActiveRequest(
+                    title = "Fuga en lavamanos",
+                    time = "Hoy 14:30",
+                    status = "En camino",
+                    proName = "Carlos M.",
+                    proInitial = "C",
+                    rating = 4.9,
+                    reviewCount = 120,
+                ),
+            ),
             onCategoryClick = { _, _ -> },
             onNotificationsClick = {},
             onAiSendClick = {},

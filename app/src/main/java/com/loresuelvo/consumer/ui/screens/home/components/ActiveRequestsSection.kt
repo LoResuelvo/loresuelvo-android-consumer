@@ -5,15 +5,13 @@ import androidx.compose.ui.Modifier
 
 /**
  * "Solicitudes en curso" section. Renders the first
- * [ActiveRequestMock] of [requests] if any, or the empty state
+ * [ActiveRequest] of [requests] if any, or the empty state
  * otherwise. Stateless; the active-requests list is the
- * HomeViewModel's responsibility (TODO: replace the hard-coded
- * mock in HomeScreen with a real flow when the backend exposes
- * `/requests`).
+ * HomeViewModel's responsibility once `/requests` exists.
  */
 @Composable
 fun ActiveRequestsSection(
-    requests: List<ActiveRequestMock>,
+    requests: List<ActiveRequest>,
     modifier: Modifier = Modifier,
 ) {
     if (requests.isEmpty()) {

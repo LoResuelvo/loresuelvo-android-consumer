@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -16,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -26,13 +26,11 @@ import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
- * Mock "Solicitudes en curso" tile. Stateless; the parent section
- * passes the title, time, pro avatar initial, rating summary, etc.
- * until the backend exposes real service requests.
- *
- * Replace [data] with a real domain model when the API ships.
+ * Domain-shaped data for one active service request shown on the
+ * Home "Solicitudes en curso" section. Replace with a real domain
+ * type backed by `/requests` once the backend exposes it.
  */
-data class ActiveRequestMock(
+data class ActiveRequest(
     val title: String,
     val time: String,
     val status: String,
@@ -42,8 +40,13 @@ data class ActiveRequestMock(
     val reviewCount: Int,
 )
 
+/**
+ * Single active-request card. Stateless; the empty-state counterpart
+ * (no active requests) lives in [ActiveRequestsEmpty] and the
+ * branching between the two is handled by [ActiveRequestsSection].
+ */
 @Composable
-fun ActiveRequestCard(request: ActiveRequestMock) {
+fun ActiveRequestCard(request: ActiveRequest) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -63,7 +66,7 @@ fun ActiveRequestCard(request: ActiveRequestMock) {
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = "🛠",
+                        text = "\uD83D\uDEE0",
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
@@ -96,7 +99,7 @@ fun ActiveRequestCard(request: ActiveRequestMock) {
                 }
             }
 
-            androidx.compose.foundation.layout.Spacer(modifier = Modifier.padding(top = 12.dp))
+            Spacer(modifier = Modifier.padding(top = 12.dp))
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -105,8 +108,7 @@ fun ActiveRequestCard(request: ActiveRequestMock) {
                 Box(
                     modifier = Modifier
                         .size(36.dp)
-                        .clip(RoundedCornerShape(50)
-                        )
+                        .clip(RoundedCornerShape(50))
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -146,10 +148,10 @@ private fun ActiveRequestCardPreview() {
     LoresuelvoTheme {
         Column(modifier = Modifier.padding(24.dp)) {
             ActiveRequestCard(
-                request = ActiveRequestMock(
+                request = ActiveRequest(
                     title = "Fuga en lavamanos",
                     time = "Hoy 14:30",
-                    status = stringResource(R.string.home_request_status_on_the_way),
+                    status = "En camino",
                     proName = "Carlos M.",
                     proInitial = "C",
                     rating = 4.9,
