@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,19 +16,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.components.branding.AppLogo
-import com.loresuelvo.consumer.ui.theme.TextWhite
 
 /**
  * Header block for the CompleteProfile screen: a small logo at the
  * top and the hero copy (title + subtitle) that frames the form.
  *
- * Stateless: every value comes from `strings.xml` (es + en).
- *
- * Visual contract is identical to the inline header that used to
- * live in `CompleteProfileScreen`: same colors, same typography,
- * same spacing. The split is purely structural — separating the
- * header from the form makes the upcoming redesign easier to land
- * without rewriting the screen at the same time.
+ * Stateless: every value comes from `strings.xml` (es + en). Colors
+ * follow the active MaterialTheme so the header reads correctly on
+ * the light surface that the screen now uses (replacing the
+ * pre-redesign dark gradient).
  */
 @Composable
 fun ProfileHeader(modifier: Modifier = Modifier) {
@@ -38,14 +33,14 @@ fun ProfileHeader(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        AppLogo()
+        AppLogo(size = 48.dp)
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
             text = stringResource(R.string.complete_profile_hero_title),
             style = MaterialTheme.typography.displaySmall,
-            color = TextWhite,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
 
@@ -54,7 +49,7 @@ fun ProfileHeader(modifier: Modifier = Modifier) {
         Text(
             text = stringResource(R.string.complete_profile_hero_subtitle),
             style = MaterialTheme.typography.titleMedium,
-            color = TextWhite.copy(alpha = 0.85f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
             lineHeight = 24.sp,
         )

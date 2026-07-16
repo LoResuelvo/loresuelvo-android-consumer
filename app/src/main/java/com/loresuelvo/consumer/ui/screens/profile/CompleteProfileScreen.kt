@@ -10,18 +10,15 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfileForm
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfileHeader
 import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
-import com.loresuelvo.consumer.ui.theme.AuthGradientBottom
-import com.loresuelvo.consumer.ui.theme.AuthGradientMiddle
-import com.loresuelvo.consumer.ui.theme.AuthGradientTop
 
 /**
  * Composable for the `CompleteProfile` screen. Stateless: every
@@ -57,15 +54,7 @@ fun CompleteProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        AuthGradientTop,
-                        AuthGradientMiddle,
-                        AuthGradientBottom,
-                    ),
-                ),
-            )
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(scrollState)
             .imePadding()
             .padding(horizontal = 24.dp, vertical = 24.dp),

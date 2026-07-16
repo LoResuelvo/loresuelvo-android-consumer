@@ -11,10 +11,9 @@ val BrandTertiary = Color(0xFFE9C46A)
 val BrandNeutral = Color(0xFFF4F1EE)
 val BrandDanger = Color(0xFFDC2626)
 
-// Auth-screen background gradient derived from BrandPrimary.
-val AuthGradientTop = Color(0xFF24395F)
-val AuthGradientMiddle = Color(0xFF1A2B48)
-val AuthGradientBottom = Color(0xFF101B2E)
+// Auth-screen background gradient was removed when CompleteProfile
+// migrated to a light surface (MaterialTheme.colorScheme.background).
+// The WelcomeScreen uses WelcomeScaffold with its own background.
 
 // Neutrals & surfaces.
 val TextWhite = Color.White
