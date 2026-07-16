@@ -62,6 +62,7 @@
     <string name="professionals_retry">Retry</string>
     <!-- Home screen -->
     <string name="home_greeting">Hi,</string>
+    <string name="home_greeting_inline">Hi, %1$s</string>
     <string name="home_ai_search_hint">Describe your problem</string>
     <string name="home_ai_search_microcopy">Takes 30 seconds and helps you find the right professional.</string>
     <string name="home_section_categories">What do you need fixed?</string>

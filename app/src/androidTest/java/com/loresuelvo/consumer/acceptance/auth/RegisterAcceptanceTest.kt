@@ -121,13 +121,13 @@ class RegisterWithAuth0AcceptanceTest {
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule
-                .onAllNodesWithText("Andres")
+                .onAllNodesWithText("Andres", substring = true)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
         composeTestRule
-            .onNodeWithText("Andres")
+            .onNodeWithText("Andres", substring = true)
             .assertIsDisplayed()
     }
 
@@ -139,17 +139,17 @@ class RegisterWithAuth0AcceptanceTest {
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             composeTestRule
-                .onAllNodesWithText("Andres")
+                .onAllNodesWithText("Andres", substring = true)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
         composeTestRule
-            .onNodeWithText(localizedString(R.string.home_greeting))
+            .onNodeWithText(localizedString(R.string.home_greeting), substring = true)
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Andres")
+            .onNodeWithText("Andres", substring = true)
             .assertIsDisplayed()
 
         composeTestRule

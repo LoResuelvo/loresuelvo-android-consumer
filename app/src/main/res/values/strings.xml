@@ -64,6 +64,7 @@
     <string name="professionals_retry">Reintentar</string>
     <!-- Home screen -->
     <string name="home_greeting">Hola,</string>
+    <string name="home_greeting_inline">Hola, %1$s</string>
     <string name="home_ai_search_hint">Describí tu problema</string>
     <string name="home_ai_search_microcopy">Tarda 30 segundos y te ayuda a encontrar al profesional correcto.</string>
     <string name="home_section_categories">¿Qué necesitás arreglar?</string>

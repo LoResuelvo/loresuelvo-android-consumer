@@ -122,11 +122,11 @@ class CompleteProfileScreenAcceptanceTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithText(localizedString(R.string.home_greeting))
+            .onNodeWithText(localizedString(R.string.home_greeting), substring = true)
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Andres")
+            .onNodeWithText("Andres", substring = true)
             .assertIsDisplayed()
     }
 
@@ -198,11 +198,11 @@ class CompleteProfileScreenAcceptanceTest {
             .assertCountEquals(0)
 
         composeTestRule
-            .onNodeWithText(localizedString(R.string.home_greeting))
+            .onNodeWithText(localizedString(R.string.home_greeting), substring = true)
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText("Andres")
+            .onNodeWithText("Andres", substring = true)
             .assertIsDisplayed()
     }
 

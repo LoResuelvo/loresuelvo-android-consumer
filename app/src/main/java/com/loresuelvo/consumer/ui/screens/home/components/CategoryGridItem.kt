@@ -67,7 +67,7 @@ fun CategoryGridItem(
         }
 
         Text(
-            text = name,
+            text = name.replaceFirstChar { it.titlecaseChar() },
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,

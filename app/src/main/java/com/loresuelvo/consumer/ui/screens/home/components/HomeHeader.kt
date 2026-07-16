@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Notifications
@@ -28,13 +27,15 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 
 /**
- * Home header: avatar circle (initials fallback), greeting +
- * display name, and a notifications action.
+ * Home header: avatar circle (initial fallback) + inline greeting
+ * + notifications action. The greeting + display name live on a
+ * single line so the header stays a compact row, freeing vertical
+ * space for the content below.
  *
  * Stateless: the parent screen passes [displayName]; the avatar
- * shows the first letter when no image is available. The
- * notifications callback is a no-op placeholder — wired for
- * future push integrations.
+ * shows the first letter when no image is available. When the
+ * display name is null we fall back to the brand name so the
+ * greeting still reads naturally.
  */
 @Composable
 fun HomeHeader(
@@ -62,21 +63,14 @@ fun HomeHeader(
             )
         }
 
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.home_greeting),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            )
-            Text(
-                text = displayName ?: stringResource(R.string.brand_name),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-        }
-
-        Box(modifier = Modifier.width(8.dp))
+        val nameOrBrand = displayName ?: stringResource(R.string.brand_name)
+        Text(
+            text = stringResource(R.string.home_greeting_inline, nameOrBrand),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f),
+        )
 
         IconButton(onClick = onNotificationsClick) {
             Icon(
