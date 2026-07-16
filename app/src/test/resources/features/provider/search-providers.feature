@@ -42,7 +42,6 @@ Feature: Search providers by category
     And I see the provider "Juan Pérez" for category "Plomería"
     And I see the provider "Pedro Dib" for category "Plomería"
 
-  @wip
   Scenario: Empty state when no providers exist for the category
     Given no providers exist for category "Gas"
     When I tap the "Gas" category card
