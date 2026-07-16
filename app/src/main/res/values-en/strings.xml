@@ -70,6 +70,9 @@
     <string name="home_section_requests_link">See all</string>
     <string name="home_section_diagnoses">Recent diagnoses</string>
     <string name="home_diagnoses_empty">No recent diagnoses</string>
+    <string name="home_diagnoses_empty_title">Try the AI diagnosis</string>
+    <string name="home_diagnoses_empty_body">Tell us what\'s going on and we\'ll suggest the right professional. Takes 30 seconds.</string>
+    <string name="home_diagnoses_empty_cta">Start diagnosis</string>
     <string name="home_requests_empty">You have no active requests.</string>
     <string name="home_requests_empty_title">You haven\'t made any requests yet.</string>
     <string name="home_requests_empty_body">Pick a category and we\'ll match you with a pro in minutes.</string>

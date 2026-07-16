@@ -72,6 +72,9 @@
     <string name="home_section_requests_link">Ver todas</string>
     <string name="home_section_diagnoses">Diagnósticos recientes</string>
     <string name="home_diagnoses_empty">Sin diagnósticos recientes</string>
+    <string name="home_diagnoses_empty_title">Probá el diagnóstico con IA</string>
+    <string name="home_diagnoses_empty_body">Contale qué te pasa y te decimos qué tipo de profesional necesitás. Tarda 30 segundos.</string>
+    <string name="home_diagnoses_empty_cta">Iniciar diagnóstico</string>
     <string name="home_requests_empty">No tienes ninguna solicitud en curso.</string>
     <string name="home_requests_empty_title">Todavía no realizaste ninguna solicitud.</string>
     <string name="home_requests_empty_body">Elegí una categoría y encontrá un profesional en minutos.</string>

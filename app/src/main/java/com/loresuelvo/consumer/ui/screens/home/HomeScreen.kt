@@ -111,7 +111,7 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
         )
-        RecentDiagnosesEmpty()
+        RecentDiagnosesEmpty(onCtaClick = onAiSendClick)
 
         Spacer(Modifier.height(8.dp))
 
