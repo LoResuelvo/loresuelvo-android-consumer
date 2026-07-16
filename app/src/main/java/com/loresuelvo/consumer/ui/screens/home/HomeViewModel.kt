@@ -23,6 +23,14 @@ import kotlinx.coroutines.launch
  * only mocked data lives in the screen itself (active requests,
  * recent diagnoses).
  */
+/**
+ * Maximum number of categories surfaced on the Home grid. Anything
+ * beyond that lives behind the "Ver todas" link (placeholder for now).
+ * This is a UI decision, not a domain rule; the use case still returns
+ * the full list.
+ */
+private const val MAX_CATEGORIES_ON_HOME = 6
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getCategories: GetCategoriesUseCase,
@@ -41,10 +49,14 @@ class HomeViewModel @Inject constructor(
                 HomeUiState.Loading(categories = it.categories)
             }
             val next = when (val outcome = getCategories()) {
-                is CategoriesOutcome.Success ->
+                is CategoriesOutcome.Success -> {
+                    val visible = outcome.categories
+                        .sortedBy { it.name.lowercase() }
+                        .take(MAX_CATEGORIES_ON_HOME)
                     HomeUiState.Ready(
-                        categories = CategoriesState.Ready(outcome.categories),
+                        categories = CategoriesState.Ready(visible),
                     )
+                }
                 is CategoriesOutcome.Failure ->
                     HomeUiState.Error(
                         categories = CategoriesState.Error,
