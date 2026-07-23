@@ -59,9 +59,6 @@ class ApiUserRepository @Inject constructor(
             ?: return UserRegistrationOutcome.Failure.Unauthorized("No active session")
 
         return try {
-            // Returns MessageResponseDto on 2xx. Any non-2xx throws
-            // HttpException, mapped via toApiError(). Network errors
-            // throw IOException, also mapped.
             backendApi.registerConsumer(data.toDto())
             UserRegistrationOutcome.Success(
                 session.user.copy(

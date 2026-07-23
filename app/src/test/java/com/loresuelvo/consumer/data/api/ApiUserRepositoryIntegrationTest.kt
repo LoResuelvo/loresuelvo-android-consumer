@@ -95,7 +95,7 @@ class ApiUserRepositoryIntegrationTest {
                 .setResponseCode(200)
                 .setHeader("Content-Type", "application/json")
                 .setBody(
-                    """{"AuthID":"auth0|123","Name":"Ana","Surname":"Perez","Email":"ana@example.com","Role":"consumer"}""",
+                    """{"id":7,"name":"Ana","surname":"Perez","email":"ana@example.com","role":"consumer"}""",
                 ),
         )
 
@@ -151,7 +151,7 @@ class ApiUserRepositoryIntegrationTest {
             MockResponse()
                 .setResponseCode(201)
                 .setHeader("Content-Type", "application/json")
-                .setBody("""{"message":"cuenta registrada exitosamente"}"""),
+                .setBody("""{"id":7,"name":"Ana","surname":"Perez"}"""),
         )
         val data = RegisterConsumerData(
             email = "ana@example.com",
