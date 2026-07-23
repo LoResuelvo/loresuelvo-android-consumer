@@ -15,16 +15,26 @@ import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
  * [MessageBubble] in arrival order, using the message's stable
  * `id` as the LazyColumn key.
  *
- * When [typingIndicatorVisible] is `true`, an extra item
- * ([TypingIndicatorBubble]) is appended to the list so the user
- * sees the assistant's "escribiendo…" hint while a round-trip is
- * in flight (scenario 03-DIA). The bubble uses a fixed key so
- * Compose doesn't tear it down on recomposition.
+ * Conditional items appended in order:
+ *
+ *  - [TypingIndicatorBubble] when [typingIndicatorVisible] is
+ *    `true` (in-flight round-trip, scenario 03-DIA).
+ *  - [ChatErrorCard] when [transientError] is non-null (failed
+ *    round-trip, scenario 04-DIA). Retry + dismiss callbacks are
+ *    forwarded verbatim — both flow back through the
+ *    [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel].
+ *
+ * All conditional items use stable keys so Compose doesn't tear
+ * them down across recompositions (typing indicator → success, or
+ * error card → retry → success).
  */
 @Composable
 fun MessagesList(
     messages: List<ChatMessage>,
     typingIndicatorVisible: Boolean,
+    transientError: ChatError?,
+    onRetryClick: () -> Unit,
+    onErrorDismissClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -40,7 +50,17 @@ fun MessagesList(
                 TypingIndicatorBubble()
             }
         }
+        if (transientError != null) {
+            item(key = ERROR_CARD_KEY) {
+                ChatErrorCard(
+                    error = transientError,
+                    onRetryClick = onRetryClick,
+                    onDismissClick = onErrorDismissClick,
+                )
+            }
+        }
     }
 }
 
 private const val TYPING_INDICATOR_KEY: String = "chat-typing-indicator"
+private const val ERROR_CARD_KEY: String = "chat-error-card"
