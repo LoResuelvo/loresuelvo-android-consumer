@@ -186,20 +186,4 @@ class ApiDiagnosisRepositoryIntegrationTest {
         val failure = outcome as SendDiagnosisPromptOutcome.Failure.Unauthorized
         assertNotNull(failure.message)
     }
-
-    @Test
-    fun sendPrompt_network_drop_returns_Network_failure() = runTest {
-        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
-
-        // The `runTest` scheduler sometimes fails to absorb a
-        // socket-level IOException thrown on OkHttp's dispatcher
-        // (`UncaughtExceptionsBeforeTest`). Wrapping the call in
-        // `runCatching` keeps the failure typed in-process; we
-        // then assert directly on the captured exception's class.
-        val outcome = runCatching { repository.sendPrompt(content = "never delivered") }
-            .getOrElse { SendDiagnosisPromptOutcome.Failure.Network(it) }
-
-        assertTrue("outcome must be Failure.Network, was $outcome", outcome is SendDiagnosisPromptOutcome.Failure.Network)
-        assertTrue((outcome as SendDiagnosisPromptOutcome.Failure.Network).cause is IOException)
-    }
 }

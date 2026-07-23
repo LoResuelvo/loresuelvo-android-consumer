@@ -8,6 +8,7 @@ import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
 import com.loresuelvo.consumer.ui.screens.chat.ChatViewModel
+import com.loresuelvo.consumer.ui.screens.chat.errorLiteral
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -200,6 +201,82 @@ class AiDiagnosisWorld : AutoCloseable {
                     "was $state",
             )
         }
+    }
+
+    // ---- 04-DIA failure + retry helpers ---------------------------
+
+    /**
+     * 04-DIA `When`: the user types a new prompt and the backend
+     * fails. The fake returns [SendDiagnosisPromptOutcome.Failure.Server]
+     * on the next [sendPrompt], the VM flips
+     * `transientError = ChatError.ServiceUnavailable` and the
+     * optimistic bubble stays visible.
+     */
+    fun simulateFailingSend(prompt: String = "segunda") {
+        fakeRepo.enqueueFailure(
+            com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome.Failure.Server(
+                code = 500,
+                message = "boom",
+            ),
+        )
+        typePrompt(prompt)
+        tapSend()
+    }
+
+    /**
+     * 04-DIA `Then veo el mensaje del asistente "{string}"`:
+     * asserts the literal user-visible Spanish text is shown by
+     * mapping the typed `transientError` through the same
+     * [com.loresuelvo.consumer.ui.screens.chat.errorLiteral]
+     * function the UI uses. If the VM surfaces a different error
+     * type, the test fails loud so the inconsistency is caught at
+     * commit-time instead of via end-to-end manual QA.
+     */
+    fun assertAssistantErrorMessageEquals(expected: String) {
+        val state = lastUiState()
+        val error = state.transientError
+            ?: error("expected transientError to be set, was $state")
+        val actual = error.errorLiteral()
+        if (actual != expected) {
+            error(
+                "expected the assistant error to read '$expected', " +
+                    "got '$actual' for ${error::class.simpleName}",
+            )
+        }
+    }
+
+    /**
+     * 04-DIA `And puedo volver a intentarlo`. The retry CTA calls
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRetryClick],
+     * which clears `transientError` and refires the round-trip
+     * with `lastAttemptedPrompt`.
+     */
+    fun assertRetryClearsError() {
+        val state = lastUiState()
+        if (state.transientError != null) {
+            error(
+                "expected transientError to be cleared after retry, " +
+                    "was ${state.transientError}",
+            )
+        }
+        // After 04-DIA's retry hook a fresh round-trip is in
+        // flight with the original prompt; state.sending is true
+        // again until the fake's next outcome lands.
+        if (!state.sending) {
+            error("expected sending=true after retry, was $state")
+        }
+    }
+
+    /**
+     * Test-only helper: trigger [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRetryClick]
+     * and advance the scheduler so the launched coroutine
+     * completes with the next queued outcome. The BDD step
+     * `And puedo volver a intentarlo` calls this through the
+     * world, mirroring the user's tap on the retry CTA.
+     */
+    fun simulateRetry() {
+        viewModel.onRetryClick()
+        scheduler.advanceUntilIdle()
     }
 
     // ---- 02-DIA server-roundtrip helpers ----------------------------

@@ -24,22 +24,6 @@ import io.cucumber.java.PendingException
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario: 04-DIA Mostrar error de servicio ----------------
-    @When("envío un nuevo mensaje y el servicio falla")
-    fun envioUnNuevoMensajeYElServicioFalla() {
-        throw PendingException("04-DIA pendiente")
-    }
-
-    @Then("veo el mensaje del asistente {string}")
-    fun veoElMensajeDelAsistente(mensaje: String) {
-        throw PendingException("04-DIA pendiente")
-    }
-
-    @Then("puedo volver a intentarlo")
-    fun puedoVolverAIntentarlo() {
-        throw PendingException("04-DIA pendiente")
-    }
-
     // ---- Scenario: 05-DIA Mostrar advertencia de orientación
     @When("visualizo la conversación con el asistente")
     fun visualizoLaConversacionConElAsistente() {

@@ -25,7 +25,6 @@ Feature: Diagnóstico asistido por IA
     Then veo un indicador de carga
     And no puedo enviar un nuevo mensaje hasta recibir una respuesta
 
-  @wip
   Scenario: 04-DIA Mostrar error de servicio
     Given estoy en una conversación con el asistente
     When envío un nuevo mensaje y el servicio falla

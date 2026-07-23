@@ -266,4 +266,143 @@ class ChatViewModelTest {
 
         coVerify(exactly = 1) { useCase(any(), any()) }
     }
+
+    // ---- 04-DIA: failure path + retry ------------------------------
+
+    @Test
+    fun onSendClick_failure_Server_sets_transientError_and_records_lastAttemptedPrompt() = runTest {
+        coEvery { useCase(any(), anyNullable()) } returns
+            SendDiagnosisPromptOutcome.Failure.Server(code = 500, message = "boom")
+
+        viewModel.onPromptChange("Tengo una gotera")
+        viewModel.onSendClick()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.sending)
+        assertTrue(
+            "the last prompt must be snapshotted so the retry CTA can resubmit it, " +
+                "was '${state.lastAttemptedPrompt}'",
+            state.lastAttemptedPrompt == "Tengo una gotera",
+        )
+        assertTrue(
+            "expected ChatError.ServiceUnavailable, was ${state.transientError}",
+            state.transientError == ChatError.ServiceUnavailable,
+        )
+        // Optimistic bubble is preserved so the user keeps their
+        // typed context while they read the error.
+        assertEquals(1, state.messages.size)
+    }
+
+    @Test
+    fun onSendClick_failure_Network_maps_to_ChatError_Network() = runTest {
+        coEvery { useCase(any(), anyNullable()) } returns
+            SendDiagnosisPromptOutcome.Failure.Network(IOException("dns"))
+
+        viewModel.onPromptChange("Tengo una gotera")
+        viewModel.onSendClick()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(
+            "expected ChatError.Network, was ${state.transientError}",
+            state.transientError == ChatError.Network,
+        )
+    }
+
+    @Test
+    fun onSendClick_failure_Unauthorized_maps_to_ChatError_Unauthorized() = runTest {
+        coEvery { useCase(any(), anyNullable()) } returns
+            SendDiagnosisPromptOutcome.Failure.Unauthorized("token expired")
+
+        viewModel.onPromptChange("Tengo una gotera")
+        viewModel.onSendClick()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(
+            "expected ChatError.Unauthorized, was ${state.transientError}",
+            state.transientError is ChatError.Unauthorized,
+        )
+        assertEquals("token expired", (state.transientError as ChatError.Unauthorized).message)
+    }
+
+    @Test
+    fun onRetryClick_after_failure_resends_lastAttemptedPrompt_and_clears_transientError() = runTest {
+        // First send fails; we stash the prompt and surface the error.
+        coEvery { useCase("primera", null) } returns
+            SendDiagnosisPromptOutcome.Failure.Server(code = 500, message = "boom")
+
+        viewModel.onPromptChange("primera")
+        viewModel.onSendClick()
+        advanceUntilIdle()
+        assertEquals(ChatError.ServiceUnavailable, viewModel.uiState.value.transientError)
+        assertEquals("primera", viewModel.uiState.value.lastAttemptedPrompt)
+
+        // Retry: the user re-taps the retry CTA. The VM fires a
+        // fresh round-trip using the previously-recorded prompt.
+        coEvery { useCase("primera", null) } returns SendDiagnosisPromptOutcome.Success(
+            Diagnosis(conversationId = "conv-1", messages = emptyList()),
+        )
+        viewModel.onRetryClick()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(
+            "transientError must be cleared once retry fires",
+            state.transientError,
+        )
+        assertTrue(
+            "successful retry must persist the server-issued conversation id, " +
+                "was '${state.conversationId}'",
+            state.conversationId == "conv-1",
+        )
+        assertFalse(state.sending)
+    }
+
+    @Test
+    fun onRetryClick_is_a_no_op_when_no_previous_failure() = runTest {
+        viewModel.onRetryClick()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertFalse(state.sending)
+        coVerify(exactly = 0) { useCase(any(), anyNullable()) }
+    }
+
+    @Test
+    fun onRetryClick_is_a_no_op_while_sending() = runTest {
+        // Park the first call so `state.sending` stays true.
+        coEvery { useCase(any(), anyNullable()) } coAnswers { kotlinx.coroutines.awaitCancellation() }
+
+        viewModel.onPromptChange("primera")
+        viewModel.onSendClick()
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.sending)
+
+        viewModel.onRetryClick()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { useCase(any(), anyNullable()) }
+    }
+
+    @Test
+    fun onErrorDismiss_clears_transientError_without_resending() = runTest {
+        coEvery { useCase(any(), anyNullable()) } returns
+            SendDiagnosisPromptOutcome.Failure.Server(code = 500, message = "boom")
+
+        viewModel.onPromptChange("primera")
+        viewModel.onSendClick()
+        advanceUntilIdle()
+        assertEquals(ChatError.ServiceUnavailable, viewModel.uiState.value.transientError)
+
+        viewModel.onErrorDismiss()
+
+        val state = viewModel.uiState.value
+        assertNull(state.transientError)
+        // `lastAttemptedPrompt` is intentionally kept so the user
+        // can still hit the retry CTA even after dismissing.
+        assertEquals("primera", state.lastAttemptedPrompt)
+        coVerify(exactly = 1) { useCase(any(), anyNullable()) }
+    }
 }

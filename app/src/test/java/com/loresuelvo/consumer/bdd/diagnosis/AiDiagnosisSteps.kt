@@ -117,8 +117,43 @@ class AiDiagnosisSteps {
     }
 
     @And("no puedo enviar un nuevo mensaje hasta recibir una respuesta")
-    fun noPuedoEnviarNuevoMensajeHastaRecibirUnaRespuesta() {
+    fun noPuedoEnviarNuevoMensajeHastaRecibirRespuesta() {
         world.assertSendingFlagBlocksNewSends()
+    }
+
+    // ---- Scenario: 04-DIA Mostrar error de servicio ----------------
+
+    /**
+     * 04-DIA "When": the user types and sends a follow-up, but
+     * the backend returns a 500. The VM must surface the error
+     * to the UI without dropping the user's optimistic bubble.
+     * (The `Given estoy en una conversación con el asistente` step
+     * above is shared with 03-DIA via Cucumber's step-key dispatch.)
+     */
+    @When("envío un nuevo mensaje y el servicio falla")
+    fun envioUnNuevoMensajeYElServicioFalla() {
+        world.simulateFailingSend()
+    }
+
+    @Then("veo el mensaje del asistente {string}")
+    fun veoElMensajeDelAsistente(mensaje: String) {
+        world.assertAssistantErrorMessageEquals(mensaje)
+    }
+
+    /**
+     * 04-DIA "And puedo volver a intentarlo": the retry CTA in
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatErrorCard] calls
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRetryClick],
+     * which clears `transientError` and refires with
+     * `lastAttemptedPrompt`.
+     */
+    @Then("puedo volver a intentarlo")
+    fun puedoVolverAIntentarlo() {
+        // The retry is initiated first; `assertRetryClearsError`
+        // verifies the post-retry state (`sending = true`,
+        // `transientError = null`).
+        world.simulateRetry()
+        world.assertRetryClearsError()
     }
 
     // ---- Scenario: 06-DIA Navegar al chat de IA --------------------

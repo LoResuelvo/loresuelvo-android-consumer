@@ -92,4 +92,9 @@
     <string name="chat_placeholder_body">Contale a la IA qué pasa en tu hogar para iniciar una conversación.</string>
     <string name="chat_send_content_description">Enviar mensaje</string>
     <string name="chat_typing_indicator">Asistente escribiendo…</string>
+    <string name="chat_error_service_unavailable">No pudimos obtener una respuesta en este momento</string>
+    <string name="chat_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="chat_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="chat_error_retry">Reintentar</string>
+    <string name="chat_error_dismiss">Descartar</string>
 </resources>

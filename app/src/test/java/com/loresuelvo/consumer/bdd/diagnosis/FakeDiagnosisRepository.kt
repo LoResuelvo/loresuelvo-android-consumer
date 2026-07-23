@@ -44,6 +44,16 @@ class FakeDiagnosisRepository : DiagnosisRepository {
     }
 
     /**
+     * 04-DIA: enqueue a [SendDiagnosisPromptOutcome.Failure] for
+     * the next [sendPrompt] call. Convenience over
+     * [enqueueOutcome] that keeps the BDD step defs readable
+     * when the intent is "the service failed".
+     */
+    fun enqueueFailure(failure: SendDiagnosisPromptOutcome.Failure) {
+        enqueueOutcome(failure)
+    }
+
+    /**
      * 03-DIA: enqueue a response that never arrives. The next
      * [sendPrompt] call suspends indefinitely, mirroring a backend
      * that takes too long to reply.
