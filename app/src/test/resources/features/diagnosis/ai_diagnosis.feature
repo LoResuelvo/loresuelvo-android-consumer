@@ -19,7 +19,6 @@ Feature: Diagnóstico asistido por IA
     When el asistente procesa mi mensaje
     Then veo una respuesta del asistente en el chat
 
-  @wip
   Scenario: 03-DIA Mostrar indicador de carga
     Given estoy en una conversación con el asistente
     When envío un nuevo mensaje y la respuesta tarda en llegar

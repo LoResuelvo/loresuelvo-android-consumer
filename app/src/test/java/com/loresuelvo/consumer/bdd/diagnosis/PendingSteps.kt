@@ -24,27 +24,6 @@ import io.cucumber.java.PendingException
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario: 03-DIA Mostrar indicador de carga ----------------
-    @Given("estoy en una conversación con el asistente")
-    fun estoyEnUnaConversacionConElAsistente() {
-        throw PendingException("03-DIA pendiente")
-    }
-
-    @When("envío un nuevo mensaje y la respuesta tarda en llegar")
-    fun envioUnNuevoMensajeConRespuestaTardia() {
-        throw PendingException("03-DIA pendiente")
-    }
-
-    @Then("veo un indicador de carga")
-    fun veoUnIndicadorDeCarga() {
-        throw PendingException("03-DIA pendiente")
-    }
-
-    @Then("no puedo enviar un nuevo mensaje hasta recibir una respuesta")
-    fun noPuedoEnviarNuevoMensajeHastaRecibirRespuesta() {
-        throw PendingException("03-DIA pendiente")
-    }
-
     // ---- Scenario: 04-DIA Mostrar error de servicio ----------------
     @When("envío un nuevo mensaje y el servicio falla")
     fun envioUnNuevoMensajeYElServicioFalla() {

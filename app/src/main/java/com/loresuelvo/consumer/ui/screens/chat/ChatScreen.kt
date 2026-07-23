@@ -1,7 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,21 +25,21 @@ import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
  *
  * Layout:
  *  - [ChatTopBar] with the back arrow and the "Chat con IA" title.
- *  - [MessagesList] (when the conversation has at least one entry),
- *    or the localisable placeholder body (when the list is empty).
+ *  - [MessagesList] when the conversation has at least one entry,
+ *    OR the localisable placeholder body when the list is empty
+ *    AND we are not mid-round-trip. When `sending = true` the
+ *    [MessagesList] also renders [TypingIndicatorBubble] in the
+ *    assistant's lane (scenario 03-DIA).
  *  - [ChatInputBar] pinned at the bottom, with `imePadding` and
- *    `navigationBarsPadding` so the keyboard never covers the field.
- *
- * Scenario 01-DIA exercises the consumer side: once the user sends
- * their prompt, the messages list renders a single bubble on the
- * right. Successive commits add server responses, typing indicators,
- * error cards and recommendations without growing this Composable
- * — each concern will get its own child file under `ui/screens/chat/`.
+ *    `navigationBarsPadding` so the keyboard never covers the
+ *    field. The send icon is disabled when `!canSend`, which
+ *    includes `state.sending == true`.
  */
 @Composable
 fun ChatScreen(
     promptInput: String,
     canSend: Boolean,
+    sending: Boolean,
     messages: List<ChatMessage>,
     onPromptChange: (String) -> Unit,
     onSendClick: () -> Unit,
@@ -64,7 +63,7 @@ fun ChatScreen(
                     .weight(1f),
                 contentAlignment = Alignment.Center,
             ) {
-                if (messages.isEmpty()) {
+                if (messages.isEmpty() && !sending) {
                     Text(
                         text = stringResource(R.string.chat_placeholder_body),
                         style = MaterialTheme.typography.bodyLarge,
@@ -76,7 +75,10 @@ fun ChatScreen(
                         ),
                     )
                 } else {
-                    MessagesList(messages = messages)
+                    MessagesList(
+                        messages = messages,
+                        typingIndicatorVisible = sending,
+                    )
                 }
             }
             Column(

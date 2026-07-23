@@ -130,6 +130,78 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
+    // ---- 03-DIA in-flight typing indicator helpers -------------------
+
+    /**
+     * Drives a complete round-trip end-to-end so the conversation
+     * has at least one [com.loresuelvo.consumer.domain.diagnosis.Sender.Consumer]
+     * message AND the matching assistant reply. Used by 03-DIA's
+     * `Given estoy en una conversación con el asistente`.
+     */
+    fun driveCompletedRoundTrip(
+        prompt: String = "primera",
+        assistantContent: String = "OK",
+    ) {
+        seedSuccessDiagnosis(assistantContent = assistantContent)
+        typePrompt(prompt)
+        tapSend()
+        // `tapSend` already calls `scheduler.advanceUntilIdle()`,
+        // so the fake's success response has been consumed and
+        // the VM state has settled with `sending = false` and a
+        // 2-message history.
+    }
+
+    /**
+     * 03-DIA `When`: simulates the user sending a new prompt
+     * while the backend takes too long to reply. The fake's
+     * `enqueueHangingResponse()` makes the launched coroutine
+     * stay parked at `awaitCancellation()`; `state.sending`
+     * therefore remains `true` after `scheduler.advanceUntilIdle()`.
+     */
+    fun simulateHangingSend(prompt: String = "segunda") {
+        fakeRepo.enqueueHangingResponse()
+        typePrompt(prompt)
+        tapSend()
+    }
+
+    /**
+     * 03-DIA `Then veo un indicador de carga`. The
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatScreen] renders
+     * [com.loresuelvo.consumer.ui.screens.chat.TypingIndicatorBubble]
+     * iff `state.sending == true`. We assert the state contract
+     * here; the visual rendering is verified by the manual
+     * smoke test on device.
+     */
+    fun assertTypingIndicatorVisible() {
+        val state = lastUiState()
+        if (!state.sending) {
+            error(
+                "expected state.sending=true so the typing indicator would render, " +
+                    "but state=$state",
+            )
+        }
+    }
+
+    /**
+     * 03-DIA `And no puedo enviar un nuevo mensaje hasta recibir
+     * una respuesta`. The `canSend` derivation in
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatUiState] gates
+     * on `!state.sending`, so a `true` here would mean a new send
+     * could slip in and stack coroutines on the server.
+     */
+    fun assertSendingFlagBlocksNewSends() {
+        val state = lastUiState()
+        if (!state.sending) {
+            error("expected state.sending=true while in flight, was $state")
+        }
+        if (state.canSend) {
+            error(
+                "expected canSend=false because state.sending=true (in-flight round-trip), " +
+                    "was $state",
+            )
+        }
+    }
+
     // ---- 02-DIA server-roundtrip helpers ----------------------------
 
     /**

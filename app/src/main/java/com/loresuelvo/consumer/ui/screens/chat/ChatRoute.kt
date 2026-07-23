@@ -10,11 +10,11 @@ import androidx.navigation.NavHostController
  * Compose bridge for the AI diagnostic chat screen. Resolves the
  * [ChatViewModel] through Hilt and wires the navigation callbacks.
  *
- * Today this route only handles the back press (the smart router is
- * responsible for re-deriving the start destination based on the
- * session, so plain `popBackStack` is enough to return to Home).
- * Scenario 01-DIA also exercises the prompt → send → optimistic
- * append path: see [ChatScreen] and [ChatViewModel.onSendClick].
+ * Today this route only handles the back press (the smart router
+ * is responsible for re-deriving the start destination based on
+ * the session, so plain `popBackStack` is enough to return to
+ * Home). Scenarios 01-DIA → 03-DIA all hit the same VM and observe
+ * its UDF state.
  */
 @Composable
 fun ChatRoute(
@@ -25,6 +25,7 @@ fun ChatRoute(
     ChatScreen(
         promptInput = state.promptInput,
         canSend = state.canSend,
+        sending = state.sending,
         messages = state.messages,
         onPromptChange = viewModel::onPromptChange,
         onSendClick = viewModel::onSendClick,

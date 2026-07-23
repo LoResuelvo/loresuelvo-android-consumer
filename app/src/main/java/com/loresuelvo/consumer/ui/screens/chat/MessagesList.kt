@@ -12,16 +12,19 @@ import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 
 /**
  * Lazy list of chat messages. Renders each [ChatMessage] through
- * [MessageBubble] in arrival order, using the message's stable `id`
- * as the LazyColumn key.
+ * [MessageBubble] in arrival order, using the message's stable
+ * `id` as the LazyColumn key.
  *
- * Auto-scrolling to the newest message lands in a later commit; for
- * scenario 01-DIA the consumer sends the first message and the list
- * has one entry, so no scrolling is needed.
+ * When [typingIndicatorVisible] is `true`, an extra item
+ * ([TypingIndicatorBubble]) is appended to the list so the user
+ * sees the assistant's "escribiendo…" hint while a round-trip is
+ * in flight (scenario 03-DIA). The bubble uses a fixed key so
+ * Compose doesn't tear it down on recomposition.
  */
 @Composable
 fun MessagesList(
     messages: List<ChatMessage>,
+    typingIndicatorVisible: Boolean,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -32,5 +35,12 @@ fun MessagesList(
         items(items = messages, key = { it.id }) { message ->
             MessageBubble(message = message)
         }
+        if (typingIndicatorVisible) {
+            item(key = TYPING_INDICATOR_KEY) {
+                TypingIndicatorBubble()
+            }
+        }
     }
 }
+
+private const val TYPING_INDICATOR_KEY: String = "chat-typing-indicator"

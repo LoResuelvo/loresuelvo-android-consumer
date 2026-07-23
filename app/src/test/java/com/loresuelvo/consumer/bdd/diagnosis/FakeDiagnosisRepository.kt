@@ -10,12 +10,21 @@ import java.util.concurrent.atomic.AtomicReference
  * `viewModelScope.launch` consumes it on the first
  * [sendPrompt] call.
  *
- * This fake is intentionally SIMPLE — it does not chain multiple
- * queued responses. Once an outcome is consumed, the next call
- * will throw unless a new outcome is enqueued. Future scenarios
- * (03-DIA delay, 04-DIA failure) extend the contract by wrapping
- * the body of [sendPrompt] (e.g. a `delay(...)` before returning,
- * or a `sendPrompts: Channel<Response>` for round-trip tests).
+ * Three enqueue modes are exposed:
+ *
+ *  - [enqueueOutcome] — returns the given outcome on the next call
+ *    (happy path used by 01-DIA / 02-DIA).
+ *  - [enqueueHangingResponse] — suspends [sendPrompt] forever
+ *    (`awaitCancellation`), simulating a slow backend. Used by
+ *    03-DIA to keep `state.sending = true` while we assert that
+ *    the UI gating logic disables the next send.
+ *
+ * Each call consumes its enqueued state once; subsequent calls
+ * without a fresh enqueue throw an `error("…")` so BDD failures
+ * surface loud rather than silently reusing stale state. Future
+ * scenarios that need to chain multiple round-trips (03-DIA's
+ * `Then` phase for the "second message") seed a fresh outcome
+ * before each `tapSend()`.
  *
  * Mirrors the pattern of `FakeUserRepository` in
  * `bdd/onboarding/registerconsumer/`.
@@ -23,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference
 class FakeDiagnosisRepository : DiagnosisRepository {
 
     private val nextOutcomeRef = AtomicReference<SendDiagnosisPromptOutcome?>(null)
+    private val hangModeRef = AtomicReference(false)
 
     /**
      * Enqueue the next outcome to be returned by [sendPrompt].
@@ -30,12 +40,26 @@ class FakeDiagnosisRepository : DiagnosisRepository {
      */
     fun enqueueOutcome(outcome: SendDiagnosisPromptOutcome) {
         nextOutcomeRef.set(outcome)
+        hangModeRef.set(false)
+    }
+
+    /**
+     * 03-DIA: enqueue a response that never arrives. The next
+     * [sendPrompt] call suspends indefinitely, mirroring a backend
+     * that takes too long to reply.
+     */
+    fun enqueueHangingResponse() {
+        nextOutcomeRef.set(null)
+        hangModeRef.set(true)
     }
 
     override suspend fun sendPrompt(
         content: String,
         existingConversationId: String?,
     ): SendDiagnosisPromptOutcome {
+        if (hangModeRef.getAndSet(false)) {
+            kotlinx.coroutines.awaitCancellation()
+        }
         val outcome = nextOutcomeRef.getAndSet(null)
             ?: error(
                 "FakeDiagnosisRepository: no outcome queued. " +

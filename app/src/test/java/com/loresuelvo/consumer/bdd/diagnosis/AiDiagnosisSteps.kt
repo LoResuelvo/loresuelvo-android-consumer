@@ -85,6 +85,42 @@ class AiDiagnosisSteps {
         world.assertAssistantMessageVisible()
     }
 
+    // ---- Scenario: 03-DIA Mostrar indicador de carga ----------------
+
+    /**
+     * 03-DIA "Given": the consumer is already mid-conversation
+     * (one round-trip done). The world drives that complete
+     * cycle so `state.messages` and `state.conversationId` look
+     * like a real interaction before the slow next-round-trip
+     * in the `When`.
+     */
+    @Given("estoy en una conversación con el asistente")
+    fun estoyEnUnaConversacionConElAsistente03() {
+        world.driveCompletedRoundTrip()
+    }
+
+    /**
+     * 03-DIA "When": the user types a follow-up and taps send,
+     * but the fake stalls the round-trip indefinitely. The state
+     * we observe from here onward has `sending = true` until the
+     * next `When` releases the suspension (or the step is
+     * declared passed with the indicator visible).
+     */
+    @When("envío un nuevo mensaje y la respuesta tarda en llegar")
+    fun envioUnNuevoMensajeYLaRespuestaTardaEnLlegar() {
+        world.simulateHangingSend()
+    }
+
+    @Then("veo un indicador de carga")
+    fun veoUnIndicadorDeCarga() {
+        world.assertTypingIndicatorVisible()
+    }
+
+    @And("no puedo enviar un nuevo mensaje hasta recibir una respuesta")
+    fun noPuedoEnviarNuevoMensajeHastaRecibirUnaRespuesta() {
+        world.assertSendingFlagBlocksNewSends()
+    }
+
     // ---- Scenario: 06-DIA Navegar al chat de IA --------------------
 
     @When("selecciono la opción {string}")
