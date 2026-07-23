@@ -2,7 +2,7 @@ package com.loresuelvo.consumer.data.api
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -70,7 +70,7 @@ class ApiDiagnosisRepositoryIntegrationTest {
     }
 
     @Test
-    fun sendPrompt_without_existing_id_hits_create_endpoint_and_returns_diagnosis() = runTest {
+    fun sendPrompt_without_existing_id_hits_create_endpoint_and_returns_diagnosis() = runBlocking {
         // Wire shape mirrors `loresuelvo-api`'s
         // `POST /chatbot/conversations`: numeric `id`, full
         // `messages[]` history, optional `assessment` /
@@ -120,7 +120,7 @@ class ApiDiagnosisRepositoryIntegrationTest {
     }
 
     @Test
-    fun sendPrompt_with_existing_id_hits_append_endpoint_and_returns_diagnosis() = runTest {
+    fun sendPrompt_with_existing_id_hits_append_endpoint_and_returns_diagnosis() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -157,7 +157,7 @@ class ApiDiagnosisRepositoryIntegrationTest {
     }
 
     @Test
-    fun sendPrompt_500_returns_Server_failure() = runTest {
+    fun sendPrompt_500_returns_Server_failure() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
@@ -172,7 +172,7 @@ class ApiDiagnosisRepositoryIntegrationTest {
     }
 
     @Test
-    fun sendPrompt_401_returns_Unauthorized_failure() = runTest {
+    fun sendPrompt_401_returns_Unauthorized_failure() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
