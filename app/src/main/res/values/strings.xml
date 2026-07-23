@@ -84,4 +84,10 @@
     <string name="home_request_rating">★ %1$.1f (%2$d reseñas)</string>
     <string name="home_notifications_content_description">Notificaciones</string>
     <string name="home_search_send_content_description">Enviar problema</string>
+
+    <!-- Chat screen -->
+    <string name="chat_title">Chat con IA</string>
+    <string name="chat_back_content_description">Volver</string>
+    <string name="chat_input_placeholder">Describe el problema de tu hogar…</string>
+    <string name="chat_placeholder_body">Contale a la IA qué pasa en tu hogar para iniciar una conversación.</string>
 </resources>

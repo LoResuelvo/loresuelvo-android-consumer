@@ -82,4 +82,10 @@
     <string name="home_request_rating">★ %1$.1f (%2$d reviews)</string>
     <string name="home_notifications_content_description">Notifications</string>
     <string name="home_search_send_content_description">Send problem</string>
+
+    <!-- Chat screen -->
+    <string name="chat_title">Chat with AI</string>
+    <string name="chat_back_content_description">Back</string>
+    <string name="chat_input_placeholder">Describe your home problem…</string>
+    <string name="chat_placeholder_body">Tell the AI what\'s happening in your home to start the conversation.</string>
 </resources>

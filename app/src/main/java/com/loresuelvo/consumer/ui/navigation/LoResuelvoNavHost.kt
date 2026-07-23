@@ -15,6 +15,7 @@ fun LoResuelvoNavHost(
     completeProfile: @Composable () -> Unit,
     home: @Composable () -> Unit,
     professionals: @Composable (categoryId: Int, categoryName: String) -> Unit,
+    chat: @Composable () -> Unit,
 ) {
     NavHost(
         navController = navController,
@@ -37,5 +38,6 @@ fun LoResuelvoNavHost(
             val categoryName = entry.arguments?.getString("categoryName").orEmpty()
             professionals(categoryId, categoryName)
         }
+        composable(Route.Chat.path) { chat() }
     }
 }

@@ -18,6 +18,7 @@ import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
+import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
@@ -69,6 +70,7 @@ fun LoResuelvoNav() {
         completeProfile = { CompleteProfileRoute(navController = navController) },
         home = { HomeRoute(navController = navController) },
         professionals = { categoryId, categoryName -> ProfessionalsRoute(categoryId, categoryName) },
+        chat = { ChatRoute(navController = navController) },
     )
 }
 
@@ -175,7 +177,7 @@ private fun HomeRoute(
             )
         },
         onNotificationsClick = { /* TODO */ },
-        onAiSendClick = { /* TODO */ },
+        onAiSendClick = { navController.navigate(Route.Chat.path) },
         onRetryClick = { homeViewModel.loadCategories() },
         onLogoutClick = { sessionViewModel.signOut(context) },
     )
