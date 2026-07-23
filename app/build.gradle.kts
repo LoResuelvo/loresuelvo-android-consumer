@@ -84,6 +84,14 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
+            // BDD: only run scenarios that don't carry the `@wip` marker.
+            // Each commit adds the step defs for one scenario and
+            // removes its `@wip` marker; this keeps the rest of the
+            // feature dormant without polluting the build with
+            // `UndefinedStepException`s.
+            all {
+                it.systemProperty("cucumber.filter.tags", "not @wip")
+            }
         }
     }
 

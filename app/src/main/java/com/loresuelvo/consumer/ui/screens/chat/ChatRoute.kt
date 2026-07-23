@@ -13,6 +13,8 @@ import androidx.navigation.NavHostController
  * Today this route only handles the back press (the smart router is
  * responsible for re-deriving the start destination based on the
  * session, so plain `popBackStack` is enough to return to Home).
+ * Scenario 01-DIA also exercises the prompt → send → optimistic
+ * append path: see [ChatScreen] and [ChatViewModel.onSendClick].
  */
 @Composable
 fun ChatRoute(
@@ -21,10 +23,11 @@ fun ChatRoute(
     val viewModel: ChatViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
     ChatScreen(
+        promptInput = state.promptInput,
+        canSend = state.canSend,
+        messages = state.messages,
+        onPromptChange = viewModel::onPromptChange,
+        onSendClick = viewModel::onSendClick,
         onBackClick = { navController.popBackStack() },
     )
-    // `state` is consumed here so subsequent commits can layer
-    // additional Composables that observe it without touching
-    // [ChatRoute] again.
-    @Suppress("UNUSED_EXPRESSION") state
 }

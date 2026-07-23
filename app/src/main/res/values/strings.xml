@@ -90,4 +90,5 @@
     <string name="chat_back_content_description">Volver</string>
     <string name="chat_input_placeholder">Describe el problema de tu hogar…</string>
     <string name="chat_placeholder_body">Contale a la IA qué pasa en tu hogar para iniciar una conversación.</string>
+    <string name="chat_send_content_description">Enviar mensaje</string>
 </resources>
