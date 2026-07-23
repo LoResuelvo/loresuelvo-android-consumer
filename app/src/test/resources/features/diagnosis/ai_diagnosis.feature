@@ -7,7 +7,7 @@ Feature: Diagnóstico asistido por IA
   Background:
     Given estoy autenticado como consumidor
     And me encuentro en la pantalla Home
-  @wip
+
   Scenario: 01-DIA Iniciar conversación con el asistente
     When ingreso un mensaje "Tengo una gotera en el baño" en el campo de diagnóstico
     And presiono "Diagnosticar"
