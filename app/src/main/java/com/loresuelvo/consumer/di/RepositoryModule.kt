@@ -1,12 +1,14 @@
 package com.loresuelvo.consumer.di
 
 import com.loresuelvo.consumer.data.api.ApiCategoryRepository
+import com.loresuelvo.consumer.data.api.ApiDiagnosisRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import dagger.Binds
 import dagger.Module
@@ -46,4 +48,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthSessionStore(impl: EncryptedAuthSessionStore): AuthSessionStore
+
+    @Binds
+    @Singleton
+    abstract fun bindDiagnosisRepository(
+        impl: ApiDiagnosisRepository,
+    ): DiagnosisRepository
 }

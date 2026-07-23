@@ -182,6 +182,12 @@ class ChatNavigationAcceptanceTest {
         abstract fun bindAuthSessionStore(
             store: EncryptedAuthSessionStore,
         ): AuthSessionStore
+
+        @Binds
+        @Singleton
+        abstract fun bindDiagnosisRepository(
+            repository: FakeDiagnosisRepository,
+        ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
     }
 
     @Singleton

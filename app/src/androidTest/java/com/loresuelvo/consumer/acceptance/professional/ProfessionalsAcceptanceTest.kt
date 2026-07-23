@@ -274,5 +274,11 @@ class ProfessionalsAcceptanceTest {
         abstract fun bindAuthSessionStore(
             impl: com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore,
         ): AuthSessionStore
+
+        @Binds
+        @Singleton
+        abstract fun bindDiagnosisRepository(
+            impl: com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository,
+        ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
     }
 }

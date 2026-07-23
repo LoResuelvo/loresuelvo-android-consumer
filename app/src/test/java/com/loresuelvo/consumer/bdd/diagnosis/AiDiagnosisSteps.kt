@@ -9,16 +9,16 @@ import io.cucumber.java.en.When
  * Step defs for `features/diagnosis/ai_diagnosis.feature`. Each step
  * is intentionally thin: the heavy lifting lives in [AiDiagnosisWorld]
  * which pins `Dispatchers.Main` and drives the [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel]
- * through a `StandardTestDispatcher`.
+ * through a `StandardTestDispatcher` against a [FakeDiagnosisRepository].
  *
  * Cucumber instantiates this class with its zero-arg constructor on
  * a per-scenario basis; `close()` is invoked from the JVM shutdown
  * hook.
  *
  * Steps that live here today:
- *  - 01-DIA (full coverage)
- *  - 06-DIA (the chat route exists and the entry-point intent is
- *    recorded; the user-flow proof is the Compose acceptance test).
+ *  - 01-DIA: typing + sending surfaces the user's optimistic message.
+ *  - 02-DIA: the assistant round-trip becomes visible in the chat.
+ *  - 06-DIA: structural assertion that `Route.Chat` is registered.
  *
  * Steps for the remaining `@wip` scenarios live in [PendingSteps].
  */
@@ -60,6 +60,29 @@ class AiDiagnosisSteps {
     @Then("veo mi mensaje en el chat")
     fun veoMiMensajeEnElChat() {
         world.assertUserMessageVisible(world.lastTypedPromptSnapshot())
+    }
+
+    // ---- Scenario: 02-DIA Recibir respuesta del asistente ----------
+
+    /**
+     * 02-DIA "Given": the consumer has already kicked off the
+     * conversation. We combine the typing + send from 01-DIA's
+     * flow here so the launched coroutine sits in the queue
+     * waiting for the seeded fake response.
+     */
+    @Given("inicié una conversación con el asistente")
+    fun inicieUnaConversacionConElAsistente() {
+        world.startConversationWithSeededResponse()
+    }
+
+    @When("el asistente procesa mi mensaje")
+    fun elAsistenteProcesaMiMensaje() {
+        world.simulateAssistantResponse()
+    }
+
+    @Then("veo una respuesta del asistente en el chat")
+    fun veoUnaRespuestaDelAsistenteEnElChat() {
+        world.assertAssistantMessageVisible()
     }
 
     // ---- Scenario: 06-DIA Navegar al chat de IA --------------------

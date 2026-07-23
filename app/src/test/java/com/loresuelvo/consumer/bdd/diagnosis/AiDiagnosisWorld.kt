@@ -1,5 +1,9 @@
 package com.loresuelvo.consumer.bdd.diagnosis
 
+import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
@@ -20,13 +24,15 @@ import kotlinx.coroutines.test.setMain
  * the observation scope, so step defs can deterministically drive
  * and inspect the UDF state without Hilt, Compose, or a backend.
  *
- * The chat screen is identity-continuous: there is no separate
- * `init { }` block that fires a network request, so the VM is
- * constructed synchronously. The network round-trip lands in commit
- * 02-DIA; this world will then host a `FakeDiagnosisRepository`.
+ * The chat screen exercises a real round-trip against a
+ * [FakeDiagnosisRepository] (no Hilt). The repo's response is
+ * deterministic per scenario: scenarios that need a successful
+ * server reply enqueue a [Diagnosis] through
+ * [seedSuccessDiagnosis]; scenarios that need a typed failure
+ * (04-DIA) enqueue a [SendDiagnosisPromptOutcome.Failure].
  *
- * Cucumber instantiates this class via its zero-arg constructor on a
- * per-scenario basis (no state leaks across scenarios).
+ * Cucumber instantiates this class via its zero-arg constructor on
+ * a per-scenario basis (no state leaks across scenarios).
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class AiDiagnosisWorld : AutoCloseable {
@@ -36,6 +42,8 @@ class AiDiagnosisWorld : AutoCloseable {
     private val supervisorJob = SupervisorJob()
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
+    private val fakeRepo = FakeDiagnosisRepository()
+    private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
     private lateinit var viewModel: ChatViewModel
     private val observedUiStates: MutableList<ChatUiState> = mutableListOf()
 
@@ -64,7 +72,8 @@ class AiDiagnosisWorld : AutoCloseable {
 
         Dispatchers.setMain(dispatcher)
 
-        viewModel = ChatViewModel()
+        sendDiagnosisPrompt = SendDiagnosisPromptUseCase(fakeRepo)
+        viewModel = ChatViewModel(sendDiagnosisPrompt)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
@@ -72,6 +81,8 @@ class AiDiagnosisWorld : AutoCloseable {
 
         scheduler.advanceUntilIdle()
     }
+
+    // ---- 01-DIA + 02-DIA flow helpers --------------------------------
 
     fun typePrompt(text: String) {
         lastTypedPrompt = text
@@ -119,11 +130,107 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
+    // ---- 02-DIA server-roundtrip helpers ----------------------------
+
+    /**
+     * Seeds a deterministic [SendDiagnosisPromptOutcome.Success]
+     * for the next `sendPrompt(...)` call. The diagnosis includes
+     * the user's typed prompt (as a consumer message) and the
+     * supplied assistant content. The fake consumes the seeded
+     * outcome exactly once.
+     */
+    fun seedSuccessDiagnosis(
+        assistantContent: String,
+        conversationId: String = "fake-conv",
+    ) {
+        val prompt = lastTypedPromptSnapshot()
+        val diagnosis = Diagnosis(
+            conversationId = conversationId,
+            messages = listOf(
+                ServerSideMessage(
+                    id = "user-server-1",
+                    sender = Sender.Consumer,
+                    content = prompt,
+                ).toChatMessage(),
+                ServerSideMessage(
+                    id = "assistant-1",
+                    sender = Sender.Assistant,
+                    content = assistantContent,
+                ).toChatMessage(),
+            ),
+        )
+        fakeRepo.enqueueOutcome(SendDiagnosisPromptOutcome.Success(diagnosis))
+    }
+
+    /**
+     * 02-DIA wrapper: seeds the fake's deterministic success
+     * response, types the same prompt used in 01-DIA, and taps
+     * send. The state lands in `messages = [optimistic-user]` with
+     * `sending = true` and the launched coroutine queued in
+     * `viewModelScope`. The matching `When` step's
+     * [simulateAssistantResponse] advances the scheduler so the
+     * coroutine consumes the seeded outcome and the state
+     * transitions to `messages = [server-user, server-assistant]`.
+     */
+    fun startConversationWithSeededResponse() {
+        val prompt = "Tengo una gotera en el baño"
+        typePrompt(prompt)
+        seedSuccessDiagnosis(
+            assistantContent = "Entiendo. ¿La pérdida es continua?",
+        )
+        tapSend()
+    }
+
+    /**
+     * Advances the scheduler so the launched coroutine inside
+     * `ChatViewModel.onSendClick` consumes the seeded fake outcome
+     * and the resulting state update lands in the observed UI
+     * states list. Mirrors "the assistant processed my message".
+     */
+    fun simulateAssistantResponse() {
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * "veo una respuesta del asistente en el chat" — 02-DIA.
+     * Asserts that the assistant bubble is present in `state.messages`
+     * after the round-trip. We don't pin the exact content because
+     * the Gherkin has no `{string}` parameter; the fake's seeded
+     * content is asserted in unit tests instead.
+     */
+    fun assertAssistantMessageVisible() {
+        val state = lastUiState()
+        if (state.sending) {
+            error("expected assistant message, but the round-trip is still in flight")
+        }
+        val assistant = state.messages.lastOrNull { it.sender is Sender.Assistant }
+            ?: error(
+                "expected at least one assistant message after the round-trip, " +
+                    "but messages=${state.messages}",
+            )
+        // Sanity: the server-returned messages list should also
+        // include the consumer's prompt — the optimistic append is
+        // replaced by the server's full history, not just the
+        // assistant reply.
+        if (state.messages.none { it.sender is Sender.Consumer }) {
+            error(
+                "expected the round-trip to surface the user prompt as a " +
+                    "consumer message too, but messages=${state.messages}",
+            )
+        }
+        if (assistant.content.isBlank()) {
+            error("expected the assistant message to have non-blank content")
+        }
+    }
+
+    // ---- 06-DIA helpers --------------------------------------------
+
     /**
      * "selecciono la opción 'Chat con IA'" — 06-DIA. Records the
      * intent so the matching `Then` step can assert the navigation
      * route exists. The actual user-flow proof (the chat screen is
-     * rendered) is the responsibility of the Compose acceptance test.
+     * rendered) is the responsibility of the Compose acceptance
+     * test.
      */
     fun recordChatWithAiIntent() {
         chatWithAiIntentIssued = true
@@ -149,6 +256,20 @@ class AiDiagnosisWorld : AutoCloseable {
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()
+    }
+
+    private data class ServerSideMessage(
+        val id: String,
+        val sender: Sender,
+        val content: String,
+    ) {
+        fun toChatMessage(): com.loresuelvo.consumer.domain.diagnosis.ChatMessage =
+            com.loresuelvo.consumer.domain.diagnosis.ChatMessage(
+                id = id,
+                sender = sender,
+                content = content,
+                sentAtEpochMillis = 0L,
+            )
     }
 
     private companion object {

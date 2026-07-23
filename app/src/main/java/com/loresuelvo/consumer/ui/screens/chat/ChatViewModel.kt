@@ -1,8 +1,11 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Sender
+import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -10,27 +13,36 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the AI diagnostic chat screen.
  *
- * This commit (scenario 01-DIA) wires only the consumer side:
- *  - [onPromptChange] keeps [ChatUiState.promptInput] in sync with
- *    the input field;
- *  - [onSendClick] trims the prompt, no-ops on empty input, and
- *    appends an optimistic [ChatMessage] (sender = [Sender.Consumer],
- *    id = `user-<uuid>`) to [ChatUiState.messages], clearing the
- *    input on success.
+ * Commit 02-DIA wires the full client → server round-trip:
  *
- * The server round-trip (commit 02-DIA) replaces the optimistic
- * message with the backend's full history; the error path (commit
- * 04-DIA) renders an error card; the typing indicator (commit
- * 03-DIA) flips on a `sending` flag for the duration of the call.
- * This commit deliberately does not depend on any repository or use
- * case so the BDD layer can drive the VM with no fakes.
+ *  1. [onPromptChange] keeps [ChatUiState.promptInput] in sync
+ *     with the input field.
+ *  2. [onSendClick]:
+ *     - Trims [ChatUiState.promptInput] and bails on empty or
+ *       `sending = true` (defensive mirror of [ChatUiState.canSend]).
+ *     - Appends an optimistic [ChatMessage]
+ *       (`sender = Sender.Consumer`) to [ChatUiState.messages],
+ *       clears the input, and flips `sending = true`.
+ *     - Launches `sendDiagnosisPrompt(prompt, conversationId)` via
+ *       [viewModelScope]. On `Success`, [ChatUiState.messages] is
+ *       REPLACED with the server's full history and `conversationId`
+ *       is updated. On `Failure.{Network|Server|Unauthorized}`,
+ *       `sending` is reset; the typed error visualisation lands
+ *       in commit 04-DIA, for now the conversation stays usable.
+ *
+ * Idempotency: the round-trip snapshots the conversation id before
+ * launching so two parallel `onSendClick` invocations don't race on
+ * the path argument to the use case.
  */
 @HiltViewModel
-class ChatViewModel @Inject constructor() : ViewModel() {
+class ChatViewModel @Inject constructor(
+    private val sendDiagnosisPrompt: SendDiagnosisPromptUseCase,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
@@ -42,9 +54,10 @@ class ChatViewModel @Inject constructor() : ViewModel() {
     fun onSendClick() {
         val state = _uiState.value
         val prompt = state.promptInput.trim()
-        if (prompt.isEmpty()) return
+        if (prompt.isEmpty() || state.sending) return
 
-        val message = ChatMessage(
+        val conversationIdAtLaunch = state.conversationId
+        val optimistic = ChatMessage(
             id = USER_MESSAGE_ID_PREFIX + UUID.randomUUID(),
             sender = Sender.Consumer,
             content = prompt,
@@ -53,10 +66,37 @@ class ChatViewModel @Inject constructor() : ViewModel() {
 
         _uiState.update {
             it.copy(
-                messages = state.messages + message,
+                messages = state.messages + optimistic,
                 promptInput = "",
+                sending = true,
             )
         }
+
+        viewModelScope.launch {
+            val outcome = sendDiagnosisPrompt(prompt, conversationIdAtLaunch)
+            when (outcome) {
+                is SendDiagnosisPromptOutcome.Success -> applyServerResponse(outcome)
+                is SendDiagnosisPromptOutcome.Failure.Network -> clearSendingOnly()
+                is SendDiagnosisPromptOutcome.Failure.Server -> clearSendingOnly()
+                is SendDiagnosisPromptOutcome.Failure.Unauthorized -> clearSendingOnly()
+            }
+        }
+    }
+
+    private fun applyServerResponse(outcome: SendDiagnosisPromptOutcome.Success) {
+        val diagnosis = outcome.diagnosis
+        _uiState.update {
+            it.copy(
+                sending = false,
+                conversationId = diagnosis.conversationId ?: it.conversationId,
+                messages = diagnosis.messages,
+                recommendations = diagnosis.recommendations ?: it.recommendations,
+            )
+        }
+    }
+
+    private fun clearSendingOnly() {
+        _uiState.update { it.copy(sending = false) }
     }
 
     private companion object {

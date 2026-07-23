@@ -132,6 +132,12 @@ class RealBackendFlowE2ETest {
         @Binds
         @Singleton
         abstract fun bindAuthSessionStore(impl: EncryptedAuthSessionStore): AuthSessionStore
+
+        @Binds
+        @Singleton
+        abstract fun bindDiagnosisRepository(
+            impl: com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository,
+        ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
     }
 }
 

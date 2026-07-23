@@ -274,6 +274,12 @@ class CompleteProfileScreenAcceptanceTest {
         abstract fun bindAuthSessionStore(
             store: EncryptedAuthSessionStore,
         ): AuthSessionStore
+
+        @Binds
+        @Singleton
+        abstract fun bindDiagnosisRepository(
+            repository: com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository,
+        ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
     }
 
     @Singleton

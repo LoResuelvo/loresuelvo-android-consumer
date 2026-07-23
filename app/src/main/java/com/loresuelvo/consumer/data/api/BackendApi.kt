@@ -1,13 +1,18 @@
 package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
+import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
+import com.loresuelvo.consumer.data.api.dto.CreateConversationRequestDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
+import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
 import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
+import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 /**
@@ -48,4 +53,29 @@ interface BackendApi {
      */
     @GET("providers")
     suspend fun getProviders(@Query("category_id") categoryId: Int): List<ProviderDto>
+
+    // ---- AI diagnostic chat (added in commit 02-DIA) ---------------
+
+    /**
+     * `POST /chatbot/conversations` — opens a new conversation with
+     * the AI diagnostic assistant. The body carries the first
+     * message; the response is the full conversation
+     * [DiagnosisDto] with the assistant's first reply.
+     */
+    @POST("chatbot/conversations")
+    suspend fun createConversation(
+        @Body body: CreateConversationRequestDto,
+    ): DiagnosisDto
+
+    /**
+     * `POST /chatbot/conversations/{conversationId}/messages` —
+     * appends a follow-up message to an existing conversation. The
+     * response carries the updated full history (user message +
+     * assistant reply).
+     */
+    @POST("chatbot/conversations/{conversationId}/messages")
+    suspend fun sendMessage(
+        @Path("conversationId") conversationId: String,
+        @Body body: SendMessageRequestDto,
+    ): DiagnosisDto
 }
