@@ -69,10 +69,3 @@ Feature: Diagnóstico asistido por IA
     Then cada prestador muestra nombre y apellido
     And cada prestador muestra el rubro "Plomería"
     And cada prestador muestra su foto de perfil
-
-  @wip
-  Scenario: 11-DIA Conversación sin recomendaciones de prestador
-    Given la IA respondió sin recomendar prestadores
-    When visualizo la respuesta del asistente
-    Then no veo la sección de prestadores recomendados
-    And la conversación continúa normalmente
