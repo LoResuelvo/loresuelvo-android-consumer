@@ -9,6 +9,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
@@ -42,6 +45,25 @@ internal fun messagesListScrollIndex(
     if (messageCount == 0) return null
     return if (typingIndicatorVisible) messageCount else messageCount - 1
 }
+
+/**
+ * "Respect reader position" gate (ticket 4 of the chat-UX backlog).
+ *
+ * Returns `true` iff the [MessagesList] should
+ * [androidx.compose.foundation.lazy.LazyListState.scrollToItem] to
+ * the freshly-computed [target]. The rule: the auto-scroll only
+ * fires when the user is already at the bottom of the list, so a
+ * brand-new assistant reply does not yank the reader away from
+ * older messages they're currently scrolling through. The chat
+ * itself still scrolls UPWARD via the user — they just don't get
+ * force-scrolled down any time a new bubble arrives.
+ *
+ * Pure function for unit testing; the Composable reads this via
+ * [androidx.compose.runtime.derivedStateOf] over
+ * `listState.layoutInfo`.
+ */
+internal fun shouldAutoScroll(target: Int?, isAtBottom: Boolean): Boolean =
+    target != null && isAtBottom
 
 /**
  * Lazy list of chat messages. Renders each [ChatMessage] through
@@ -78,17 +100,26 @@ fun MessagesList(
 ) {
     // Auto-scroll on every new message + typing indicator change so
     // the user's newest prompt and the assistant's in-flight /
-    // final bubble are always on screen. The mapping is in
-    // [messagesListScrollIndex] (unit-tested).
+    // final bubble are always on screen **if the user is already
+    // at the bottom**. If the user has scrolled up to read older
+    // messages, the new bubble just appears below — no yank — so
+    // their reading position is preserved (ticket 4).
+    val isAtBottom by remember {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            info.totalItemsCount == 0 ||
+                info.visibleItemsInfo.lastOrNull()?.index == info.totalItemsCount - 1
+        }
+    }
     LaunchedEffect(messages.size, typingIndicatorVisible) {
         val target = messagesListScrollIndex(
             messageCount = messages.size,
             typingIndicatorVisible = typingIndicatorVisible,
         )
-        if (target != null) {
-            // `scrollToItem` runs the platform's default scroll
-            // behavior; in production this is animated by Compose's
-            // frame scheduler for a smooth feel.
+        // `shouldAutoScroll` is a non-inline pure function so
+        // Kotlin can't smart-cast `target` after the call. Check
+        // explicitly so the resulting `Int` reaches `scrollToItem`.
+        if (target != null && shouldAutoScroll(target, isAtBottom)) {
             listState.scrollToItem(target)
         }
     }
