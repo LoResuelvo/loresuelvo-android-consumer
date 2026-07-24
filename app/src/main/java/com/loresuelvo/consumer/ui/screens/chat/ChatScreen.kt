@@ -3,8 +3,10 @@ package com.loresuelvo.consumer.ui.screens.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -23,8 +25,10 @@ import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 /**
  * Stateless Composable for the AI diagnostic chat screen.
  *
- * Layout:
+ * Layout (top-down):
  *  - [ChatTopBar] with the back arrow and the "Chat con IA" title.
+ *  - [PreliminaryBanner] above the messages when
+ *    `preliminaryWarningVisible = true` (scenario 05-DIA).
  *  - [MessagesList] when the conversation has at least one entry,
  *    OR the localisable placeholder body when the list is empty
  *    AND we are not mid-round-trip. When `sending = true` the
@@ -43,6 +47,7 @@ fun ChatScreen(
     sending: Boolean,
     messages: List<ChatMessage>,
     transientError: ChatError?,
+    preliminaryWarningVisible: Boolean,
     onPromptChange: (String) -> Unit,
     onSendClick: () -> Unit,
     onRetryClick: () -> Unit,
@@ -61,31 +66,40 @@ fun ChatScreen(
                 .background(MaterialTheme.colorScheme.background)
                 .padding(padding),
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
-                contentAlignment = Alignment.Center,
             ) {
-                if (messages.isEmpty() && !sending && transientError == null) {
-                    Text(
-                        text = stringResource(R.string.chat_placeholder_body),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(
-                            horizontal = 24.dp,
-                            vertical = 32.dp,
-                        ),
-                    )
-                } else {
-                    MessagesList(
-                        messages = messages,
-                        typingIndicatorVisible = sending,
-                        transientError = transientError,
-                        onRetryClick = onRetryClick,
-                        onErrorDismissClick = onErrorDismiss,
-                    )
+                if (preliminaryWarningVisible) {
+                    PreliminaryBanner()
+                }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    if (messages.isEmpty() && !sending && transientError == null) {
+                        Text(
+                            text = stringResource(R.string.chat_placeholder_body),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(
+                                horizontal = 24.dp,
+                                vertical = 32.dp,
+                            ),
+                        )
+                    } else {
+                        MessagesList(
+                            messages = messages,
+                            typingIndicatorVisible = sending,
+                            transientError = transientError,
+                            onRetryClick = onRetryClick,
+                            onErrorDismissClick = onErrorDismiss,
+                        )
+                    }
                 }
             }
             Column(

@@ -97,4 +97,5 @@
     <string name="chat_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <string name="chat_error_retry">Reintentar</string>
     <string name="chat_error_dismiss">Descartar</string>
+    <string name="chat_preliminary_warning">Las respuestas brindadas son una orientación preliminar y no constituyen un diagnóstico técnico definitivo</string>
 </resources>
