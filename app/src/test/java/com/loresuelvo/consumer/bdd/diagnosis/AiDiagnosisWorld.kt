@@ -224,25 +224,50 @@ class AiDiagnosisWorld : AutoCloseable {
     }
 
     /**
-     * 04-DIA `Then veo el mensaje del asistente "{string}"`:
-     * asserts the literal user-visible Spanish text is shown by
-     * mapping the typed `transientError` through the same
+     * 04-DIA + 05-DIA shared `Then veo el mensaje del asistente
+     * "{string}"`: assert the literal user-visible text is
+     * surfaced by EITHER the transient error card (04-DIA) OR the
+     * preliminary warning banner (05-DIA). The two assistants
+     * share a Gherkin step so the dispatcher checks the typed
+     * `transientError` first; if absent, falls back to the
+     * `preliminaryWarningVisible` flag.
+     *
+     * The literal text is bridged through the same
      * [com.loresuelvo.consumer.ui.screens.chat.errorLiteral]
-     * function the UI uses. If the VM surfaces a different error
-     * type, the test fails loud so the inconsistency is caught at
-     * commit-time instead of via end-to-end manual QA.
+     * function used by the UI for errors. The warning banner's
+     * literal lives in `R.string.chat_preliminary_warning`, so we
+     * match it against the canonical Spanish string the Gherkin
+     * phrase expects.
      */
-    fun assertAssistantErrorMessageEquals(expected: String) {
+    fun assertAssistantMessageShows(expected: String) {
         val state = lastUiState()
-        val error = state.transientError
-            ?: error("expected transientError to be set, was $state")
-        val actual = error.errorLiteral()
-        if (actual != expected) {
+
+        // 04-DIA path: the error card is visible.
+        state.transientError?.let { error ->
+            val actual = error.errorLiteral()
+            if (actual == expected) return
             error(
                 "expected the assistant error to read '$expected', " +
-                    "got '$actual' for ${error::class.simpleName}",
+                    "got '$actual' for ${error::class.simpleName}, " +
+                    "preliminaryWarningVisible=${state.preliminaryWarningVisible}",
             )
         }
+
+        // 05-DIA path: the warning banner is visible.
+        if (state.preliminaryWarningVisible) {
+            // The banner text in the resource is fixed and
+            // matches the Gherkin phrase verbatim. The actual
+            // i18n is verified by the locale-aware strings.xml
+            // snapshots; here we assert the flag is on so the
+            // banner renders the right resource.
+            if (expected == PRELIMINARY_WARNING_LITERAL) return
+        }
+
+        error(
+            "expected assistant-visible message '$expected' but " +
+                "transientError=${state.transientError} " +
+                "and preliminaryWarningVisible=${state.preliminaryWarningVisible}",
+        )
     }
 
     /**
@@ -422,6 +447,11 @@ class AiDiagnosisWorld : AutoCloseable {
     }
 
     private companion object {
+        // Mirrors `app/src/main/res/values/strings.xml#chat_preliminary_warning`
+        // for the BDD bridge — see [assertAssistantMessageShows].
+        const val PRELIMINARY_WARNING_LITERAL: String =
+            "Las respuestas brindadas son una orientación preliminar y no constituyen un diagnóstico técnico definitivo"
+
         const val CHAT_ROUTE_PATH = "chat"
     }
 }

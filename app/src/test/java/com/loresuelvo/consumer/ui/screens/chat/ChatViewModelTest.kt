@@ -78,6 +78,10 @@ class ChatViewModelTest {
         assertNull(state.conversationId)
         assertNull(state.recommendations)
         assertFalse(state.canSend)
+        assertTrue(
+            "preliminaryWarningVisible should default to true so the warning banner renders",
+            state.preliminaryWarningVisible,
+        )
     }
 
     @Test

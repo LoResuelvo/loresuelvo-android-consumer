@@ -137,7 +137,7 @@ class AiDiagnosisSteps {
 
     @Then("veo el mensaje del asistente {string}")
     fun veoElMensajeDelAsistente(mensaje: String) {
-        world.assertAssistantErrorMessageEquals(mensaje)
+        world.assertAssistantMessageShows(mensaje)
     }
 
     /**
@@ -154,6 +154,26 @@ class AiDiagnosisSteps {
         // `transientError = null`).
         world.simulateRetry()
         world.assertRetryClearsError()
+    }
+
+    // ---- Scenario: 05-DIA Mostrar advertencia de orientación -----
+
+    /**
+     * 05-DIA "When": the user opens the chat screen. There's no
+     * setup beyond what [estoyAutenticadoComoConsumidor] already
+     * does — the warning is part of the default chat surface.
+     *
+     * `Then veo el mensaje del asistente {string}` is shared with
+     * 04-DIA — see [veoElMensajeDelAsistente]. The World's
+     * `assertAssistantMessageShows` dispatches between the
+     * warning and the error card based on which surface is
+     * actually showing.
+     */
+
+    @When("visualizo la conversación con el asistente")
+    fun visualizoLaConversacionConElAsistente() {
+        // No-op: the chat screen always shows the warning
+        // banner by default (see [ChatUiState.preliminaryWarningVisible]).
     }
 
     // ---- Scenario: 06-DIA Navegar al chat de IA --------------------

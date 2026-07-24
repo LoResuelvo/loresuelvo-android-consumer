@@ -6,17 +6,17 @@ import com.loresuelvo.consumer.domain.diagnosis.Recommendations
 /**
  * UDF state for the AI diagnostic chat screen.
  *
- *  - [transientError]: non-null while the last send surfaced a
- *    failure the user must acknowledge. Pairs with
- *    [lastAttemptedPrompt] so the retry CTA can resubmit the
- *    same content without forcing the consumer to retype.
- *    Set in commits 04-DIA onwards; rendered as the
- *    [ChatErrorCard] in the assistant's lane.
- *  - [lastAttemptedPrompt]: snapshot of the prompt whose send
- *    landed in [transientError]. Cleared once the user retries
- *    successfully.
+ *  - [preliminaryWarningVisible]: always `true` while the chat is
+ *    open, controls whether the orientation-preliminary banner
+ *    renders above the messages. The text comes from the
+ *    `chat_preliminary_warning` resource (so it tracks the
+ *    active locale). Carried as a flag rather than a literal
+ *    string to keep the Spanish copy out of `app/src/main/java/`
+ *    per the AGENTS.md i18n rule. Reserved for scenario 05-DIA;
+ *    future commits may flip it off when the assessment returns
+ *    a `self_service` outcome.
  *
- * The remaining fields mirror commits 01-DIA → 03-DIA.
+ * The remaining fields are unchanged from commits 01-DIA → 04-DIA.
  */
 data class ChatUiState(
     val placeholderBody: String = "",
@@ -27,6 +27,7 @@ data class ChatUiState(
     val recommendations: Recommendations? = null,
     val transientError: ChatError? = null,
     val lastAttemptedPrompt: String? = null,
+    val preliminaryWarningVisible: Boolean = true,
 ) {
     val canSend: Boolean get() = promptInput.trim().isNotEmpty() && !sending
 }

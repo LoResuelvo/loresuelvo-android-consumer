@@ -24,12 +24,6 @@ import io.cucumber.java.PendingException
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario: 05-DIA Mostrar advertencia de orientación
-    @When("visualizo la conversación con el asistente")
-    fun visualizoLaConversacionConElAsistente() {
-        throw PendingException("05-DIA pendiente")
-    }
-
     // ---- Scenario: 07-DIA Expandir campo de texto automáticamente ---
     @Given("me encuentro escribiendo un mensaje para el asistente")
     fun meEncuentroEscribiendoUnMensaje() {
