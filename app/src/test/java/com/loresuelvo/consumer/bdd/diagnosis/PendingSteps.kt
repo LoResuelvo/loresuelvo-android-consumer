@@ -108,20 +108,4 @@ class PendingSteps {
     fun cadaPrestadorMuestraSuFotoDePerfil() {
         throw PendingException("10-DIA pendiente")
     }
-
-    // ---- Scenario: 11-DIA Conversación sin recomendaciones ------------
-    @Given("la IA respondió sin recomendar prestadores")
-    fun laIaRespondioSinRecomendarPrestadores() {
-        throw PendingException("11-DIA pendiente")
-    }
-
-    @Then("no veo la sección de prestadores recomendados")
-    fun noVeoLaSeccionDePrestadores() {
-        throw PendingException("11-DIA pendiente")
-    }
-
-    @Then("la conversación continúa normalmente")
-    fun laConversacionContinuaNormalmente() {
-        throw PendingException("11-DIA pendiente")
-    }
 }
