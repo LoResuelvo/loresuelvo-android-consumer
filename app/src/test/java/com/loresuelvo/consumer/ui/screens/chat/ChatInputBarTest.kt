@@ -6,8 +6,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextClearance
@@ -54,11 +60,15 @@ class ChatInputBarTest {
      * without external clipping (a fixed 400.dp on a phone-sized
      * viewport leaves headroom even for very long prompts).
      */
-    private fun setContentBar(promptState: androidx.compose.runtime.MutableState<String>) {
+    private fun setContentBar(
+        promptState: androidx.compose.runtime.MutableState<String>,
+        sending: Boolean = false,
+    ) {
         composeTestRule.setContent {
             ChatInputBar(
                 promptInput = promptState.value,
-                canSend = promptState.value.isNotBlank(),
+                canSend = promptState.value.isNotBlank() && !sending,
+                sending = sending,
                 onPromptChange = { promptState.value = it },
                 onSendClick = {},
                 modifier = Modifier
@@ -148,5 +158,80 @@ class ChatInputBarTest {
             "field height should stay compact after clear, was ${fieldHeightPx()}px",
             fieldHeightPx() <= dpToPx(96.dp),
         )
+    }
+
+    // ---- Ticket 2: muted Send icon when unavailable ----
+
+    /**
+     * When the round-trip is in flight, the Send icon stays in the
+     * tree but the button is disabled. We deliberately do NOT show
+     * a spinner here — the chat already has a typing indicator
+     * bubble, and two simultaneous spinners feel noisy.
+     */
+    @Test
+    fun shows_send_icon_muted_when_sending() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "primera",
+                canSend = false,
+                sending = true,
+                onPromptChange = {},
+                onSendClick = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+        composeTestRule.onNodeWithTag(SEND_ICON_TAG, useUnmergedTree = true)
+            .assertExists()
+        composeTestRule.onNodeWithTag(SEND_BUTTON_TAG).assertIsNotEnabled()
+    }
+
+    /**
+     * When the bar is idle and a non-empty prompt is present, the
+     * Send icon renders in the primary colour and the button is
+     * enabled.
+     */
+    @Test
+    fun shows_send_icon_active_when_idle() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "primera",
+                canSend = true,
+                sending = false,
+                onPromptChange = {},
+                onSendClick = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+        composeTestRule.onNodeWithTag(SEND_ICON_TAG, useUnmergedTree = true)
+            .assertExists()
+        composeTestRule.onNodeWithTag(SEND_BUTTON_TAG).assertIsEnabled()
+    }
+
+    /**
+     * Empty prompt + not sending → no spinner. Send icon is in the
+     * tree but the button is disabled (and the icon's alpha is
+     * muted via the same `primary.copy(alpha = 0.38f)` branch).
+     */
+    @Test
+    fun shows_send_icon_muted_when_empty() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "",
+                canSend = false,
+                sending = false,
+                onPromptChange = {},
+                onSendClick = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+        composeTestRule.onNodeWithTag(SEND_ICON_TAG, useUnmergedTree = true)
+            .assertExists()
+        composeTestRule.onNodeWithTag(SEND_BUTTON_TAG).assertIsNotEnabled()
     }
 }

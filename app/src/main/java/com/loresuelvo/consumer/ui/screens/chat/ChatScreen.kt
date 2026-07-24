@@ -10,17 +10,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
 
 /**
  * Stateless Composable for the AI diagnostic chat screen.
@@ -109,9 +112,21 @@ fun ChatScreen(
                     .imePadding()
                     .navigationBarsPadding(),
             ) {
+                // WhatsApp-style divider between the chat surface
+                // and the composer. Anchored at the bottom of the
+                // chat list so it travels with the input bar across
+                // recompositions.
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.testTag(CHAT_INPUT_DIVIDER_TAG),
+                )
                 ChatInputBar(
                     promptInput = promptInput,
                     canSend = canSend,
+                    // Ticket 2: muted Send icon while the round-trip
+                    // is in flight (no second spinner — the typing
+                    // indicator bubble already has one).
+                    sending = sending,
                     onPromptChange = onPromptChange,
                     onSendClick = onSendClick,
                 )
