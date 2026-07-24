@@ -2,7 +2,7 @@ package com.loresuelvo.consumer.data.api
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -64,7 +64,7 @@ class ApiCategoryRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_categories_200_returns_Success_with_mapped_list() = runTest {
+    fun get_categories_200_returns_Success_with_mapped_list() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -94,7 +94,7 @@ class ApiCategoryRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_categories_200_empty_array_returns_Success_empty() = runTest {
+    fun get_categories_200_empty_array_returns_Success_empty() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -109,7 +109,7 @@ class ApiCategoryRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_categories_500_returns_Server_failure() = runTest {
+    fun get_categories_500_returns_Server_failure() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
@@ -124,7 +124,7 @@ class ApiCategoryRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_categories_network_drop_returns_Network_failure() = runTest {
+    fun get_categories_network_drop_returns_Network_failure() = runBlocking {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
         val outcome = repository.getCategories()

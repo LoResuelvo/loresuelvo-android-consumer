@@ -8,7 +8,7 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -89,7 +89,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_current_user_200_returns_persisted_backend_profile() = runTest {
+    fun get_current_user_200_returns_persisted_backend_profile() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -114,7 +114,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_current_user_404_returns_NotFound_for_new_account() = runTest {
+    fun get_current_user_404_returns_NotFound_for_new_account() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(404)
@@ -128,7 +128,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun get_current_user_401_returns_Unauthorized() = runTest {
+    fun get_current_user_401_returns_Unauthorized() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
@@ -146,7 +146,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_201_returns_Success_with_session_user() = runTest {
+    fun register_consumer_201_returns_Success_with_session_user() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -181,7 +181,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_400_returns_Server_failure_with_code_and_message() = runTest {
+    fun register_consumer_400_returns_Server_failure_with_code_and_message() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(400)
@@ -200,7 +200,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_409_returns_Server_failure_with_conflict_message() = runTest {
+    fun register_consumer_409_returns_Server_failure_with_conflict_message() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(409)
@@ -219,7 +219,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_401_with_message_returns_Unauthorized() = runTest {
+    fun register_consumer_401_with_message_returns_Unauthorized() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
@@ -237,7 +237,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_401_without_message_falls_back_to_error_field() = runTest {
+    fun register_consumer_401_without_message_falls_back_to_error_field() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
@@ -255,7 +255,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_500_with_no_body_returns_Server_failure() = runTest {
+    fun register_consumer_500_with_no_body_returns_Server_failure() = runBlocking {
         server.enqueue(
             MockResponse()
                 .setResponseCode(500)
@@ -275,7 +275,7 @@ class ApiUserRepositoryIntegrationTest {
     }
 
     @Test
-    fun register_consumer_network_failure_returns_Network_failure_with_cause() = runTest {
+    fun register_consumer_network_failure_returns_Network_failure_with_cause() = runBlocking {
         // DISCONNECT_AT_START makes the server close the socket before any
         // bytes are read; OkHttp surfaces this as an IOException.
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
