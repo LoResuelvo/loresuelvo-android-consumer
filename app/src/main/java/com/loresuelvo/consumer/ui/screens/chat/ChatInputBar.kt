@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
@@ -61,7 +62,8 @@ fun ChatInputBar(
                     color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(24.dp),
                 )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag(CHAT_INPUT_FIELD_TAG),
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface,
             ),
@@ -98,3 +100,11 @@ fun ChatInputBar(
         }
     }
 }
+
+/**
+ * Compose testTag for the prompt [BasicTextField]. Exposed
+ * publicly so the Compose-test in `src/test/.../ChatInputBarTest.kt`
+ * can measure the field's height across single- and multi-line
+ * contents without depending on text-content assertions.
+ */
+const val CHAT_INPUT_FIELD_TAG: String = "chat_input_field"

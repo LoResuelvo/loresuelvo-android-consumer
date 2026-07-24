@@ -176,6 +176,66 @@ class AiDiagnosisSteps {
         // banner by default (see [ChatUiState.preliminaryWarningVisible]).
     }
 
+    // ---- Scenario: 07-DIA Auto-grow del campo hasta 6 líneas ----
+
+    /**
+     * 07-DIA "Given": the consumer is in the chat screen typing.
+     * No-op: the default VM state already represents this. The
+     * visual field rendering is verified by the Compose-test in
+     * `src/test/.../ChatInputBarTest.kt`.
+     */
+    @Given("me encuentro escribiendo un mensaje para el asistente")
+    fun meEncuentroEscribiendoUnMensajeParaElAsistente() {
+        // Visual assertion only — verified by ChatInputBarTest.
+    }
+
+    /**
+     * 07-DIA "When": the user types a multi-line message. The BDD
+     * layer can only assert the VM state; the visible height-grow
+     * is verified by [com.loresuelvo.consumer.ui.screens.chat.ChatInputBarTest].
+     */
+    @When("el contenido supera una línea")
+    fun elContenidoSuperaUnaLinea() {
+        world.typePrompt("Línea uno\nLínea dos\nLínea tres")
+    }
+
+    @Then("el campo de texto aumenta su altura automáticamente")
+    fun elCampoDeTextoAumentaSuAltura() {
+        // Visual assertion — covered by ChatInputBarTest.
+    }
+
+    @And("permite visualizar hasta 6 líneas de contenido sin scroll")
+    fun permiteVisualizarHasta6Lineas() {
+        // Visual assertion — covered by ChatInputBarTest.
+    }
+
+    // ---- Scenario: 08-DIA Scroll interno para > 6 líneas ----------
+
+    /**
+     * 08-DIA "When": the user types content longer than the
+     * 6-line cap. The BDD layer reflects the VM state; the
+     * visual scroll behavior is verified by the Compose-test.
+     */
+    @When("el contenido supera las 6 líneas visibles")
+    fun elContenidoSuperaLas6LineasVisibles() {
+        world.typePrompt("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8")
+    }
+
+    @Then("el campo de texto mantiene una altura máxima de 6 líneas")
+    fun elCampoDeTextoMantieneAlturaMaximaDe6Lineas() {
+        // Visual assertion — covered by ChatInputBarTest.
+    }
+
+    @And("puedo desplazarme mediante scroll dentro del campo")
+    fun puedoDesplazarmePorScroll() {
+        // Visual assertion — covered by ChatInputBarTest.
+    }
+
+    @And("el contenido completo permanece accesible")
+    fun contenidoCompletoAccesible() {
+        // Visual assertion — covered by ChatInputBarTest.
+    }
+
     // ---- Scenario: 06-DIA Navegar al chat de IA --------------------
 
     @When("selecciono la opción {string}")

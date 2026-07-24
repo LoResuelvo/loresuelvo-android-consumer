@@ -24,48 +24,6 @@ import io.cucumber.java.PendingException
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario: 07-DIA Expandir campo de texto automáticamente ---
-    @Given("me encuentro escribiendo un mensaje para el asistente")
-    fun meEncuentroEscribiendoUnMensaje() {
-        throw PendingException("07-DIA pendiente")
-    }
-
-    @When("el contenido supera una línea")
-    fun elContenidoSuperaUnaLinea() {
-        throw PendingException("07-DIA pendiente")
-    }
-
-    @Then("el campo de texto aumenta su altura automáticamente")
-    fun elCampoDeTextoAumentaSuAltura() {
-        throw PendingException("07-DIA pendiente")
-    }
-
-    @Then("permite visualizar hasta 6 líneas de contenido sin scroll")
-    fun permiteVisualizarHasta6Lineas() {
-        throw PendingException("07-DIA pendiente")
-    }
-
-    // ---- Scenario: 08-DIA Utilizar scroll en mensajes extensos -------
-    @When("el contenido supera las 6 líneas visibles")
-    fun elContenidoSuperaLas6Lineas() {
-        throw PendingException("08-DIA pendiente")
-    }
-
-    @Then("el campo de texto mantiene una altura máxima de 6 líneas")
-    fun elCampoMantieneAlturaMaximaDe6() {
-        throw PendingException("08-DIA pendiente")
-    }
-
-    @Then("puedo desplazarme mediante scroll dentro del campo")
-    fun puedoDesplazarmePorScroll() {
-        throw PendingException("08-DIA pendiente")
-    }
-
-    @Then("el contenido completo permanece accesible")
-    fun contenidoCompletoAccesible() {
-        throw PendingException("08-DIA pendiente")
-    }
-
     // ---- Scenario: 09-DIA Visualizar diagnóstico concluido -----------
     @Given("la IA concluyó el diagnóstico y recomienda prestadores del rubro {string}")
     fun laIaConcluyoDiagnosticoYRubro(rubro: String) {
