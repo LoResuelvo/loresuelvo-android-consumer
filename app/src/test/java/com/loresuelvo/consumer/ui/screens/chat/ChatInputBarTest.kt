@@ -124,18 +124,19 @@ class ChatInputBarTest {
             "L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8"
         )
 
-        // 08-DIA scaffold: at 8 lines of content the field renders
-        // the lines (≥ ~110 dp so we know height is non-trivial)
-        // and stays within a reasonable upper bound. The strict
-        // cap at six visible lines (≤ 175 dp) is verified in
-        // commit 7B once `maxLines = 6` lands.
+        // 08-DIA: at 8 lines of content the field caps at 6
+        // visible lines worth of height. Without `maxLines = 6`
+        // (the implementation commit 7B lands) the field grows
+        // past ~200 dp and this assertion fails.
+        assertTrue(
+            "field should cap at ≤ 6 lines (≤ 175 dp), " +
+                "was ${fieldHeightPx()}px",
+            fieldHeightPx() <= dpToPx(175.dp),
+        )
+        // Also assert the field is non-trivial so the test isn't
+        // accidentally satisfied by an empty (0-height) layout.
         composeTestRule.onNodeWithTag(CHAT_INPUT_FIELD_TAG)
             .assertHeightIsAtLeast(110.dp)
-        assertTrue(
-            "field should stay ≤ a generous upper bound today, " +
-                "was ${fieldHeightPx()}px",
-            fieldHeightPx() <= dpToPx(300.dp),
-        )
     }
 
     @Test
