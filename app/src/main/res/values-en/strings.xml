@@ -96,4 +96,8 @@
     <string name="chat_error_retry">Retry</string>
     <string name="chat_error_dismiss">Dismiss</string>
     <string name="chat_preliminary_warning">The answers provided are preliminary guidance and do not constitute a definitive technical diagnosis</string>
+    <!-- Empty state (commit 11A) -->
+    <string name="chat_empty_state_title">LoResuelvo AI Assistant</string>
+    <string name="chat_empty_state_body">I help you understand what might be happening in your home and find the right professional.</string>
+    <string name="chat_initial_message_body">Hi! I\'m the LoResuelvo assistant. I\'ll help you figure out what might be happening in your home and, if needed, recommend professionals. Tell me what\'s going on.</string>
 </resources>

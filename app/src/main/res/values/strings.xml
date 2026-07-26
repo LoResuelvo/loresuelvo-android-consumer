@@ -98,4 +98,9 @@
     <string name="chat_error_retry">Reintentar</string>
     <string name="chat_error_dismiss">Descartar</string>
     <string name="chat_preliminary_warning">Las respuestas brindadas son una orientación preliminar y no constituyen un diagnóstico técnico definitivo</string>
+    <!-- Empty state (commit 11A). The assistant "has already spoken"
+         when the chat is opened; the chips land in 11B. -->
+    <string name="chat_empty_state_title">Asistente IA de LoResuelvo</string>
+    <string name="chat_empty_state_body">Te ayudo a entender qué puede estar pasando en tu hogar y a encontrar el profesional adecuado.</string>
+    <string name="chat_initial_message_body">¡Hola! Soy el asistente de LoResuelvo. Voy a ayudarte a identificar qué puede estar pasando en tu hogar y, si corresponde, recomendarte profesionales. Contame qué está ocurriendo.</string>
 </resources>
