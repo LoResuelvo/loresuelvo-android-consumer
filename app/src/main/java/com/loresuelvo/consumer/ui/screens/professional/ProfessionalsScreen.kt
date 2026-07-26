@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -62,6 +63,10 @@ fun ProfessionalsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            // Edge-to-edge: respect the status-bar inset (the OS no
+            // longer pre-reserves it since
+            // `MainActivity.setDecorFitsSystemWindows(false)`).
+            .statusBarsPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
         Text(

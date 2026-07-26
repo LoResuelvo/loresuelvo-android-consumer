@@ -3,10 +3,8 @@ package com.loresuelvo.consumer.ui.screens.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -15,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -23,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
 
 /**
@@ -30,14 +30,13 @@ import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
  *
  * Layout (top-down):
  *  - [ChatTopBar] with the back arrow and the "Chat con IA" title.
- *  - [PreliminaryBanner] above the messages when
- *    `preliminaryWarningVisible = true` (scenario 05-DIA).
- *  - [MessagesList] when the conversation has at least one entry,
- *    OR the localisable placeholder body when the list is empty
- *    AND we are not mid-round-trip. When `sending = true` the
- *    [MessagesList] also renders [TypingIndicatorBubble]; when
- *    `transientError != null` it appends [ChatErrorCard] with the
- *    retry / dismiss callbacks (scenarios 03-DIA / 04-DIA).
+ *  - The conversation list, which always starts with the assistant's
+ *    initial message ("¡Hola! Soy el asistente…") and is followed by
+ *    the user / assistant messages the VM has accumulated. The
+ *    "welcome" feeling comes from the initial bubble being the only
+ *    item when the user has not sent anything yet; once the user
+ *    sends the first message, the initial bubble stays at the top
+ *    as the chronological first message of the conversation.
  *  - [ChatInputBar] pinned at the bottom, with `imePadding` and
  *    `navigationBarsPadding` so the keyboard never covers the
  *    field. The send icon is disabled when `!canSend`, which
@@ -58,6 +57,14 @@ fun ChatScreen(
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val initialMessage = ChatMessage(
+        id = INITIAL_MESSAGE_ID,
+        sender = Sender.Assistant,
+        content = stringResource(R.string.chat_initial_message_body),
+        sentAtEpochMillis = 0L,
+    )
+    val conversation = remember(messages) { listOf(initialMessage) + messages }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
@@ -81,28 +88,15 @@ fun ChatScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f),
-                    contentAlignment = Alignment.Center,
+                    contentAlignment = Alignment.TopCenter,
                 ) {
-                    if (messages.isEmpty() && !sending && transientError == null) {
-                        Text(
-                            text = stringResource(R.string.chat_placeholder_body),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(
-                                horizontal = 24.dp,
-                                vertical = 32.dp,
-                            ),
-                        )
-                    } else {
-                        MessagesList(
-                            messages = messages,
-                            typingIndicatorVisible = sending,
-                            transientError = transientError,
-                            onRetryClick = onRetryClick,
-                            onErrorDismissClick = onErrorDismiss,
-                        )
-                    }
+                    MessagesList(
+                        messages = conversation,
+                        typingIndicatorVisible = sending,
+                        transientError = transientError,
+                        onRetryClick = onRetryClick,
+                        onErrorDismissClick = onErrorDismiss,
+                    )
                 }
             }
             Column(
@@ -112,10 +106,6 @@ fun ChatScreen(
                     .imePadding()
                     .navigationBarsPadding(),
             ) {
-                // WhatsApp-style divider between the chat surface
-                // and the composer. Anchored at the bottom of the
-                // chat list so it travels with the input bar across
-                // recompositions.
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.testTag(CHAT_INPUT_DIVIDER_TAG),
@@ -123,9 +113,6 @@ fun ChatScreen(
                 ChatInputBar(
                     promptInput = promptInput,
                     canSend = canSend,
-                    // Ticket 2: muted Send icon while the round-trip
-                    // is in flight (no second spinner — the typing
-                    // indicator bubble already has one).
                     sending = sending,
                     onPromptChange = onPromptChange,
                     onSendClick = onSendClick,
@@ -134,3 +121,10 @@ fun ChatScreen(
         }
     }
 }
+
+/**
+ * Stable id for the initial message so [androidx.compose.foundation.lazy.LazyColumn]
+ * keys don't churn between recompositions when the user
+ * sends / receives a new message.
+ */
+private const val INITIAL_MESSAGE_ID: String = "initial-assistant-welcome"

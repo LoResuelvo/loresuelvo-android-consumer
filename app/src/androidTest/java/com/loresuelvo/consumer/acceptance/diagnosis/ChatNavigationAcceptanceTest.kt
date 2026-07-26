@@ -131,7 +131,7 @@ class ChatNavigationAcceptanceTest {
             .assertIsDisplayed()
 
         composeTestRule
-            .onNodeWithText(localizedString(R.string.chat_placeholder_body))
+            .onNodeWithText(localizedString(R.string.chat_initial_message_body))
             .assertIsDisplayed()
     }
 
