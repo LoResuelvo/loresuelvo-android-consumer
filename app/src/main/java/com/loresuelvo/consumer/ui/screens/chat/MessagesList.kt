@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
@@ -116,10 +117,14 @@ fun MessagesList(
             messageCount = messages.size,
             typingIndicatorVisible = typingIndicatorVisible,
         )
-        // `shouldAutoScroll` is a non-inline pure function so
-        // Kotlin can't smart-cast `target` after the call. Check
-        // explicitly so the resulting `Int` reaches `scrollToItem`.
-        if (target != null && shouldAutoScroll(target, isAtBottom)) {
+        // When the list is shorter than the viewport, the bottom
+        // alignment already places the content correctly, so we
+        // avoid forcing a scroll that would push the first item to
+        // the top and create a large white gap.
+        val info = listState.layoutInfo
+        val isScrollable = info.totalItemsCount > info.visibleItemsInfo.size
+
+        if (target != null && shouldAutoScroll(target, isAtBottom) && isScrollable) {
             listState.scrollToItem(target)
         }
     }
@@ -127,7 +132,7 @@ fun MessagesList(
         modifier = modifier.fillMaxSize(),
         state = listState,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
     ) {
         items(items = messages, key = { it.id }) { message ->
             MessageBubble(message = message)

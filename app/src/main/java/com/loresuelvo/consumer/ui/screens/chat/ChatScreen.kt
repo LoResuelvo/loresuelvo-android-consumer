@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -69,6 +70,27 @@ fun ChatScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { ChatTopBar(onBackClick = onBackClick) },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.background)
+                    .navigationBarsPadding(),
+            ) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.testTag(CHAT_INPUT_DIVIDER_TAG)
+                                .padding(horizontal = 16.dp),
+                )
+                ChatInputBar(
+                    promptInput = promptInput,
+                    canSend = canSend,
+                    sending = sending,
+                    onPromptChange = onPromptChange,
+                    onSendClick = onSendClick,
+                )
+            }
+        },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -84,38 +106,13 @@ fun ChatScreen(
                 if (preliminaryWarningVisible) {
                     PreliminaryBanner()
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.TopCenter,
-                ) {
-                    MessagesList(
-                        messages = conversation,
-                        typingIndicatorVisible = sending,
-                        transientError = transientError,
-                        onRetryClick = onRetryClick,
-                        onErrorDismissClick = onErrorDismiss,
-                    )
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .imePadding()
-                    .navigationBarsPadding(),
-            ) {
-                HorizontalDivider(
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.testTag(CHAT_INPUT_DIVIDER_TAG),
-                )
-                ChatInputBar(
-                    promptInput = promptInput,
-                    canSend = canSend,
-                    sending = sending,
-                    onPromptChange = onPromptChange,
-                    onSendClick = onSendClick,
+                MessagesList(
+                    messages = conversation,
+                    typingIndicatorVisible = sending,
+                    transientError = transientError,
+                    onRetryClick = onRetryClick,
+                    onErrorDismissClick = onErrorDismiss,
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
