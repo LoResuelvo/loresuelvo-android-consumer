@@ -25,6 +25,9 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
+// importo windowInsets para usar safeDrawing en Scaffold
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
 
 /**
  * Stateless Composable for the AI diagnostic chat screen.
@@ -67,6 +70,7 @@ fun ChatScreen(
     val conversation = remember(messages) { listOf(initialMessage) + messages }
 
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { ChatTopBar(onBackClick = onBackClick) },
