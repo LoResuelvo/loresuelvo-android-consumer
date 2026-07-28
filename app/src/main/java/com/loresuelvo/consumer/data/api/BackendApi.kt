@@ -45,11 +45,18 @@ interface BackendApi {
     suspend fun getCategories(): List<CategoryDto>
 
     /**
-     * `GET /providers?category_id=X` — public service providers for
-     * a category (no auth required, same as `/categories`). Returns a
-     * JSON array of [ProviderDto]; non-2xx throws
+     * `GET /providers?category_id=X` — service providers for a
+     * category. Requires a valid Auth0 JWT (the backend returns
+     * `401 {"error":"invalid_token"}` for unauthenticated calls —
+     * verified 2026-07-27). The `AuthInterceptor` injects the
+     * bearer token from [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present.
+     *
+     * Returns a JSON array of [ProviderDto]; non-2xx throws
      * [retrofit2.HttpException], mapped by the data layer to
-     * [com.loresuelvo.consumer.domain.api.ApiError].
+     * [com.loresuelvo.consumer.domain.api.ApiError]. Note: the
+     * response does NOT echo `category_id` — see [ProviderDto] and
+     * the mapper at `data/api/mapper/ProviderDtoMapper.kt`.
      */
     @GET("providers")
     suspend fun getProviders(@Query("category_id") categoryId: Int): List<ProviderDto>

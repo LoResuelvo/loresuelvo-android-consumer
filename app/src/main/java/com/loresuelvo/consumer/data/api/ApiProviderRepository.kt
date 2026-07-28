@@ -30,7 +30,9 @@ class ApiProviderRepository @Inject constructor(
         categoryId: Int,
     ): ProvidersOutcome =
         try {
-            ProvidersOutcome.Success(backendApi.getProviders(categoryId).toDomain())
+            ProvidersOutcome.Success(
+                backendApi.getProviders(categoryId).toDomain(categoryId),
+            )
         } catch (e: Throwable) {
             mapToFailure(e)
         }

@@ -26,7 +26,11 @@ import java.util.concurrent.TimeUnit
  *   network drop      -> Failure.Network
  *
  * Wire-level inspection verifies the path and `category_id` query
- * param on every request.
+ * param on every request. The mocked body matches the real backend
+ * shape captured on 2026-07-27: each provider carries `id`, `name`,
+ * `surname`, `category_name` and `profile_photo_url` — `category_id`
+ * is **not** echoed in the response (the repository injects it from
+ * the query parameter instead, see [ProviderDtoMapper]).
  */
 class ApiProviderRepositoryIntegrationTest {
 
@@ -78,7 +82,6 @@ class ApiProviderRepositoryIntegrationTest {
                         "id": 92,
                         "name": "Agustina",
                         "surname": "Molina",
-                        "category_id": 2,
                         "category_name": "Electricidad",
                         "profile_photo_url": "http://x/p1.webp"
                       },
@@ -86,7 +89,6 @@ class ApiProviderRepositoryIntegrationTest {
                         "id": 32,
                         "name": "Agustina",
                         "surname": "Ruiz",
-                        "category_id": 2,
                         "category_name": "Electricidad",
                         "profile_photo_url": "http://x/p2.webp"
                       }
@@ -109,9 +111,15 @@ class ApiProviderRepositoryIntegrationTest {
         assertEquals(92, success.providers[0].id)
         assertEquals("Agustina", success.providers[0].name)
         assertEquals("Molina", success.providers[0].surname)
+        // `category_id` is injected from the query parameter because
+        // the wire response does not echo it back.
         assertEquals(2, success.providers[0].categoryId)
         assertEquals("Electricidad", success.providers[0].categoryName)
         assertEquals("http://x/p1.webp", success.providers[0].profilePhotoUrl)
+        // Both providers share the same category id, sourced from
+        // the query, not from the wire body.
+        assertEquals(2, success.providers[1].categoryId)
+        assertEquals("Electricidad", success.providers[1].categoryName)
     }
 
     @Test
@@ -157,5 +165,35 @@ class ApiProviderRepositoryIntegrationTest {
             "outcome must be Failure.Network, was $outcome",
             outcome is com.loresuelvo.consumer.domain.provider.ProvidersOutcome.Failure.Network,
         )
+    }
+
+    @Test
+    fun get_providers_200_missing_category_id_in_body_still_maps_success() = runBlocking {
+        // Regression: the previous ProviderDto required `category_id`
+        // as non-null Int and threw MissingFieldException on the
+        // real wire (which does not echo it). This test pins the
+        // deserialization of the exact body shape the backend sends.
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    [{"id":7,"name":"Ana","surname":"Pérez","category_name":"Plomería","profile_photo_url":null}]
+                    """.trimIndent(),
+                ),
+        )
+
+        val outcome = repository.getProvidersByCategory(1)
+
+        assertTrue(outcome is com.loresuelvo.consumer.domain.provider.ProvidersOutcome.Success)
+        val success = outcome as com.loresuelvo.consumer.domain.provider.ProvidersOutcome.Success
+        assertEquals(1, success.providers.size)
+        assertEquals(7, success.providers[0].id)
+        assertEquals("Ana", success.providers[0].name)
+        assertEquals("Pérez", success.providers[0].surname)
+        assertEquals(1, success.providers[0].categoryId)
+        assertEquals("Plomería", success.providers[0].categoryName)
+        assertEquals(null, success.providers[0].profilePhotoUrl)
     }
 }

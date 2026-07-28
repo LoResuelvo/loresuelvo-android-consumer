@@ -19,9 +19,17 @@ import kotlinx.serialization.Serializable
  * }
  * ```
  *
- * The endpoint is **public** (no auth required) per the spec, so the
- * `AuthInterceptor` simply doesn't add the `Authorization` header when
- * there is no session.
+ * `category_id` is **not** echoed in the response — the consumer
+ * app queries by it and threads the value through
+ * [com.loresuelvo.consumer.data.api.mapper.toDomain] (see
+ * `ProviderDtoMapper`). Marking it nullable keeps
+ * kotlinx-serialization honest with the real wire shape instead of
+ * throwing `MissingFieldException`.
+ *
+ * The endpoint requires a valid Auth0 JWT: the backend returns
+ * `401 {"error":"invalid_token"}` for unauthenticated calls. The
+ * `AuthInterceptor` injects the bearer token automatically when a
+ * session is present in the [com.loresuelvo.consumer.domain.auth.AuthSessionStore].
  */
 @Serializable
 data class ProviderDto(
@@ -29,6 +37,6 @@ data class ProviderDto(
     @SerialName("name") val name: String,
     @SerialName("surname") val surname: String,
     @SerialName("category_name") val categoryName: String,
-    @SerialName("category_id") val categoryId: Int,
+    @SerialName("category_id") val categoryId: Int? = null,
     @SerialName("profile_photo_url") val profilePhotoUrl: String? = null,
 )
