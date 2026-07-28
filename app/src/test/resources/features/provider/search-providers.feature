@@ -53,3 +53,17 @@ Feature: Search providers by category
     When I tap the "Electricidad" category card
     Then I am taken to the providers list for category "Electricidad"
     And I see the error message "No pudimos cargar los profesionales. Revisá tu conexión e intentá de nuevo."
+
+  @wip
+  Scenario: Provider profile photo URL flows through to the UI state
+    Given a provider in "Electricidad" has a profile photo assigned
+    When I tap the "Electricidad" category card
+    Then I am taken to the providers list for category "Electricidad"
+    And the provider card for "Laura Gómez" exposes the assigned profile photo
+
+  @wip
+  Scenario: Provider without a photo URL renders the initial-letter fallback
+    Given a provider in "Plomería" has no profile photo assigned
+    When I tap the "Plomería" category card
+    Then I am taken to the providers list for category "Plomería"
+    And the provider card for "Juan Pérez" falls back to the initial "J"
