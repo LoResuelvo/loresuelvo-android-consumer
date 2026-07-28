@@ -124,17 +124,46 @@ class CucumberWorld : AutoCloseable {
             val surname = row.getValue("surname")
             val categoryName = row.getValue("category_name")
             val categoryId = row.getValue("category_id").toInt()
+            // `profile_photo_url` is optional: the column is omitted
+            // on the existing scenarios to keep them focused. A blank
+            // value also collapses to `null` so scenario authors can
+            // spell "no photo" as an empty cell.
+            val photoUrl = row["profile_photo_url"]
+                ?.trim()
+                ?.takeIf { it.isNotEmpty() }
             providers += Provider(
                 id = id,
                 name = name,
                 surname = surname,
                 categoryId = categoryId,
                 categoryName = categoryName,
-                profilePhotoUrl = null,
+                profilePhotoUrl = photoUrl,
             )
         }
         providerRepo.setSeed(providers.toList())
     }
+
+    /**
+     * Overrides the [profilePhotoUrl] of the first provider found in
+     * the given [categoryName]. Used by the @wip "photo URL flows
+     * through to UI" scenario in
+     * `features/provider/search-providers.feature`.
+     */
+    fun overridePhotoUrlForFirstProviderIn(categoryName: String, photoUrl: String?) {
+        val provider = providers.first { it.categoryName == categoryName }
+        val idx = providers.indexOf(provider)
+        providers[idx] = provider.copy(profilePhotoUrl = photoUrl)
+        providerRepo.setSeed(providers.toList())
+    }
+
+    /**
+     * Returns the [profilePhotoUrl] of the provider whose full name
+     * ("Name Surname") matches [providerFullName]. Used by the @wip
+     * photo-URL scenarios.
+     */
+    fun photoUrlOf(providerFullName: String): String? =
+        providers.first { "${it.name} ${it.surname}" == providerFullName }
+            .profilePhotoUrl
 
     fun visitProvidersFor(categoryName: String) {
         val cat = categoriesByName.getValue(categoryName)

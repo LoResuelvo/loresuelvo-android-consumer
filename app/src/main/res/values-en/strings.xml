@@ -60,6 +60,7 @@
     <string name="professionals_error_title">We couldn\'t load the professionals</string>
     <string name="professionals_error_body">Check your connection and try again.</string>
     <string name="professionals_retry">Retry</string>
+    <string name="provider_photo_content_description">%1$s\'s profile photo</string>
     <!-- Home screen -->
     <string name="home_greeting">Hi,</string>
     <string name="home_greeting_inline">Hi, %1$s</string>

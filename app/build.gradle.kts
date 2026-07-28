@@ -218,6 +218,10 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.security.crypto)
 
+    // Image loading (added for provider photos in Professionals screen)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
     // Hilt (added in Fase 1)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)

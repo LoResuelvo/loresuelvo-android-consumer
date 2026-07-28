@@ -26,6 +26,10 @@ turbine = "1.2.0"
 coroutinesTest = "1.9.0"
 robolectric = "4.13"
 cucumberJvm = "7.20.1"
+# Image loading (Coil 3) — Compose-native AsyncImage with built-in
+# memory + disk cache. Used by `ProviderAvatar` to render provider
+# profile photos from `Provider.profilePhotoUrl`.
+coil = "3.0.4"
 
 [libraries]
 androidx-compose-ui-test = { group = "androidx.compose.ui", name = "ui-test" }
@@ -73,6 +77,10 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 cucumber-java = { group = "io.cucumber", name = "cucumber-java", version.ref = "cucumberJvm" }
 cucumber-junit = { group = "io.cucumber", name = "cucumber-junit", version.ref = "cucumberJvm" }
+
+# Image loading (added for provider photos)
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

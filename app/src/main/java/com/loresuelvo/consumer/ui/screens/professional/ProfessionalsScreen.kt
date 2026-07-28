@@ -28,11 +28,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
@@ -173,7 +176,10 @@ private fun ProviderCard(provider: Provider) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ProviderAvatar(provider)
+            ProviderAvatar(
+                name = provider.name,
+                profilePhotoUrl = provider.profilePhotoUrl,
+            )
             Spacer(Modifier.size(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -192,24 +198,91 @@ private fun ProviderCard(provider: Provider) {
     }
 }
 
+/**
+ * Circular avatar for a service provider.
+ *
+ * Renders in one of two modes:
+ *
+ *  - **Photo**: when [profilePhotoUrl] is non-blank, [coil3]'s
+ *    [coil3.compose.AsyncImage] loads the photo. While the request
+ *    is in flight (or on error: 404, DNS, timeout, …) the photo
+ *    paints nothing and the initial-letter fallback underneath
+ *    stays visible. When the photo resolves, it paints over the
+ *    fallback and fills the circle (with [ContentScale.Crop]).
+ *  - **Fallback only**: when [profilePhotoUrl] is null/blank the
+ *    composable skips Coil entirely and renders the initial on the
+ *    brand-coloured circle — no doomed network round-trip is fired.
+ *
+ * The initial is the LAST child in the [Box], so the Box's own
+ * [Alignment.Center] guarantees it is always centred on the circle
+ * regardless of the photo state. The photo paints **above** the
+ * fallback (later children win the draw order in a Compose [Box]),
+ * so a successful load cleanly covers the initial.
+ *
+ * Decoupled from the [Provider] domain type: the screen passes the
+ * two primitives it needs (`name`, `profilePhotoUrl`) so this stays
+ * trivially unit-testable without Hilt or a real [Provider].
+ *
+ * `testTag = PROVIDER_AVATAR_TAG` is exposed so Compose tests can
+ * locate the avatar regardless of the rendered state.
+ */
 @Composable
-private fun ProviderAvatar(provider: Provider) {
-    val size = 48.dp
+fun ProviderAvatar(
+    name: String,
+    profilePhotoUrl: String?,
+    modifier: Modifier = Modifier,
+    size: Dp = 48.dp,
+) {
+    val initial = name.firstOrNull()?.uppercase() ?: "?"
+    val description = stringResource(
+        R.string.provider_photo_content_description,
+        name,
+    )
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.primary),
+            .background(MaterialTheme.colorScheme.primary)
+            .testTag(PROVIDER_AVATAR_TAG),
         contentAlignment = Alignment.Center,
     ) {
+        if (!profilePhotoUrl.isNullOrBlank()) {
+            // Painted FIRST so the initial painted LAST covers it
+            // when Coil returns nothing (loading / error). When the
+            // photo resolves, it covers the initial underneath.
+            coil3.compose.AsyncImage(
+                model = profilePhotoUrl,
+                contentDescription = description,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(CircleShape)
+                    .testTag(PROVIDER_AVATAR_IMAGE_TAG),
+            )
+        }
         Text(
-            text = provider.name.firstOrNull()?.uppercase() ?: "?",
+            text = initial,
             color = MaterialTheme.colorScheme.onPrimary,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
     }
 }
+
+/**
+ * Compose testTag for the [ProviderAvatar] slot (the outer
+ * circle). Always present when the avatar is rendered, regardless
+ * of whether the photo loaded.
+ */
+const val PROVIDER_AVATAR_TAG: String = "provider-avatar"
+
+/**
+ * Compose testTag for the inner image painted by Coil when a photo
+ * URL is provided. Asserting this node exists proves the avatar
+ * attempted to load a remote photo (rather than going straight to
+ * the initial-letter fallback).
+ */
+const val PROVIDER_AVATAR_IMAGE_TAG: String = "provider-avatar-image"
 
 @Preview(showBackground = true, name = "Professionals · Ready")
 @Composable
@@ -225,7 +298,10 @@ private fun ProfessionalsReadyPreview() {
                         surname = "Molina",
                         categoryId = 2,
                         categoryName = "Electricidad",
-                        profilePhotoUrl = null,
+                        // First row carries a photo URL so the preview
+                        // exercises the Coil path; the second row
+                        // exercises the initial-letter fallback.
+                        profilePhotoUrl = "https://example.com/p.webp",
                     ),
                     Provider(
                         id = 32,
@@ -239,6 +315,32 @@ private fun ProfessionalsReadyPreview() {
             ),
             onRetryClick = {},
         )
+    }
+}
+
+@Preview(showBackground = true, name = "ProviderAvatar · with photo URL")
+@Composable
+private fun ProviderAvatarWithPhotoPreview() {
+    LoresuelvoTheme {
+        Row {
+            ProviderAvatar(
+                name = "Agustina",
+                profilePhotoUrl = "https://example.com/p.webp",
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, name = "ProviderAvatar · fallback")
+@Composable
+private fun ProviderAvatarFallbackPreview() {
+    LoresuelvoTheme {
+        Row {
+            ProviderAvatar(
+                name = "Agustina",
+                profilePhotoUrl = null,
+            )
+        }
     }
 }
 

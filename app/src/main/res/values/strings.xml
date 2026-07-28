@@ -62,6 +62,7 @@
     <string name="professionals_error_title">No pudimos cargar los profesionales</string>
     <string name="professionals_error_body">Revisá tu conexión e intentá de nuevo.</string>
     <string name="professionals_retry">Reintentar</string>
+    <string name="provider_photo_content_description">Foto de perfil de %1$s</string>
     <!-- Home screen -->
     <string name="home_greeting">Hola,</string>
     <string name="home_greeting_inline">Hola, %1$s</string>
