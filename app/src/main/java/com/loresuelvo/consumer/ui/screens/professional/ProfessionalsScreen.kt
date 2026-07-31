@@ -20,9 +20,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,18 +52,33 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
  * lives here.
  *
  *   Loading -> circular progress
- *   Ready   -> LazyColumn of [ProviderCard]
+ *   Ready   -> LazyColumn of [ProviderCard] (each row exposes a
+ *             "Contactar" button that opens the contact form
+ *             ModalBottomSheet)
  *   Empty   -> explanatory copy + back action
  *   Error   -> retry copy + [onRetryClick] callback
+ *
+ * The contact form is wired through the modal sheet rendered at
+ * the bottom of the screen whenever [contactFormState] is
+ * [ContactProviderUiState.Open]. The host (`LoResuelvoNav.ProfessionalsRoute`)
+ * owns the [ContactProviderViewModel] and forwards the navigation
+ * event when the form submits successfully.
  *
  * Navigation args (categoryId, categoryName) are owned by
  * `LoResuelvoNav.ProfessionalsRoute`; this composable receives only
  * the [state] slice + retry callback.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfessionalsScreen(
     state: ProfessionalsUiState,
+    contactFormState: ContactProviderUiState,
     onRetryClick: () -> Unit,
+    onContactarClick: (Provider) -> Unit,
+    onContactTitleChange: (String) -> Unit,
+    onContactDescriptionChange: (String) -> Unit,
+    onContactSubmit: () -> Unit,
+    onContactCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -83,9 +102,42 @@ fun ProfessionalsScreen(
 
         when (state) {
             is ProfessionalsUiState.Loading -> LoadingView()
-            is ProfessionalsUiState.Ready -> ReadyList(state.providers)
+            is ProfessionalsUiState.Ready ->
+                ReadyList(
+                    providers = state.providers,
+                    onContactarClick = onContactarClick,
+                )
             is ProfessionalsUiState.Empty -> EmptyView(state.categoryName)
             is ProfessionalsUiState.Error -> ErrorView(onRetryClick)
+        }
+    }
+
+    // Contact-provider bottom sheet. Renders only when the VM
+    // exposes an Open state (the modal is dismissed by transitioning
+    // back to Closed). The sheet's own onDismissRequest calls
+    // onContactCancel so swiping the sheet down also clears the
+    // VM state.
+    val openState = contactFormState as? ContactProviderUiState.Open
+    if (openState != null) {
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = true,
+        )
+        ModalBottomSheet(
+            onDismissRequest = onContactCancel,
+            sheetState = sheetState,
+        ) {
+            ContactProviderBottomSheet(
+                provider = openState.provider,
+                title = openState.title,
+                description = openState.description,
+                canSubmit = openState.canSubmit,
+                isSubmitting = openState.isSubmitting,
+                error = openState.error,
+                onTitleChange = onContactTitleChange,
+                onDescriptionChange = onContactDescriptionChange,
+                onSubmit = onContactSubmit,
+                onCancel = onContactCancel,
+            )
         }
     }
 }
@@ -101,13 +153,19 @@ private fun LoadingView(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ReadyList(providers: List<Provider>) {
+private fun ReadyList(
+    providers: List<Provider>,
+    onContactarClick: (Provider) -> Unit,
+) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(vertical = 8.dp),
     ) {
         items(items = providers, key = { it.id }) { provider ->
-            ProviderCard(provider = provider)
+            ProviderCard(
+                provider = provider,
+                onContactarClick = { onContactarClick(provider) },
+            )
         }
     }
 }
@@ -163,7 +221,10 @@ private fun ErrorView(onRetryClick: () -> Unit) {
 }
 
 @Composable
-private fun ProviderCard(provider: Provider) {
+private fun ProviderCard(
+    provider: Provider,
+    onContactarClick: () -> Unit,
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -194,9 +255,29 @@ private fun ProviderCard(provider: Provider) {
                     color = SubtitleGray,
                 )
             }
+            TextButton(
+                onClick = onContactarClick,
+                modifier = Modifier.testTag(CONTACT_PROVIDER_CARD_BUTTON_TAG),
+            ) {
+                Text(
+                    text = stringResource(R.string.contact_provider_button_contactar),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
     }
 }
+
+/**
+ * Compose testTag for the "Contactar" button on each provider
+ * card. Pinning the locator (rather than the literal Spanish
+ * label) keeps the existing acceptance tests in
+ * `src/androidTest/.../acceptance/professional/` localisation-
+ * independent.
+ */
+const val CONTACT_PROVIDER_CARD_BUTTON_TAG: String = "provider-card-contactar"
 
 /**
  * Circular avatar for a service provider.
@@ -313,7 +394,13 @@ private fun ProfessionalsReadyPreview() {
                     ),
                 ),
             ),
+            contactFormState = ContactProviderUiState.Closed,
             onRetryClick = {},
+            onContactarClick = {},
+            onContactTitleChange = {},
+            onContactDescriptionChange = {},
+            onContactSubmit = {},
+            onContactCancel = {},
         )
     }
 }
@@ -350,7 +437,13 @@ private fun ProfessionalsEmptyPreview() {
     LoresuelvoTheme {
         ProfessionalsScreen(
             state = ProfessionalsUiState.Empty(categoryName = "Gas"),
+            contactFormState = ContactProviderUiState.Closed,
             onRetryClick = {},
+            onContactarClick = {},
+            onContactTitleChange = {},
+            onContactDescriptionChange = {},
+            onContactSubmit = {},
+            onContactCancel = {},
         )
     }
 }
@@ -361,7 +454,13 @@ private fun ProfessionalsErrorPreview() {
     LoresuelvoTheme {
         ProfessionalsScreen(
             state = ProfessionalsUiState.Error(categoryName = "Electricidad"),
+            contactFormState = ContactProviderUiState.Closed,
             onRetryClick = {},
+            onContactarClick = {},
+            onContactTitleChange = {},
+            onContactDescriptionChange = {},
+            onContactSubmit = {},
+            onContactCancel = {},
         )
     }
 }
@@ -372,7 +471,13 @@ private fun ProfessionalsLoadingPreview() {
     LoresuelvoTheme {
         ProfessionalsScreen(
             state = ProfessionalsUiState.Loading(categoryName = "Electricidad"),
+            contactFormState = ContactProviderUiState.Closed,
             onRetryClick = {},
+            onContactarClick = {},
+            onContactTitleChange = {},
+            onContactDescriptionChange = {},
+            onContactSubmit = {},
+            onContactCancel = {},
         )
     }
 }
