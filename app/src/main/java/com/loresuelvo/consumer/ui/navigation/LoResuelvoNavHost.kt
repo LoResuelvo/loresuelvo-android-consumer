@@ -16,6 +16,7 @@ fun LoResuelvoNavHost(
     home: @Composable () -> Unit,
     professionals: @Composable (categoryId: Int, categoryName: String) -> Unit,
     chat: @Composable () -> Unit,
+    conversation: @Composable (conversationId: String) -> Unit,
 ) {
     NavHost(
         navController = navController,
@@ -39,5 +40,14 @@ fun LoResuelvoNavHost(
             professionals(categoryId, categoryName)
         }
         composable(Route.Chat.path) { chat() }
+        composable(
+            route = Route.Conversation(conversationId = "_ignored_").path,
+            arguments = listOf(
+                navArgument("conversationId") { type = NavType.StringType },
+            ),
+        ) { entry ->
+            val conversationId = entry.arguments?.getString("conversationId").orEmpty()
+            conversation(conversationId)
+        }
     }
 }

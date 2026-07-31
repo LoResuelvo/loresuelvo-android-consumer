@@ -69,8 +69,15 @@ fun LoResuelvoNav() {
         welcome = { WelcomeRoute() },
         completeProfile = { CompleteProfileRoute(navController = navController) },
         home = { HomeRoute(navController = navController) },
-        professionals = { categoryId, categoryName -> ProfessionalsRoute(categoryId, categoryName) },
+        professionals = { categoryId, categoryName ->
+            ProfessionalsRoute(navController, categoryId, categoryName)
+        },
         chat = { ChatRoute(navController = navController) },
+        conversation = { conversationId ->
+            com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
+                conversationId = conversationId,
+            )
+        },
     )
 }
 
@@ -134,17 +141,52 @@ private fun CompleteProfileRoute(
  * `categoryName` from the back-stack entry and forwards them to the
  * [ProfessionalsViewModel] on first composition; subsequent
  * navigation to the same category reuses the same VM instance.
+ *
+ * Also hosts the [ContactProviderViewModel] that drives the
+ * contact-form bottom sheet. The VM emits
+ * [com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent.NavigateToConversation]
+ * when `POST /job-requests` succeeds — this route forwards the
+ * event to the [androidx.navigation.NavHostController].
  */
 @Composable
-private fun ProfessionalsRoute(categoryId: Int, categoryName: String) {
+private fun ProfessionalsRoute(
+    navController: androidx.navigation.NavHostController,
+    categoryId: Int,
+    categoryName: String,
+) {
     val viewModel: ProfessionalsViewModel = hiltViewModel()
+    val contactViewModel: com.loresuelvo.consumer.ui.screens.professional.ContactProviderViewModel =
+        hiltViewModel()
     androidx.compose.runtime.LaunchedEffect(categoryId, categoryName) {
         viewModel.loadProviders(categoryId, categoryName)
     }
     val state by viewModel.uiState.collectAsState()
+    val contactState by contactViewModel.uiState.collectAsState()
+
+    // Forward the navigation event emitted by the contact form
+    // (Phase 5 / scenario 02-SRP). The VM closes the modal before
+    // sending the event, so the user lands on the chat screen
+    // directly without an intermediate "submitted" state.
+    androidx.compose.runtime.LaunchedEffect(contactViewModel) {
+        contactViewModel.events.collect { event ->
+            when (event) {
+                is com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent.NavigateToConversation ->
+                    navController.navigate(
+                        Route.Conversation.buildPath(event.conversationId),
+                    )
+            }
+        }
+    }
+
     com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreen(
         state = state,
+        contactFormState = contactState,
         onRetryClick = { viewModel.loadProviders(categoryId, categoryName) },
+        onContactarClick = contactViewModel::onOpenContact,
+        onContactTitleChange = contactViewModel::onTitleChange,
+        onContactDescriptionChange = contactViewModel::onDescriptionChange,
+        onContactSubmit = contactViewModel::onSubmit,
+        onContactCancel = contactViewModel::onCancel,
     )
 }
 

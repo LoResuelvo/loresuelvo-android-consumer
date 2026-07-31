@@ -16,6 +16,21 @@ sealed class Route(val path: String) {
     data object Chat : Route("chat")
 
     /**
+     * Provider conversation (1:1 chat between the consumer and
+     * the provider, created by `POST /job-requests`). The host
+     * composable is a placeholder for now — the actual message
+     * UI is fleshed out in a follow-up US (scenarios 03-SRP and
+     * 04-SRP of `contact-provider.feature`).
+     */
+    data class Conversation(val conversationId: String) :
+        Route("conversation/{conversationId}") {
+        companion object {
+            fun buildPath(conversationId: String): String =
+                "conversation/$conversationId"
+        }
+    }
+
+    /**
      * Provider list for a single category. The category name is
      * display-only (rendered in the header) — the underlying query
      * is always by `categoryId`. It is URL-encoded in the path so
