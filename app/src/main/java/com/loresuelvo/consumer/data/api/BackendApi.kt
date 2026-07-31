@@ -3,8 +3,10 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.CreateConversationRequestDto
+import com.loresuelvo.consumer.data.api.dto.CreateJobRequestDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
 import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
+import com.loresuelvo.consumer.data.api.dto.JobRequestDto
 import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
@@ -85,4 +87,22 @@ interface BackendApi {
         @Path("conversationId") conversationId: String,
         @Body body: SendMessageRequestDto,
     ): DiagnosisDto
+
+    // ---- Job requests (added for US "Contact a provider") -------
+
+    /**
+     * `POST /job-requests` — submits the consumer's first message
+     * to a provider. The body carries the provider id, a title,
+     * the description, and an optional list of presigned image
+     * ids (the modal form does not expose upload today, so the
+     * field is omitted from the payload when empty).
+     *
+     * The response carries the persisted [JobRequestDto] including
+     * the backend-issued `id` and the `conversationId` the UI
+     * navigates to on success.
+     */
+    @POST("job-requests")
+    suspend fun createJobRequest(
+        @Body body: CreateJobRequestDto,
+    ): JobRequestDto
 }
