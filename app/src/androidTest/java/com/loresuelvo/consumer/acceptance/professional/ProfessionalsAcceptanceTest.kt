@@ -280,5 +280,11 @@ class ProfessionalsAcceptanceTest {
         abstract fun bindDiagnosisRepository(
             impl: com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository,
         ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindJobRequestRepository(
+            impl: com.loresuelvo.consumer.testdi.FakeJobRequestRepository,
+        ): com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
     }
 }

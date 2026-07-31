@@ -188,6 +188,12 @@ class ChatNavigationAcceptanceTest {
         abstract fun bindDiagnosisRepository(
             repository: FakeDiagnosisRepository,
         ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindJobRequestRepository(
+            repository: com.loresuelvo.consumer.testdi.FakeJobRequestRepository,
+        ): com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
     }
 
     @Singleton
