@@ -61,6 +61,16 @@
     <string name="professionals_error_body">Check your connection and try again.</string>
     <string name="professionals_retry">Retry</string>
     <string name="provider_photo_content_description">%1$s\'s profile photo</string>
+    <!-- Contact provider (job request) -->
+    <string name="contact_provider_button_contactar">Contact</string>
+    <string name="contact_provider_modal_title">Create work request</string>
+    <string name="contact_provider_modal_subtitle">Your first message will start a conversation with the provider.</string>
+    <string name="contact_provider_field_title">Problem title</string>
+    <string name="contact_provider_field_description">Problem description</string>
+    <string name="contact_provider_button_cancel">Cancel</string>
+    <string name="contact_provider_button_submit">Send request</string>
+    <string name="contact_provider_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="contact_provider_error_unauthorized">Your session expired. Please log in again.</string>
     <!-- Home screen -->
     <string name="home_greeting">Hi,</string>
     <string name="home_greeting_inline">Hi, %1$s</string>

@@ -63,6 +63,16 @@
     <string name="professionals_error_body">Revisá tu conexión e intentá de nuevo.</string>
     <string name="professionals_retry">Reintentar</string>
     <string name="provider_photo_content_description">Foto de perfil de %1$s</string>
+    <!-- Contact provider (job request) -->
+    <string name="contact_provider_button_contactar">Contactar</string>
+    <string name="contact_provider_modal_title">Crear solicitud de trabajo</string>
+    <string name="contact_provider_modal_subtitle">Tu primer mensaje iniciará una conversación con el prestador.</string>
+    <string name="contact_provider_field_title">Título del problema</string>
+    <string name="contact_provider_field_description">Descripción del problema</string>
+    <string name="contact_provider_button_cancel">Cancelar</string>
+    <string name="contact_provider_button_submit">Enviar solicitud</string>
+    <string name="contact_provider_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="contact_provider_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <!-- Home screen -->
     <string name="home_greeting">Hola,</string>
     <string name="home_greeting_inline">Hola, %1$s</string>
