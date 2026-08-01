@@ -27,23 +27,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 02-IC: Redirect to chats ----------------
-
-    @Given("I want to start a chat with a provider from the search results")
-    fun iWantToStartAChatWithAProviderFromTheSearchResults() {
-        throw PendingException("02-IC pending")
-    }
-
-    @When("I tap the {string} button on the provider")
-    fun iTapTheButtonOnTheProvider(buttonLabel: String) {
-        throw PendingException("02-IC pending")
-    }
-
-    @Then("I am redirected to the messages screen with the selected provider")
-    fun iAmRedirectedToTheMessagesScreenWithTheSelectedProvider() {
-        throw PendingException("02-IC pending")
-    }
-
     // ---- Scenario 03-IC: Contact list ----------------------
 
     @Given("I already sent a message to a provider")

@@ -27,7 +27,6 @@ Feature: Start a conversation with a provider
     When I view the results list
     Then I see a message icon to contact them
 
-  @wip
   Scenario: 02-IC Redirect to the chats screen when starting a conversation
     Given I want to start a chat with a provider from the search results
     When I tap the "Contactar" button on the provider

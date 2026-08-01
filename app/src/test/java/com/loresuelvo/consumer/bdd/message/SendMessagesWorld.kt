@@ -3,11 +3,19 @@ package com.loresuelvo.consumer.bdd.message
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
+import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
+import com.loresuelvo.consumer.domain.jobrequest.JobRequest
+import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import com.loresuelvo.consumer.domain.provider.ProvidersOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
 import com.loresuelvo.consumer.domain.usecase.provider.GetProvidersByCategoryUseCase
+import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
+import com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState
+import com.loresuelvo.consumer.ui.screens.professional.ContactProviderViewModel
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -19,26 +27,26 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Per-scenario world for the US-17 "Start a conversation with a
- * provider" BDD specs. Wires the [ProfessionalsViewModel] against
- * an in-memory [ProviderRepository] + [CategoryRepository] so the
- * scenarios can drive the search results list and assert on the
- * observed [ProfessionalsUiState].
+ * provider" BDD specs. Wires the [ProfessionalsViewModel] (for the
+ * search results list) AND the [ContactProviderViewModel] (for the
+ * contact form flow against the same provider) against in-memory
+ * fakes so the scenarios can drive the user journey and assert on
+ * the observed state.
  *
  * The world is self-contained — it does NOT share state with the
- * search-providers BDD world's `SearchProvidersCucumberWorld`. The
- * shared `Given` steps (login, providers, etc.) live in the search
- * glue package and operate on the search world's VM; this world
- * drives a SEPARATE [ProfessionalsViewModel] instance so the
- * messaging BDD scenarios observe their own state transitions.
+ * search-providers BDD world's `SearchProvidersCucumberWorld` or the
+ * contact-provider BDD world's `ContactProviderWorld`. The shared
+ * `Given` steps (login, providers, etc.) live in the search glue
+ * package and operate on the search world's VM; this world drives
+ * SEPARATE VM instances so the messaging BDD scenarios observe
+ * their own state transitions.
  *
- * Hard-coded provider + category fixtures match the Background of
- * the upstream `search-providers.feature` so the scenarios test
- * the same fixture data. As scenarios 02-IC onwards are landed,
- * the helpers will gain `openContact`, `submit`, etc. (mirroring
- * `ContactProviderWorld`).
+ * As scenarios 03-IC onwards are landed, the world will gain
+ * `MessagesViewModel` (or equivalent) helpers in the same pattern.
  */
 class SendMessagesWorld : AutoCloseable {
 
@@ -51,7 +59,19 @@ class SendMessagesWorld : AutoCloseable {
     private val fakeCategoryRepo = FakeCategoryRepository()
     private lateinit var viewModel: ProfessionalsViewModel
 
+    // Contact form flow (scenario 02-IC): owns its own VM and uses
+    // a fake JobRequestRepository so the `When` step can pre-load a
+    // success outcome and the submit transitions to the navigation
+    // event. The data layer's `CreateJobRequestUseCase` is shared
+    // with production — the BDD only substitutes the repository it
+    // depends on.
+    private val fakeJobRequestRepo = FakeJobRequestRepository()
+    private val createJobRequestUseCase = CreateJobRequestUseCase(fakeJobRequestRepo)
+    private lateinit var contactProviderViewModel: ContactProviderViewModel
+
     private val observedUiStates = mutableListOf<ProfessionalsUiState>()
+    private val observedContactUiStates = mutableListOf<ContactProviderUiState>()
+    private val observedContactEvents = mutableListOf<ContactProviderEvent>()
 
     private val knownProviders: Map<String, Provider> = mapOf(
         "Juan Pérez" to Provider(
@@ -90,9 +110,16 @@ class SendMessagesWorld : AutoCloseable {
             getProviders = GetProvidersByCategoryUseCase(fakeProviderRepo),
             getCategories = GetCategoriesUseCase(fakeCategoryRepo),
         )
+        contactProviderViewModel = ContactProviderViewModel(createJobRequestUseCase)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            contactProviderViewModel.uiState.collect { observedContactUiStates += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            contactProviderViewModel.events.collect { observedContactEvents += it }
         }
 
         scheduler.advanceUntilIdle()
@@ -113,9 +140,50 @@ class SendMessagesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    fun providerNamed(fullName: String): Provider =
+        knownProviders[fullName]
+            ?: error("Unknown provider: $fullName (BDD has ${knownProviders.keys})")
+
+    // ---- Contact form flow (scenario 02-IC) -------------------
+
+    /**
+     * Opens the contact form for [providerName]. Mirrors the
+     * `ContactProviderWorld.openContactFor` API so the messaging
+     * BDD step stays terse.
+     */
+    fun openContactFor(providerName: String) {
+        contactProviderViewModel.onOpenContact(providerNamed(providerName))
+        scheduler.advanceUntilIdle()
+    }
+
+    fun typeTitle(text: String) {
+        contactProviderViewModel.onTitleChange(text)
+        scheduler.advanceUntilIdle()
+    }
+
+    fun typeDescription(text: String) {
+        contactProviderViewModel.onDescriptionChange(text)
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * Pre-loads the fake [JobRequestRepository] with a successful
+     * outcome so the next `submitContact()` transitions to
+     * `Closed` + emits `NavigateToConversation`. Mirrors the
+     * `ContactProviderWorld.enqueueSuccess` API.
+     */
+    fun preLoadSuccess(conversationId: String = "fake-conv-1") {
+        fakeJobRequestRepo.enqueueSuccess(conversationId)
+    }
+
+    fun submitContact() {
+        contactProviderViewModel.onSubmit()
+        scheduler.advanceUntilIdle()
+    }
+
     fun lastUiState(): ProfessionalsUiState = observedUiStates.last()
 
-    fun observedStates(): List<ProfessionalsUiState> = observedUiStates.toList()
+    fun observedContactEvents(): List<ContactProviderEvent> = observedContactEvents.toList()
 
     override fun close() {
         supervisorJob.cancel()
@@ -137,5 +205,39 @@ class SendMessagesWorld : AutoCloseable {
     private class FakeCategoryRepository : CategoryRepository {
         override suspend fun getCategories(): CategoriesOutcome =
             CategoriesOutcome.Success(emptyList())
+    }
+
+    private class FakeJobRequestRepository : JobRequestRepository {
+        private val nextOutcome = AtomicReference<CreateJobRequestOutcome?>(null)
+
+        fun enqueueSuccess(conversationId: String = "fake-conv-1") {
+            nextOutcome.set(
+                CreateJobRequestOutcome.Success(
+                    JobRequest(
+                        id = "fake-job-1",
+                        conversationId = conversationId,
+                        title = "irrelevant",
+                        description = "irrelevant",
+                        status = "pending",
+                        images = emptyList(),
+                    ),
+                ),
+            )
+        }
+
+        override suspend fun createJobRequest(data: CreateJobRequestData): CreateJobRequestOutcome {
+            val queued = nextOutcome.getAndSet(null)
+            if (queued != null) return queued
+            return CreateJobRequestOutcome.Success(
+                JobRequest(
+                    id = "fake-job-1",
+                    conversationId = "fake-conv-1",
+                    title = data.title,
+                    description = data.description,
+                    status = "pending",
+                    images = emptyList(),
+                ),
+            )
+        }
     }
 }
