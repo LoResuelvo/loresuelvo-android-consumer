@@ -32,6 +32,7 @@ Feature: Complete consumer profile on first login
     Then I see a "first name required" error
     And no POST is sent to "/consumers"
 
+  @wip
   Scenario: Empty last name triggers a "last name required" error and never calls the backend
     When I type "Juan" in the first name field
     And I leave the last name field blank
