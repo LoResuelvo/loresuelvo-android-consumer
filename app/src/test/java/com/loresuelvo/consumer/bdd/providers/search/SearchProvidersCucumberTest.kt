@@ -19,7 +19,7 @@ import org.junit.runner.RunWith
  */
 @RunWith(Cucumber::class)
 @CucumberOptions(
-    features = ["classpath:features/provider"],
+    features = ["classpath:features/provider/search-providers.feature"],
     glue = ["com.loresuelvo.consumer.bdd.providers.search"],
     plugin = ["pretty", "summary"],
 )

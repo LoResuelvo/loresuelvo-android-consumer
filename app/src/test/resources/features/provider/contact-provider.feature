@@ -39,14 +39,12 @@ Feature: Contact a provider from the category list
       | prov-002 | Pedro | Dib     | Plomería      | 1           |
     And I tap the "Plomería" category card
 
-  @wip
   Scenario: 01-SRP Open the contact modal for a new provider
     When I tap the "Contactar" button on the provider "Juan Pérez"
     Then the "Create Work Request" modal opens
     And I see the provider name "Juan Pérez"
     And I see the required fields "PROBLEM TITLE" and "PROBLEM DESCRIPTION"
 
-  @wip
   Scenario: 02-SRP Send the work request successfully
     Given the "Create Work Request" modal is open for "Juan Pérez"
     When I enter a title, a description and tap the "Enviar solicitud" button

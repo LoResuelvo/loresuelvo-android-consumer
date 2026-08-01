@@ -89,8 +89,13 @@ class ContactProviderViewModel @Inject constructor(
         val state = _uiState.value
         if (state !is ContactProviderUiState.Open) return
         if (!state.canSubmit) return
+        // Flip the loading flag synchronously so the UI sees the
+        // spinner immediately. The HTTP round-trip happens in the
+        // launch below; the loading state is captured in the
+        // observed history before the launch completes (mirrors
+        // ChatViewModel.onSendClick's pattern).
+        _uiState.update { state.copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
-            _uiState.update { state.copy(isSubmitting = true, error = null) }
             when (val outcome = createJobRequest(
                 CreateJobRequestData(
                     providerId = state.provider.id,
