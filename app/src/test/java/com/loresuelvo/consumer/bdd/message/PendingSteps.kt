@@ -27,23 +27,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 01-IC: Verify the message icon -----------
-
-    @Given("I am searching for providers by category")
-    fun iAmSearchingForProvidersByCategory() {
-        throw PendingException("01-IC pending")
-    }
-
-    @When("I view the results list")
-    fun iViewTheResultsList() {
-        throw PendingException("01-IC pending")
-    }
-
-    @Then("I see a message icon to contact them")
-    fun iSeeAMessageIconToContactThem() {
-        throw PendingException("01-IC pending")
-    }
-
     // ---- Scenario 02-IC: Redirect to chats ----------------
 
     @Given("I want to start a chat with a provider from the search results")

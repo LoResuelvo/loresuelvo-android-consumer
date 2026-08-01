@@ -22,7 +22,6 @@ Feature: Start a conversation with a provider
   I want to send a contact request message to a provider I haven't interacted with
   So I can propose a job and start a chat
 
-  @wip
   Scenario: 01-IC Verify the message icon on the search results
     Given I am searching for providers by category
     When I view the results list
