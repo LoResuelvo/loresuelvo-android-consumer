@@ -61,6 +61,10 @@
     <string name="professionals_error_body">Check your connection and try again.</string>
     <string name="professionals_retry">Retry</string>
     <string name="provider_photo_content_description">%1$s\'s profile photo</string>
+    <!-- Bottom navigation -->
+    <string name="bottom_nav_mensajes">Messages</string>
+    <string name="bottom_nav_inicio">Home</string>
+    <string name="bottom_nav_asistente">AI Assistant</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
     <string name="contact_provider_modal_title">Create work request</string>
