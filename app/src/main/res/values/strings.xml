@@ -67,6 +67,11 @@
     <string name="bottom_nav_mensajes">Mensajes</string>
     <string name="bottom_nav_inicio">Inicio</string>
     <string name="bottom_nav_asistente">Asistente IA</string>
+    <!-- Bottom-bar placeholder screens -->
+    <string name="messages_screen_placeholder_title">Mensajes</string>
+    <string name="messages_screen_placeholder_body">Tus conversaciones con prestadores aparecerán acá.</string>
+    <string name="assistant_screen_placeholder_title">Asistente IA</string>
+    <string name="assistant_screen_placeholder_body">Tus sesiones con el asistente aparecerán acá.</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contactar</string>
     <string name="contact_provider_modal_title">Crear solicitud de trabajo</string>

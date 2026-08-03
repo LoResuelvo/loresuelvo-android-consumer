@@ -65,6 +65,11 @@
     <string name="bottom_nav_mensajes">Messages</string>
     <string name="bottom_nav_inicio">Home</string>
     <string name="bottom_nav_asistente">AI Assistant</string>
+    <!-- Bottom-bar placeholder screens -->
+    <string name="messages_screen_placeholder_title">Messages</string>
+    <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>
+    <string name="assistant_screen_placeholder_title">AI Assistant</string>
+    <string name="assistant_screen_placeholder_body">Your sessions with the assistant will appear here.</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
     <string name="contact_provider_modal_title">Create work request</string>
