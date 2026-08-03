@@ -5,11 +5,15 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -105,19 +109,22 @@ class ChatNavigationAcceptanceTest {
     // Scenario: 06-DIA Navegar al chat de IA
     @Test
     fun tapping_ai_entry_navigates_to_chat_screen() {
+        val sendButtonDescription = localizedString(R.string.home_search_send_content_description)
+
+        composeTestRule.onRoot().printToLog("ChatHomeTreeStart")
+
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule
-                .onAllNodesWithContentDescription(
-                    localizedString(R.string.home_search_send_content_description),
-                )
+                .onAllNodesWithContentDescription(sendButtonDescription)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
+        composeTestRule.onRoot().printToLog("ChatHomeTree")
+
         composeTestRule
-            .onNodeWithContentDescription(
-                localizedString(R.string.home_search_send_content_description),
-            )
+            .onNodeWithContentDescription(sendButtonDescription)
+            .assertIsDisplayed()
             .performClick()
 
         composeTestRule.waitUntil(timeoutMillis = 10_000) {

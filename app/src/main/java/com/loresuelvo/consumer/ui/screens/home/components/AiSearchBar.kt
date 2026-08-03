@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,6 +21,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
@@ -89,26 +92,22 @@ fun AiSearchBar(
                 )
             }
 
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp),
+            val sendContentDescription = stringResource(
+                R.string.home_search_send_content_description,
+            )
+
+            IconButton(
                 onClick = onSendClick,
+                modifier = Modifier
+                    .size(40.dp)
+                    .semantics { contentDescription = sendContentDescription },
             ) {
-                Row(
-                    modifier = Modifier.padding(10.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                        contentDescription = stringResource(
-                            R.string.home_search_send_content_description,
-                        ),
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }

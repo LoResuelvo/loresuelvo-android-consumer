@@ -4,9 +4,13 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -86,8 +90,8 @@ class ProfessionalsAcceptanceTest {
         ).authSessionStore()
     }
 
-    private fun string(@androidx.annotation.StringRes id: Int, vararg formatArgs: Any): String =
-        ApplicationProvider.getApplicationContext<Application>().getString(id, *formatArgs)
+    private fun localizedString(@androidx.annotation.StringRes id: Int, vararg formatArgs: Any): String =
+        composeTestRule.activity.getString(id, *formatArgs)
 
     @Before
     fun setUp() {
@@ -135,7 +139,7 @@ class ProfessionalsAcceptanceTest {
                 .isNotEmpty()
         }
         composeTestRule
-            .onNodeWithText(string(R.string.professionals_empty_title, "Plomería"))
+            .onNodeWithText(localizedString(R.string.professionals_empty_title, "Plomería"))
             .assertDoesNotExist()
         // At least one provider from the stub.
         composeTestRule
@@ -166,8 +170,17 @@ class ProfessionalsAcceptanceTest {
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
+
+        composeTestRule.onRoot().printToLog("ProfessionalsEmptyTest")
+
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule
+                .onAllNodesWithText(localizedString(R.string.professionals_empty_title, "Albañilería"))
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
         composeTestRule
-            .onNodeWithText(string(R.string.professionals_empty_title, "Albañilería"))
+            .onNodeWithText(localizedString(R.string.professionals_empty_title, "Albañilería"))
             .assertIsDisplayed()
     }
 

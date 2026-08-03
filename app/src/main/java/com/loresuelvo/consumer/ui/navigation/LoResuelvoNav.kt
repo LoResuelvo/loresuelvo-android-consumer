@@ -13,6 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import kotlinx.coroutines.flow.firstOrNull
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -71,19 +72,37 @@ fun LoResuelvoNav() {
         else -> Route.Home.path
     }
 
-    val currentDestination = navController.currentDestination
+    val lastAppliedSessionRoute = androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<String?>(null)
+    }
 
-    androidx.compose.runtime.LaunchedEffect(currentRoute, currentDestination) {
-        // Re-navigate whenever the derived start destination changes.
-        // Wait until the NavHost has attached its graph and exposed a
-        // current destination before navigating, otherwise `navigate`
-        // fails with "graph has not been set".
-        if (currentDestination != null && currentDestination.route != currentRoute) {
+    androidx.compose.runtime.LaunchedEffect(currentRoute) {
+        // The smart-router waits for the graph to be attached before
+        // deciding whether to navigate. `backStackEntry != null` from
+        // the previous implementation wasn't enough because with
+        // `Scaffold` + `SubcomposeLayout` the NavHost is composed
+        // inside the scaffold's measurement phase, so the
+        // `LaunchedEffect` re-runs triggered by a key change weren't
+        // always observed by the effect body. Subscribing to the
+        // back-stack flow directly is the canonical fix: the flow
+        // only emits once the graph is set.
+        val isGraphReady = navController.currentBackStackEntryFlow
+            .firstOrNull() != null
+        // Only force the smart-router when the derived session route
+        // has actually changed. This avoids bouncing the user back
+        // to Home while they are navigating to deeper routes such as
+        // Professionals or Chat.
+        val currentRouteOnStack = navController.currentDestination?.route
+        if (isGraphReady &&
+            currentRouteOnStack != currentRoute &&
+            lastAppliedSessionRoute.value != currentRoute
+        ) {
             navController.navigate(currentRoute) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
         }
+        lastAppliedSessionRoute.value = currentRoute
     }
 
     Scaffold(
@@ -113,7 +132,7 @@ fun LoResuelvoNav() {
     ) { padding ->
         LoResuelvoNavHost(
             navController = navController,
-            startDestination = Route.Welcome.path,
+            startDestination = currentRoute,
             contentPadding = padding,
             welcome = { WelcomeRoute() },
             completeProfile = { CompleteProfileRoute(navController = navController) },
