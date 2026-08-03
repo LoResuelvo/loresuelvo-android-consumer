@@ -9,9 +9,11 @@ sealed class Route(val path: String) {
 
     /**
      * AI diagnostic chat screen. Reached from the `AiSearchBar` on
-     * Home (the "Chat con IA" entry point). No arguments yet — the
-     * first commit only wires navigation; subsequent commits will
-     * carry the conversation id and persisted history.
+     * Home (the "Chat con IA" entry point) and from the bottom-bar
+     * "Asistente IA" tab → AssistantScreen → session detail. No
+     * arguments yet — the first commit only wires navigation;
+     * subsequent commits will carry the conversation id and
+     * persisted history.
      */
     data object Chat : Route("chat")
 
@@ -46,4 +48,27 @@ sealed class Route(val path: String) {
                     Uri.encode(categoryName)
         }
     }
+
+    // ---- Bottom-bar destinations (US-18) ----------------------
+    //
+    // The path strings here are duplicated in
+    // `BottomDestination.Companion` (intentionally, to keep the
+    // bottom-nav component decoupled from the navigation graph).
+    // Keep both in sync when renaming a route.
+
+    /**
+     * Messages list (consumer's conversations with providers).
+     * Reachable from the bottom-bar "Mensajes" tab. The actual
+     * list of conversations is fleshed out in scenario 03-SRP of
+     * the messaging BDD; this commit only registers the route.
+     */
+    data object Messages : Route("messages")
+
+    /**
+     * AI assistant landing screen (sessions list + "nueva
+     * conversación" entry point). Reachable from the bottom-bar
+     * "Asistente IA" tab. Detail / per-session screens are
+     * `Route.Chat` (existing) once a session is opened.
+     */
+    data object Assistant : Route("assistant")
 }
