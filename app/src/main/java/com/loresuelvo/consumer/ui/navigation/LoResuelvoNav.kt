@@ -1,7 +1,10 @@
 package com.loresuelvo.consumer.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -9,16 +12,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.navArgument
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
+import com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination
+import com.loresuelvo.consumer.ui.components.bottomnav.LoResuelvoBottomBar
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
+import com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
+import com.loresuelvo.consumer.ui.screens.messages.MessagesScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
@@ -27,20 +37,30 @@ import com.loresuelvo.consumer.ui.session.SessionViewModel
 /**
  * Composition root for the app. Hosts the navigation graph, the
  * smart-router logic (which screen is the start destination, based
- * on the session), and the per-route ViewModel wiring.
+ * on the session), the bottom-nav [Scaffold] slot, and the
+ * per-route ViewModel wiring.
  *
  * `MainActivity` is a thin shell that calls
  * `setContent { LoResuelvoNav() }`. All `LaunchedEffect`,
  * `popUpTo(graph.id) { inclusive = true }` and `navController.navigate`
  * calls live here.
  *
- * Smart-route logic reuses [SessionViewModel] instead of subscribing
- * to `AuthSessionStore` directly — the navigation graph stays a pure
- * consumer of the UDF state that the rest of the UI uses.
+ * Smart-route logic reuses [SessionViewModel] instead of
+ * subscribing to `AuthSessionStore` directly — the navigation graph
+ * stays a pure consumer of the UDF state that the rest of the UI
+ * uses.
+ *
+ * Bottom-bar visibility is derived from the current
+ * `NavBackStackEntry` route via
+ * [BottomDestination.shouldShow]; the bar is rendered in the
+ * Scaffold's `bottomBar` slot and observes the [Route.Messages] /
+ * [Route.Assistant] / [Route.Home] triad.
  */
 @Composable
 fun LoResuelvoNav() {
     val navController = androidx.navigation.compose.rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val navCurrentRoute = backStackEntry?.destination?.route
 
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val sessionState by sessionViewModel.uiState.collectAsState()
@@ -51,11 +71,14 @@ fun LoResuelvoNav() {
         else -> Route.Home.path
     }
 
-    androidx.compose.runtime.LaunchedEffect(currentRoute) {
+    val currentDestination = navController.currentDestination
+
+    androidx.compose.runtime.LaunchedEffect(currentRoute, currentDestination) {
         // Re-navigate whenever the derived start destination changes.
-        // `popUpTo(graph.id)` clears the back stack so the user can't
-        // press Back and return to the previous auth state.
-        if (navController.currentDestination?.route != currentRoute) {
+        // Wait until the NavHost has attached its graph and exposed a
+        // current destination before navigating, otherwise `navigate`
+        // fails with "graph has not been set".
+        if (currentDestination != null && currentDestination.route != currentRoute) {
             navController.navigate(currentRoute) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
@@ -63,22 +86,51 @@ fun LoResuelvoNav() {
         }
     }
 
-    LoResuelvoNavHost(
-        navController = navController,
-        startDestination = Route.Welcome.path,
-        welcome = { WelcomeRoute() },
-        completeProfile = { CompleteProfileRoute(navController = navController) },
-        home = { HomeRoute(navController = navController) },
-        professionals = { categoryId, categoryName ->
-            ProfessionalsRoute(navController, categoryId, categoryName)
+    Scaffold(
+        bottomBar = {
+            if (BottomDestination.shouldShow(navCurrentRoute)) {
+                LoResuelvoBottomBar(
+                    currentRoute = navCurrentRoute,
+                    onNavigate = { destination ->
+                        // Bottom-nav navigation follows the Instagram
+                        // pattern: popUpTo the start destination to keep
+                        // the back stack flat, launchSingleTop to avoid
+                        // duplicate instances of the same tab, and
+                        // restoreState to remember scroll positions.
+                        navController.navigate(destination.route) {
+                            if (navController.currentDestination != null) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
+            }
         },
-        chat = { ChatRoute(navController = navController) },
-        conversation = { conversationId ->
-            com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
-                conversationId = conversationId,
-            )
-        },
-    )
+    ) { padding ->
+        LoResuelvoNavHost(
+            navController = navController,
+            startDestination = Route.Welcome.path,
+            contentPadding = padding,
+            welcome = { WelcomeRoute() },
+            completeProfile = { CompleteProfileRoute(navController = navController) },
+            home = { HomeRoute(navController = navController) },
+            professionals = { categoryId, categoryName ->
+                ProfessionalsRoute(navController, categoryId, categoryName)
+            },
+            chat = { ChatRoute(navController = navController) },
+            conversation = { conversationId ->
+                com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
+                    conversationId = conversationId,
+                )
+            },
+            messages = { MessagesScreen() },
+            assistant = { AssistantScreen() },
+        )
+    }
 }
 
 /**
@@ -118,7 +170,9 @@ private fun CompleteProfileRoute(
             when (event) {
                 CompleteProfileEvent.NavigateToHome ->
                     navController.navigate(Route.Home.path) {
-                        popUpTo(navController.graph.id) { inclusive = true }
+                        if (navController.currentDestination != null) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
                         launchSingleTop = true
                     }
             }
