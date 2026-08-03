@@ -14,6 +14,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -101,11 +102,19 @@ fun AiSearchBar(
                 modifier = Modifier
                     .size(40.dp)
                     .semantics { contentDescription = sendContentDescription },
+                // The IconButton defaults to a transparent container,
+                // which would leave the white-tinted arrow invisible
+                // over the Card's white surface. Pin both colours so
+                // the arrow sits on the brand-primary pill like the
+                // original Surface-based design.
+                colors = IconButtonDefaults.iconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                ),
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(20.dp),
                 )
             }
