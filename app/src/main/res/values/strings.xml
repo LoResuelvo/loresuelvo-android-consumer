@@ -72,6 +72,16 @@
     <string name="messages_screen_placeholder_body">Tus conversaciones con prestadores aparecerán acá.</string>
     <string name="assistant_screen_placeholder_title">Asistente IA</string>
     <string name="assistant_screen_placeholder_body">Tus sesiones con el asistente aparecerán acá.</string>
+    <!-- Messages list screen (added in 03-IC) -->
+    <string name="messages_screen_loading">Cargando conversaciones…</string>
+    <string name="messages_screen_empty_title">Aún no tenés conversaciones</string>
+    <string name="messages_screen_empty_body">Cuando contactes a un prestador, va a aparecer acá.</string>
+    <string name="messages_screen_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="messages_screen_error_server">No pudimos cargar tus conversaciones. Reintentá.</string>
+    <string name="messages_screen_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="messages_screen_error_retry">Reintentar</string>
+    <string name="messages_screen_pending_badge">Pendiente</string>
+    <string name="messages_screen_no_preview">(Sin mensajes aún)</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contactar</string>
     <string name="contact_provider_modal_title">Crear solicitud de trabajo</string>

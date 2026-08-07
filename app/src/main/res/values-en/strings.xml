@@ -70,6 +70,16 @@
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>
     <string name="assistant_screen_placeholder_title">AI Assistant</string>
     <string name="assistant_screen_placeholder_body">Your sessions with the assistant will appear here.</string>
+    <!-- Messages list screen (added in 03-IC) -->
+    <string name="messages_screen_loading">Loading conversations…</string>
+    <string name="messages_screen_empty_title">No conversations yet</string>
+    <string name="messages_screen_empty_body">When you contact a provider, it\'ll appear here.</string>
+    <string name="messages_screen_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="messages_screen_error_server">We couldn\'t load your conversations. Try again.</string>
+    <string name="messages_screen_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="messages_screen_error_retry">Retry</string>
+    <string name="messages_screen_pending_badge">Pending</string>
+    <string name="messages_screen_no_preview">(No messages yet)</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
     <string name="contact_provider_modal_title">Create work request</string>

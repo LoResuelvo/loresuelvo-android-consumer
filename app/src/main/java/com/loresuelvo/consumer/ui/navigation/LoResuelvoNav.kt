@@ -146,7 +146,11 @@ fun LoResuelvoNav() {
                     conversationId = conversationId,
                 )
             },
-            messages = { MessagesScreen() },
+            messages = {
+                com.loresuelvo.consumer.ui.screens.messages.MessagesScreen(
+                    state = com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState.Loading,
+                )
+            },
             assistant = { AssistantScreen() },
         )
     }
