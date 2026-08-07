@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
+import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.CreateConversationRequestDto
 import com.loresuelvo.consumer.data.api.dto.CreateJobRequestDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
@@ -105,4 +106,22 @@ interface BackendApi {
     suspend fun createJobRequest(
         @Body body: CreateJobRequestDto,
     ): JobRequestDto
+
+    // ---- Consumer ↔ provider conversations (added for US-17 / 03-IC) --
+
+    /**
+     * `GET /conversations` — the consumer's conversation list,
+     * ordered by `updated_on` descending. Each element carries
+     * the counterpart profile and the most recent message preview
+     * so the list cell can render without a second round-trip.
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @GET("conversations")
+    suspend fun getConversations(): List<ConversationDto>
 }
