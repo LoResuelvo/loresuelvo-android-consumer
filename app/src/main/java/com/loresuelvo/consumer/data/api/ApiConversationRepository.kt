@@ -1,25 +1,28 @@
 package com.loresuelvo.consumer.data.api
 
+import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
+import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Default implementation of [ConversationRepository] against the
- * backend. Adapts `GET /conversations` (Retrofit-typed via
- * [BackendApi]) to the domain's [ConversationsOutcome] hierarchy.
+ * backend. Adapts the three consumer ↔ provider conversation
+ * endpoints (`GET /conversations`, `GET /conversations/{id}`,
+ * `POST /conversations/{id}/messages`) to the domain's typed
+ * outcome hierarchies.
  *
  * Like every other adapter in this package, it never throws on
  * HTTP / network failures: every exception is translated to a
- * typed [ConversationsOutcome.Failure] via [toApiError], so
- * callers handle each branch explicitly. The 401 branch maps to
- * [ConversationsOutcome.Failure.Unauthorized] (a dedicated subtype
- * exists on this outcome — the categories endpoint collapses 401
- * into `Server(401, …)` because its outcome lacks the dedicated
- * case).
+ * typed `Failure` via [toApiError], so callers handle each
+ * branch explicitly. The 401 branch maps to each outcome's
+ * dedicated `Unauthorized` subtype so the VM can clear the local
+ * session when the JWT expires.
  */
 @Singleton
 class ApiConversationRepository @Inject constructor(
@@ -30,37 +33,34 @@ class ApiConversationRepository @Inject constructor(
         val dtos = backendApi.getConversations()
         ConversationsOutcome.Success(dtos.map { it.toDomain() })
     } catch (t: Throwable) {
-        mapGetToFailure(t)
+        mapConversationsFailure(t)
     }
 
-    /**
-     * Detail snapshot of a single conversation. Implementation
-     * lands in a follow-up commit alongside the
-     * `BackendApi.getConversationById` call.
-     */
     override suspend fun getConversationById(
         conversationId: String,
-    ): com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome =
-        throw NotImplementedError(
-            "ApiConversationRepository.getConversationById not yet implemented",
-        )
+    ): ConversationDetailOutcome = try {
+        val dto = backendApi.getConversationById(conversationId)
+        ConversationDetailOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapDetailFailure(t)
+    }
 
-    /**
-     * Append a consumer message to an existing conversation.
-     * Implementation lands in a follow-up commit alongside
-     * `BackendApi.sendMessage`.
-     */
     override suspend fun sendMessage(
         conversationId: String,
         content: String,
-    ): com.loresuelvo.consumer.domain.conversation.SendMessageOutcome =
-        throw NotImplementedError(
-            "ApiConversationRepository.sendMessage not yet implemented",
+    ): SendMessageOutcome = try {
+        val dto = backendApi.postMessage(
+            conversationId,
+            SendMessageRequestDto(content = content),
         )
+        SendMessageOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapSendFailure(t)
+    }
 
-    private fun mapGetToFailure(
-        e: Throwable,
-    ): ConversationsOutcome.Failure = when (val error = e.toApiError()) {
+    private fun mapConversationsFailure(
+        t: Throwable,
+    ): ConversationsOutcome.Failure = when (val error = t.toApiError()) {
         is ApiError.Network ->
             ConversationsOutcome.Failure.Network(error.networkCause)
         is ApiError.Unauthorized ->
@@ -69,5 +69,31 @@ class ApiConversationRepository @Inject constructor(
             ConversationsOutcome.Failure.Server(error.code, error.errorMessage)
         is ApiError.Unknown ->
             ConversationsOutcome.Failure.Server(0, error.message ?: "Unknown error")
+    }
+
+    private fun mapDetailFailure(
+        t: Throwable,
+    ): ConversationDetailOutcome.Failure = when (val error = t.toApiError()) {
+        is ApiError.Network ->
+            ConversationDetailOutcome.Failure.Network(error.networkCause)
+        is ApiError.Unauthorized ->
+            ConversationDetailOutcome.Failure.Unauthorized(error.errorMessage)
+        is ApiError.Server ->
+            ConversationDetailOutcome.Failure.Server(error.code, error.errorMessage)
+        is ApiError.Unknown ->
+            ConversationDetailOutcome.Failure.Server(0, error.message ?: "Unknown error")
+    }
+
+    private fun mapSendFailure(
+        t: Throwable,
+    ): SendMessageOutcome.Failure = when (val error = t.toApiError()) {
+        is ApiError.Network ->
+            SendMessageOutcome.Failure.Network(error.networkCause)
+        is ApiError.Unauthorized ->
+            SendMessageOutcome.Failure.Unauthorized(error.errorMessage)
+        is ApiError.Server ->
+            SendMessageOutcome.Failure.Server(error.code, error.errorMessage)
+        is ApiError.Unknown ->
+            SendMessageOutcome.Failure.Server(0, error.message ?: "Unknown error")
     }
 }

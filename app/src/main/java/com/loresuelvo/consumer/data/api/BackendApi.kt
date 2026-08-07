@@ -2,7 +2,9 @@ package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
+import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
+import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
 import com.loresuelvo.consumer.data.api.dto.CreateConversationRequestDto
 import com.loresuelvo.consumer.data.api.dto.CreateJobRequestDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
@@ -124,4 +126,28 @@ interface BackendApi {
      */
     @GET("conversations")
     suspend fun getConversations(): List<ConversationDto>
+
+    /**
+     * `GET /conversations/{conversationId}` — full snapshot of a
+     * single conversation including the complete `messages[]`
+     * thread. The chat surface uses it on entry to render the
+     * header (counterpart, status) and the existing bubbles.
+     */
+    @GET("conversations/{conversationId}")
+    suspend fun getConversationById(
+        @Path("conversationId") conversationId: String,
+    ): ConversationDetailDto
+
+    /**
+     * `POST /conversations/{conversationId}/messages` — appends
+     * a consumer message to an existing conversation. The body
+     * carries the message text; the response is the
+     * server-persisted message (with the backend-issued numeric
+     * id and the authoritative `created_on` timestamp).
+     */
+    @POST("conversations/{conversationId}/messages")
+    suspend fun postMessage(
+        @Path("conversationId") conversationId: String,
+        @Body body: SendMessageRequestDto,
+    ): ConversationMessageDto
 }

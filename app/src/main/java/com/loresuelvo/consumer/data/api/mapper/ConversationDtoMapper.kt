@@ -1,10 +1,12 @@
 package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.ConversationCounterpartDto
+import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
+import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
@@ -25,6 +27,14 @@ internal fun ConversationDto.toDomain(): Conversation = Conversation(
     status = status.toConversationStatus(),
     counterpart = counterpart.toDomain(),
     lastMessage = lastMessage?.toDomain(),
+    updatedOnEpochMillis = parseIsoMillisOrZero(updatedOn) ?: 0L,
+)
+
+internal fun ConversationDetailDto.toDomain(): ConversationDetail = ConversationDetail(
+    id = id.toString(),
+    status = status.toConversationStatus(),
+    counterpart = counterpart.toDomain(),
+    messages = messages.map { it.toDomain() },
     updatedOnEpochMillis = parseIsoMillisOrZero(updatedOn) ?: 0L,
 )
 
