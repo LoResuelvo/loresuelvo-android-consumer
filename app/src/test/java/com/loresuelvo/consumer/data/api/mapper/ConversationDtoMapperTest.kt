@@ -237,12 +237,16 @@ class ConversationDtoMapperTest {
     private fun detailDto(
         id: Long = 1,
         status: String = "pending",
-        counterpart: ConversationCounterpartDto = counterpartDto(),
+        work: ConversationDetailDto.WorkDto? = ConversationDetailDto.WorkDto(
+            counterpart = counterpartDto(),
+        ),
+        counterpart: ConversationCounterpartDto? = null,
         messages: List<ConversationMessageDto> = listOf(messageDto()),
         updatedOn: String? = "2026-05-29T18:01:00Z",
     ) = ConversationDetailDto(
         id = id,
         status = status,
+        work = work,
         counterpart = counterpart,
         messages = messages,
         updatedOn = updatedOn,
@@ -253,6 +257,48 @@ class ConversationDtoMapperTest {
         val detail = detailDto(id = 42L).toDomain()
 
         assertEquals("42", detail.id)
+    }
+
+    @Test
+    fun detail_extracts_counterpart_from_work_wrapper() {
+        // The dev backend nests counterpart under `work` on the
+        // detail endpoint — pin that path explicitly.
+        val detail = detailDto(
+            work = ConversationDetailDto.WorkDto(
+                counterpart = counterpartDto(
+                    id = 56,
+                    name = "Florencia",
+                    surname = "Vega",
+                    categoryName = "Electricidad",
+                    profilePhotoUrl = "https://cdn.example/flor.jpg",
+                ),
+            ),
+        ).toDomain()
+
+        assertEquals(56L, detail.counterpart.id)
+        assertEquals("Florencia", detail.counterpart.name)
+        assertEquals("Vega", detail.counterpart.surname)
+        assertEquals("Electricidad", detail.counterpart.categoryName)
+        assertEquals("https://cdn.example/flor.jpg", detail.counterpart.profilePhotoUrl)
+    }
+
+    @Test
+    fun detail_falls_back_to_root_counterpart_when_work_wrapper_absent() {
+        // Tolerance for future wire-shape drift: if the backend
+        // ever drops the `work` wrapper on the detail endpoint,
+        // the mapper should still surface the root `counterpart`.
+        val detail = detailDto(
+            work = null,
+            counterpart = counterpartDto(
+                id = 99,
+                name = "Lucía",
+                surname = "Pérez",
+                categoryName = "Gas",
+            ),
+        ).toDomain()
+
+        assertEquals(99L, detail.counterpart.id)
+        assertEquals("Lucía", detail.counterpart.name)
     }
 
     @Test
@@ -284,24 +330,13 @@ class ConversationDtoMapperTest {
     }
 
     @Test
-    fun detail_maps_status_and_counterpart_and_timestamp() {
+    fun detail_maps_status_and_timestamp() {
         val detail = detailDto(
             status = "pending",
-            counterpart = counterpartDto(
-                id = 99,
-                name = "Lucía",
-                surname = "Pérez",
-                categoryName = "Gas",
-                profilePhotoUrl = "https://cdn.example/lucia.jpg",
-            ),
             updatedOn = "2026-05-29T18:01:00Z",
         ).toDomain()
 
         assertEquals(ConversationStatus.Pending, detail.status)
-        assertEquals(99L, detail.counterpart.id)
-        assertEquals("Lucía", detail.counterpart.name)
-        assertEquals("Gas", detail.counterpart.categoryName)
-        assertEquals("https://cdn.example/lucia.jpg", detail.counterpart.profilePhotoUrl)
         assertTrue(detail.updatedOnEpochMillis != 0L)
     }
 
@@ -332,5 +367,27 @@ class ConversationDtoMapperTest {
         val detail = detailDto(updatedOn = null).toDomain()
 
         assertEquals(0L, detail.updatedOnEpochMillis)
+    }
+
+    @Test
+    fun detail_updatedOn_with_microseconds_and_Z_parses() {
+        // The dev backend emits `2026-08-07T15:46:40.928659Z`.
+        // The parser must extract a non-zero epoch and ignore the
+        // microsecond tail.
+        val detail = detailDto(updatedOn = "2026-08-07T15:46:40.928659Z").toDomain()
+
+        assertTrue(
+            "expected a non-zero epoch from microsecond timestamp, got ${detail.updatedOnEpochMillis}",
+            detail.updatedOnEpochMillis != 0L,
+        )
+    }
+
+    @Test
+    fun detail_updatedOn_with_milliseconds_and_Z_parses() {
+        // 3-digit millisecond precision (Java's `SSS`) is also
+        // accepted by the backend on some endpoints.
+        val detail = detailDto(updatedOn = "2026-08-07T15:46:40.928Z").toDomain()
+
+        assertTrue(detail.updatedOnEpochMillis != 0L)
     }
 }

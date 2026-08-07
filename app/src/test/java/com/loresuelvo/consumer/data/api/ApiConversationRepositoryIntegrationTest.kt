@@ -234,6 +234,10 @@ class ApiConversationRepositoryIntegrationTest {
 
     @Test
     fun getConversationById_hits_endpoint_and_maps_full_payload() = runBlocking {
+        // Mirror the dev backend's actual response shape: the
+        // counterpart is nested under `work`, the timestamp
+        // carries microseconds + trailing Z, and the
+        // conversation id is numeric on the wire.
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -241,72 +245,65 @@ class ApiConversationRepositoryIntegrationTest {
                 .setBody(
                     """
                     {
-                      "id": 1,
+                      "id": 4,
+                      "type": "work",
                       "status": "pending",
-                      "counterpart": {
-                        "id": 20,
-                        "role": "provider",
-                        "name": "Juan",
-                        "surname": "Gómez",
-                        "category_name": "Plomería",
-                        "profile_photo_url": "https://cdn.example/juan.jpg"
+                      "work": {
+                        "counterpart": {
+                          "id": 56,
+                          "role": "provider",
+                          "name": "Florencia",
+                          "surname": "Vega",
+                          "category_name": "Electricidad",
+                          "profile_photo_url": "http://example/flor.jpg"
+                        }
                       },
                       "messages": [
                         {
                           "id": 1,
                           "sender_role": "consumer",
-                          "content": "Hola Juan, necesito una mano",
-                          "created_on": "2026-05-29T18:01:00Z"
-                        },
-                        {
-                          "id": 2,
-                          "sender_role": "provider",
-                          "content": "Hola! ¿Cuándo podés?",
-                          "created_on": "2026-05-30T09:15:00Z"
+                          "content": "Hola Florencia, necesito una mano",
+                          "created_on": "2026-05-29T18:01:00.928659Z"
                         }
                       ],
-                      "updated_on": "2026-05-30T09:15:00Z"
+                      "updated_on": "2026-08-07T15:46:40.928659Z"
                     }
                     """.trimIndent(),
                 ),
         )
 
-        val outcome = repository.getConversationById("1")
+        val outcome = repository.getConversationById("4")
 
         val recorded = server.takeRequest()
         assertEquals("GET", recorded.method)
-        assertEquals("/conversations/1", recorded.path)
+        assertEquals("/conversations/4", recorded.path)
 
         assertTrue(outcome is ConversationDetailOutcome.Success)
         val detail = (outcome as ConversationDetailOutcome.Success).detail
 
         // Header fields.
-        assertEquals("1", detail.id)
+        assertEquals("4", detail.id)
         assertEquals(ConversationStatus.Pending, detail.status)
         assertEquals(
             ConversationCounterpart(
-                id = 20L,
-                name = "Juan",
-                surname = "Gómez",
-                categoryName = "Plomería",
-                profilePhotoUrl = "https://cdn.example/juan.jpg",
+                id = 56L,
+                name = "Florencia",
+                surname = "Vega",
+                categoryName = "Electricidad",
+                profilePhotoUrl = "http://example/flor.jpg",
             ),
             detail.counterpart,
         )
+        // Microsecond timestamp parses to a non-zero epoch.
         assertTrue(detail.updatedOnEpochMillis != 0L)
 
-        // Full message thread.
-        assertEquals(2, detail.messages.size)
+        // Message thread.
+        assertEquals(1, detail.messages.size)
         val first = detail.messages[0]
         assertEquals("1", first.id)
         assertEquals(ConversationSender.Consumer, first.sender)
-        assertEquals("Hola Juan, necesito una mano", first.content)
+        assertEquals("Hola Florencia, necesito una mano", first.content)
         assertTrue(first.createdOnEpochMillis != 0L)
-        val second = detail.messages[1]
-        assertEquals("2", second.id)
-        assertEquals(ConversationSender.Provider, second.sender)
-        assertEquals("Hola! ¿Cuándo podés?", second.content)
-        assertTrue(second.createdOnEpochMillis != 0L)
     }
 
     @Test
