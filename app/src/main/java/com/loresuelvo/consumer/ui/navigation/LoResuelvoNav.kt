@@ -142,11 +142,12 @@ fun LoResuelvoNav() {
             },
             chat = { ChatRoute(navController = navController) },
             conversation = { conversationId ->
-                com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
+                ConversationRoute(
+                    navController = navController,
                     conversationId = conversationId,
                 )
             },
-            messages = { MessagesRoute() },
+            messages = { MessagesRoute(navController) },
             assistant = { AssistantScreen() },
         )
     }
@@ -303,14 +304,13 @@ private fun HomeRoute(
  * [com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel]
  * through Hilt and forwards the UDF state to the screen.
  *
- * Scenario 03-IC scope: no row tap handler — the conversation
- * detail screen is for 04-IC / 05-IC. The
- * `onConversationClick` callback is wired to a no-op so the
- * screen stays usable end-to-end while we wait for those
- * scenarios.
+ * 05-IC wires the row-tap handler to `navController.navigate` so
+ * tapping a conversation opens the detail screen
+ * (`Route.Conversation`). The earlier "no-op" placeholder was
+ * removed when the detail screen became real.
  */
 @Composable
-private fun MessagesRoute() {
+private fun MessagesRoute(navController: androidx.navigation.NavHostController) {
     val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel =
         hiltViewModel()
     val state by viewModel.uiState.collectAsState()
@@ -318,8 +318,40 @@ private fun MessagesRoute() {
     com.loresuelvo.consumer.ui.screens.messages.MessagesScreen(
         state = state,
         onRetryClick = viewModel::load,
-        // Out of scope for 03-IC: 04-IC/05-IC will wire this to
-        // `navController.navigate(Route.Conversation.buildPath(id))`.
-        onConversationClick = { _ -> },
+        onConversationClick = { conversationId ->
+            navController.navigate(
+                Route.Conversation.buildPath(conversationId),
+            )
+        },
+    )
+}
+
+/**
+ * Conversation detail route. Resolves the
+ * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel]
+ * through Hilt and forwards the UDF state to the screen. The
+ * nav argument [conversationId] is fed to the VM's `load(id)`
+ * once on first composition (and again on the screen-level
+ * retry from the `Error` state).
+ */
+@Composable
+private fun ConversationRoute(
+    navController: androidx.navigation.NavHostController,
+    conversationId: String,
+) {
+    val viewModel: com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel =
+        hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(conversationId) {
+        viewModel.load(conversationId)
+    }
+
+    com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
+        state = state,
+        onPromptChange = viewModel::onPromptChange,
+        onSendClick = viewModel::onSendClick,
+        onBackClick = { navController.popBackStack() },
+        onRetryClick = { viewModel.load(conversationId) },
+        onErrorDismiss = viewModel::onErrorDismiss,
     )
 }
