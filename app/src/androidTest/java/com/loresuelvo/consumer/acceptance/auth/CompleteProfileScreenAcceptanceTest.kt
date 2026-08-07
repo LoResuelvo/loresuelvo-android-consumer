@@ -286,6 +286,12 @@ class CompleteProfileScreenAcceptanceTest {
         abstract fun bindJobRequestRepository(
             repository: com.loresuelvo.consumer.testdi.FakeJobRequestRepository,
         ): com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindConversationRepository(
+            repository: com.loresuelvo.consumer.testdi.FakeConversationRepository,
+        ): com.loresuelvo.consumer.domain.conversation.ConversationRepository
     }
 
     @Singleton
