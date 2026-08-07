@@ -146,11 +146,7 @@ fun LoResuelvoNav() {
                     conversationId = conversationId,
                 )
             },
-            messages = {
-                com.loresuelvo.consumer.ui.screens.messages.MessagesScreen(
-                    state = com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState.Loading,
-                )
-            },
+            messages = { MessagesRoute() },
             assistant = { AssistantScreen() },
         )
     }
@@ -299,5 +295,31 @@ private fun HomeRoute(
         onAiSendClick = { navController.navigate(Route.Chat.path) },
         onRetryClick = { homeViewModel.loadCategories() },
         onLogoutClick = { sessionViewModel.signOut(context) },
+    )
+}
+
+/**
+ * Messages list route. Resolves the
+ * [com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel]
+ * through Hilt and forwards the UDF state to the screen.
+ *
+ * Scenario 03-IC scope: no row tap handler — the conversation
+ * detail screen is for 04-IC / 05-IC. The
+ * `onConversationClick` callback is wired to a no-op so the
+ * screen stays usable end-to-end while we wait for those
+ * scenarios.
+ */
+@Composable
+private fun MessagesRoute() {
+    val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel =
+        hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    com.loresuelvo.consumer.ui.screens.messages.MessagesScreen(
+        state = state,
+        onRetryClick = viewModel::load,
+        // Out of scope for 03-IC: 04-IC/05-IC will wire this to
+        // `navController.navigate(Route.Conversation.buildPath(id))`.
+        onConversationClick = { _ -> },
     )
 }
