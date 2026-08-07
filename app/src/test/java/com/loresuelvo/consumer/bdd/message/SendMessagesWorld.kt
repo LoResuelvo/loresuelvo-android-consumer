@@ -325,11 +325,14 @@ class SendMessagesWorld : AutoCloseable {
     }
 
     /**
-     * Fake [ConversationRepository] for scenario 03-IC. Holds a
-     * seeded list of conversations and returns it verbatim as a
-     * `Success` outcome; the BDD step seeds the list via
-     * [SendMessagesWorld.enqueueConversation] before the `When`
-     * step fires the VM's `load()`.
+     * Fake [ConversationRepository] for the send-messages BDD
+     * scenarios. Holds a seeded list of conversations and returns
+     * it verbatim as a `Success` outcome on `getConversations`.
+     * The detail (`getConversationById`) and send (`sendMessage`)
+     * methods are no-ops returning failures until scenarios
+     * 05-IC / 06-IC extend the world with their own seeding
+     * helpers — keeping them here is what keeps the build green
+     * as the interface evolves.
      */
     private class FakeConversationRepository : ConversationRepository {
         private var seed: List<Conversation> = emptyList()
@@ -340,5 +343,22 @@ class SendMessagesWorld : AutoCloseable {
 
         override suspend fun getConversations(): ConversationsOutcome =
             ConversationsOutcome.Success(seed)
+
+        override suspend fun getConversationById(
+            conversationId: String,
+        ): com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome =
+            com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome.Failure.Server(
+                code = 0,
+                message = "getConversationById not seeded in this world yet",
+            )
+
+        override suspend fun sendMessage(
+            conversationId: String,
+            content: String,
+        ): com.loresuelvo.consumer.domain.conversation.SendMessageOutcome =
+            com.loresuelvo.consumer.domain.conversation.SendMessageOutcome.Failure.Server(
+                code = 0,
+                message = "sendMessage not seeded in this world yet",
+            )
     }
 }
