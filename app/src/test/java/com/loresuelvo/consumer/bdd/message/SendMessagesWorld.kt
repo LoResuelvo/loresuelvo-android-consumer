@@ -5,11 +5,14 @@ import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
+import com.loresuelvo.consumer.domain.conversation.ConversationDetail
+import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
 import com.loresuelvo.consumer.domain.jobrequest.JobRequest
@@ -18,11 +21,15 @@ import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import com.loresuelvo.consumer.domain.provider.ProvidersOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationsUseCase
+import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
 import com.loresuelvo.consumer.domain.usecase.provider.GetProvidersByCategoryUseCase
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
+import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
+import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
@@ -87,12 +94,22 @@ class SendMessagesWorld : AutoCloseable {
     // load (in the `When` step) to observe the seeded conversation.
     private val fakeConversationRepo = FakeConversationRepository()
     private val getConversationsUseCase = GetConversationsUseCase(fakeConversationRepo)
+    private val getConversationByIdUseCase = GetConversationByIdUseCase(fakeConversationRepo)
+    private val sendMessageUseCase = SendMessageUseCase(fakeConversationRepo)
     private lateinit var messagesListViewModel: MessagesListViewModel
+
+    // Conversation detail (scenario 05-IC): the same fake repo
+    // backs both the list and the detail VM. The detail VM is
+    // constructed but does NOT auto-load — the `Given` step must
+    // seed the detail + call `openConversation(id)` so the
+    // production-equivalent load path runs.
+    private lateinit var conversationViewModel: ConversationViewModel
 
     private val observedUiStates = mutableListOf<ProfessionalsUiState>()
     private val observedContactUiStates = mutableListOf<ContactProviderUiState>()
     private val observedContactEvents = mutableListOf<ContactProviderEvent>()
     private val observedMessagesListStates = mutableListOf<MessagesListUiState>()
+    private val observedConversationStates = mutableListOf<ConversationUiState>()
 
     private val knownProviders: Map<String, Provider> = mapOf(
         "Juan Pérez" to Provider(
@@ -133,6 +150,10 @@ class SendMessagesWorld : AutoCloseable {
         )
         contactProviderViewModel = ContactProviderViewModel(createJobRequestUseCase)
         messagesListViewModel = MessagesListViewModel(getConversationsUseCase)
+        conversationViewModel = ConversationViewModel(
+            getConversationById = getConversationByIdUseCase,
+            sendMessage = sendMessageUseCase,
+        )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
@@ -145,6 +166,9 @@ class SendMessagesWorld : AutoCloseable {
         }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             messagesListViewModel.uiState.collect { observedMessagesListStates += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            conversationViewModel.uiState.collect { observedConversationStates += it }
         }
 
         scheduler.advanceUntilIdle()
@@ -215,7 +239,10 @@ class SendMessagesWorld : AutoCloseable {
     /**
      * Seeds the fake [ConversationRepository] with a single
      * conversation so the next [accessMessagesSection] call
-     * observes the seeded row in the list.
+     * observes the seeded row in the list, AND seeds the
+     * detail endpoint so [openConversation] lands on a
+     * populated thread. Earlier scenarios (03-IC, 04-IC) only
+     * read the list state — the detail seed is a no-op for them.
      */
     fun enqueueConversation(
         conversationId: String = "1",
@@ -227,28 +254,44 @@ class SendMessagesWorld : AutoCloseable {
         lastMessageSender: ConversationSender = ConversationSender.Consumer,
         updatedOnEpochMillis: Long = 0L,
     ) {
-        fakeConversationRepo.setSeed(
+        val counterpart = ConversationCounterpart(
+            id = 20L,
+            name = counterpartName,
+            surname = counterpartSurname,
+            categoryName = categoryName,
+            profilePhotoUrl = null,
+        )
+        val seededMessage = lastMessageContent?.let { content ->
+            ConversationMessage(
+                id = "$conversationId-msg-1",
+                sender = lastMessageSender,
+                content = content,
+                createdOnEpochMillis = updatedOnEpochMillis,
+            )
+        }
+        fakeConversationRepo.setListSeed(
             listOf(
                 Conversation(
                     id = conversationId,
                     status = status,
-                    counterpart = ConversationCounterpart(
-                        id = 20L,
-                        name = counterpartName,
-                        surname = counterpartSurname,
-                        categoryName = categoryName,
-                        profilePhotoUrl = null,
-                    ),
-                    lastMessage = lastMessageContent?.let { content ->
-                        ConversationMessage(
-                            id = "$conversationId-msg-1",
-                            sender = lastMessageSender,
-                            content = content,
-                            createdOnEpochMillis = updatedOnEpochMillis,
-                        )
-                    },
+                    counterpart = counterpart,
+                    lastMessage = seededMessage,
                     updatedOnEpochMillis = updatedOnEpochMillis,
                 ),
+            ),
+        )
+        // The detail endpoint returns the full thread. For the
+        // BDD "conversation has at least one message" baseline we
+        // mirror the seeded `lastMessage` into the `messages[]`
+        // list; `null` ⇒ an empty thread (a brand-new conversation
+        // the consumer just opened).
+        fakeConversationRepo.setDetailSeed(
+            ConversationDetail(
+                id = conversationId,
+                status = status,
+                counterpart = counterpart,
+                messages = listOfNotNull(seededMessage),
+                updatedOnEpochMillis = updatedOnEpochMillis,
             ),
         )
     }
@@ -267,6 +310,42 @@ class SendMessagesWorld : AutoCloseable {
 
     fun lastMessagesListUiState(): MessagesListUiState =
         observedMessagesListStates.last()
+
+    // ---- Conversation detail (scenario 05-IC) -------------
+
+    /**
+     * Drives [ConversationViewModel.load] for the seeded
+     * conversation. Mirrors the host's `LaunchedEffect` in
+     * `ConversationRoute` so the BDD exercises the same code
+     * path the production UI does.
+     */
+    fun openConversation(conversationId: String) {
+        conversationViewModel.load(conversationId)
+        scheduler.advanceUntilIdle()
+    }
+
+    /** Updates the composer field. */
+    fun typeMessage(text: String) {
+        conversationViewModel.onPromptChange(text)
+        scheduler.advanceUntilIdle()
+    }
+
+    /** Taps the send button. Advances the scheduler so the
+     *  round-trip completes synchronously against the fake repo. */
+    fun tapSend() {
+        conversationViewModel.onSendClick()
+        scheduler.advanceUntilIdle()
+    }
+
+    fun lastConversationUiState(): ConversationUiState =
+        observedConversationStates.last()
+
+    /** Snapshots the `(conversationId, content)` pairs that hit
+     *  the fake repo's `sendMessage` — useful when the BDD needs
+     *  to assert WHICH message was sent (not just that the state
+     *  mutated). */
+    fun observedSendCalls(): List<Pair<String, String>> =
+        fakeConversationRepo.sendCallsSnapshot()
 
     override fun close() {
         supervisorJob.cancel()
@@ -326,39 +405,66 @@ class SendMessagesWorld : AutoCloseable {
 
     /**
      * Fake [ConversationRepository] for the send-messages BDD
-     * scenarios. Holds a seeded list of conversations and returns
-     * it verbatim as a `Success` outcome on `getConversations`.
-     * The detail (`getConversationById`) and send (`sendMessage`)
-     * methods are no-ops returning failures until scenarios
-     * 05-IC / 06-IC extend the world with their own seeding
-     * helpers — keeping them here is what keeps the build green
-     * as the interface evolves.
+     * scenarios. Holds a seeded list of conversations AND a
+     * seeded single-conversation detail so both the list screen
+     * and the detail screen have something to render. Records
+     * every `sendMessage` call so the BDD can assert what the
+     * user actually sent (and not just that the state mutated).
+     *
+     * Send responses are always `Success` with a fresh server-
+     * issued message — the BDD scenarios for 05-IC and 06-IC
+     * don't exercise typed failures at the repo level (those
+     * are pinned by `ApiConversationRepositoryIntegrationTest`).
      */
     private class FakeConversationRepository : ConversationRepository {
-        private var seed: List<Conversation> = emptyList()
+        private var listSeed: List<Conversation> = emptyList()
+        private var detailSeed: ConversationDetail? = null
+        private val sendCalls = mutableListOf<Pair<String, String>>()
 
-        fun setSeed(conversations: List<Conversation>) {
-            seed = conversations
+        fun setListSeed(conversations: List<Conversation>) {
+            listSeed = conversations
         }
 
+        fun setDetailSeed(detail: ConversationDetail) {
+            detailSeed = detail
+        }
+
+        fun sendCallsSnapshot(): List<Pair<String, String>> =
+            sendCalls.toList()
+
         override suspend fun getConversations(): ConversationsOutcome =
-            ConversationsOutcome.Success(seed)
+            ConversationsOutcome.Success(listSeed)
 
         override suspend fun getConversationById(
             conversationId: String,
-        ): com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome =
-            com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome.Failure.Server(
-                code = 0,
-                message = "getConversationById not seeded in this world yet",
-            )
+        ): ConversationDetailOutcome {
+            val detail = detailSeed
+                ?: return ConversationDetailOutcome.Failure.Server(
+                    code = 0,
+                    message = "FakeConversationRepository: no detail seeded",
+                )
+            if (detail.id != conversationId) {
+                return ConversationDetailOutcome.Failure.Server(
+                    code = 404,
+                    message = "Conversation $conversationId not found",
+                )
+            }
+            return ConversationDetailOutcome.Success(detail)
+        }
 
         override suspend fun sendMessage(
             conversationId: String,
             content: String,
-        ): com.loresuelvo.consumer.domain.conversation.SendMessageOutcome =
-            com.loresuelvo.consumer.domain.conversation.SendMessageOutcome.Failure.Server(
-                code = 0,
-                message = "sendMessage not seeded in this world yet",
+        ): SendMessageOutcome {
+            sendCalls += conversationId to content
+            return SendMessageOutcome.Success(
+                ConversationMessage(
+                    id = "server-msg-${sendCalls.size}",
+                    sender = ConversationSender.Consumer,
+                    content = content,
+                    createdOnEpochMillis = 1_700_000_000_000L,
+                ),
             )
+        }
     }
 }

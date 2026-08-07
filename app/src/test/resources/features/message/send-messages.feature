@@ -43,7 +43,6 @@ Feature: Start a conversation with a provider
     When I view the contact status
     Then I see a notification indicating that the provider has not yet accepted my request
 
-  @wip
   Scenario: 05-IC Verify the consumer can send more messages while the provider has not accepted
     Given I started a chat with a provider and it was not accepted
     When I write a new message

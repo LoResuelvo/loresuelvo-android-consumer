@@ -27,23 +27,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 05-IC: Send more messages --------------
-
-    @Given("I started a chat with a provider and it was not accepted")
-    fun iStartedAChatWithAProviderAndItWasNotAccepted() {
-        throw PendingException("05-IC pending")
-    }
-
-    @When("I write a new message")
-    fun iWriteANewMessage() {
-        throw PendingException("05-IC pending")
-    }
-
-    @Then("I can send additional messages to the provider without restrictions")
-    fun iCanSendAdditionalMessagesToTheProviderWithoutRestrictions() {
-        throw PendingException("05-IC pending")
-    }
-
     // ---- Scenario 06-IC: Persistence ----------------------
 
     @Given("I started a chat with a provider and sent a message")

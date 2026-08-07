@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.bdd.message
 
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
+import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
 import io.cucumber.java.en.And
@@ -225,6 +226,80 @@ class SendMessagesSteps {
         assertTrue(
             "expected the conversation to be Pending, was ${conversation.status}",
             conversation.status is ConversationStatus.Pending,
+        )
+    }
+
+    // ---- Scenario 05-IC --------------------------------------
+
+    /**
+     * "I started a chat with a provider and it was not accepted"
+     * — the consumer has opened a thread (visible in the
+     * messages list AND accessible via the detail endpoint).
+     * The world seeds both endpoints from the same source data
+     * so opening the conversation lands on a populated thread.
+     */
+    @Given("I started a chat with a provider and it was not accepted")
+    fun iStartedAChatWithAProviderAndItWasNotAccepted() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+        world.openConversation("1")
+    }
+
+    /**
+     * "I write a new message" — the consumer types into the
+     * composer and taps send. The BDD combines the type + send
+     * actions into one step so the `Then` assertion can read
+     * the post-send state in a single snapshot.
+     */
+    @When("I write a new message")
+    fun iWriteANewMessage() {
+        world.typeMessage("¿Podés venir mañana a las 10?")
+        world.tapSend()
+    }
+
+    @Then("I can send additional messages to the provider without restrictions")
+    fun iCanSendAdditionalMessagesToTheProviderWithoutRestrictions() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val ready = state as ConversationUiState.Ready
+
+        // The server-persisted bubble landed in the thread — that
+        // proves the round-trip completed end-to-end.
+        val sentContent = "¿Podés venir mañana a las 10?"
+        assertTrue(
+            "expected the sent message to be in the thread, was " +
+                ready.detail.messages,
+            ready.detail.messages.any { it.content == sentContent },
+        )
+
+        // The send call hit the fake repo with the right id +
+        // content (pin that the right message was sent, not
+        // just that some message went through).
+        val calls = world.observedSendCalls()
+        assertEquals(
+            "expected exactly one send call, was $calls",
+            1,
+            calls.size,
+        )
+        assertEquals("1", calls.single().first)
+        assertEquals(sentContent, calls.single().second)
+
+        // "Without restrictions" — pin that the conversation
+        // was Pending when the send went through (so a future
+        // commit that gates the composer on `status == Accepted`
+        // breaks this scenario).
+        assertEquals(
+            ConversationStatus.Pending,
+            ready.detail.status,
         )
     }
 }
