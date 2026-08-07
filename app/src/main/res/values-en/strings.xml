@@ -80,6 +80,19 @@
     <string name="messages_screen_error_retry">Retry</string>
     <string name="messages_screen_pending_badge">Pending</string>
     <string name="messages_screen_no_preview">(No messages yet)</string>
+    <!-- Conversation detail screen (added in 05-IC) -->
+    <string name="conversation_top_bar_back_content_description">Back</string>
+    <string name="conversation_input_placeholder">Write a message…</string>
+    <string name="conversation_loading">Loading conversation…</string>
+    <string name="conversation_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="conversation_error_server">We couldn\'t load the conversation. Try again.</string>
+    <string name="conversation_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="conversation_error_retry">Retry</string>
+    <string name="conversation_transient_error_network">We couldn\'t send the message. Check your connection.</string>
+    <string name="conversation_transient_error_server">We couldn\'t send the message. Try again.</string>
+    <string name="conversation_transient_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="conversation_transient_error_retry">Retry</string>
+    <string name="conversation_transient_error_dismiss">Dismiss</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
     <string name="contact_provider_modal_title">Create work request</string>

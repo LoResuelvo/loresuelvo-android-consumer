@@ -82,6 +82,19 @@
     <string name="messages_screen_error_retry">Reintentar</string>
     <string name="messages_screen_pending_badge">Pendiente</string>
     <string name="messages_screen_no_preview">(Sin mensajes aún)</string>
+    <!-- Conversation detail screen (added in 05-IC) -->
+    <string name="conversation_top_bar_back_content_description">Volver</string>
+    <string name="conversation_input_placeholder">Escribí un mensaje…</string>
+    <string name="conversation_loading">Cargando conversación…</string>
+    <string name="conversation_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="conversation_error_server">No pudimos cargar la conversación. Reintentá.</string>
+    <string name="conversation_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="conversation_error_retry">Reintentar</string>
+    <string name="conversation_transient_error_network">No pudimos enviar el mensaje. Revisá tu conexión.</string>
+    <string name="conversation_transient_error_server">No pudimos enviar el mensaje. Reintentá.</string>
+    <string name="conversation_transient_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="conversation_transient_error_retry">Reintentar</string>
+    <string name="conversation_transient_error_dismiss">Descartar</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contactar</string>
     <string name="contact_provider_modal_title">Crear solicitud de trabajo</string>
