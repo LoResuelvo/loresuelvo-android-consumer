@@ -3,10 +3,13 @@ package com.loresuelvo.consumer.data.api
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
+import com.loresuelvo.consumer.domain.conversation.ConversationDetail
+import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -225,5 +228,249 @@ class ApiConversationRepositoryIntegrationTest {
         // lastMessage of a fresh conversation is null in the wire too
         // — covered by the success test; this one only asserts the
         // transport-failure mapping.
+    }
+
+    // ---- getConversationById -------------------------------------------
+
+    @Test
+    fun getConversationById_hits_endpoint_and_maps_full_payload() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 1,
+                      "status": "pending",
+                      "counterpart": {
+                        "id": 20,
+                        "role": "provider",
+                        "name": "Juan",
+                        "surname": "Gómez",
+                        "category_name": "Plomería",
+                        "profile_photo_url": "https://cdn.example/juan.jpg"
+                      },
+                      "messages": [
+                        {
+                          "id": 1,
+                          "sender_role": "consumer",
+                          "content": "Hola Juan, necesito una mano",
+                          "created_on": "2026-05-29T18:01:00Z"
+                        },
+                        {
+                          "id": 2,
+                          "sender_role": "provider",
+                          "content": "Hola! ¿Cuándo podés?",
+                          "created_on": "2026-05-30T09:15:00Z"
+                        }
+                      ],
+                      "updated_on": "2026-05-30T09:15:00Z"
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val outcome = repository.getConversationById("1")
+
+        val recorded = server.takeRequest()
+        assertEquals("GET", recorded.method)
+        assertEquals("/conversations/1", recorded.path)
+
+        assertTrue(outcome is ConversationDetailOutcome.Success)
+        val detail = (outcome as ConversationDetailOutcome.Success).detail
+
+        // Header fields.
+        assertEquals("1", detail.id)
+        assertEquals(ConversationStatus.Pending, detail.status)
+        assertEquals(
+            ConversationCounterpart(
+                id = 20L,
+                name = "Juan",
+                surname = "Gómez",
+                categoryName = "Plomería",
+                profilePhotoUrl = "https://cdn.example/juan.jpg",
+            ),
+            detail.counterpart,
+        )
+        assertTrue(detail.updatedOnEpochMillis != 0L)
+
+        // Full message thread.
+        assertEquals(2, detail.messages.size)
+        val first = detail.messages[0]
+        assertEquals("1", first.id)
+        assertEquals(ConversationSender.Consumer, first.sender)
+        assertEquals("Hola Juan, necesito una mano", first.content)
+        assertTrue(first.createdOnEpochMillis != 0L)
+        val second = detail.messages[1]
+        assertEquals("2", second.id)
+        assertEquals(ConversationSender.Provider, second.sender)
+        assertEquals("Hola! ¿Cuándo podés?", second.content)
+        assertTrue(second.createdOnEpochMillis != 0L)
+    }
+
+    @Test
+    fun getConversationById_with_empty_messages_returns_Success_with_empty_list() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 2,
+                      "status": "pending",
+                      "counterpart": {
+                        "id": 30,
+                        "role": "provider",
+                        "name": "Pedro",
+                        "surname": "Dib",
+                        "category_name": "Plomería"
+                      },
+                      "messages": [],
+                      "updated_on": "2026-06-01T12:00:00Z"
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val outcome = repository.getConversationById("2")
+
+        assertTrue(outcome is ConversationDetailOutcome.Success)
+        assertEquals(
+            emptyList<ConversationMessage>(),
+            (outcome as ConversationDetailOutcome.Success).detail.messages,
+        )
+    }
+
+    @Test
+    fun getConversationById_500_returns_Server_failure() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(500)
+                .setHeader("Content-Type", "application/json")
+                .setBody(""),
+        )
+
+        val outcome = repository.getConversationById("1")
+
+        assertTrue(outcome is ConversationDetailOutcome.Failure.Server)
+        assertEquals(500, (outcome as ConversationDetailOutcome.Failure.Server).code)
+    }
+
+    @Test
+    fun getConversationById_401_returns_Unauthorized_failure() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(401)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"error":"invalid_token","message":"token expired"}"""),
+        )
+
+        val outcome = repository.getConversationById("1")
+
+        assertTrue(outcome is ConversationDetailOutcome.Failure.Unauthorized)
+        assertEquals(
+            "token expired",
+            (outcome as ConversationDetailOutcome.Failure.Unauthorized).message,
+        )
+    }
+
+    @Test
+    fun getConversationById_transport_drop_returns_Network_failure() = runBlocking {
+        server.enqueue(
+            MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START),
+        )
+
+        val outcome = repository.getConversationById("1")
+
+        assertTrue(outcome is ConversationDetailOutcome.Failure.Network)
+    }
+
+    // ---- postMessage ---------------------------------------------------
+
+    @Test
+    fun postMessage_hits_endpoint_with_snack_case_body_and_maps_response() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 2,
+                      "sender_role": "consumer",
+                      "content": "¿El jueves por la mañana te queda cómodo?",
+                      "created_on": "2026-05-31T12:00:00Z"
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val outcome = repository.sendMessage(
+            conversationId = "1",
+            content = "¿El jueves por la mañana te queda cómodo?",
+        )
+
+        val recorded = server.takeRequest()
+        assertEquals("POST", recorded.method)
+        assertEquals("/conversations/1/messages", recorded.path)
+        // snake_case body: `content` field.
+        val body = recorded.body.readUtf8()
+        assertTrue(
+            "body must carry the content, was '$body'",
+            body.contains("\"content\":\"¿El jueves por la mañana te queda cómodo?\""),
+        )
+
+        assertTrue(outcome is SendMessageOutcome.Success)
+        val success = outcome as SendMessageOutcome.Success
+        assertEquals("2", success.message.id)
+        assertEquals(ConversationSender.Consumer, success.message.sender)
+        assertEquals("¿El jueves por la mañana te queda cómodo?", success.message.content)
+        assertTrue(success.message.createdOnEpochMillis != 0L)
+    }
+
+    @Test
+    fun postMessage_500_returns_Server_failure() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(500)
+                .setHeader("Content-Type", "application/json")
+                .setBody(""),
+        )
+
+        val outcome = repository.sendMessage("1", "hola")
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Server)
+        assertEquals(500, (outcome as SendMessageOutcome.Failure.Server).code)
+    }
+
+    @Test
+    fun postMessage_401_returns_Unauthorized_failure() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(401)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"error":"invalid_token","message":"token expired"}"""),
+        )
+
+        val outcome = repository.sendMessage("1", "hola")
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Unauthorized)
+        assertEquals(
+            "token expired",
+            (outcome as SendMessageOutcome.Failure.Unauthorized).message,
+        )
+    }
+
+    @Test
+    fun postMessage_transport_drop_returns_Network_failure() = runBlocking {
+        server.enqueue(
+            MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START),
+        )
+
+        val outcome = repository.sendMessage("1", "hola")
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Network)
     }
 }

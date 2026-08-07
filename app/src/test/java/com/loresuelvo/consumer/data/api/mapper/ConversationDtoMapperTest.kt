@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.ConversationCounterpartDto
+import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
@@ -229,5 +230,107 @@ class ConversationDtoMapperTest {
         val mapped = messageDto(createdOn = "???").toDomain()
 
         assertEquals(0L, mapped.createdOnEpochMillis)
+    }
+
+    // ---- Detail mapper (ConversationDetailDto → ConversationDetail) -----
+
+    private fun detailDto(
+        id: Long = 1,
+        status: String = "pending",
+        counterpart: ConversationCounterpartDto = counterpartDto(),
+        messages: List<ConversationMessageDto> = listOf(messageDto()),
+        updatedOn: String? = "2026-05-29T18:01:00Z",
+    ) = ConversationDetailDto(
+        id = id,
+        status = status,
+        counterpart = counterpart,
+        messages = messages,
+        updatedOn = updatedOn,
+    )
+
+    @Test
+    fun detail_maps_numeric_id_to_string() {
+        val detail = detailDto(id = 42L).toDomain()
+
+        assertEquals("42", detail.id)
+    }
+
+    @Test
+    fun detail_maps_messages_list_in_order() {
+        val detail = detailDto(
+            messages = listOf(
+                messageDto(id = 1, senderRole = "consumer", content = "primera"),
+                messageDto(id = 2, senderRole = "provider", content = "segunda"),
+                messageDto(id = 3, senderRole = "consumer", content = "tercera"),
+            ),
+        ).toDomain()
+
+        assertEquals(listOf("1", "2", "3"), detail.messages.map { it.id })
+        assertEquals(
+            listOf(ConversationSender.Consumer, ConversationSender.Provider, ConversationSender.Consumer),
+            detail.messages.map { it.sender },
+        )
+        assertEquals(
+            listOf("primera", "segunda", "tercera"),
+            detail.messages.map { it.content },
+        )
+    }
+
+    @Test
+    fun detail_with_empty_messages_list_maps_to_empty_list() {
+        val detail = detailDto(messages = emptyList()).toDomain()
+
+        assertEquals(0, detail.messages.size)
+    }
+
+    @Test
+    fun detail_maps_status_and_counterpart_and_timestamp() {
+        val detail = detailDto(
+            status = "pending",
+            counterpart = counterpartDto(
+                id = 99,
+                name = "Lucía",
+                surname = "Pérez",
+                categoryName = "Gas",
+                profilePhotoUrl = "https://cdn.example/lucia.jpg",
+            ),
+            updatedOn = "2026-05-29T18:01:00Z",
+        ).toDomain()
+
+        assertEquals(ConversationStatus.Pending, detail.status)
+        assertEquals(99L, detail.counterpart.id)
+        assertEquals("Lucía", detail.counterpart.name)
+        assertEquals("Gas", detail.counterpart.categoryName)
+        assertEquals("https://cdn.example/lucia.jpg", detail.counterpart.profilePhotoUrl)
+        assertTrue(detail.updatedOnEpochMillis != 0L)
+    }
+
+    @Test
+    fun detail_status_case_insensitive() {
+        val detail = detailDto(status = "Pending").toDomain()
+
+        assertEquals(ConversationStatus.Pending, detail.status)
+    }
+
+    @Test
+    fun detail_unknown_status_falls_back_to_Other() {
+        val detail = detailDto(status = "rejected").toDomain()
+
+        assertTrue(detail.status is ConversationStatus.Other)
+        assertEquals("rejected", (detail.status as ConversationStatus.Other).raw)
+    }
+
+    @Test
+    fun detail_updatedOn_unparseable_falls_back_to_zero() {
+        val detail = detailDto(updatedOn = "not-a-date").toDomain()
+
+        assertEquals(0L, detail.updatedOnEpochMillis)
+    }
+
+    @Test
+    fun detail_updatedOn_null_falls_back_to_zero() {
+        val detail = detailDto(updatedOn = null).toDomain()
+
+        assertEquals(0L, detail.updatedOnEpochMillis)
     }
 }
