@@ -33,6 +33,31 @@ class ApiConversationRepository @Inject constructor(
         mapGetToFailure(t)
     }
 
+    /**
+     * Detail snapshot of a single conversation. Implementation
+     * lands in a follow-up commit alongside the
+     * `BackendApi.getConversationById` call.
+     */
+    override suspend fun getConversationById(
+        conversationId: String,
+    ): com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome =
+        throw NotImplementedError(
+            "ApiConversationRepository.getConversationById not yet implemented",
+        )
+
+    /**
+     * Append a consumer message to an existing conversation.
+     * Implementation lands in a follow-up commit alongside
+     * `BackendApi.sendMessage`.
+     */
+    override suspend fun sendMessage(
+        conversationId: String,
+        content: String,
+    ): com.loresuelvo.consumer.domain.conversation.SendMessageOutcome =
+        throw NotImplementedError(
+            "ApiConversationRepository.sendMessage not yet implemented",
+        )
+
     private fun mapGetToFailure(
         e: Throwable,
     ): ConversationsOutcome.Failure = when (val error = e.toApiError()) {

@@ -8,9 +8,8 @@ package com.loresuelvo.consumer.domain.conversation
  * domain's [ConversationsOutcome] hierarchy.
  *
  * The repository never throws on HTTP / network failures: every
- * exception is mapped to a typed
- * [ConversationsOutcome.Failure] (exhaustive `when` against
- * [com.loresuelvo.consumer.domain.api.ApiError]).
+ * exception is mapped to a typed `Failure` (exhaustive `when`
+ * against [com.loresuelvo.consumer.domain.api.ApiError]).
  * Implementations must remain pure with respect to UI concerns —
  * no Android, no kotlinx-serialization, no Hilt.
  */
@@ -26,4 +25,34 @@ interface ConversationRepository {
      * yet; the UI renders an "empty state" CTA.
      */
     suspend fun getConversations(): ConversationsOutcome
+
+    /**
+     * Loads the full snapshot of a single conversation,
+     * including the complete ordered message thread. The chat
+     * surface uses it on entry to render the header (counterpart,
+     * status) and the existing bubbles. Empty `messages` is a
+     * valid response for a brand-new conversation that the
+     * consumer has just opened.
+     */
+    suspend fun getConversationById(
+        conversationId: String,
+    ): ConversationDetailOutcome
+
+    /**
+     * Appends a consumer-typed message to the given conversation.
+     * The [content] is sent verbatim to the backend; trimming /
+     * blank-guarding is the use case's responsibility.
+     *
+     * On success the carried [ConversationMessage] is the
+     * server-persisted bubble (with the backend's stable id and
+     * authoritative timestamp). The VM uses it to replace the
+     * optimistic bubble it appended locally.
+     *
+     * 404 on `conversationId` (the provider or consumer dropped
+     * the thread) maps to [SendMessageOutcome.Failure.Server].
+     */
+    suspend fun sendMessage(
+        conversationId: String,
+        content: String,
+    ): SendMessageOutcome
 }
