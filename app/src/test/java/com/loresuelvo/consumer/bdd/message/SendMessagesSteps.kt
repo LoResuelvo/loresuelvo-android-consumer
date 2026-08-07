@@ -1,8 +1,10 @@
 package com.loresuelvo.consumer.bdd.message
 
+import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
+import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
@@ -151,5 +153,78 @@ class SendMessagesSteps {
         assertEquals("Juan", counterpart.name)
         assertEquals("Pérez", counterpart.surname)
         assertEquals("Plomería", counterpart.categoryName)
+    }
+
+    // ---- Scenario 04-IC --------------------------------------
+
+    /**
+     * "I started a chat with a provider" — the consumer has an
+     * active conversation with status=Pending (the provider has
+     * not yet accepted). The BDD seeds the conversation directly
+     * with `Pending` so the row's notification badge will render.
+     *
+     * Re-uses the same world helpers as 03-IC; the only
+     * difference is the explicit `status = Pending` parameter.
+     */
+    @Given("I started a chat with a provider")
+    fun iStartedAChatWithAProvider() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+    }
+
+    /**
+     * "The provider has not yet accepted the conversation" —
+     * already encoded by the `Pending` status seeded in the
+     * `Given` step. No further action; the step exists so the
+     * Gherkin flow reads naturally.
+     */
+    @And("the provider has not yet accepted the conversation")
+    fun theProviderHasNotYetAcceptedTheConversation() {
+        // No-op: the seed carries the Pending status; the
+        // assertion in the `Then` step verifies it surfaces.
+    }
+
+    /**
+     * "I view the contact status" — entering the messages list
+     * re-fetches the conversations and exposes the seeded
+     * row's status. The row's notification badge is the
+     * "status indicator" the user sees; the visual rendering
+     * is pinned by
+     * `MessagesScreenTest.ready_state_renders_pending_badge_only_for_pending_conversations`.
+     */
+    @When("I view the contact status")
+    fun iViewTheContactStatus() {
+        world.accessMessagesSection()
+    }
+
+    @Then("I see a notification indicating that the provider has not yet accepted my request")
+    fun iSeeAPendingNotification() {
+        val state = world.lastMessagesListUiState()
+        assertTrue(
+            "expected MessagesListUiState.Ready, was $state",
+            state is MessagesListUiState.Ready,
+        )
+        val conversations = (state as MessagesListUiState.Ready).conversations
+        assertEquals(
+            "expected exactly one conversation in the list",
+            1,
+            conversations.size,
+        )
+        val conversation = conversations.first()
+        // The "notification" the user sees is the row's
+        // `PendingBadge` (`CONVERSATION_ROW_PENDING_TAG` in
+        // `ConversationRow.kt`). The BDD asserts the data
+        // backing that badge — `status is Pending` — and
+        // trusts the Compose test for the visual rendering.
+        assertTrue(
+            "expected the conversation to be Pending, was ${conversation.status}",
+            conversation.status is ConversationStatus.Pending,
+        )
     }
 }

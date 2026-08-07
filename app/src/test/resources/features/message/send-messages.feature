@@ -37,7 +37,6 @@ Feature: Start a conversation with a provider
     When I access the messages section
     Then I see the provider as a contact in my list
 
-  @wip
   Scenario: 04-IC Verify the pending request notification
     Given I started a chat with a provider
     And the provider has not yet accepted the conversation

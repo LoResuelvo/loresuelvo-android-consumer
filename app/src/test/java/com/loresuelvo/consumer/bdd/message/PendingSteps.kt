@@ -27,28 +27,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 04-IC: Pending notification -------------
-
-    @Given("I started a chat with a provider")
-    fun iStartedAChatWithAProvider() {
-        throw PendingException("04-IC pending")
-    }
-
-    @And("the provider has not yet accepted the conversation")
-    fun theProviderHasNotYetAcceptedTheConversation() {
-        throw PendingException("04-IC pending")
-    }
-
-    @When("I view the contact status")
-    fun iViewTheContactStatus() {
-        throw PendingException("04-IC pending")
-    }
-
-    @Then("I see a notification indicating that the provider has not yet accepted my request")
-    fun iSeeANotificationIndicatingThatTheProviderHasNotYetAcceptedMyRequest() {
-        throw PendingException("04-IC pending")
-    }
-
     // ---- Scenario 05-IC: Send more messages --------------
 
     @Given("I started a chat with a provider and it was not accepted")
