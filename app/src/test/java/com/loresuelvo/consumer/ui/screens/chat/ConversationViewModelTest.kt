@@ -142,6 +142,67 @@ class ConversationViewModelTest {
         )
     }
 
+    @Test
+    fun rebuilding_VM_and_reloading_surfaces_persisted_messages() = runTest {
+        // Scenario 06-IC: the user leaves the conversation screen
+        // (Hilt discards the NavBackStackEntry → the VM is gone)
+        // and re-enters it (new VM, fresh `load`). The previously
+        // sent message must surface in the new VM's state because
+        // the backend persisted it. This test pins that contract:
+        // a second `load()` call against a freshly-built VM
+        // replaces the state with whatever the backend returns,
+        // including the persisted bubble.
+        val initialDetail = com.loresuelvo.consumer.domain.conversation.ConversationDetail(
+            id = "1",
+            status = com.loresuelvo.consumer.domain.conversation.ConversationStatus.Pending,
+            counterpart = com.loresuelvo.consumer.domain.conversation.ConversationCounterpart(
+                id = 20L,
+                name = "Juan",
+                surname = "Gómez",
+                categoryName = "Plomería",
+                profilePhotoUrl = null,
+            ),
+            messages = emptyList(),
+            updatedOnEpochMillis = 0L,
+        )
+        val persistedMessage = com.loresuelvo.consumer.domain.conversation.ConversationMessage(
+            id = "42",
+            sender = com.loresuelvo.consumer.domain.conversation.ConversationSender.Consumer,
+            content = "Hola Juan, necesito una mano",
+            createdOnEpochMillis = 1_700_000_000_000L,
+        )
+        val rehydratedDetail = initialDetail.copy(
+            messages = listOf(persistedMessage),
+        )
+
+        // First load returns the empty thread (brand-new conversation).
+        coEvery { getConversationById("1") } returnsMany listOf(
+            ConversationDetailOutcome.Success(initialDetail),
+            ConversationDetailOutcome.Success(rehydratedDetail),
+        )
+
+        viewModel = ConversationViewModel(getConversationById, sendMessage)
+        viewModel.load("1")
+        advanceUntilIdle()
+        val firstState = viewModel.uiState.value as ConversationUiState.Ready
+        assertEquals(emptyList<Any>(), firstState.detail.messages)
+
+        // Discard the VM (simulates navigation away — Hilt discards
+        // the NavBackStackEntry, the VM goes out of scope). Build a
+        // fresh one and re-load; the backend returns the persisted
+        // message that the consumer sent before navigating away.
+        viewModel = ConversationViewModel(getConversationById, sendMessage)
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        val rehydratedState = viewModel.uiState.value as ConversationUiState.Ready
+        assertEquals(
+            "the persisted bubble must surface after re-entry",
+            listOf(persistedMessage),
+            rehydratedState.detail.messages,
+        )
+    }
+
     // ---- onPromptChange --------------------------------------------------
 
     @Test

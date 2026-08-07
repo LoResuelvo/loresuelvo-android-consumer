@@ -48,7 +48,6 @@ Feature: Start a conversation with a provider
     When I write a new message
     Then I can send additional messages to the provider without restrictions
 
-  @wip
   Scenario: 06-IC Verify messages persist when navigating away and back
     Given I started a chat with a provider and sent a message
     When I navigate to the home page

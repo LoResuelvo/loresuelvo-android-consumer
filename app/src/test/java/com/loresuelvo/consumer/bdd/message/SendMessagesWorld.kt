@@ -347,6 +347,52 @@ class SendMessagesWorld : AutoCloseable {
     fun observedSendCalls(): List<Pair<String, String>> =
         fakeConversationRepo.sendCallsSnapshot()
 
+    // ---- Navigation lifecycle (scenario 06-IC) --------------
+
+    /**
+     * Simulates the user leaving the conversation screen (e.g.
+     * tapping back, or jumping to the home tab). Hilt scopes
+     * [ConversationViewModel] to the NavBackStackEntry, so the
+     * equivalent of "navigation away" at the VM level is to
+     * discard the reference; the world then forgets about it
+     * until [reenterConversationScreen] builds a fresh one.
+     */
+    fun leaveConversationScreen() {
+        // The previously-collected states stay in the
+        // `observedConversationStates` list (immutable history);
+        // they aren't cleared so a later assertion can still
+        // inspect the pre-navigation state if needed.
+        conversationViewModel = ConversationViewModel(
+            getConversationById = getConversationByIdUseCase,
+            sendMessage = sendMessageUseCase,
+        )
+        // No observer for the new instance — the BDD re-entry
+        // step creates yet another VM with its own observer.
+        // This mirrors the production lifecycle: the previous
+        // VM is gone, the new VM is fresh, and the user
+        // observability resets until the screen mounts.
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * Simulates the user re-entering the conversation screen
+     * after leaving. Builds a fresh [ConversationViewModel]
+     * (Hilt semantics: NavBackStackEntry → new VM), attaches a
+     * fresh observer, and fires [ConversationViewModel.load]
+     * so the seeded detail surfaces in the new state stream.
+     */
+    fun reenterConversationScreen(conversationId: String) {
+        conversationViewModel = ConversationViewModel(
+            getConversationById = getConversationByIdUseCase,
+            sendMessage = sendMessageUseCase,
+        )
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            conversationViewModel.uiState.collect { observedConversationStates += it }
+        }
+        conversationViewModel.load(conversationId)
+        scheduler.advanceUntilIdle()
+    }
+
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()

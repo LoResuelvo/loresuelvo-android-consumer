@@ -14,16 +14,15 @@ import org.junit.Assert.assertTrue
 
 /**
  * Real step implementations for the scenarios in
- * `features/message/send-messages.feature`. The methods for the
- * still-`@wip` scenarios (03-IC onward) remain in [PendingSteps]
- * and throw [io.cucumber.java.PendingException]; they move here
- * one commit at a time, mirroring the convention documented at
- * the top of the feature file.
+ * `features/message/send-messages.feature`. Every scenario is now
+ * green (06-IC is the last); the placeholder `PendingSteps.kt`
+ * was removed once all `@wip` markers were lifted. The
+ * per-scenario discipline (one scenario per commit, ≤ 400 lines)
+ * is documented at the top of the feature file.
  *
- * Per the team discipline ("one scenario per commit, ≤ 400 lines"),
- * the comments at each step flag whether the assertion is at the
- * state level (this file) or the visual / integration level (covered
- * separately by the Compose test suite).
+ * Comments at each step flag whether the assertion is at the
+ * state level (this file) or the visual / integration level
+ * (covered separately by the Compose test suite).
  */
 class SendMessagesSteps {
 
@@ -300,6 +299,75 @@ class SendMessagesSteps {
         assertEquals(
             ConversationStatus.Pending,
             ready.detail.status,
+        )
+    }
+
+    // ---- Scenario 06-IC --------------------------------------
+
+    /**
+     * "I started a chat with a provider and sent a message" — the
+     * conversation already has the consumer's first message
+     * persisted on the backend (carried in the seeded detail's
+     * `messages[]`). The world seeds the detail so the screen
+     * renders a populated thread on first load.
+     */
+    @Given("I started a chat with a provider and sent a message")
+    fun iStartedAChatWithAProviderAndSentAMessage() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+        world.openConversation("1")
+    }
+
+    /**
+     * "I navigate to the home page" — the consumer leaves the
+     * conversation screen. At the VM level this means the
+     * NavBackStackEntry is popped and Hilt's scoped VM is
+     * discarded; the world simulates that by replacing the
+     * [ConversationViewModel] reference with a fresh instance
+     * (no observer, no state) so a stale reference cannot leak
+     * into the `Then` assertion.
+     */
+    @When("I navigate to the home page")
+    fun iNavigateToTheHomePage() {
+        world.leaveConversationScreen()
+    }
+
+    /**
+     * "I return to the messages section with the same provider"
+     * — the consumer taps the conversation row again. A new
+     * [ConversationViewModel] is built (Hilt semantics) and
+     * [ConversationViewModel.load] fires against the seeded
+     * detail; the previously-sent message must surface in the
+     * fresh state stream.
+     */
+    @And("I return to the messages section with the same provider")
+    fun iReturnToTheMessagesSectionWithTheSameProvider() {
+        world.reenterConversationScreen("1")
+    }
+
+    @Then("I still see the message I sent earlier in the conversation")
+    fun iStillSeeTheMessageISentEarlierInTheConversation() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready after re-entry, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val ready = state as ConversationUiState.Ready
+        // The previously-sent message is part of the seeded
+        // detail's `messages[]`. After the VM is rebuilt and
+        // re-loads, the message must be present in the new
+        // state's `detail.messages` — the persistence contract.
+        val expectedContent = "Hola Juan, necesito una mano"
+        assertTrue(
+            "expected the previously-sent message to survive the navigation cycle, " +
+                "was ${ready.detail.messages}",
+            ready.detail.messages.any { it.content == expectedContent },
         )
     }
 }

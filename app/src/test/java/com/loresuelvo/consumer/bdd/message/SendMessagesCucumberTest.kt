@@ -7,8 +7,9 @@ import org.junit.runner.RunWith
 /**
  * JUnit 4 entry point for the Cucumber JVM scenarios in
  * `src/test/resources/features/message/send-messages.feature`.
- * The per-scenario glue lives in [PendingSteps] (placeholder) and,
- * once the scenarios land, in `SendMessagesSteps.kt`.
+ * The per-scenario glue lives in `SendMessagesSteps.kt` (the
+ * placeholder `PendingSteps.kt` was removed once the last `@wip`
+ * scenario landed — 06-IC is the last).
  *
  * Mirrors the convention documented at the top of the feature
  * file: every scenario starts `@wip`. The `cucumber.filter.tags`
