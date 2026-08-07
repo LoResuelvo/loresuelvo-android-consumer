@@ -19,6 +19,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_PENDING_TAG
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_TAG
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -150,7 +151,7 @@ class MessagesScreenTest {
 
         composeTestRule.onNodeWithTag(MESSAGES_LIST_TAG).assertIsDisplayed()
         composeTestRule
-            .onAllNodesWithTag(CONVERSATION_ROW_TAG)
+            .onAllNodesWithTag(CONVERSATION_ROW_TAG, useUnmergedTree = true)
             .assertCountEquals(3)
         // The counterpart full name lands in the row.
         composeTestRule
@@ -190,9 +191,12 @@ class MessagesScreenTest {
             )
         }
 
-        // Exactly one badge (the Pending row).
+        // Exactly one badge (the Pending row). The badge is a
+        // child of a clickable Row, so its testTag is consumed
+        // by the merged semantics tree unless we opt into the
+        // unmerged view (same pattern as `ChatScreenTest`).
         composeTestRule
-            .onAllNodesWithTag(CONVERSATION_ROW_PENDING_TAG)
+            .onAllNodesWithTag(CONVERSATION_ROW_PENDING_TAG, useUnmergedTree = true)
             .assertCountEquals(1)
         // The badge carries the localized copy.
         composeTestRule
@@ -221,6 +225,34 @@ class MessagesScreenTest {
         composeTestRule
             .onNodeWithText(localizedString(R.string.messages_screen_no_preview))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun tapping_a_row_fires_onConversationClick_with_the_conversation_id() {
+        // Regression test: commit 7a wired `onClick` as a parameter
+        // on `ConversationRow` but the parameter was never wired
+        // into a Modifier.clickable, so the row was inert. This
+        // test would have caught it.
+        val conversations = listOf(
+            conversation(id = "1", providerName = "Juan", providerSurname = "Gómez"),
+            conversation(id = "2", providerName = "Pedro", providerSurname = "Dib"),
+        )
+        var clickedId: String? = null
+
+        composeTestRule.setContent {
+            MessagesScreen(
+                state = MessagesListUiState.Ready(conversations = conversations),
+                onConversationClick = { clickedId = it },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(CONVERSATION_ROW_TAG)
+            .get(1)
+            .performClick()
+
+        assertEquals("2", clickedId)
     }
 
     // ---- Error state ----------------------------------------------------

@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.messages.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,9 +41,11 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
  *  - a relative timestamp (today → `HH:mm`; older →
  *    `getRelativeTimeSpanString`) on the trailing edge.
  *
- * Tapping is wired via [onClick]. The 03-IC scope does NOT
- * navigate from the row (the conversation detail screen is for
- * 04-IC / 05-IC), so the default is a no-op.
+ * Tapping the whole row fires [onClick]. Wired to the host's
+ * `navController.navigate(Route.Conversation.buildPath(id))` so
+ * the user lands on the chat detail screen (commit 15b wired
+ * the navigation; commit 17 — this one — wires the actual
+ * `clickable` modifier that was missing).
  */
 @Composable
 fun ConversationRow(
@@ -57,6 +60,7 @@ fun ConversationRow(
 
     Row(
         modifier = modifier
+            .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp)
             .testTag(CONVERSATION_ROW_TAG),
         verticalAlignment = Alignment.CenterVertically,
