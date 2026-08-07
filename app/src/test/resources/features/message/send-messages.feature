@@ -32,7 +32,6 @@ Feature: Start a conversation with a provider
     When I tap the "Contactar" button on the provider
     Then I am redirected to the messages screen with the selected provider
 
-  @wip
   Scenario: 03-IC Verify the provider appears as a contact after the first message
     Given I already sent a message to a provider
     When I access the messages section

@@ -3,6 +3,13 @@ package com.loresuelvo.consumer.bdd.message
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.conversation.Conversation
+import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
+import com.loresuelvo.consumer.domain.conversation.ConversationMessage
+import com.loresuelvo.consumer.domain.conversation.ConversationRepository
+import com.loresuelvo.consumer.domain.conversation.ConversationSender
+import com.loresuelvo.consumer.domain.conversation.ConversationStatus
+import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
 import com.loresuelvo.consumer.domain.jobrequest.JobRequest
@@ -11,13 +18,16 @@ import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import com.loresuelvo.consumer.domain.provider.ProvidersOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationsUseCase
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
 import com.loresuelvo.consumer.domain.usecase.provider.GetProvidersByCategoryUseCase
+import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
+import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
+import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
+import com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderViewModel
-import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
-import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -48,6 +58,7 @@ import java.util.concurrent.atomic.AtomicReference
  * As scenarios 03-IC onwards are landed, the world will gain
  * `MessagesViewModel` (or equivalent) helpers in the same pattern.
  */
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SendMessagesWorld : AutoCloseable {
 
     private val scheduler = TestCoroutineScheduler()
@@ -69,9 +80,19 @@ class SendMessagesWorld : AutoCloseable {
     private val createJobRequestUseCase = CreateJobRequestUseCase(fakeJobRequestRepo)
     private lateinit var contactProviderViewModel: ContactProviderViewModel
 
+    // Conversations list (scenario 03-IC): owns its own VM against
+    // a fake ConversationRepository. The VM auto-loads in its
+    // `init { }` block (mirrors production) so the world seeds the
+    // fake repo FIRST (in the `Given` step) and then re-fires the
+    // load (in the `When` step) to observe the seeded conversation.
+    private val fakeConversationRepo = FakeConversationRepository()
+    private val getConversationsUseCase = GetConversationsUseCase(fakeConversationRepo)
+    private lateinit var messagesListViewModel: MessagesListViewModel
+
     private val observedUiStates = mutableListOf<ProfessionalsUiState>()
     private val observedContactUiStates = mutableListOf<ContactProviderUiState>()
     private val observedContactEvents = mutableListOf<ContactProviderEvent>()
+    private val observedMessagesListStates = mutableListOf<MessagesListUiState>()
 
     private val knownProviders: Map<String, Provider> = mapOf(
         "Juan Pérez" to Provider(
@@ -111,6 +132,7 @@ class SendMessagesWorld : AutoCloseable {
             getCategories = GetCategoriesUseCase(fakeCategoryRepo),
         )
         contactProviderViewModel = ContactProviderViewModel(createJobRequestUseCase)
+        messagesListViewModel = MessagesListViewModel(getConversationsUseCase)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
@@ -120,6 +142,9 @@ class SendMessagesWorld : AutoCloseable {
         }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             contactProviderViewModel.events.collect { observedContactEvents += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            messagesListViewModel.uiState.collect { observedMessagesListStates += it }
         }
 
         scheduler.advanceUntilIdle()
@@ -185,6 +210,64 @@ class SendMessagesWorld : AutoCloseable {
 
     fun observedContactEvents(): List<ContactProviderEvent> = observedContactEvents.toList()
 
+    // ---- Conversations list (scenario 03-IC) ---------------
+
+    /**
+     * Seeds the fake [ConversationRepository] with a single
+     * conversation so the next [accessMessagesSection] call
+     * observes the seeded row in the list.
+     */
+    fun enqueueConversation(
+        conversationId: String = "1",
+        counterpartName: String = "Juan",
+        counterpartSurname: String = "Pérez",
+        categoryName: String = "Plomería",
+        status: ConversationStatus = ConversationStatus.Pending,
+        lastMessageContent: String? = "Hola Juan, necesito una mano",
+        lastMessageSender: ConversationSender = ConversationSender.Consumer,
+        updatedOnEpochMillis: Long = 0L,
+    ) {
+        fakeConversationRepo.setSeed(
+            listOf(
+                Conversation(
+                    id = conversationId,
+                    status = status,
+                    counterpart = ConversationCounterpart(
+                        id = 20L,
+                        name = counterpartName,
+                        surname = counterpartSurname,
+                        categoryName = categoryName,
+                        profilePhotoUrl = null,
+                    ),
+                    lastMessage = lastMessageContent?.let { content ->
+                        ConversationMessage(
+                            id = "$conversationId-msg-1",
+                            sender = lastMessageSender,
+                            content = content,
+                            createdOnEpochMillis = updatedOnEpochMillis,
+                        )
+                    },
+                    updatedOnEpochMillis = updatedOnEpochMillis,
+                ),
+            ),
+        )
+    }
+
+    /**
+     * Re-fires [MessagesListViewModel.load]. The BDD's `When`
+     * step ("I access the messages section") maps to this — the
+     * VM's `init { load() }` already fired during
+     * [startScenario] against an empty seed; the re-fetch after
+     * seeding surfaces the conversation the user "already sent".
+     */
+    fun accessMessagesSection() {
+        messagesListViewModel.load()
+        scheduler.advanceUntilIdle()
+    }
+
+    fun lastMessagesListUiState(): MessagesListUiState =
+        observedMessagesListStates.last()
+
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()
@@ -239,5 +322,23 @@ class SendMessagesWorld : AutoCloseable {
                 ),
             )
         }
+    }
+
+    /**
+     * Fake [ConversationRepository] for scenario 03-IC. Holds a
+     * seeded list of conversations and returns it verbatim as a
+     * `Success` outcome; the BDD step seeds the list via
+     * [SendMessagesWorld.enqueueConversation] before the `When`
+     * step fires the VM's `load()`.
+     */
+    private class FakeConversationRepository : ConversationRepository {
+        private var seed: List<Conversation> = emptyList()
+
+        fun setSeed(conversations: List<Conversation>) {
+            seed = conversations
+        }
+
+        override suspend fun getConversations(): ConversationsOutcome =
+            ConversationsOutcome.Success(seed)
     }
 }

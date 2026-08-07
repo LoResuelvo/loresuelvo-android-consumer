@@ -1,10 +1,12 @@
 package com.loresuelvo.consumer.bdd.message
 
-import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
+import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
+import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
 /**
@@ -98,5 +100,56 @@ class SendMessagesSteps {
         // state); the actual destination route is wired in
         // `LoResuelvoNav.kt` and is verified by the Compose
         // integration test in `ProfessionalsAcceptanceTest`.
+    }
+
+    // ---- Scenario 03-IC --------------------------------------
+
+    /**
+     * "I already sent a message" → the backend already has a
+     * conversation for the consumer with the provider. The BDD
+     * seeds the fake [ConversationRepository] with that
+     * conversation so the next `When` step observes it in the
+     * list.
+     */
+    @Given("I already sent a message to a provider")
+    fun iAlreadySentAMessageToAProvider() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+    }
+
+    /**
+     * "I access the messages section" → the consumer enters the
+     * `Route.Messages` bottom-bar tab. The VM's `init { load() }`
+     * already fired against the empty seed at
+     * [world.startScenario] time; this step re-fires `load()`
+     * after the seeding so the conversation surfaces.
+     */
+    @When("I access the messages section")
+    fun iAccessTheMessagesSection() {
+        world.accessMessagesSection()
+    }
+
+    @Then("I see the provider as a contact in my list")
+    fun iSeeTheProviderAsAContactInMyList() {
+        val state = world.lastMessagesListUiState()
+        assertTrue(
+            "expected MessagesListUiState.Ready, was $state",
+            state is MessagesListUiState.Ready,
+        )
+        val conversations = (state as MessagesListUiState.Ready).conversations
+        assertEquals(
+            "expected exactly one conversation in the list",
+            1,
+            conversations.size,
+        )
+        val counterpart = conversations.first().counterpart
+        assertEquals("Juan", counterpart.name)
+        assertEquals("Pérez", counterpart.surname)
+        assertEquals("Plomería", counterpart.categoryName)
     }
 }

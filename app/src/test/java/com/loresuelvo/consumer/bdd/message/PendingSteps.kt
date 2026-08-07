@@ -27,23 +27,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 03-IC: Contact list ----------------------
-
-    @Given("I already sent a message to a provider")
-    fun iAlreadySentAMessageToAProvider() {
-        throw PendingException("03-IC pending")
-    }
-
-    @When("I access the messages section")
-    fun iAccessTheMessagesSection() {
-        throw PendingException("03-IC pending")
-    }
-
-    @Then("I see the provider as a contact in my list")
-    fun iSeeTheProviderAsAContactInMyList() {
-        throw PendingException("03-IC pending")
-    }
-
     // ---- Scenario 04-IC: Pending notification -------------
 
     @Given("I started a chat with a provider")
