@@ -14,6 +14,7 @@ import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
 import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
+import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -150,4 +151,13 @@ interface BackendApi {
         @Path("conversationId") conversationId: String,
         @Body body: SendMessageRequestDto,
     ): ConversationMessageDto
+
+    /**
+     * `POST /ws-tickets` — fetches a short-lived signed JWT the
+     * Android client uses as the `ticket` query parameter when
+     * opening the `/ws` WebSocket. The endpoint requires the
+     * regular Auth0 bearer token (added by `AuthInterceptor`).
+     */
+    @POST("ws-tickets")
+    suspend fun getWsTicket(): WsTicketResponseDto
 }

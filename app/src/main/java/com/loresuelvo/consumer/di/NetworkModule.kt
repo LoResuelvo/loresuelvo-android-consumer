@@ -10,6 +10,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Named
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -82,4 +83,19 @@ object NetworkModule {
     @Singleton
     fun provideBackendApi(retrofit: Retrofit): BackendApi =
         retrofit.create(BackendApi::class.java)
+
+    /**
+     * `ws://` URL the WebSocket client opens. Derived from the
+     * REST `API_URL` (swap the scheme, append `/ws`) so the
+     * consumer and provider apps stay in sync with whatever the
+     * local dev backend exposes; a future `WS_URL` env var can
+     * override this if the two ever diverge.
+     */
+    @Provides
+    @Singleton
+    @Named("wsUrl")
+    fun provideWsUrl(): String = BuildConfig.API_URL
+        .replaceFirst("https://", "wss://")
+        .replaceFirst("http://", "ws://")
+        .let { "$it/ws" }
 }
