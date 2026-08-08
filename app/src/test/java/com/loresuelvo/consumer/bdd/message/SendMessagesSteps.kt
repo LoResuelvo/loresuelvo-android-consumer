@@ -14,15 +14,16 @@ import org.junit.Assert.assertTrue
 
 /**
  * Real step implementations for the scenarios in
- * `features/message/send-messages.feature`. Every scenario is now
- * green (06-IC is the last); the placeholder `PendingSteps.kt`
- * was removed once all `@wip` markers were lifted. The
- * per-scenario discipline (one scenario per commit, ≤ 400 lines)
- * is documented at the top of the feature file.
+ * `features/message/send-messages.feature`. Scenarios 01-06-IC
+ * are green; scenarios 07-10-IC are the next batch (real-time
+ * chat over WebSocket) and live as `@wip` placeholders in
+ * `PendingSteps.kt` until each one is implemented.
  *
- * Comments at each step flag whether the assertion is at the
- * state level (this file) or the visual / integration level
- * (covered separately by the Compose test suite).
+ * The per-scenario discipline (one scenario per commit, ≤ 400
+ * lines) is documented at the top of the feature file. Comments
+ * at each step flag whether the assertion is at the state level
+ * (this file) or the visual / integration level (covered
+ * separately by the Compose test suite).
  */
 class SendMessagesSteps {
 

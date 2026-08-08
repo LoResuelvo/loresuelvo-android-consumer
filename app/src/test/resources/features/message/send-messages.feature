@@ -53,3 +53,28 @@ Feature: Start a conversation with a provider
     When I navigate to the home page
     And I return to the messages section with the same provider
     Then I still see the message I sent earlier in the conversation
+
+  @wip
+  Scenario: 07-IC Verify the consumer sees the provider's message arrive in real-time
+    Given I am viewing a conversation with a provider
+    When the provider sends me a new message via WebSocket
+    Then I see the provider's message in the chat
+
+  @wip
+  Scenario: 08-IC Verify messages from other conversations do not leak into the current chat
+    Given I am viewing a conversation with one provider
+    When a different conversation receives a new message via WebSocket
+    Then that message does not appear in the chat I am viewing
+
+  @wip
+  Scenario: 09-IC Verify the chat auto-scrolls to the new message when at the bottom
+    Given I am viewing a conversation and I am at the bottom of the chat
+    When a new message arrives via WebSocket
+    Then the chat scrolls to show the new message
+
+  @wip
+  Scenario: 10-IC Verify a new-message indicator appears when the user is scrolled up
+    Given I am viewing a conversation and I am scrolled up reading older messages
+    When a new message arrives via WebSocket
+    Then I see an indicator telling me there is a new message
+    And the chat does not auto-scroll
