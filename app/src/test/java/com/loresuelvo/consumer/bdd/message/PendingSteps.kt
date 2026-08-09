@@ -31,23 +31,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 08-IC: isolation between conversations ---------
-
-    @Given("I am viewing a conversation with one provider")
-    fun iAmViewingAConversationWithOneProvider() {
-        throw PendingException("08-IC pending")
-    }
-
-    @When("a different conversation receives a new message via WebSocket")
-    fun aDifferentConversationReceivesANewMessageViaWebSocket() {
-        throw PendingException("08-IC pending")
-    }
-
-    @Then("that message does not appear in the chat I am viewing")
-    fun thatMessageDoesNotAppearInTheChatIAmViewing() {
-        throw PendingException("08-IC pending")
-    }
-
     // ---- Scenario 09-IC: auto-scroll at the bottom ---------------
 
     @Given("I am viewing a conversation and I am at the bottom of the chat")

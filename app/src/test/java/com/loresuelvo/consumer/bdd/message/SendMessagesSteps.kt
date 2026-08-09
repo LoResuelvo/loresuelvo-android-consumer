@@ -425,4 +425,58 @@ class SendMessagesSteps {
             messages.any { it.content == expectedContent },
         )
     }
+
+    // ---- Scenario 08-IC --------------------------------------
+
+    /**
+     * "I am viewing a conversation with one provider" — same
+     * precondition as 07-IC (open a chat, seeded with one
+     * message). The world seeds conversation id `"1"`; the
+     * different-conversation event below uses id `"99"` so the
+     * VM's filter on `state.detail.id == event.conversationId`
+     * rejects it.
+     */
+    @Given("I am viewing a conversation with one provider")
+    fun iAmViewingAConversationWithOneProvider() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+        world.openConversation("1")
+    }
+
+    /**
+     * "A different conversation receives a new message via
+     * WebSocket" — emit a `WsEvent` for a conversation id other
+     * than the one the consumer is viewing. The VM's filter
+     * must drop the frame before it can mutate the state.
+     */
+    @When("a different conversation receives a new message via WebSocket")
+    fun aDifferentConversationReceivesANewMessageViaWebSocket() {
+        world.providerSendsViaWebSocket(
+            conversationId = "99",
+            messageId = "300",
+            content = "Mensaje de otra conversación que no debería aparecer",
+        )
+    }
+
+    @Then("that message does not appear in the chat I am viewing")
+    fun thatMessageDoesNotAppearInTheChatIAmViewing() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val messages = (state as ConversationUiState.Ready).detail.messages
+        val foreignContent = "Mensaje de otra conversación que no debería aparecer"
+        assertTrue(
+            "messages from another conversation must not leak into the current chat, " +
+                "was $messages",
+            messages.none { it.content == foreignContent },
+        )
+    }
 }

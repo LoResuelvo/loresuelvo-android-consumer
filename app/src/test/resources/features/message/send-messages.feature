@@ -59,7 +59,6 @@ Feature: Start a conversation with a provider
     When the provider sends me a new message via WebSocket
     Then I see the provider's message in the chat
 
-  @wip
   Scenario: 08-IC Verify messages from other conversations do not leak into the current chat
     Given I am viewing a conversation with one provider
     When a different conversation receives a new message via WebSocket
