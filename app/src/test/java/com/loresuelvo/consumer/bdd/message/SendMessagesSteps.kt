@@ -371,4 +371,58 @@ class SendMessagesSteps {
             ready.detail.messages.any { it.content == expectedContent },
         )
     }
+
+    // ---- Scenario 07-IC --------------------------------------
+
+    /**
+     * "I am viewing a conversation with a provider" — the
+     * consumer has opened the chat. Seed the detail with one
+     * message so the screen has something to render before the
+     * provider pushes a new one.
+     */
+    @Given("I am viewing a conversation with a provider")
+    fun iAmViewingAConversationWithAProvider() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+        world.openConversation("1")
+    }
+
+    /**
+     * "The provider sends me a new message via WebSocket" — at
+     * the data layer this is the backend pushing a
+     * `conversation.message.created` frame. The world emits the
+     * event into the same flow the VM subscribed to in `init {}`,
+     * so the test exercises the production decoding + filtering
+     * path end-to-end.
+     */
+    @When("the provider sends me a new message via WebSocket")
+    fun theProviderSendsMeANewMessageViaWebSocket() {
+        world.providerSendsViaWebSocket(
+            conversationId = "1",
+            messageId = "200",
+            content = "¿El jueves por la mañana te queda cómodo?",
+        )
+    }
+
+    @Then("I see the provider's message in the chat")
+    fun iSeeTheProvidersMessageInTheChat() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val messages = (state as ConversationUiState.Ready).detail.messages
+        val expectedContent = "¿El jueves por la mañana te queda cómodo?"
+        assertTrue(
+            "expected the provider's message to be in the thread after the WS push, " +
+                "was $messages",
+            messages.any { it.content == expectedContent },
+        )
+    }
 }

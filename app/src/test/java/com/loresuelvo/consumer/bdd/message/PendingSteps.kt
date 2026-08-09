@@ -31,23 +31,6 @@ import io.cucumber.java.en.When
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario 07-IC: real-time delivery ----------------------
-
-    @Given("I am viewing a conversation with a provider")
-    fun iAmViewingAConversationWithAProvider() {
-        throw PendingException("07-IC pending")
-    }
-
-    @When("the provider sends me a new message via WebSocket")
-    fun theProviderSendsMeANewMessageViaWebSocket() {
-        throw PendingException("07-IC pending")
-    }
-
-    @Then("I see the provider's message in the chat")
-    fun iSeeTheProvidersMessageInTheChat() {
-        throw PendingException("07-IC pending")
-    }
-
     // ---- Scenario 08-IC: isolation between conversations ---------
 
     @Given("I am viewing a conversation with one provider")

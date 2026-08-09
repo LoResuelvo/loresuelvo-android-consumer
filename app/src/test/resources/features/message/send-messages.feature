@@ -54,7 +54,6 @@ Feature: Start a conversation with a provider
     And I return to the messages section with the same provider
     Then I still see the message I sent earlier in the conversation
 
-  @wip
   Scenario: 07-IC Verify the consumer sees the provider's message arrive in real-time
     Given I am viewing a conversation with a provider
     When the provider sends me a new message via WebSocket

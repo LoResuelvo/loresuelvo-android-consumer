@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.bdd.message
 
+import com.loresuelvo.consumer.data.api.WebSocketClient
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
@@ -26,6 +27,7 @@ import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationsUseCa
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
 import com.loresuelvo.consumer.domain.usecase.provider.GetProvidersByCategoryUseCase
+import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
@@ -45,6 +47,8 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import java.util.concurrent.atomic.AtomicReference
+import io.mockk.every
+import io.mockk.mockk
 
 /**
  * Per-scenario world for the US-17 "Start a conversation with a
@@ -98,12 +102,22 @@ class SendMessagesWorld : AutoCloseable {
     private val sendMessageUseCase = SendMessageUseCase(fakeConversationRepo)
     private lateinit var messagesListViewModel: MessagesListViewModel
 
-    // Conversation detail (scenario 05-IC): the same fake repo
-    // backs both the list and the detail VM. The detail VM is
-    // constructed but does NOT auto-load — the `Given` step must
-    // seed the detail + call `openConversation(id)` so the
+    // Conversation detail (scenario 05-IC + 07-IC): the same fake
+    // repo backs both the list and the detail VM. The detail VM
+    // is constructed but does NOT auto-load — the `Given` step
+    // must seed the detail + call `openConversation(id)` so the
     // production-equivalent load path runs.
     private lateinit var conversationViewModel: ConversationViewModel
+    private val wsEvents: kotlinx.coroutines.flow.MutableSharedFlow<WsEvent> =
+        kotlinx.coroutines.flow.MutableSharedFlow(
+            replay = 0,
+            extraBufferCapacity = 64,
+            onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST,
+        )
+    private val fakeWebSocketClient: WebSocketClient = mockk(relaxed = true) {
+        every { events } returns wsEvents
+        every { start() } returns Unit
+    }
 
     private val observedUiStates = mutableListOf<ProfessionalsUiState>()
     private val observedContactUiStates = mutableListOf<ContactProviderUiState>()
@@ -153,7 +167,7 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
-            webSocketClient = io.mockk.mockk(relaxed = true),
+            webSocketClient = fakeWebSocketClient,
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -338,6 +352,38 @@ class SendMessagesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    /**
+     * Simulates the backend pushing a `conversation.message.created`
+     * event to the consumer's WebSocket (the production wire the
+     * `WebSocketClient` decodes). Emits into the same flow the VM
+     * subscribed to in its `init {}` so the test exercises the
+     * real VM filtering + appending path.
+     *
+     * Scenarios 07-IC (consumer sees provider's message in
+     * real-time) and 08-IC (other-conversation messages don't
+     * leak) both drive the wire through this helper.
+     */
+    fun providerSendsViaWebSocket(
+        conversationId: String = "1",
+        messageId: String = "100",
+        content: String = "Hola desde el provider",
+    ) {
+        val id = conversationId.toLongOrNull()
+            ?: error("providerSendsViaWebSocket requires a numeric conversation id, got $conversationId")
+        val event = WsEvent(
+            type = WsEvent.CONVERSATION_MESSAGE_CREATED,
+            conversationId = id,
+            message = ConversationMessage(
+                id = messageId,
+                sender = ConversationSender.Provider,
+                content = content,
+                createdOnEpochMillis = 1_700_000_000_000L,
+            ),
+        )
+        wsEvents.tryEmit(event)
+        scheduler.advanceUntilIdle()
+    }
+
     fun lastConversationUiState(): ConversationUiState =
         observedConversationStates.last()
 
@@ -366,7 +412,7 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
-            webSocketClient = io.mockk.mockk(relaxed = true),
+            webSocketClient = fakeWebSocketClient,
         )
         // No observer for the new instance — the BDD re-entry
         // step creates yet another VM with its own observer.
@@ -387,7 +433,7 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
-            webSocketClient = io.mockk.mockk(relaxed = true),
+            webSocketClient = fakeWebSocketClient,
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             conversationViewModel.uiState.collect { observedConversationStates += it }
