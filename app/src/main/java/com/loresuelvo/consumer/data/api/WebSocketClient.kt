@@ -85,7 +85,12 @@ class WebSocketClient @Inject constructor(
     private var stopped = false
 
     fun start() {
+        // Idempotent: callers (currently the conversation
+        // `ConversationViewModel.init {}`) invoke this on every
+        // screen entry. After the first call the connection stays
+        // up across the app session; subsequent calls are no-ops.
         if (stopped) return
+        if (webSocket != null || reconnectJob?.isActive == true) return
         scope.launch { connect() }
     }
 

@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import com.loresuelvo.consumer.data.api.WebSocketClient
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
@@ -41,6 +42,7 @@ class ConversationViewModelSendRetryTest {
     private val testDispatcher = StandardTestDispatcher()
     private val getConversationById = mockk<GetConversationByIdUseCase>()
     private val sendMessage = mockk<SendMessageUseCase>()
+    private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var viewModel: ConversationViewModel
 
     private fun serverMessage(id: String = "10", content: String = "hola") =
@@ -68,7 +70,7 @@ class ConversationViewModelSendRetryTest {
                     updatedOnEpochMillis = 0L,
                 ),
             )
-        viewModel = ConversationViewModel(getConversationById, sendMessage)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
     }
@@ -105,7 +107,7 @@ class ConversationViewModelSendRetryTest {
             )
         coEvery { sendMessage("1", "primera") } returns
             SendMessageOutcome.Failure.Server(500, "boom")
-        viewModel = ConversationViewModel(getConversationById, sendMessage)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onPromptChange("primera")

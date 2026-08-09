@@ -153,6 +153,7 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
+            webSocketClient = io.mockk.mockk(relaxed = true),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -365,6 +366,7 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
+            webSocketClient = io.mockk.mockk(relaxed = true),
         )
         // No observer for the new instance — the BDD re-entry
         // step creates yet another VM with its own observer.
@@ -385,6 +387,7 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
+            webSocketClient = io.mockk.mockk(relaxed = true),
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             conversationViewModel.uiState.collect { observedConversationStates += it }
