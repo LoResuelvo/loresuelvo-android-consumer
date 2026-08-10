@@ -479,4 +479,127 @@ class SendMessagesSteps {
             messages.none { it.content == foreignContent },
         )
     }
+
+    // ---- Scenario 09-IC --------------------------------------
+
+    /**
+     * "I am viewing a conversation and I am at the bottom of the
+     * chat" — same precondition as 07-IC plus the scroll
+     * position. The VM's default `isAtBottom = true` already
+     * matches this state, so we just assert the seed.
+     */
+    @Given("I am viewing a conversation and I am at the bottom of the chat")
+    fun iAmViewingAConversationAndIAmAtTheBottomOfTheChat() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+        world.openConversation("1")
+    }
+
+    /**
+     * "A new message arrives via WebSocket" — generic variant
+     * used by 09-IC / 10-IC where the conversation id is implicit
+     * (the one the consumer is viewing).
+     */
+    @When("a new message arrives via WebSocket")
+    fun aNewMessageArrivesViaWebSocket() {
+        world.providerSendsViaWebSocket(
+            conversationId = "1",
+            messageId = "200",
+            content = "Confirmado para el jueves.",
+        )
+    }
+
+    /**
+     * "The chat scrolls to show the new message" — when the user
+     * is at the bottom, the new bubble lands without raising the
+     * "↓ nuevo mensaje" banner (the screen auto-scrolls into it
+     * directly). The state assertion: `hasUnreadIncoming` must be
+     * `false`. The visual scroll behaviour itself is pinned by
+     * the Compose test suite.
+     */
+    @Then("the chat scrolls to show the new message")
+    fun theChatScrollsToShowTheNewMessage() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val ready = state as ConversationUiState.Ready
+        assertTrue(
+            "the new bubble must be in the thread, was ${ready.detail.messages}",
+            ready.detail.messages.any { it.content == "Confirmado para el jueves." },
+        )
+        assertEquals(
+            "at-bottom user must NOT see the unread banner",
+            false,
+            ready.hasUnreadIncoming,
+        )
+    }
+
+    // ---- Scenario 10-IC --------------------------------------
+
+    /**
+     * "I am viewing a conversation and I am scrolled up reading
+     * older messages" — same precondition as 09-IC plus the
+     * scroll position flipped to `false`. The VM persists this
+     * in `Ready.isAtBottom` and the next incoming WS event will
+     * raise the unread banner.
+     */
+    @Given("I am viewing a conversation and I am scrolled up reading older messages")
+    fun iAmViewingAConversationAndIAmScrolledUpReadingOlderMessages() {
+        world.startScenario()
+        world.enqueueConversation(
+            counterpartName = "Juan",
+            counterpartSurname = "Pérez",
+            categoryName = "Plomería",
+            status = ConversationStatus.Pending,
+            lastMessageContent = "Hola Juan, necesito una mano",
+        )
+        world.openConversation("1")
+        world.scrolledUpOfTheChat()
+    }
+
+    @Then("I see an indicator telling me there is a new message")
+    fun iSeeAnIndicatorTellingMeThereIsANewMessage() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val ready = state as ConversationUiState.Ready
+        assertTrue(
+            "scrolled-up user must see the unread banner flag",
+            ready.hasUnreadIncoming,
+        )
+    }
+
+    /**
+     * "The chat does not auto-scroll" — companion assertion to
+     * `I see an indicator…`. The VM keeps `hasUnreadIncoming = true`
+     * exactly because it deliberately did NOT auto-scroll; if the
+     * scroll had happened, the screen would have reported
+     * `isAtBottom = true` back and the flag would be `false`.
+     * Pinning `hasUnreadIncoming == true` is therefore equivalent
+     * to pinning "no auto-scroll".
+     */
+    @And("the chat does not auto-scroll")
+    fun theChatDoesNotAutoScroll() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val ready = state as ConversationUiState.Ready
+        assertEquals(
+            "no auto-scroll means hasUnreadIncoming stays true",
+            true,
+            ready.hasUnreadIncoming,
+        )
+    }
 }

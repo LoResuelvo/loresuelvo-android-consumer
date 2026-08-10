@@ -394,6 +394,30 @@ class SendMessagesWorld : AutoCloseable {
     fun observedSendCalls(): List<Pair<String, String>> =
         fakeConversationRepo.sendCallsSnapshot()
 
+    // ---- Scroll position (scenarios 09-IC + 10-IC) ---------------
+
+    /**
+     * Reports to the VM that the chat's LazyColumn is at the
+     * bottom (user just sent or scrolled to the latest bubble).
+     * Equivalent to the production screen's
+     * `derivedStateOf { isAtBottom }` firing with `true`.
+     */
+    fun atBottomOfTheChat() {
+        conversationViewModel.onScrollPositionChanged(atBottom = true)
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * Reports to the VM that the chat is scrolled up reading
+     * older messages (i.e. not at the bottom). Scenario 10-IC
+     * uses this to flip `isAtBottom = false` before the WS push
+     * so the unread-banner flag flips on.
+     */
+    fun scrolledUpOfTheChat() {
+        conversationViewModel.onScrollPositionChanged(atBottom = false)
+        scheduler.advanceUntilIdle()
+    }
+
     // ---- Navigation lifecycle (scenario 06-IC) --------------
 
     /**

@@ -64,13 +64,11 @@ Feature: Start a conversation with a provider
     When a different conversation receives a new message via WebSocket
     Then that message does not appear in the chat I am viewing
 
-  @wip
   Scenario: 09-IC Verify the chat auto-scrolls to the new message when at the bottom
     Given I am viewing a conversation and I am at the bottom of the chat
     When a new message arrives via WebSocket
     Then the chat scrolls to show the new message
 
-  @wip
   Scenario: 10-IC Verify a new-message indicator appears when the user is scrolled up
     Given I am viewing a conversation and I am scrolled up reading older messages
     When a new message arrives via WebSocket
