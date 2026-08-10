@@ -108,10 +108,18 @@ class ConversationViewModel @Inject constructor(
             // server id is already in the list (race between
             // `sendMessage` Success and the WS echo), skip.
             if (current.detail.messages.any { it.id == message.id }) return@update current
+            // Scenario 09-IC: when the user is at the bottom, the
+            // screen renders the new bubble immediately (auto-
+            // scroll) so no "new message" indicator is needed.
+            // Scenario 10-IC: when the user is scrolled up reading
+            // older messages, surface a "↓ nuevo mensaje" banner
+            // by flipping `hasUnreadIncoming` to `true`. The banner
+            // CTA (`onUnreadBannerTapped`) clears the flag.
             current.copy(
                 detail = current.detail.copy(
                     messages = current.detail.messages + message,
                 ),
+                hasUnreadIncoming = !current.isAtBottom,
             )
         }
     }
@@ -191,6 +199,43 @@ class ConversationViewModel @Inject constructor(
         _uiState.update { state ->
             if (state is ConversationUiState.Ready) {
                 state.copy(transientError = null)
+            } else {
+                state
+            }
+        }
+    }
+
+    /**
+     * Reports whether the chat's `LazyColumn` is currently
+     * scrolled to its last visible item. The screen wires this
+     * to a `derivedStateOf { listState.layoutInfo... }` that
+     * re-fires on every scroll. When [atBottom] flips to
+     * `true`, the unread-incoming flag clears (the user is now
+     * looking at the new bubbles). When it flips to `false`,
+     * the flag is preserved so a follow-up incoming message
+     * can still surface the "↓ nuevo mensaje" banner.
+     */
+    fun onScrollPositionChanged(atBottom: Boolean) {
+        _uiState.update { state ->
+            if (state !is ConversationUiState.Ready) return@update state
+            if (state.isAtBottom == atBottom) return@update state
+            state.copy(
+                isAtBottom = atBottom,
+                hasUnreadIncoming = if (atBottom) false else state.hasUnreadIncoming,
+            )
+        }
+    }
+
+    /**
+     * Manual "mark as read" hook for the "↓ nuevo mensaje"
+     * banner CTA. The user tapped the banner and jumped to the
+     * bottom; clear the unread flag manually so the screen
+     * collapses back to the normal chat.
+     */
+    fun onUnreadBannerTapped() {
+        _uiState.update { state ->
+            if (state is ConversationUiState.Ready) {
+                state.copy(hasUnreadIncoming = false)
             } else {
                 state
             }

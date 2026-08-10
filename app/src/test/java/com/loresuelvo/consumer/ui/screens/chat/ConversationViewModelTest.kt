@@ -409,4 +409,139 @@ class ConversationViewModelTest {
 
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
     }
+
+    // ---- Scroll-position tracking (09-IC + 10-IC) ------------------
+
+    @Test
+    fun ws_event_while_at_bottom_sets_hasUnreadIncoming_to_false() = runTest {
+        // Scenario 09-IC: when the user is at the bottom and a
+        // new message arrives, no "↓ nuevo mensaje" banner shows
+        // (the new bubble auto-scrolls into view).
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel.load("1")
+        advanceUntilIdle()
+        // Default state: isAtBottom = true.
+        val initial = viewModel.uiState.value as ConversationUiState.Ready
+        assertTrue(initial.isAtBottom)
+        assertFalse(initial.hasUnreadIncoming)
+
+        webSocketEvents.tryEmit(providerEvent(messageId = "100"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertEquals(1, state.detail.messages.size)
+        assertFalse(
+            "at bottom + incoming → no unread banner",
+            state.hasUnreadIncoming,
+        )
+    }
+
+    @Test
+    fun ws_event_while_scrolled_up_sets_hasUnreadIncoming_to_true() = runTest {
+        // Scenario 10-IC: when the user is scrolled up reading
+        // older messages and a new one arrives, surface the
+        // "↓ nuevo mensaje" banner.
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel.load("1")
+        advanceUntilIdle()
+        viewModel.onScrollPositionChanged(atBottom = false)
+        assertFalse(
+            (viewModel.uiState.value as ConversationUiState.Ready).isAtBottom,
+        )
+
+        webSocketEvents.tryEmit(providerEvent(messageId = "100"))
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertEquals(1, state.detail.messages.size)
+        assertTrue(
+            "scrolled up + incoming → unread banner",
+            state.hasUnreadIncoming,
+        )
+    }
+
+    @Test
+    fun scrolling_back_to_bottom_clears_unread_incoming() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel.load("1")
+        advanceUntilIdle()
+        viewModel.onScrollPositionChanged(atBottom = false)
+        webSocketEvents.tryEmit(providerEvent(messageId = "100"))
+        advanceUntilIdle()
+        assertTrue(
+            (viewModel.uiState.value as ConversationUiState.Ready).hasUnreadIncoming,
+        )
+
+        // User scrolls back to the bottom (auto-scroll fires,
+        // which the screen reports via onScrollPositionChanged).
+        viewModel.onScrollPositionChanged(atBottom = true)
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertFalse(
+            "scroll-to-bottom clears the unread flag",
+            state.hasUnreadIncoming,
+        )
+    }
+
+    @Test
+    fun unread_banner_tap_clears_unread_incoming() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel.load("1")
+        advanceUntilIdle()
+        viewModel.onScrollPositionChanged(atBottom = false)
+        webSocketEvents.tryEmit(providerEvent(messageId = "100"))
+        advanceUntilIdle()
+        assertTrue(
+            (viewModel.uiState.value as ConversationUiState.Ready).hasUnreadIncoming,
+        )
+
+        viewModel.onUnreadBannerTapped()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertFalse(
+            "banner tap clears the unread flag",
+            state.hasUnreadIncoming,
+        )
+        // Scrolled-up state is preserved — the banner tap is
+        // orthogonal to scroll position.
+        assertFalse(state.isAtBottom)
+    }
+
+    @Test
+    fun onScrollPositionChanged_with_same_value_is_a_no_op() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel.load("1")
+        advanceUntilIdle()
+        val before = viewModel.uiState.value as ConversationUiState.Ready
+
+        viewModel.onScrollPositionChanged(atBottom = true) // already true
+
+        assertEquals(before, viewModel.uiState.value)
+    }
+
+    @Test
+    fun onScrollPositionChanged_outside_Ready_is_a_no_op() = runTest {
+        coEvery { getConversationById("1") } coAnswers {
+            kotlinx.coroutines.awaitCancellation()
+        }
+        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        // State is Loading.
+        viewModel.onScrollPositionChanged(atBottom = false)
+        assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
+    }
 }
