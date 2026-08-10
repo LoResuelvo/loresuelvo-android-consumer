@@ -12,8 +12,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -26,6 +28,30 @@ const val CHAT_DIAGNOSIS_SUMMARY_TAG: String = "chat-diagnosis-summary"
 const val CHAT_DIAGNOSIS_CATEGORY_TAG: String = "chat-diagnosis-category"
 const val CHAT_DIAGNOSIS_PROVIDER_ROW_TAG: String = "chat-diagnosis-provider-row"
 const val CHAT_DIAGNOSIS_PROVIDER_CATEGORY_TAG: String = "chat-diagnosis-provider-category"
+
+/**
+ * Theme tokens the summary card reads from. Pinned to the
+ * `secondaryContainer` / `onSecondaryContainer` slots — those are
+ * mapped in `theme/Theme.kt` to `BrandSecondary` (emerald
+ * `#147560`) at 12% alpha for the container and full emerald for
+ * the content. The unit test
+ * `DiagnosisSummaryCardTokensTest` locks both bindings so an
+ * accidental revert to `surfaceVariant` (Material's default
+ * lilac/purple tint) cannot ship undetected.
+ *
+ * Extracted as `@ReadOnlyComposable` getters rather than inlined
+ * literals so the contract between the card and the theme stays
+ * in one place; a future re-skin only edits the theme.
+ */
+internal val diagnosisSummaryContainerColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.secondaryContainer
+
+internal val diagnosisSummaryContentColor: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = MaterialTheme.colorScheme.onSecondaryContainer
 
 /**
  * Summary card rendered below the chat history once the AI
@@ -47,7 +73,8 @@ fun DiagnosisSummaryCard(
             .fillMaxWidth()
             .testTag(CHAT_DIAGNOSIS_SUMMARY_TAG),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = diagnosisSummaryContainerColor,
+            contentColor = diagnosisSummaryContentColor,
         ),
     ) {
         Column(
