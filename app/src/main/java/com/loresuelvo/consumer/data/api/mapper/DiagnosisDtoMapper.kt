@@ -25,6 +25,10 @@ internal fun DiagnosisDto.toDomain(): Diagnosis {
         conversationId = id?.toString() ?: conversationId,
         messages = messages,
         recommendations = null,
+        assessment = assessment,
+        recommendedProviders = recommendedProviders?.map { provider ->
+            provider.toDomain(provider.categoryId ?: 0)
+        },
     )
 }
 

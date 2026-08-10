@@ -30,5 +30,7 @@ data class DiagnosisDto(
     @SerialName("title") val title: String? = null,
     @SerialName("status") val status: String? = null,
     @SerialName("response_status") val responseStatus: String? = null,
+    @SerialName("assessment") val assessment: String? = null,
+    @SerialName("recommended_providers") val recommendedProviders: List<ProviderDto>? = null,
     @SerialName("messages") val messages: List<ChatMessageDto>,
 )

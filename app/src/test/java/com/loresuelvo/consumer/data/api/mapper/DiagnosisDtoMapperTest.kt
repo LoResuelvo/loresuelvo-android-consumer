@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
+import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -176,19 +177,33 @@ class DiagnosisDtoMapperTest {
     }
 
     @Test
-    fun mapper_propagates_recommendations_as_null_until_later_commits() {
-        // The mapper currently can't decode `assessment` /
-        // `recommended_providers`. Reserve `null` for now — 09-DIA
-        // will adjust this assertion.
-        val dto = DiagnosisDto(
+    fun maps_assessment_and_recommended_providers() {
+        val diagnosis = DiagnosisDto(
+            id = 42L,
+            assessment = "Fuga en la conexión",
+            recommendedProviders = listOf(
+                ProviderDto(7, "Ana", "Pérez", "Plomería", 1, "https://example.com/a.jpg"),
+            ),
+            messages = emptyList(),
+        ).toDomain()
+
+        assertEquals("Fuga en la conexión", diagnosis.assessment)
+        assertEquals("Ana", diagnosis.recommendedProviders?.single()?.name)
+        assertEquals("Pérez", diagnosis.recommendedProviders?.single()?.surname)
+        assertEquals("Plomería", diagnosis.recommendedProviders?.single()?.categoryName)
+        assertEquals("https://example.com/a.jpg", diagnosis.recommendedProviders?.single()?.profilePhotoUrl)
+    }
+
+    @Test
+    fun keeps_optional_diagnosis_metadata_null_when_absent() {
+        val diagnosis = DiagnosisDto(
             id = 42L,
             messages = listOf(
                 ChatMessageDto(id = 1L, senderRole = "chatbot", content = "diagnóstico listo"),
             ),
-        )
+        ).toDomain()
 
-        val diagnosis = dto.toDomain()
-
-        assertNull(diagnosis.recommendations)
+        assertNull(diagnosis.assessment)
+        assertNull(diagnosis.recommendedProviders)
     }
 }

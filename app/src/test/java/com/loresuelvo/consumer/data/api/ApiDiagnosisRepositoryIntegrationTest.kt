@@ -116,7 +116,8 @@ class ApiDiagnosisRepositoryIntegrationTest {
         assertTrue(success.diagnosis.messages[1].sender == com.loresuelvo.consumer.domain.diagnosis.Sender.Assistant)
         assertEquals("Tengo una gotera", success.diagnosis.messages[0].content)
         assertEquals("Entiendo. ¿Es constante?", success.diagnosis.messages[1].content)
-        assertNull(success.diagnosis.recommendations)
+        assertNull(success.diagnosis.assessment)
+        assertNull(success.diagnosis.recommendedProviders)
     }
 
     @Test
