@@ -52,14 +52,12 @@ Feature: Diagnóstico asistido por IA
     And puedo desplazarme mediante scroll dentro del campo
     And el contenido completo permanece accesible
 
-  @wip
   Scenario: 09-DIA Visualizar diagnóstico concluido con prestadores recomendados
     Given la IA concluyó el diagnóstico y recomienda prestadores del rubro "Plomería"
     When visualizo la respuesta del asistente
     Then veo la explicación del problema detectado
     And veo los prestadores recomendados del rubro "Plomería"
 
-  @wip
   Scenario: 10-DIA Visualizar datos de cada prestador recomendado
     Given la IA concluyó el diagnóstico y recomienda prestadores del rubro "Plomería"
     When visualizo la respuesta del asistente
