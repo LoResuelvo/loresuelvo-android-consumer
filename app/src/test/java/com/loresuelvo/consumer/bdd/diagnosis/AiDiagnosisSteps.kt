@@ -253,4 +253,71 @@ class AiDiagnosisSteps {
         // rendered" proof is the Compose acceptance test.
         world.assertChatScreenRouteAvailable()
     }
+
+    // ---- Scenario: 09-DIA Visualizar diagnóstico concluido --------
+
+    /**
+     * 09-DIA "Given": the AI concluded the diagnosis and the
+     * backend response includes an assessment + a list of
+     * recommended providers for the supplied [rubro]. The world
+     * seeds the fake's response and drives a complete round-trip
+     * so the VM lands in the post-conclusion state.
+     */
+    @Given("la IA concluyó el diagnóstico y recomienda prestadores del rubro {string}")
+    fun laIaConcluyoDiagnosticoYRubro(rubro: String) {
+        world.startScenario()
+        world.seedConcludedDiagnosis(categoryName = rubro)
+    }
+
+    /**
+     * 09-DIA "When": the user views the assistant's response. The
+     * world already drove the round-trip in the `Given` step, so
+     * this step is a no-op placeholder mirroring the Gherkin
+     * wording.
+     */
+    @When("visualizo la respuesta del asistente")
+    fun visualizoLaRespuestaDelAsistente() {
+        // No-op: the round-trip has already settled in the
+        // `Given` step.
+    }
+
+    @Then("veo la explicación del problema detectado")
+    fun veoLaExplicacionDelProblema() {
+        world.assertAssessmentVisible()
+    }
+
+    @Then("veo los prestadores recomendados del rubro {string}")
+    fun veoLosPrestadoresRecomendados(rubro: String) {
+        world.assertRecommendedProvidersVisible(categoryName = rubro)
+    }
+
+    // ---- Scenario: 10-DIA Visualizar datos de cada prestador -----
+
+    @Then("cada prestador muestra nombre y apellido")
+    fun cadaPrestadorMuestraNombreYApellido() {
+        // "veo los prestadores recomendados" already proved a
+        // non-empty list with a non-blank full name. Reuse the
+        // same check so the step is independently runnable.
+        world.assertRecommendedProvidersVisible(categoryName = "Plomería")
+    }
+
+    @Then("cada prestador muestra el rubro {string}")
+    fun cadaPrestadorMuestraElRubro(rubro: String) {
+        world.assertRecommendedProvidersVisible(categoryName = rubro)
+    }
+
+    @Then("cada prestador muestra su foto de perfil")
+    fun cadaPrestadorMuestraSuFotoDePerfil() {
+        // The ProviderAvatar is rendered for every provider row
+        // regardless of whether the URL is null (the avatar falls
+        // back to the initial). The Compose test pins the
+        // avatar-image testTag to confirm the photo URL is wired
+        // to the AsyncImage; here we only assert the world holds
+        // a non-empty providers list so each row has a slot.
+        val providers = world.lastUiState().recommendedProviders
+            ?: error("expected recommended providers to be present for 10-DIA")
+        if (providers.isEmpty()) {
+            error("expected at least one provider row to render an avatar")
+        }
+    }
 }

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Sender
+import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
 // importo windowInsets para usar safeDrawing en Scaffold
 import androidx.compose.foundation.layout.WindowInsets
@@ -52,6 +53,8 @@ fun ChatScreen(
     canSend: Boolean,
     sending: Boolean,
     messages: List<ChatMessage>,
+    assessment: String?,
+    recommendedProviders: List<Provider>?,
     transientError: ChatError?,
     preliminaryWarningVisible: Boolean,
     onPromptChange: (String) -> Unit,
@@ -118,6 +121,15 @@ fun ChatScreen(
                     onErrorDismissClick = onErrorDismiss,
                     modifier = Modifier.weight(1f),
                 )
+                if (assessment != null) {
+                    DiagnosisSummaryCard(
+                        assessment = assessment,
+                        providers = recommendedProviders.orEmpty(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
             }
         }
     }

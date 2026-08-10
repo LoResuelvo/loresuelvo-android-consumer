@@ -108,7 +108,8 @@ class ChatViewModel @Inject constructor(
                 sending = false,
                 conversationId = diagnosis.conversationId ?: it.conversationId,
                 messages = diagnosis.messages,
-                recommendations = diagnosis.recommendations ?: it.recommendations,
+                assessment = diagnosis.assessment ?: it.assessment,
+                recommendedProviders = diagnosis.recommendedProviders ?: it.recommendedProviders,
                 transientError = null,
                 lastAttemptedPrompt = null,
             )

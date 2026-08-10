@@ -24,40 +24,5 @@ import io.cucumber.java.PendingException
 @Suppress("unused", "UNUSED_PARAMETER")
 class PendingSteps {
 
-    // ---- Scenario: 09-DIA Visualizar diagnóstico concluido -----------
-    @Given("la IA concluyó el diagnóstico y recomienda prestadores del rubro {string}")
-    fun laIaConcluyoDiagnosticoYRubro(rubro: String) {
-        throw PendingException("09-DIA pendiente")
-    }
-
-    @When("visualizo la respuesta del asistente")
-    fun visualizoLaRespuestaDelAsistente() {
-        throw PendingException("09-DIA pendiente")
-    }
-
-    @Then("veo la explicación del problema detectado")
-    fun veoLaExplicacionDelProblema() {
-        throw PendingException("09-DIA pendiente")
-    }
-
-    @Then("veo los prestadores recomendados del rubro {string}")
-    fun veoLosPrestadoresRecomendados(rubro: String) {
-        throw PendingException("09-DIA pendiente")
-    }
-
-    // ---- Scenario: 10-DIA Visualizar datos de cada prestador --------
-    @Then("cada prestador muestra nombre y apellido")
-    fun cadaPrestadorMuestraNombreYApellido() {
-        throw PendingException("10-DIA pendiente")
-    }
-
-    @Then("cada prestador muestra el rubro {string}")
-    fun cadaPrestadorMuestraElRubro(rubro: String) {
-        throw PendingException("10-DIA pendiente")
-    }
-
-    @Then("cada prestador muestra su foto de perfil")
-    fun cadaPrestadorMuestraSuFotoDePerfil() {
-        throw PendingException("10-DIA pendiente")
-    }
+    // 09-DIA and 10-DIA moved to AiDiagnosisSteps.
 }

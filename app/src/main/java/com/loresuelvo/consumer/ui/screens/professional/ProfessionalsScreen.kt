@@ -313,6 +313,7 @@ fun ProviderAvatar(
     profilePhotoUrl: String?,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
+    testTag: String = PROVIDER_AVATAR_TAG,
 ) {
     val initial = name.firstOrNull()?.uppercase() ?: "?"
     val description = stringResource(
@@ -324,7 +325,7 @@ fun ProviderAvatar(
             .size(size)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary)
-            .testTag(PROVIDER_AVATAR_TAG),
+            .testTag(testTag),
         contentAlignment = Alignment.Center,
     ) {
         if (!profilePhotoUrl.isNullOrBlank()) {

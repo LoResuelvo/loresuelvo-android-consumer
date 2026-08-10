@@ -27,6 +27,8 @@ fun ChatRoute(
         canSend = state.canSend,
         sending = state.sending,
         messages = state.messages,
+        assessment = state.assessment,
+        recommendedProviders = state.recommendedProviders,
         transientError = state.transientError,
         preliminaryWarningVisible = state.preliminaryWarningVisible,
         onPromptChange = viewModel::onPromptChange,

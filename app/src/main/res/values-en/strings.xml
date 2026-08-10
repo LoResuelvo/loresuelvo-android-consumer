@@ -142,4 +142,7 @@
     <string name="chat_preliminary_warning">The answers provided are preliminary guidance and do not constitute a definitive technical diagnosis</string>
     <!-- Initial message (commit 11A) -->
     <string name="chat_initial_message_body">Hi! I\'m the LoResuelvo assistant. I\'ll help you figure out what might be happening in your home and, if needed, recommend professionals. Tell me what\'s going on.</string>
+    <!-- AI diagnosis conclusion card (09-DIA / 10-DIA) -->
+    <string name="chat_diagnosis_assessment_title">Diagnosis</string>
+    <string name="chat_diagnosis_providers_title">Recommended providers</string>
 </resources>

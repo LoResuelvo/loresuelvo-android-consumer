@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Sender
+import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
 import com.loresuelvo.consumer.ui.screens.chat.ChatViewModel
@@ -426,6 +427,94 @@ class AiDiagnosisWorld : AutoCloseable {
             error("expected Route.Chat.path == '$CHAT_ROUTE_PATH', was '$path'")
         }
     }
+
+    // ---- 09-DIA / 10-DIA diagnosis-concluded helpers ----------------
+
+    /**
+     * 09-DIA `Given`: drive a complete round-trip where the
+     * backend returns an assessment and a list of recommended
+     * providers for the supplied [categoryName]. Used by both
+     * 09-DIA and 10-DIA.
+     */
+    fun seedConcludedDiagnosis(categoryName: String) {
+        val prompt = "Tengo una gotera en el baño"
+        typePrompt(prompt)
+        val providers = listOf(
+            Provider(
+                id = 11,
+                name = "Ana",
+                surname = "Pérez",
+                categoryId = 1,
+                categoryName = categoryName,
+                profilePhotoUrl = "https://example.com/ana.webp",
+            ),
+            Provider(
+                id = 12,
+                name = "Luis",
+                surname = "Gómez",
+                categoryId = 1,
+                categoryName = categoryName,
+                profilePhotoUrl = null,
+            ),
+        )
+        val diagnosis = Diagnosis(
+            conversationId = "fake-conv",
+            messages = listOf(
+                ServerSideMessage(
+                    id = "user-server-1",
+                    sender = Sender.Consumer,
+                    content = prompt,
+                ).toChatMessage(),
+                ServerSideMessage(
+                    id = "assistant-1",
+                    sender = Sender.Assistant,
+                    content = "Tengo una gotera en el baño",
+                ).toChatMessage(),
+            ),
+            assessment = "Fuga en la conexión del caño principal",
+            recommendedProviders = providers,
+        )
+        fakeRepo.enqueueOutcome(SendDiagnosisPromptOutcome.Success(diagnosis))
+        tapSend()
+    }
+
+    fun assertAssessmentVisible() {
+        val state = lastUiState()
+        val assessment = state.assessment
+            ?: error(
+                "expected assessment to be visible after the AI concluded the diagnosis, " +
+                    "but state.assessment was null. state=$state",
+            )
+        if (assessment.isBlank()) {
+            error("expected non-blank assessment, was '$assessment'")
+        }
+    }
+
+    fun assertRecommendedProvidersVisible(categoryName: String) {
+        val state = lastUiState()
+        val providers = state.recommendedProviders
+            ?: error(
+                "expected recommended providers to be visible, " +
+                    "but state.recommendedProviders was null. state=$state",
+            )
+        if (providers.isEmpty()) {
+            error("expected at least one recommended provider, was empty")
+        }
+        providers.forEach { provider ->
+            if (provider.categoryName != categoryName) {
+                error(
+                    "expected every provider to belong to '$categoryName', " +
+                        "but '${provider.name} ${provider.surname}' belongs to " +
+                        "'${provider.categoryName}'",
+                )
+            }
+            val fullName = "${provider.name} ${provider.surname}".trim()
+            if (fullName.isBlank()) {
+                error("expected provider to have a non-blank full name, was '$fullName'")
+            }
+        }
+    }
+
 
     override fun close() {
         supervisorJob.cancel()

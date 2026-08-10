@@ -2,10 +2,10 @@ package com.loresuelvo.consumer.ui.screens.chat
 
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
-import com.loresuelvo.consumer.domain.diagnosis.Recommendations
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
+import com.loresuelvo.consumer.domain.provider.Provider
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -76,7 +76,8 @@ class ChatViewModelTest {
         assertEquals(emptyList<ChatMessage>(), state.messages)
         assertFalse(state.sending)
         assertNull(state.conversationId)
-        assertNull(state.recommendations)
+        assertNull(state.assessment)
+        assertNull(state.recommendedProviders)
         assertFalse(state.canSend)
         assertTrue(
             "preliminaryWarningVisible should default to true so the warning banner renders",
@@ -153,7 +154,10 @@ class ChatViewModelTest {
                     sentAtEpochMillis = 0L,
                 ),
             ),
-            recommendations = Recommendations(stub = true),
+            assessment = "Problema detectado",
+            recommendedProviders = listOf(
+                Provider(1, "Ana", "Pérez", 1, "Plomería", "https://example.com/a.jpg"),
+            ),
         )
         coEvery { useCase(any(), anyNullable()) } returns
             SendDiagnosisPromptOutcome.Success(serverDiagnosis)
@@ -171,7 +175,8 @@ class ChatViewModelTest {
             state.messages.map { it.id },
         )
         assertEquals(Sender.Assistant, state.messages.last().sender)
-        assertNotNull(state.recommendations)
+        assertEquals("Problema detectado", state.assessment)
+        assertEquals("Ana", state.recommendedProviders?.single()?.name)
     }
 
     @Test
