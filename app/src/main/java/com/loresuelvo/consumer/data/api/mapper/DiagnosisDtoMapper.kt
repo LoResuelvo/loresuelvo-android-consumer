@@ -11,22 +11,22 @@ import com.loresuelvo.consumer.domain.diagnosis.Sender
  * Stays in `data/` per the AGENTS.md rule: snake_case ↔ camelCase
  * conversion lives in `mapper/`, never in `domain/` or `ui/`.
  *
- * The mapper is intentionally narrow for commit 02-DIA: only
- * the wire fields exercised by the [Diagnosis] aggregate's
- * `conversationId` / `messages` flow are mapped. The wrapped
- * `chatbot.{...}` shape that the webapp tolerates
- * (`infrastructure/repositories/ai-chat-mapper.ts`) lands when
- * the assessment + providers commits (09-DIA → 11-DIA) force us
- * to consume that nested block.
+ * The mapper threads `assessment.problem_category.id` into every
+ * mapped recommended provider (the AI wire echoes the category
+ * name on each provider but not the id; the consumer app keeps
+ * the `Provider.categoryId: Int` non-null invariant by reusing
+ * the category id the assessment already carried — see
+ * `ProviderDto.toDomain(categoryId)`).
  */
 internal fun DiagnosisDto.toDomain(): Diagnosis {
     val messages = messages.map { it.toDomain() }
+    val problemCategoryId = assessment?.problemCategory?.id
     return Diagnosis(
         conversationId = id?.toString() ?: conversationId,
         messages = messages,
-        assessment = assessment,
+        assessment = assessment?.toDomain(),
         recommendedProviders = recommendedProviders?.map { provider ->
-            provider.toDomain(provider.categoryId ?: 0)
+            provider.toDomain(categoryId = problemCategoryId ?: 0)
         },
     )
 }
@@ -35,20 +35,12 @@ internal fun ChatMessageDto.toDomain(): ChatMessage {
     val sender = when (senderRole.lowercase()) {
         "consumer" -> Sender.Consumer
         "chatbot" -> Sender.Assistant
-        // Defensive default: unknown sender roles from a future
-        // backend revision render as assistant bubbles. The login
-        // attempt still surfaces through the next request and the
-        // server response will reconcile the identity.
         else -> Sender.Assistant
     }
     val sentAtEpochMillis = parseIsoMillisOrZero(sentAt)
         ?: parseIsoMillisOrZero(createdOn)
         ?: 0L
     return ChatMessage(
-        // Backend issues numeric ids; the UI key path is the
-        // string form so `LazyColumn` keys stay stable across
-        // optimistic appends (the local `user-<uuid>` ids
-        // never collide with backend numeric ids).
         id = id.toString(),
         sender = sender,
         content = content,
@@ -75,7 +67,4 @@ private fun parseIsoMillisOrZero(value: String?): Long? = value?.let { raw ->
             timeZone = java.util.TimeZone.getTimeZone("UTC")
         }.parse(raw)?.time
     }.getOrNull()
-} ?: when {
-    value == null -> null
-    else -> null
 }

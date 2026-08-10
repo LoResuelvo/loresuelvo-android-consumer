@@ -59,6 +59,7 @@ class ChatScreenTest {
                 transientError = null,
                 assessment = null,
                 recommendedProviders = null,
+
                 preliminaryWarningVisible = true,
                 onPromptChange = {},
                 onSendClick = {},
@@ -86,6 +87,7 @@ class ChatScreenTest {
                 transientError = null,
                 assessment = null,
                 recommendedProviders = null,
+
                 preliminaryWarningVisible = true,
                 onPromptChange = {},
                 onSendClick = {},
@@ -115,6 +117,7 @@ class ChatScreenTest {
                 transientError = null,
                 assessment = null,
                 recommendedProviders = null,
+
                 preliminaryWarningVisible = true,
                 onPromptChange = {},
                 onSendClick = {},
@@ -158,6 +161,7 @@ class ChatScreenTest {
                 transientError = null,
                 assessment = null,
                 recommendedProviders = null,
+
                 preliminaryWarningVisible = true,
                 onPromptChange = {},
                 onSendClick = {},
@@ -192,6 +196,7 @@ class ChatScreenTest {
                 transientError = null,
                 assessment = null,
                 recommendedProviders = null,
+
                 preliminaryWarningVisible = true,
                 onPromptChange = {},
                 onSendClick = {},
@@ -230,6 +235,7 @@ class ChatScreenTest {
                 transientError = null,
                 assessment = null,
                 recommendedProviders = null,
+
                 preliminaryWarningVisible = true,
                 onPromptChange = {},
                 onSendClick = {},

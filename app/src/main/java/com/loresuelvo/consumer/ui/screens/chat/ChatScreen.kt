@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
@@ -53,7 +54,7 @@ fun ChatScreen(
     canSend: Boolean,
     sending: Boolean,
     messages: List<ChatMessage>,
-    assessment: String?,
+    assessment: DiagnosisAssessment?,
     recommendedProviders: List<Provider>?,
     transientError: ChatError?,
     preliminaryWarningVisible: Boolean,
@@ -121,9 +122,9 @@ fun ChatScreen(
                     onErrorDismissClick = onErrorDismiss,
                     modifier = Modifier.weight(1f),
                 )
-                if (assessment != null) {
+                if (assessment != null && assessment.isProfessionalRequired) {
                     DiagnosisSummaryCard(
-                        assessment = assessment,
+                        categoryName = assessment.problemCategory?.name,
                         providers = recommendedProviders.orEmpty(),
                         modifier = Modifier
                             .fillMaxWidth()

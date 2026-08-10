@@ -17,11 +17,21 @@ import kotlinx.serialization.Serializable
  *
  * `messages` is the full conversation history returned by the
  * backend — the optimistic append is REPLACED by this list once
- * the round-trip succeeds. Optional metadata (`title`, `status`,
- * `response_status`, `assessment`, `response`,
- * `recommended_providers`) is intentionally ignored by the mapper
- * for now; commitments 09-DIA → 11-DIA flesh out the
- * assessment / recommendations path.
+ * the round-trip succeeds.
+ *
+ * `assessment` is null while the AI is still collecting
+ * information, and an [AssessmentDto] once the AI settles into a
+ * terminal outcome (typically `professional_required` with a
+ * `problem_category`). `recommended_providers` is the list of
+ * providers the AI suggests for the matching rubro; elements
+ * mirror `ProviderDto` minus `category_id` (the category id is
+ * threaded in by the mapper from `assessment.problem_category.id`).
+ *
+ * `response` is a backend-convenience duplicate of the LAST
+ * assistant message in `messages`; declared here so a future
+ * backend tightening that drops `ignoreUnknownKeys` doesn't
+ * silently lose data, but the consumer app intentionally doesn't
+ * read it (the chat already has `messages[-1]`).
  */
 @Serializable
 data class DiagnosisDto(
@@ -30,7 +40,8 @@ data class DiagnosisDto(
     @SerialName("title") val title: String? = null,
     @SerialName("status") val status: String? = null,
     @SerialName("response_status") val responseStatus: String? = null,
-    @SerialName("assessment") val assessment: String? = null,
+    @SerialName("assessment") val assessment: AssessmentDto? = null,
     @SerialName("recommended_providers") val recommendedProviders: List<ProviderDto>? = null,
+    @SerialName("response") val response: ChatMessageDto? = null,
     @SerialName("messages") val messages: List<ChatMessageDto>,
 )

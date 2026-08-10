@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.bdd.diagnosis
 
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
@@ -471,7 +472,13 @@ class AiDiagnosisWorld : AutoCloseable {
                     content = "Tengo una gotera en el baño",
                 ).toChatMessage(),
             ),
-            assessment = "Fuga en la conexión del caño principal",
+            assessment = DiagnosisAssessment(
+                outcome = DiagnosisAssessment.OUTCOME_PROFESSIONAL_REQUIRED,
+                problemCategory = com.loresuelvo.consumer.domain.category.Category(
+                    id = 1,
+                    name = categoryName,
+                ),
+            ),
             recommendedProviders = providers,
         )
         fakeRepo.enqueueOutcome(SendDiagnosisPromptOutcome.Success(diagnosis))
@@ -485,8 +492,11 @@ class AiDiagnosisWorld : AutoCloseable {
                 "expected assessment to be visible after the AI concluded the diagnosis, " +
                     "but state.assessment was null. state=$state",
             )
-        if (assessment.isBlank()) {
-            error("expected non-blank assessment, was '$assessment'")
+        if (!assessment.isProfessionalRequired) {
+            error(
+                "expected assessment.outcome to be 'professional_required' " +
+                    "after the AI concluded, but got '${assessment.outcome}'",
+            )
         }
     }
 

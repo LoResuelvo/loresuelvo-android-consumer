@@ -1,9 +1,12 @@
 package com.loresuelvo.consumer.data.api.mapper
 
+import com.loresuelvo.consumer.data.api.dto.AssessmentDto
+import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
 import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -177,21 +180,49 @@ class DiagnosisDtoMapperTest {
     }
 
     @Test
-    fun maps_assessment_and_recommended_providers() {
+    fun maps_concluded_assessment_with_professional_required_outcome_and_recommended_providers() {
         val diagnosis = DiagnosisDto(
             id = 42L,
-            assessment = "Fuga en la conexión",
+            assessment = AssessmentDto(
+                outcome = "professional_required",
+                problemCategory = ProviderDto_assessmentCategoryFixture(),
+            ),
             recommendedProviders = listOf(
-                ProviderDto(7, "Ana", "Pérez", "Plomería", 1, "https://example.com/a.jpg"),
+                ProviderDto(10, "Juan", "Gómez", "Plomería", profilePhotoUrl = "https://cdn.example/files/provider.jpg"),
             ),
             messages = emptyList(),
         ).toDomain()
 
-        assertEquals("Fuga en la conexión", diagnosis.assessment)
-        assertEquals("Ana", diagnosis.recommendedProviders?.single()?.name)
-        assertEquals("Pérez", diagnosis.recommendedProviders?.single()?.surname)
-        assertEquals("Plomería", diagnosis.recommendedProviders?.single()?.categoryName)
-        assertEquals("https://example.com/a.jpg", diagnosis.recommendedProviders?.single()?.profilePhotoUrl)
+        assertEquals("professional_required", diagnosis.assessment?.outcome)
+        assertTrue(diagnosis.assessment?.isProfessionalRequired == true)
+        assertEquals("Plomería", diagnosis.assessment?.problemCategory?.name)
+        val provider = diagnosis.recommendedProviders?.single()
+            ?: error("expected a single recommended provider")
+        // problem_category.id (3) is threaded into every mapped
+        // provider so the Provider.categoryId non-null invariant
+        // survives without lying about a value we never received.
+        assertEquals(3, provider.categoryId)
+        assertEquals("Juan", provider.name)
+        assertEquals("Gómez", provider.surname)
+        assertEquals("Plomería", provider.categoryName)
+        assertEquals("https://cdn.example/files/provider.jpg", provider.profilePhotoUrl)
+    }
+
+    @Test
+    fun maps_collecting_information_assessment_without_problem_category() {
+        val diagnosis = DiagnosisDto(
+            id = 42L,
+            assessment = AssessmentDto(outcome = "collecting_information"),
+            recommendedProviders = emptyList(),
+            messages = listOf(
+                ChatMessageDto(id = 1L, senderRole = "chatbot", content = "¿es constante?"),
+            ),
+        ).toDomain()
+
+        assertEquals("collecting_information", diagnosis.assessment?.outcome)
+        assertNull(diagnosis.assessment?.problemCategory)
+        assertFalse(diagnosis.assessment?.isProfessionalRequired == true)
+        assertEquals(emptyList<Any>(), diagnosis.recommendedProviders)
     }
 
     @Test
@@ -207,3 +238,6 @@ class DiagnosisDtoMapperTest {
         assertNull(diagnosis.recommendedProviders)
     }
 }
+
+private fun ProviderDto_assessmentCategoryFixture(): CategoryDto =
+    CategoryDto(id = 3, name = "Plomería")

@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.ui.screens.chat
 
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
@@ -154,7 +155,10 @@ class ChatViewModelTest {
                     sentAtEpochMillis = 0L,
                 ),
             ),
-            assessment = "Problema detectado",
+            assessment = DiagnosisAssessment(
+                outcome = DiagnosisAssessment.OUTCOME_PROFESSIONAL_REQUIRED,
+                problemCategory = com.loresuelvo.consumer.domain.category.Category(1, "Plomería"),
+            ),
             recommendedProviders = listOf(
                 Provider(1, "Ana", "Pérez", 1, "Plomería", "https://example.com/a.jpg"),
             ),
@@ -175,7 +179,8 @@ class ChatViewModelTest {
             state.messages.map { it.id },
         )
         assertEquals(Sender.Assistant, state.messages.last().sender)
-        assertEquals("Problema detectado", state.assessment)
+        assertEquals("professional_required", state.assessment?.outcome)
+        assertTrue(state.assessment?.isProfessionalRequired == true)
         assertEquals("Ana", state.recommendedProviders?.single()?.name)
     }
 

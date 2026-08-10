@@ -23,13 +23,22 @@ import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
 const val CHAT_DIAGNOSIS_SUMMARY_TAG: String = "chat-diagnosis-summary"
-const val CHAT_DIAGNOSIS_ASSESSMENT_TAG: String = "chat-diagnosis-assessment"
+const val CHAT_DIAGNOSIS_CATEGORY_TAG: String = "chat-diagnosis-category"
 const val CHAT_DIAGNOSIS_PROVIDER_ROW_TAG: String = "chat-diagnosis-provider-row"
 const val CHAT_DIAGNOSIS_PROVIDER_CATEGORY_TAG: String = "chat-diagnosis-provider-category"
 
+/**
+ * Summary card rendered below the chat history once the AI
+ * concludes the diagnosis. Shows the matched rubro and the list of
+ * providers the AI recommends for it. The AI's free-text
+ * explanation is intentionally NOT echoed here because the same
+ * content already lives in the last assistant chat bubble above
+ * this card — duplicating it would split the narrative across the
+ * two surfaces.
+ */
 @Composable
 fun DiagnosisSummaryCard(
-    assessment: String,
+    categoryName: String?,
     providers: List<Provider>,
     modifier: Modifier = Modifier,
 ) {
@@ -47,30 +56,25 @@ fun DiagnosisSummaryCard(
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
+            if (categoryName != null) {
                 Text(
-                    text = stringResource(R.string.chat_diagnosis_assessment_title),
+                    text = stringResource(
+                        R.string.chat_diagnosis_category_format,
+                        categoryName,
+                    ),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = assessment,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.testTag(CHAT_DIAGNOSIS_ASSESSMENT_TAG),
+                    modifier = Modifier.testTag(CHAT_DIAGNOSIS_CATEGORY_TAG),
                 )
             }
-            if (providers.isNotEmpty()) {
-                Text(
-                    text = stringResource(R.string.chat_diagnosis_providers_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    providers.forEach { provider ->
-                        RecommendedProviderRow(provider = provider)
-                    }
+            Text(
+                text = stringResource(R.string.chat_diagnosis_providers_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                providers.forEach { provider ->
+                    RecommendedProviderRow(provider = provider)
                 }
             }
         }
@@ -93,7 +97,7 @@ private fun RecommendedProviderRow(provider: Provider) {
         Spacer(Modifier.width(12.dp))
         Column {
             Text(
-                text = "${provider.name} ${provider.surname}",
+                text = "${provider.name} ${provider.surname}".trim(),
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium,
             )
