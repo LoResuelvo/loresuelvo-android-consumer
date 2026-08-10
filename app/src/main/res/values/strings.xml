@@ -95,6 +95,7 @@
     <string name="conversation_transient_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <string name="conversation_transient_error_retry">Reintentar</string>
     <string name="conversation_transient_error_dismiss">Descartar</string>
+    <string name="conversation_new_message_banner">Nuevo mensaje</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contactar</string>
     <string name="contact_provider_modal_title">Crear solicitud de trabajo</string>

@@ -22,18 +22,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationMessageBubble
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationTopBar
+import com.loresuelvo.consumer.ui.screens.chat.components.NewMessageBanner
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
@@ -75,6 +81,8 @@ fun ConversationScreen(
     onBackClick: () -> Unit,
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onScrollPositionChanged: (Boolean) -> Unit = {},
+    onUnreadBannerTapped: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -92,6 +100,8 @@ fun ConversationScreen(
                 onSendClick = onSendClick,
                 onBackClick = onBackClick,
                 onErrorDismiss = onErrorDismiss,
+                onScrollPositionChanged = onScrollPositionChanged,
+                onUnreadBannerTapped = onUnreadBannerTapped,
             )
             is ConversationUiState.Error -> ErrorState(
                 failure = state.failure,
@@ -164,30 +174,76 @@ private fun ReadyState(
     onSendClick: () -> Unit,
     onBackClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onScrollPositionChanged: (Boolean) -> Unit,
+    onUnreadBannerTapped: () -> Unit,
 ) {
     val listState = rememberLazyListState()
+
+    // Tracks whether the LazyList's last visible item is the
+    // last item of the conversation — i.e. the user is "at the
+    // bottom" (scenarios 09-IC / 10-IC). The screen reports
+    // this back to the VM so it can decide whether to flag a
+    // newly-arrived provider message as "unread" (banner) or
+    // let the auto-scroll show it directly.
+    val isAtBottom by remember {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            info.totalItemsCount == 0 ||
+                info.visibleItemsInfo.lastOrNull()?.index == info.totalItemsCount - 1
+        }
+    }
+    LaunchedEffect(isAtBottom) {
+        onScrollPositionChanged(isAtBottom)
+    }
+
     // Auto-scroll on every new message so the consumer's just-sent
     // bubble is always visible. Keyed on the message count so the
     // effect re-fires when a new bubble lands (success path or
-    // optimistic append — neither applies today but the code is
-    // forward-compatible).
+    // real-time provider push). Same `derivedStateOf`-style gate
+    // as `shouldAutoScroll` in `MessagesList` (AI chat): if the
+    // user is scrolled up reading older messages, we skip the
+    // forced scroll so they keep their place — the new bubble
+    // appears below and the unread banner surfaces instead.
     LaunchedEffect(state.detail.messages.size) {
-        if (state.detail.messages.isNotEmpty()) {
-            listState.animateScrollToItem(state.detail.messages.size - 1)
-        }
+        if (state.detail.messages.isEmpty()) return@LaunchedEffect
+        val info = listState.layoutInfo
+        if (!isAtBottom || info.totalItemsCount <= info.visibleItemsInfo.size) return@LaunchedEffect
+        listState.animateScrollToItem(state.detail.messages.size - 1)
     }
 
+    val coroutineScope = rememberCoroutineScope()
     Column(modifier = Modifier.fillMaxSize()) {
         ConversationTopBar(
             counterpart = state.detail.counterpart,
             status = state.detail.status,
             onBackClick = onBackClick,
         )
-        MessagesList(
-            messages = state.detail.messages,
-            listState = listState,
-            modifier = Modifier.weight(1f),
-        )
+        Box(modifier = Modifier.weight(1f)) {
+            MessagesList(
+                messages = state.detail.messages,
+                listState = listState,
+            )
+            // The unread banner overlays the list at the
+            // bottom-edge of the scroll area (anchored to
+            // `Alignment.BottomCenter`). Tapping it scrolls the
+            // list back to the bottom and clears the unread flag
+            // via `onUnreadBannerTapped`.
+            if (state.hasUnreadIncoming) {
+                NewMessageBanner(
+                    onTap = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(
+                                state.detail.messages.size - 1,
+                            )
+                        }
+                        onUnreadBannerTapped()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
+                )
+            }
+        }
         if (state.transientError != null) {
             TransientErrorCard(
                 failure = state.transientError,

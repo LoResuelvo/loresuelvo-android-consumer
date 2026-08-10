@@ -93,6 +93,7 @@
     <string name="conversation_transient_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="conversation_transient_error_retry">Retry</string>
     <string name="conversation_transient_error_dismiss">Dismiss</string>
+    <string name="conversation_new_message_banner">New message</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
     <string name="contact_provider_modal_title">Create work request</string>

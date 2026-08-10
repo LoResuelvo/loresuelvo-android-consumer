@@ -353,5 +353,7 @@ private fun ConversationRoute(
         onBackClick = { navController.popBackStack() },
         onRetryClick = { viewModel.load(conversationId) },
         onErrorDismiss = viewModel::onErrorDismiss,
+        onScrollPositionChanged = viewModel::onScrollPositionChanged,
+        onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
     )
 }
