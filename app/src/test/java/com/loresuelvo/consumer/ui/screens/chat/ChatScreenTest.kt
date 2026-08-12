@@ -65,6 +65,8 @@ class ChatScreenTest {
                 onSendClick = {},
                 onRetryClick = {},
                 onErrorDismiss = {},
+
+                onContactClick = {},
                 onBackClick = {},
                 modifier = Modifier.fillMaxSize(),
             )
@@ -93,6 +95,8 @@ class ChatScreenTest {
                 onSendClick = {},
                 onRetryClick = {},
                 onErrorDismiss = {},
+
+                onContactClick = {},
                 onBackClick = {},
                 modifier = Modifier.fillMaxSize(),
             )
@@ -123,6 +127,8 @@ class ChatScreenTest {
                 onSendClick = {},
                 onRetryClick = {},
                 onErrorDismiss = {},
+
+                onContactClick = {},
                 onBackClick = {},
                 modifier = Modifier.fillMaxSize(),
             )
@@ -167,6 +173,8 @@ class ChatScreenTest {
                 onSendClick = {},
                 onRetryClick = {},
                 onErrorDismiss = {},
+
+                onContactClick = {},
                 onBackClick = {},
                 modifier = Modifier.fillMaxSize(),
             )
@@ -202,6 +210,8 @@ class ChatScreenTest {
                 onSendClick = {},
                 onRetryClick = {},
                 onErrorDismiss = {},
+
+                onContactClick = {},
                 onBackClick = {},
                 modifier = Modifier.fillMaxSize(),
             )
@@ -241,6 +251,8 @@ class ChatScreenTest {
                 onSendClick = {},
                 onRetryClick = {},
                 onErrorDismiss = {},
+
+                onContactClick = {},
                 onBackClick = {},
                 modifier = Modifier.fillMaxSize(),
             )

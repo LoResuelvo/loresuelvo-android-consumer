@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
+import com.loresuelvo.consumer.data.api.dto.CreateAiJobRequestRequestDto
 import com.loresuelvo.consumer.data.api.dto.CreateConversationRequestDto
 import com.loresuelvo.consumer.data.api.dto.CreateJobRequestDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
@@ -108,6 +109,33 @@ interface BackendApi {
     @POST("job-requests")
     suspend fun createJobRequest(
         @Body body: CreateJobRequestDto,
+    ): JobRequestDto
+
+    /**
+     * `POST /chatbot/conversations/{conversationId}/job-requests`
+     * — submits the AI pre-filled job request when the consumer
+     * taps "Contactar" on a recommended provider tile INSIDE the
+     * AI diagnostic chat. The body carries only `provider_id`; the
+     * backend's AI pre-fills `title` and `description` from the
+     * conversation history (mirrors the webapp's
+     * `useAiDiagnosisChat.handleContactProvider`).
+     *
+     * The response shape is identical to `POST /job-requests`,
+     * so the existing [JobRequestDto] is reused; the mapper at
+     * `data/api/mapper/JobRequestDtoMapper.kt` handles the
+     * conversion to the domain [com.loresuelvo.consumer.domain.jobrequest.JobRequest].
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @POST("chatbot/conversations/{conversationId}/job-requests")
+    suspend fun createAiJobRequest(
+        @Path("conversationId") conversationId: String,
+        @Body body: CreateAiJobRequestRequestDto,
     ): JobRequestDto
 
     // ---- Consumer ↔ provider conversations (added for US-17 / 03-IC) --

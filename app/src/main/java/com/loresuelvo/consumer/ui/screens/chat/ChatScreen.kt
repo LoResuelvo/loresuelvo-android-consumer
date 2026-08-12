@@ -62,6 +62,7 @@ fun ChatScreen(
     onSendClick: () -> Unit,
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onContactClick: (Provider) -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -126,6 +127,7 @@ fun ChatScreen(
                     DiagnosisSummaryCard(
                         categoryName = assessment.problemCategory?.name,
                         providers = recommendedProviders.orEmpty(),
+                        onContactClick = onContactClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),

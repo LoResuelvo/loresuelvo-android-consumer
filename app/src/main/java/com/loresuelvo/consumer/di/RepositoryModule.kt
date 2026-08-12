@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.di
 
+import com.loresuelvo.consumer.data.api.ApiAiJobRequestRepository
 import com.loresuelvo.consumer.data.api.ApiCategoryRepository
 import com.loresuelvo.consumer.data.api.ApiConversationRepository
 import com.loresuelvo.consumer.data.api.ApiDiagnosisRepository
@@ -12,6 +13,7 @@ import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.jobrequest.AiJobRequestRepository
 import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import dagger.Binds
@@ -64,6 +66,12 @@ abstract class RepositoryModule {
     abstract fun bindJobRequestRepository(
         impl: ApiJobRequestRepository,
     ): JobRequestRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiJobRequestRepository(
+        impl: ApiAiJobRequestRepository,
+    ): AiJobRequestRepository
 
     @Binds
     @Singleton
