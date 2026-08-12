@@ -70,3 +70,11 @@ Feature: Diagnóstico asistido por IA
     When toco "Contactar" en el primer prestador recomendado
     Then la IA envía su propio resumen para ese prestador
     And la app navega a la conversación con ese prestador
+
+  @wip
+  Scenario: 12-DIA Ver sesiones previas del chat con IA
+    Given estoy autenticado como consumidor
+    And he tenido 2 conversaciones previas con el asistente
+    When accedo al apartado "Asistente IA"
+    Then veo una lista con mis 2 sesiones previas con la IA
+    And cada sesión muestra el título y la fecha del último mensaje
