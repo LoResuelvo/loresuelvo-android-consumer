@@ -7,7 +7,10 @@ import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateAiJobRequestUseCase
 import com.loresuelvo.consumer.ui.navigation.Route
+import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactEvent
+import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
 import com.loresuelvo.consumer.ui.screens.chat.ChatViewModel
 import com.loresuelvo.consumer.ui.screens.chat.errorLiteral
@@ -46,9 +49,14 @@ class AiDiagnosisWorld : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
     private val fakeRepo = FakeDiagnosisRepository()
+    private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
+    private lateinit var createAiJobRequest: CreateAiJobRequestUseCase
     private lateinit var viewModel: ChatViewModel
+    private lateinit var aiContactViewModel: AiDiagnosisContactViewModel
     private val observedUiStates: MutableList<ChatUiState> = mutableListOf()
+    private val observedAiContactEvents: MutableList<AiDiagnosisContactEvent> =
+        mutableListOf()
 
     private var started: Boolean = false
 
@@ -76,10 +84,15 @@ class AiDiagnosisWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         sendDiagnosisPrompt = SendDiagnosisPromptUseCase(fakeRepo)
+        createAiJobRequest = CreateAiJobRequestUseCase(fakeAiJobRequestRepo)
         viewModel = ChatViewModel(sendDiagnosisPrompt)
+        aiContactViewModel = AiDiagnosisContactViewModel(createAiJobRequest)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            aiContactViewModel.events.collect { observedAiContactEvents += it }
         }
 
         scheduler.advanceUntilIdle()
@@ -543,6 +556,84 @@ class AiDiagnosisWorld : AutoCloseable {
                 content = content,
                 sentAtEpochMillis = 0L,
             )
+    }
+
+    // ---- 11-DIA AI contact flow helpers ----------------------------
+
+    /**
+     * 11-DIA `When`: the user taps "Contactar" on the FIRST
+     * recommended provider tile inside the carousel. The VM
+     * dispatches the AI pre-filled job request via the real
+     * use case against the fake repo; the fake records the call
+     * for the matching `Then` assertion.
+     */
+    fun tapContactOnFirstRecommendedProvider() {
+        val provider = lastUiState().recommendedProviders?.firstOrNull()
+            ?: error(
+                "11-DIA precondition failed: no recommended providers in state. " +
+                    "state=${lastUiState()}",
+            )
+        val conversationId = lastUiState().conversationId
+            ?: error(
+                "11-DIA precondition failed: no conversationId in state. " +
+                    "state=${lastUiState()}",
+            )
+        aiContactViewModel.onContactProviderClick(provider, conversationId)
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * 11-DIA `Then`: the AI pre-filled `POST /chatbot/conversations/{id}/job-requests`
+     * round-trip was sent with the selected [provider]'s id and
+     * the conversation id the chat state carries.
+     */
+    fun assertAiJobRequestInvokedFor(provider: Provider) {
+        val recorded = fakeAiJobRequestRepo.lastRecordedCall()
+            ?: error(
+                "expected CreateAiJobRequestUseCase to be invoked with provider=" +
+                    "${provider.id}, but no call was recorded on the fake repo",
+            )
+        if (recorded.providerId != provider.id) {
+            error(
+                "expected AI job-request to be sent for providerId=${provider.id}" +
+                    " (${provider.name} ${provider.surname}), but the fake repo " +
+                    "recorded providerId=${recorded.providerId}",
+            )
+        }
+    }
+
+    /**
+     * Helper for the 11-DIA `Then` step: returns the first
+     * recommended provider the chat state currently exposes so
+     * the step can pin the wire call against the same provider
+     * the `When` tapped.
+     */
+    fun firstRecommendedProviderSnapshot(): Provider =
+        lastUiState().recommendedProviders?.firstOrNull()
+            ?: error(
+                "11-DIA assertion failed: no recommended providers in state. " +
+                    "state=${lastUiState()}",
+            )
+
+    /**
+     * 11-DIA `And`: the VM emitted
+     * [AiDiagnosisContactEvent.NavigateToConversation] with the
+     * backend's `conversation_id`. The route's `LaunchedEffect`
+     * would have forwarded this to `Route.Conversation.buildPath(...)`,
+     * but the BDD layer stops at the event emission.
+     */
+    fun assertNavigatesToConversation() {
+        val event = observedAiContactEvents.lastOrNull()
+            ?: error(
+                "expected AiDiagnosisContactEvent.NavigateToConversation, " +
+                    "but no event was emitted. observed=$observedAiContactEvents",
+            )
+        if (event !is AiDiagnosisContactEvent.NavigateToConversation) {
+            error(
+                "expected AiDiagnosisContactEvent.NavigateToConversation, " +
+                    "got ${event::class.simpleName}",
+            )
+        }
     }
 
     private companion object {

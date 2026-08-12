@@ -320,4 +320,45 @@ class AiDiagnosisSteps {
             error("expected at least one provider row to render an avatar")
         }
     }
+
+    // ---- Scenario: 11-DIA Contactar prestador desde el chat ----
+
+    /**
+     * 11-DIA `When`: the user taps "Contactar" on the first
+     * recommended provider in the carousel. The step param
+     * carries the visible label so the matcher can sanity-check
+     * the call (rejects presses on unrelated buttons on the
+     * chat surface).
+     */
+    @When("toco {string} en el primer prestador recomendado")
+    fun tocoEnElPrimerPrestadorRecomendado(label: String) {
+        require(label == "Contactar") {
+            "Acción desconocida en el contact flow del chat: '$label'"
+        }
+        world.tapContactOnFirstRecommendedProvider()
+    }
+
+    /**
+     * 11-DIA `Then`: the AI pre-filled job-request wire was
+     * sent with the FIRST recommended provider's id. The wording
+     * "su propio resumen" reflects the backend's behavior: the AI
+     * writes `title` and `description` server-side, the consumer
+     * only sends the provider id.
+     */
+    @Then("la IA envía su propio resumen para ese prestador")
+    fun laIaEnviaSuPropioResumenParaEsePrestador() {
+        val provider = world.firstRecommendedProviderSnapshot()
+        world.assertAiJobRequestInvokedFor(provider)
+    }
+
+    /**
+     * 11-DIA `And`: the VM emitted
+     * [AiDiagnosisContactEvent.NavigateToConversation], which the
+     * route's `LaunchedEffect` forwards to
+     * `Route.Conversation.buildPath(event.conversationId)`.
+     */
+    @And("la app navega a la conversación con ese prestador")
+    fun laAppNavegaALaConversacionConEsePrestador() {
+        world.assertNavigatesToConversation()
+    }
 }

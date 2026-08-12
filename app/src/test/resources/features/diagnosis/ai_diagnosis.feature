@@ -65,9 +65,8 @@ Feature: Diagnóstico asistido por IA
     And cada prestador muestra el rubro "Plomería"
     And cada prestador muestra su foto de perfil
 
-  @wip
   Scenario: 11-DIA Contactar prestador desde el chat
     Given la IA concluyó el diagnóstico y recomienda prestadores del rubro "Plomería"
     When toco "Contactar" en el primer prestador recomendado
-    Then la IA envía su propio resumen al backend para ese prestador
+    Then la IA envía su propio resumen para ese prestador
     And la app navega a la conversación con ese prestador
