@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.data.api
 
+import com.loresuelvo.consumer.data.api.dto.AiConversationSummaryDto
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
@@ -92,6 +93,24 @@ interface BackendApi {
         @Path("conversationId") conversationId: String,
         @Body body: SendMessageRequestDto,
     ): DiagnosisDto
+
+    /**
+     * `GET /chatbot/conversations` — the consumer's AI diagnostic
+     * conversations, ordered by the backend's `updated_on` policy
+     * (timestamp-descending). Each element is the row-level summary
+     * the "Asistente IA" tab renders; the full chat thread
+     * (messages + assessment + recommended providers) is fetched
+     * on tap via [sendMessage] / [DiagnosisDto].
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @GET("chatbot/conversations")
+    suspend fun getAiConversations(): List<AiConversationSummaryDto>
 
     // ---- Job requests (added for US "Contact a provider") -------
 
