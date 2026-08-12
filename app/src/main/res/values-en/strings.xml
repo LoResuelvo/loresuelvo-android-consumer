@@ -70,6 +70,14 @@
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>
     <string name="assistant_screen_placeholder_title">AI Assistant</string>
     <string name="assistant_screen_placeholder_body">Your sessions with the assistant will appear here.</string>
+    <!-- AI assistant "Asistente IA" tab — real list surface (added 12-DIA) -->
+    <string name="assistant_screen_loading">Loading sessions…</string>
+    <string name="assistant_screen_empty_title">No AI sessions yet</string>
+    <string name="assistant_screen_empty_body">When you ask the assistant something, it\'ll appear here.</string>
+    <string name="assistant_screen_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="assistant_screen_error_server">We couldn\'t load your sessions. Try again.</string>
+    <string name="assistant_screen_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="assistant_screen_error_retry">Retry</string>
     <!-- Messages list screen (added in 03-IC) -->
     <string name="messages_screen_loading">Loading conversations…</string>
     <string name="messages_screen_empty_title">No conversations yet</string>

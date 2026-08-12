@@ -25,6 +25,7 @@ import com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination
 import com.loresuelvo.consumer.ui.components.bottomnav.LoResuelvoBottomBar
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen
+import com.loresuelvo.consumer.ui.screens.assistant.AssistantViewModel
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
@@ -148,7 +149,7 @@ fun LoResuelvoNav() {
                 )
             },
             messages = { MessagesRoute(navController) },
-            assistant = { AssistantScreen() },
+            assistant = { AssistantRoute(navController) },
         )
     }
 }
@@ -334,6 +335,27 @@ private fun MessagesRoute(navController: androidx.navigation.NavHostController) 
  * once on first composition (and again on the screen-level
  * retry from the `Error` state).
  */
+@Composable
+private fun AssistantRoute(navController: androidx.navigation.NavHostController) {
+    val viewModel: AssistantViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen(
+        state = state,
+        onRetryClick = viewModel::retry,
+        // Tapping a row opens the saved chat thread. The chat
+        // route's `Route.Chat` lands on a fresh conversation today;
+        // a follow-up commit will thread the `conversationId` so
+        // the consumer resumes the saved session instead of
+        // starting a new one.
+        onConversationClick = { conversationId ->
+            navController.navigate(
+                Route.Conversation.buildPath(conversationId),
+            )
+        },
+    )
+}
+
 @Composable
 private fun ConversationRoute(
     navController: androidx.navigation.NavHostController,

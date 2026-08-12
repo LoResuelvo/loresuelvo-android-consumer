@@ -72,6 +72,14 @@
     <string name="messages_screen_placeholder_body">Tus conversaciones con prestadores aparecerán acá.</string>
     <string name="assistant_screen_placeholder_title">Asistente IA</string>
     <string name="assistant_screen_placeholder_body">Tus sesiones con el asistente aparecerán acá.</string>
+    <!-- AI assistant "Asistente IA" tab — real list surface (added 12-DIA) -->
+    <string name="assistant_screen_loading">Cargando sesiones…</string>
+    <string name="assistant_screen_empty_title">Aún no tenés sesiones con la IA</string>
+    <string name="assistant_screen_empty_body">Cuando le preguntes algo al asistente, va a aparecer acá.</string>
+    <string name="assistant_screen_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="assistant_screen_error_server">No pudimos cargar tus sesiones. Reintentá.</string>
+    <string name="assistant_screen_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="assistant_screen_error_retry">Reintentar</string>
     <!-- Messages list screen (added in 03-IC) -->
     <string name="messages_screen_loading">Cargando conversaciones…</string>
     <string name="messages_screen_empty_title">Aún no tenés conversaciones</string>

@@ -71,7 +71,6 @@ Feature: Diagnóstico asistido por IA
     Then la IA envía su propio resumen para ese prestador
     And la app navega a la conversación con ese prestador
 
-  @wip
   Scenario: 12-DIA Ver sesiones previas del chat con IA
     Given estoy autenticado como consumidor
     And he tenido 2 conversaciones previas con el asistente

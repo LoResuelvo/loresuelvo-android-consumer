@@ -6,9 +6,13 @@ import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Sender
+import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.domain.usecase.assistant.GetAiConversationsUseCase
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateAiJobRequestUseCase
 import com.loresuelvo.consumer.ui.navigation.Route
+import com.loresuelvo.consumer.ui.screens.assistant.AssistantUiState
+import com.loresuelvo.consumer.ui.screens.assistant.AssistantViewModel
 import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactEvent
 import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
@@ -50,11 +54,15 @@ class AiDiagnosisWorld : AutoCloseable {
 
     private val fakeRepo = FakeDiagnosisRepository()
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
+    private val fakeAiConversationRepo = FakeAiConversationRepository()
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
     private lateinit var createAiJobRequest: CreateAiJobRequestUseCase
+    private lateinit var getConversations: GetAiConversationsUseCase
     private lateinit var viewModel: ChatViewModel
     private lateinit var aiContactViewModel: AiDiagnosisContactViewModel
+    private lateinit var assistantViewModel: AssistantViewModel
     private val observedUiStates: MutableList<ChatUiState> = mutableListOf()
+    private val observedAssistantStates: MutableList<AssistantUiState> = mutableListOf()
     private val observedAiContactEvents: MutableList<AiDiagnosisContactEvent> =
         mutableListOf()
 
@@ -85,14 +93,19 @@ class AiDiagnosisWorld : AutoCloseable {
 
         sendDiagnosisPrompt = SendDiagnosisPromptUseCase(fakeRepo)
         createAiJobRequest = CreateAiJobRequestUseCase(fakeAiJobRequestRepo)
+        getConversations = GetAiConversationsUseCase(fakeAiConversationRepo)
         viewModel = ChatViewModel(sendDiagnosisPrompt)
         aiContactViewModel = AiDiagnosisContactViewModel(createAiJobRequest)
+        assistantViewModel = AssistantViewModel(getConversations)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
         }
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             aiContactViewModel.events.collect { observedAiContactEvents += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            assistantViewModel.uiState.collect { observedAssistantStates += it }
         }
 
         scheduler.advanceUntilIdle()
@@ -633,6 +646,94 @@ class AiDiagnosisWorld : AutoCloseable {
                 "expected AiDiagnosisContactEvent.NavigateToConversation, " +
                     "got ${event::class.simpleName}",
             )
+        }
+    }
+
+    /**
+     * Helper for the 12-DIA `Given`: seed the AI conversation
+     * list AND re-trigger the Assistant VM so the world settles
+     * on the matching `Ready` state. The VM auto-loads on
+     * `init`, so a simple `enqueueSuccess` after that would not
+     * reach the VM — the `retry()` call forces a fresh round-trip
+     * that consumes the seeded list.
+     */
+    fun seedAiConversations(conversations: List<AiConversationSummary>) {
+        fakeAiConversationRepo.enqueueSuccess(conversations)
+        assistantViewModel.retry()
+        scheduler.advanceUntilIdle()
+    }
+
+    private fun lastAssistantUiState(): AssistantUiState =
+        observedAssistantStates.lastOrNull()
+            ?: error(
+                "expected the Assistant VM to have emitted at least one state, " +
+                    "but observed=empty",
+            )
+
+    /**
+     * 12-DIA `Then`: the Assistant VM landed on `Ready` with a
+     * list of size [expectedCount]. Pins the wire contract
+     * (`GET /chatbot/conversations` returned the list we seeded).
+     */
+    fun assertAssistantHasConversationCount(expectedCount: Int) {
+        val state = lastAssistantUiState()
+        if (state !is AssistantUiState.Ready) {
+            error(
+                "expected AssistantUiState.Ready with $expectedCount conversations, " +
+                    "got ${state::class.simpleName}. state=$state",
+            )
+        }
+        if (state.conversations.size != expectedCount) {
+            error(
+                "expected $expectedCount conversations in the list, " +
+                    "got ${state.conversations.size}. state=$state",
+            )
+        }
+    }
+
+    /**
+     * 12-DIA `And`: the conversation list contains a row whose
+     * title matches [expectedTitle]. Used to pin the "cada sesión
+     * muestra el título" assertion.
+     */
+    fun assertAssistantConversationTitlePresent(expectedTitle: String) {
+        val state = lastAssistantUiState()
+        if (state !is AssistantUiState.Ready) {
+            error(
+                "expected AssistantUiState.Ready, got ${state::class.simpleName}",
+            )
+        }
+        if (state.conversations.none { it.title == expectedTitle }) {
+            error(
+                "expected the list to contain a conversation titled " +
+                    "'$expectedTitle', got titles=" +
+                    state.conversations.map { it.title },
+            )
+        }
+    }
+
+    /**
+     * 12-DIA `And`: the conversation list contains a row whose
+     * `lastMessageAtEpochMillis` is non-zero (the backend's
+     * `updated_on` ISO timestamp parsed). Pinned because the
+     * feature file wording is "cada sesión muestra el título y
+     * la fecha del último mensaje".
+     */
+    fun assertAssistantConversationsHaveTimestamp() {
+        val state = lastAssistantUiState()
+        if (state !is AssistantUiState.Ready) {
+            error(
+                "expected AssistantUiState.Ready, got ${state::class.simpleName}",
+            )
+        }
+        state.conversations.forEach { conversation ->
+            if (conversation.lastMessageAtEpochMillis <= 0L) {
+                error(
+                    "expected conversation '${conversation.id}' to have a " +
+                        "non-zero `lastMessageAtEpochMillis`, got " +
+                        "${conversation.lastMessageAtEpochMillis}",
+                )
+            }
         }
     }
 
