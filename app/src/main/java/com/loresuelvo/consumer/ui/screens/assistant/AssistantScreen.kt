@@ -1,10 +1,12 @@
 package com.loresuelvo.consumer.ui.screens.assistant
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -46,15 +48,17 @@ import java.util.Date
  *  - [AssistantUiState.Empty] → empty-state card explaining
  *    "you haven't started a session yet".
  *  - [AssistantUiState.Ready] with non-empty list → vertical
- *    `LazyColumn` of session rows. Each row shows the title
- *    + the formatted `lastMessageAtEpochMillis` timestamp
- *    + an optional `lastMessagePreview`.
+ *    `LazyColumn` of session rows. Each row mirrors the
+ *    consumer ↔ provider messages list shape: an `AssistantAvatar`
+ *    on the left (same avatar component used in the chat
+ *    surface), the conversation title + the last message preview
+ *    in the middle column, and the formatted
+ *    `lastMessageAtEpochMillis` timestamp on the trailing edge.
+ *    Tapping the row fires [onConversationClick] (the route
+ *    already wires that to `Route.Conversation.buildPath(id)`).
  *  - [AssistantUiState.Failure] → centred card with a typed
  *    copy (network / server / unauthorized) and a "Reintentar"
  *    button that triggers [onRetryClick].
- *
- * Row tap navigation (open the saved conversation in the chat
- * thread) is the next US's scope.
  */
 @Composable
 fun AssistantScreen(
@@ -147,6 +151,14 @@ private fun ConversationsList(
     LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
+            // `fillMaxHeight()` keeps the LazyColumn anchored
+            // to the top of the [AssistantScreen] Box instead of
+            // being centred by the Box's `contentAlignment =
+            // Center`. The Box is still useful for the
+            // Loading / Empty / Error states (which need
+            // centred content); only the Ready state's
+            // LazyColumn needs to span the full height.
+            .fillMaxHeight()
             .testTag(ASSISTANT_LIST_TAG),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -177,8 +189,9 @@ private fun ConversationRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("$ASSISTANT_ROW_TAG-${conversation.id}")
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag("$ASSISTANT_ROW_TAG-${conversation.id}"),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(
@@ -188,10 +201,10 @@ private fun ConversationRow(
         ) {
             Text(
                 text = conversation.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .weight(1f, fill = false)
@@ -214,7 +227,7 @@ private fun ConversationRow(
                 text = preview,
                 style = MaterialTheme.typography.bodyMedium,
                 color = SubtitleGray,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.testTag("$ASSISTANT_ROW_PREVIEW_TAG-${conversation.id}"),
             )
