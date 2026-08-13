@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 
 /**
  * Per-scenario world for the AI diagnostic chat BDD spec. Owns a
@@ -56,6 +57,7 @@ class AiDiagnosisWorld : AutoCloseable {
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
     private val fakeAiConversationRepo = FakeAiConversationRepository()
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
+    private lateinit var loadAiConversation: LoadAiConversationUseCase
     private lateinit var createAiJobRequest: CreateAiJobRequestUseCase
     private lateinit var getConversations: GetAiConversationsUseCase
     private lateinit var viewModel: ChatViewModel
@@ -92,9 +94,10 @@ class AiDiagnosisWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         sendDiagnosisPrompt = SendDiagnosisPromptUseCase(fakeRepo)
+        loadAiConversation = LoadAiConversationUseCase(fakeRepo)
         createAiJobRequest = CreateAiJobRequestUseCase(fakeAiJobRequestRepo)
         getConversations = GetAiConversationsUseCase(fakeAiConversationRepo)
-        viewModel = ChatViewModel(sendDiagnosisPrompt)
+        viewModel = ChatViewModel(sendDiagnosisPrompt,loadAiConversation)
         aiContactViewModel = AiDiagnosisContactViewModel(createAiJobRequest)
         assistantViewModel = AssistantViewModel(getConversations)
 
@@ -449,9 +452,11 @@ class AiDiagnosisWorld : AutoCloseable {
         require(chatWithAiIntentIssued) {
             "06-DIA: 'veo la pantalla' debe ir precedido de 'selecciono la opción \"Chat con IA\"'"
         }
-        val path = Route.Chat.path
+
+        val path = Route.Chat.buildPath()
+
         if (path != CHAT_ROUTE_PATH) {
-            error("expected Route.Chat.path == '$CHAT_ROUTE_PATH', was '$path'")
+            error("expected Route.Chat.buildPath() == '$CHAT_ROUTE_PATH', was '$path'")
         }
     }
 

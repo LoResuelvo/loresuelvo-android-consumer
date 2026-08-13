@@ -141,7 +141,7 @@ fun LoResuelvoNav() {
             professionals = { categoryId, categoryName ->
                 ProfessionalsRoute(navController, categoryId, categoryName)
             },
-            chat = { ChatRoute(navController = navController) },
+            chat = { conversationId -> ChatRoute(navController = navController, conversationId = conversationId) },
             conversation = { conversationId ->
                 ConversationRoute(
                     navController = navController,
@@ -294,7 +294,7 @@ private fun HomeRoute(
             )
         },
         onNotificationsClick = { /* TODO */ },
-        onAiSendClick = { navController.navigate(Route.Chat.path) },
+        onAiSendClick = { navController.navigate(Route.Chat.buildPath()) },
         onRetryClick = { homeViewModel.loadCategories() },
         onLogoutClick = { sessionViewModel.signOut(context) },
     )
@@ -343,14 +343,14 @@ private fun AssistantRoute(navController: androidx.navigation.NavHostController)
     com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen(
         state = state,
         onRetryClick = viewModel::retry,
-        // Tapping a row opens the saved chat thread. The chat
-        // route's `Route.Chat` lands on a fresh conversation today;
-        // a follow-up commit will thread the `conversationId` so
-        // the consumer resumes the saved session instead of
-        // starting a new one.
+        // Tapping a row opens the saved chat thread with the
+        // AI conversation id threaded into the `Route.Chat` path.
+        // The chat route / VM use it to load the saved messages
+        // (commit 5c) so the user resumes the conversation
+        // instead of starting a fresh one.
         onConversationClick = { conversationId ->
             navController.navigate(
-                Route.Conversation.buildPath(conversationId),
+                Route.Chat.buildPath(conversationId = conversationId),
             )
         },
     )

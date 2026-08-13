@@ -1,5 +1,7 @@
-package com.loresuelvo.consumer.domain.diagnosis
+package com.loresuelvo.consumer.domain.diagnosis.usecase
 
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
 

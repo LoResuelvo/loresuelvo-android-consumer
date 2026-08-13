@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.provider.Provider
 import io.mockk.coEvery
@@ -56,12 +57,13 @@ class ChatViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val useCase = mockk<SendDiagnosisPromptUseCase>()
+    private val loadUseCase = mockk<LoadAiConversationUseCase>(relaxed = true)
     private lateinit var viewModel: ChatViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ChatViewModel(useCase)
+        viewModel = ChatViewModel(useCase, loadUseCase)
     }
 
     @After

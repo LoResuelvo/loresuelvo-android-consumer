@@ -1,10 +1,10 @@
 package com.loresuelvo.consumer.domain.diagnosis
 
-import com.loresuelvo.consumer.domain.provider.Provider
-import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
-import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
+import com.loresuelvo.consumer.domain.provider.Provider
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk

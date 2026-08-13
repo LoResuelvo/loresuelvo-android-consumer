@@ -36,10 +36,21 @@ import com.loresuelvo.consumer.ui.navigation.Route
 @Composable
 fun ChatRoute(
     navController: NavHostController,
+    conversationId: String? = null,
 ) {
     val viewModel: ChatViewModel = hiltViewModel()
     val aiContactViewModel: AiDiagnosisContactViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+
+    // Resume a saved AI session when the route was opened with a
+    // `conversationId` arg (Assistant list → tap a row). The VM
+    // no-ops if the same conversation is already loaded, so this
+    // is safe to fire on every recomposition.
+    LaunchedEffect(conversationId) {
+        if (!conversationId.isNullOrBlank()) {
+            viewModel.loadExisting(conversationId)
+        }
+    }
 
     // Forward the navigation event emitted by the AI contact flow
     // when the round-trip succeeds. The backend's `job-requests`

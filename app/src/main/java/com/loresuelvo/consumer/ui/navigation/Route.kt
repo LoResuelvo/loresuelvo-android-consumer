@@ -9,13 +9,22 @@ sealed class Route(val path: String) {
 
     /**
      * AI diagnostic chat screen. Reached from the `AiSearchBar` on
-     * Home (the "Chat con IA" entry point) and from the bottom-bar
-     * "Asistente IA" tab → AssistantScreen → session detail. No
-     * arguments yet — the first commit only wires navigation;
-     * subsequent commits will carry the conversation id and
-     * persisted history.
+     * Home (the "Chat con IA" entry point, fresh conversation) and
+     * from the bottom-bar "Asistente IA" tab → AssistantScreen →
+     * session detail (resume). The optional [conversationId] arg
+     * threads the resume flow: when present, the route hands it
+     * to the chat VM, which loads the saved conversation via
+     * `GET /chatbot/conversations/{id}` and hydrates the scroll
+     * before the user can type.
      */
-    data object Chat : Route("chat")
+    data class Chat(val conversationId: String? = null) :
+        Route("chat?conversationId={conversationId}") {
+        companion object {
+            fun buildPath(conversationId: String? = null): String =
+                if (conversationId.isNullOrBlank()) "chat"
+                else "chat?conversationId=$conversationId"
+        }
+    }
 
     /**
      * Provider conversation (1:1 chat between the consumer and

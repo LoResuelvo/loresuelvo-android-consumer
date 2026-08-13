@@ -3,8 +3,10 @@ package com.loresuelvo.consumer.ui.screens.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
@@ -34,6 +36,18 @@ import kotlinx.coroutines.launch
  *  - [onRetryClick] resubmits `lastAttemptedPrompt`. No-op when
  *    no error is showing or a previous send is in flight.
  *  - [onErrorDismiss] clears `transientError` without re-firing.
+ *  - [loadExisting] (commit 5c) hydrates the chat scroll from a
+ *    saved AI session: the Assistant list → tap a row navigates
+ *    to `Route.Chat.buildPath(conversationId)` and the route
+ *    calls [loadExisting] which fetches the conversation detail
+ *    via [loadAiConversation] and populates `state.messages` +
+ *    `state.assessment` + `state.recommendedProviders`. A second
+ *    call with the same id is a no-op so a recomposition of
+ *    the route (e.g. config change) doesn't re-fire the
+ *    round-trip. The state machine then transitions cleanly
+ *    into the existing send flow — the loaded `state.conversationId`
+ *    is what [fireSend] reads so the next prompt appends to the
+ *    saved conversation.
  *
  * Idempotency: `lastAttemptedPrompt` is snapshotted from the
  * `state.promptInput.value()` before the optimistic append, so
@@ -42,6 +56,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val sendDiagnosisPrompt: SendDiagnosisPromptUseCase,
+    private val loadAiConversation: LoadAiConversationUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -86,6 +101,36 @@ class ChatViewModel @Inject constructor(
         _uiState.update { it.copy(transientError = null) }
     }
 
+    /**
+     * Loads a saved AI session. Called by [ChatRoute] when the
+     * route was opened with a `conversationId` arg. The
+     * conversationId is set to [state.conversationId] on success
+     * so the next [onSendClick] uses the right conversation id.
+     *
+     * No-op when:
+     *  - the same id is already loaded (idempotent — recomposition
+     *    of the route can re-fire [LaunchedEffect] safely);
+     *  - a send is in flight (don't clobber the optimistic
+     *    bubble + active round-trip).
+     */
+    fun loadExisting(conversationId: String) {
+        val state = _uiState.value
+        if (state.conversationId == conversationId) return
+        if (state.sending) return
+        _uiState.update { it.copy(sending = true, transientError = null) }
+        viewModelScope.launch {
+            when (val outcome = loadAiConversation(conversationId)) {
+                is LoadAiConversationOutcome.Success -> applyLoadedConversation(outcome)
+                is LoadAiConversationOutcome.Failure.Network ->
+                    applyLoadFailure(ChatError.Network)
+                is LoadAiConversationOutcome.Failure.Server ->
+                    applyLoadFailure(ChatError.ServiceUnavailable)
+                is LoadAiConversationOutcome.Failure.Unauthorized ->
+                    applyLoadFailure(ChatError.Unauthorized(outcome.message))
+            }
+        }
+    }
+
     private fun fireSend(prompt: String, conversationId: String?) {
         viewModelScope.launch {
             val outcome = sendDiagnosisPrompt(prompt, conversationId)
@@ -116,6 +161,21 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    private fun applyLoadedConversation(outcome: LoadAiConversationOutcome.Success) {
+        val diagnosis = outcome.diagnosis
+        _uiState.update {
+            it.copy(
+                sending = false,
+                conversationId = diagnosis.conversationId ?: it.conversationId,
+                messages = diagnosis.messages,
+                assessment = diagnosis.assessment ?: it.assessment,
+                recommendedProviders = diagnosis.recommendedProviders ?: it.recommendedProviders,
+                transientError = null,
+                lastAttemptedPrompt = null,
+            )
+        }
+    }
+
     private fun applySendFailure(error: ChatError) {
         _uiState.update {
             it.copy(
@@ -125,6 +185,19 @@ class ChatViewModel @Inject constructor(
                 // bubble stays in place while the error card is shown;
                 // the producer can clear it via `onErrorDismiss` or
                 // successful `onRetryClick`.
+            )
+        }
+    }
+
+    private fun applyLoadFailure(error: ChatError) {
+        _uiState.update {
+            it.copy(
+                sending = false,
+                transientError = error,
+                // The chat scroll stays empty on load failure
+                // (no messages were hydrated). The error card
+                // surfaces the failure; the user can retry by
+                // re-entering from the Assistant list.
             )
         }
     }
