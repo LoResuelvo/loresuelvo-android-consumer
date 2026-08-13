@@ -35,6 +35,10 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.session.SessionViewModel
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 
 /**
  * Composition root for the app. Hosts the navigation graph, the
@@ -311,10 +315,29 @@ private fun HomeRoute(
  * removed when the detail screen became real.
  */
 @Composable
-private fun MessagesRoute(navController: androidx.navigation.NavHostController) {
+private fun MessagesRoute(
+    navController: androidx.navigation.NavHostController,
+) {
     val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel =
         hiltViewModel()
+
     val state by viewModel.uiState.collectAsState()
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.load()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     com.loresuelvo.consumer.ui.screens.messages.MessagesScreen(
         state = state,
