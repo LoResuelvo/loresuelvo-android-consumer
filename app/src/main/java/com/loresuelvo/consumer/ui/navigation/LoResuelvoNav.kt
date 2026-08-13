@@ -318,11 +318,8 @@ private fun HomeRoute(
 private fun MessagesRoute(
     navController: androidx.navigation.NavHostController,
 ) {
-    val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel =
-        hiltViewModel()
-
+    val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
-
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -359,18 +356,30 @@ private fun MessagesRoute(
  * retry from the `Error` state).
  */
 @Composable
-private fun AssistantRoute(navController: androidx.navigation.NavHostController) {
+private fun AssistantRoute(
+    navController: androidx.navigation.NavHostController,
+) {
     val viewModel: AssistantViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.retry()
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen(
         state = state,
         onRetryClick = viewModel::retry,
-        // Tapping a row opens the saved chat thread with the
-        // AI conversation id threaded into the `Route.Chat` path.
-        // The chat route / VM use it to load the saved messages
-        // (commit 5c) so the user resumes the conversation
-        // instead of starting a fresh one.
         onConversationClick = { conversationId ->
             navController.navigate(
                 Route.Chat.buildPath(conversationId = conversationId),
