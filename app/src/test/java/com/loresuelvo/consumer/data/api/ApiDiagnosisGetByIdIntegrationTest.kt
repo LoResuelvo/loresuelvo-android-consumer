@@ -115,7 +115,10 @@ class ApiDiagnosisGetByIdIntegrationTest {
 
         val recorded = server.takeRequest()
         assertEquals("GET", recorded.method)
-        assertEquals("/chatbot/conversations/10", recorded.path)
+        // AI conversations live in the same backend `conversations`
+        // table as the consumer ↔ provider chats; the webapp's
+        // AiChatRepository.getById hits the same path.
+        assertEquals("/conversations/10", recorded.path)
 
         assertTrue(outcome is LoadAiConversationOutcome.Success)
         val success = outcome as LoadAiConversationOutcome.Success

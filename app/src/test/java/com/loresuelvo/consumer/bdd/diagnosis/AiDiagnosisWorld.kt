@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
@@ -27,7 +28,6 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
-import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 
 /**
  * Per-scenario world for the AI diagnostic chat BDD spec. Owns a
@@ -57,8 +57,8 @@ class AiDiagnosisWorld : AutoCloseable {
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
     private val fakeAiConversationRepo = FakeAiConversationRepository()
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
-    private lateinit var loadAiConversation: LoadAiConversationUseCase
     private lateinit var createAiJobRequest: CreateAiJobRequestUseCase
+    private lateinit var loadAiConversation: LoadAiConversationUseCase
     private lateinit var getConversations: GetAiConversationsUseCase
     private lateinit var viewModel: ChatViewModel
     private lateinit var aiContactViewModel: AiDiagnosisContactViewModel

@@ -95,18 +95,26 @@ interface BackendApi {
     ): DiagnosisDto
 
     /**
-     * `GET /chatbot/conversations/{conversationId}` — full snapshot
-     * of a saved AI diagnostic conversation including the
-     * `messages[]` thread, the `assessment` (if the diagnosis
-     * concluded), and the `recommended_providers[]` (if the AI
-     * matched a rubro). The chat scroll uses this on entry — when
-     * the consumer taps a row in the "Asistente IA" tab — to
-     * hydrate the conversation history without a fresh round-trip.
+     * `GET /conversations/{conversationId}` — full snapshot of a
+     * saved AI diagnostic conversation including the `messages[]`
+     * thread, the `assessment` (if the diagnosis concluded), and
+     * the `recommended_providers[]` (if the AI matched a rubro).
+     * The chat scroll uses this on entry — when the consumer taps
+     * a row in the "Asistente IA" tab — to hydrate the conversation
+     * history without a fresh round-trip.
      *
-     * The wire shape is the same `DiagnosisDto` returned by
-     * `createConversation` / `sendMessage`, so the existing
-     * `DiagnosisDtoMapper.toDomain()` handles the response without
-     * a new wire-type declaration.
+     * The AI conversation lives in the SAME backend `conversations`
+     * table as the consumer ↔ provider chats (the discriminator
+     * is the id, not a `type` field). The webapp's
+     * `AiChatRepository.getById` hits the same path
+     * (`/conversations/${id}`); mirroring it here keeps the
+     * Android + webapp clients reading from the same row.
+     *
+     * The wire shape matches `DiagnosisDto` (id, status, title,
+     * response_status, assessment, recommended_providers,
+     * response, messages); the existing
+     * `DiagnosisDtoMapper.toDomain()` handles the response
+     * without a new wire-type declaration.
      *
      * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
      * the bearer token from
@@ -115,7 +123,7 @@ interface BackendApi {
      * [retrofit2.HttpException], mapped by the data layer to
      * [com.loresuelvo.consumer.domain.api.ApiError].
      */
-    @GET("chatbot/conversations/{conversationId}")
+    @GET("conversations/{conversationId}")
     suspend fun getAiConversationById(
         @Path("conversationId") conversationId: String,
     ): DiagnosisDto
