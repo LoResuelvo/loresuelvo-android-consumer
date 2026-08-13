@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.bdd.diagnosis
 
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import java.util.concurrent.atomic.AtomicReference
 
@@ -32,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference
 class FakeDiagnosisRepository : DiagnosisRepository {
 
     private val nextOutcomeRef = AtomicReference<SendDiagnosisPromptOutcome?>(null)
+    private val nextLoadOutcomeRef = AtomicReference<LoadAiConversationOutcome?>(null)
     private val hangModeRef = AtomicReference(false)
 
     /**
@@ -74,6 +76,26 @@ class FakeDiagnosisRepository : DiagnosisRepository {
             ?: error(
                 "FakeDiagnosisRepository: no outcome queued. " +
                     "Call enqueueOutcome(...) before the next send.",
+            )
+        return outcome
+    }
+
+    /**
+     * Seed the outcome for the next [getAiConversation] call
+     * (used by the resume-AI-session flow). Mirrors
+     * [enqueueOutcome]'s "consumes its enqueued state once" rule.
+     */
+    fun enqueueLoadOutcome(outcome: LoadAiConversationOutcome) {
+        nextLoadOutcomeRef.set(outcome)
+    }
+
+    override suspend fun getAiConversation(
+        conversationId: String,
+    ): LoadAiConversationOutcome {
+        val outcome = nextLoadOutcomeRef.getAndSet(null)
+            ?: error(
+                "FakeDiagnosisRepository: no load outcome queued. " +
+                    "Call enqueueLoadOutcome(...) before the next get.",
             )
         return outcome
     }

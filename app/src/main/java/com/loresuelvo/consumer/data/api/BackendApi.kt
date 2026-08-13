@@ -95,6 +95,32 @@ interface BackendApi {
     ): DiagnosisDto
 
     /**
+     * `GET /chatbot/conversations/{conversationId}` — full snapshot
+     * of a saved AI diagnostic conversation including the
+     * `messages[]` thread, the `assessment` (if the diagnosis
+     * concluded), and the `recommended_providers[]` (if the AI
+     * matched a rubro). The chat scroll uses this on entry — when
+     * the consumer taps a row in the "Asistente IA" tab — to
+     * hydrate the conversation history without a fresh round-trip.
+     *
+     * The wire shape is the same `DiagnosisDto` returned by
+     * `createConversation` / `sendMessage`, so the existing
+     * `DiagnosisDtoMapper.toDomain()` handles the response without
+     * a new wire-type declaration.
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @GET("chatbot/conversations/{conversationId}")
+    suspend fun getAiConversationById(
+        @Path("conversationId") conversationId: String,
+    ): DiagnosisDto
+
+    /**
      * `GET /chatbot/conversations` — the consumer's AI diagnostic
      * conversations, ordered by the backend's `updated_on` policy
      * (timestamp-descending). Each element is the row-level summary

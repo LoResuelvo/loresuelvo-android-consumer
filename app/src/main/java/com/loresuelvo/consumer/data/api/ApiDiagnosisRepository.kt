@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -45,6 +46,15 @@ class ApiDiagnosisRepository @Inject constructor(
         mapSendToFailure(t)
     }
 
+    override suspend fun getAiConversation(
+        conversationId: String,
+    ): LoadAiConversationOutcome = try {
+        val dto = backendApi.getAiConversationById(conversationId)
+        LoadAiConversationOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapLoadToFailure(t)
+    }
+
     private fun mapSendToFailure(
         e: Throwable,
     ): SendDiagnosisPromptOutcome.Failure = when (val error = e.toApiError()) {
@@ -56,5 +66,18 @@ class ApiDiagnosisRepository @Inject constructor(
             SendDiagnosisPromptOutcome.Failure.Server(error.code, error.errorMessage)
         is ApiError.Unknown ->
             SendDiagnosisPromptOutcome.Failure.Server(0, error.message ?: "Unknown error")
+    }
+
+    private fun mapLoadToFailure(
+        e: Throwable,
+    ): LoadAiConversationOutcome.Failure = when (val error = e.toApiError()) {
+        is ApiError.Network ->
+            LoadAiConversationOutcome.Failure.Network(error.networkCause)
+        is ApiError.Unauthorized ->
+            LoadAiConversationOutcome.Failure.Unauthorized(error.errorMessage)
+        is ApiError.Server ->
+            LoadAiConversationOutcome.Failure.Server(error.code, error.errorMessage)
+        is ApiError.Unknown ->
+            LoadAiConversationOutcome.Failure.Server(0, error.message ?: "Unknown error")
     }
 }

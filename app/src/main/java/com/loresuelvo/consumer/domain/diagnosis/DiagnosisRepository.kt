@@ -29,4 +29,15 @@ interface DiagnosisRepository {
         content: String,
         existingConversationId: String? = null,
     ): SendDiagnosisPromptOutcome
+
+    /**
+     * Loads a saved AI diagnostic conversation so the chat scroll
+     * can hydrate when the consumer taps a row in the "Asistente
+     * IA" tab. The backend returns the full conversation
+     * including the saved messages, the assessment (if the
+     * diagnosis concluded), and the recommended providers (if
+     * the AI matched a rubro). The returned [Diagnosis] is the
+     * same aggregate the chat scroll already knows how to render.
+     */
+    suspend fun getAiConversation(conversationId: String): LoadAiConversationOutcome
 }
