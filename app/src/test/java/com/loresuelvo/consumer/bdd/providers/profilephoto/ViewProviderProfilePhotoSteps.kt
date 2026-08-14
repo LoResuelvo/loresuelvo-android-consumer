@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.bdd.providers.profilephoto
 
 import com.loresuelvo.consumer.bdd.providers.search.CucumberWorld
+import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -58,9 +59,50 @@ class ViewProviderProfilePhotoSteps {
         // `Cuando toco la tarjeta…`.
     }
 
+    @Given("ya tengo una conversación con el prestador {string}")
+    fun yaTengoUnaConversacionConElPrestador(providerFullName: String) {
+        world.seedConversationWithProvider(providerFullName)
+    }
+
+    @When("accedo a la sección de chats")
+    fun accedoALaSeccionDeChats() {
+        world.loadMessages()
+    }
+
     @When("toco la tarjeta de la categoría {string}")
     fun tocoLaTarjetaDeLaCategoria(categoryName: String) {
         world.tapCategoryCard(categoryName)
+    }
+
+    @Then("veo al prestador {string} con la foto de perfil {string} en mi lista de chats")
+    fun veoAlPrestadorConLaFotoDePerfilEnMiListaDeChats(
+        providerFullName: String,
+        expectedPhotoUrl: String,
+    ) {
+        val state = world.lastMessagesUiState()
+
+        assertTrue(
+            "expected MessagesListUiState.Ready, was $state",
+            state is MessagesListUiState.Ready,
+        )
+
+        val conversations =
+            (state as MessagesListUiState.Ready).conversations
+
+        val conversation = conversations.firstOrNull {
+            "${it.counterpart.name} ${it.counterpart.surname}" == providerFullName
+        }
+
+        assertNotNull(
+            "expected conversation with '$providerFullName', " +
+                "but conversations were $conversations",
+            conversation,
+        )
+
+        assertEquals(
+            expectedPhotoUrl,
+            conversation!!.counterpart.profilePhotoUrl,
+        )
     }
 
     @Then("llego a la lista de prestadores del rubro {string}")

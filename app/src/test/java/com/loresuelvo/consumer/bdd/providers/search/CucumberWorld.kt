@@ -13,6 +13,14 @@ import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.domain.usecase.provider.GetProvidersByCategoryUseCase
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
+import com.loresuelvo.consumer.domain.conversation.Conversation
+import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
+import com.loresuelvo.consumer.domain.conversation.ConversationRepository
+import com.loresuelvo.consumer.domain.conversation.ConversationStatus
+import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationsUseCase
+import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
+import com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -45,9 +53,11 @@ class CucumberWorld : AutoCloseable {
     private lateinit var categoryRepo: FakeCategoryRepository
     private lateinit var sessionStore: AuthSessionStore
     private lateinit var viewModel: ProfessionalsViewModel
+    private lateinit var conversationRepo: FakeConversationRepository
+    private lateinit var messagesListViewModel: MessagesListViewModel
 
     private val observedUiStates: MutableList<ProfessionalsUiState> = mutableListOf()
-
+    private val observedMessagesUiStates = mutableListOf<MessagesListUiState>()
     /**
      * Categories defined by the Background table. Populated by the
      * `Given the following categories exist:` step.
@@ -95,8 +105,20 @@ class CucumberWorld : AutoCloseable {
             getCategories = GetCategoriesUseCase(categoryRepo),
         )
 
+        conversationRepo = FakeConversationRepository()
+
+        messagesListViewModel = MessagesListViewModel(
+            GetConversationsUseCase(conversationRepo),
+        )
+
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
+        }
+
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            messagesListViewModel.uiState.collect {
+                observedMessagesUiStates += it
+            }
         }
 
         scheduler.advanceUntilIdle()
@@ -201,6 +223,35 @@ class CucumberWorld : AutoCloseable {
 
     fun observedStates(): List<ProfessionalsUiState> = observedUiStates.toList()
 
+    fun seedConversationWithProvider(providerFullName: String) {
+        val provider = providers.first {
+            "${it.name} ${it.surname}" == providerFullName
+        }
+
+        conversationRepo.addConversation(
+            Conversation(
+                id = "conversation-${provider.id}",
+                status = ConversationStatus.Pending,
+                counterpart = ConversationCounterpart(
+                    id = provider.id.toLong(),
+                    name = provider.name,
+                    surname = provider.surname,
+                    categoryName = provider.categoryName,
+                    profilePhotoUrl = provider.profilePhotoUrl,
+                ),
+                lastMessage = null,
+                updatedOnEpochMillis = 0L,
+            ),
+        )
+    }
+
+    fun loadMessages() {
+        messagesListViewModel.load()
+        scheduler.advanceUntilIdle()
+    }
+
+    fun lastMessagesUiState(): MessagesListUiState = observedMessagesUiStates.last()
+
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()
@@ -219,6 +270,26 @@ class CucumberWorld : AutoCloseable {
         override fun getSession(): AuthSession? = flow.value
         override fun saveSession(session: AuthSession) { flow.value = session }
         override fun clearSession() { flow.value = null }
+    }
+
+    private class FakeConversationRepository : ConversationRepository {
+
+        private val conversations = mutableListOf<Conversation>()
+
+        fun addConversation(conversation: Conversation) {
+            conversations.removeAll { it.id == conversation.id }
+            conversations += conversation
+        }
+
+        override suspend fun getConversations(): ConversationsOutcome = ConversationsOutcome.Success(conversations.toList())
+
+        override suspend fun getConversationById(conversationId: String) = throw UnsupportedOperationException(
+            "FakeConversationRepository: detail not needed by VFP scenarios",
+        )
+
+        override suspend fun sendMessage(conversationId: String, content: String) = throw UnsupportedOperationException(
+            "FakeConversationRepository: send not needed by VFP scenarios",
+        )
     }
 
     private class FakeCategoryRepository(
