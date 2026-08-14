@@ -26,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
@@ -67,6 +68,14 @@ fun ConversationTopBar(
                 )
             }
             Spacer(Modifier.width(4.dp))
+
+            ProviderAvatar(
+                name = counterpart.name,
+                profilePhotoUrl = counterpart.profilePhotoUrl,
+            )
+
+            Spacer(Modifier.width(12.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${counterpart.name} ${counterpart.surname}",
