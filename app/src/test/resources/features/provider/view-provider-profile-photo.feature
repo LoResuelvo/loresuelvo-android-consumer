@@ -33,8 +33,6 @@ Característica: Ver la foto de perfil del prestador
       | id       | name  | surname | category_name | category_id | profile_photo_url                  |
       | prov-001 | Juan  | Pérez   | Plomería      | 1           | https://cdn.loresuelvo.test/jp.jpg |
       | prov-002 | Laura | Gómez   | Electricidad  | 2           | https://cdn.loresuelvo.test/lg.jpg |
-    Y ya tengo una conversación con el prestador "Juan Pérez"
-    Y ya tengo una conversación con el prestador "Laura Gómez"
 
   @wip
   Escenario: 01-VFP La lista de prestadores expone la foto de perfil al filtrar por rubro
