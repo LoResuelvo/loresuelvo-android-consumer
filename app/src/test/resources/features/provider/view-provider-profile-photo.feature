@@ -40,14 +40,17 @@ Característica: Ver la foto de perfil del prestador
     Entonces llego a la lista de prestadores del rubro "Plomería"
     Y la tarjeta del prestador "Juan Pérez" expone la foto de perfil "https://cdn.loresuelvo.test/jp.jpg"
 
-  @wip
-  Escenario: 02-VFP El header del chat muestra la foto de perfil del prestador con el que converso
-    Dado accedo a la sección de chats
-    Y abro la conversación con "Juan Pérez"
-    Entonces el header del chat muestra la foto de perfil "https://cdn.loresuelvo.test/jp.jpg" del prestador "Juan Pérez"
+@wip
+Escenario: 02-VFP El header del chat muestra la foto de perfil del prestador con el que converso
+  Dado ya tengo una conversación con el prestador "Juan Pérez"
+  Cuando accedo a la sección de chats
+  Y abro la conversación con "Juan Pérez"
+  Entonces el header del chat muestra la foto de perfil "https://cdn.loresuelvo.test/jp.jpg" del prestador "Juan Pérez"
 
-  @wip
-  Escenario: 03-VFP La ventana de chats muestra la foto de perfil de cada prestador con quien tengo conversación
-    Dado accedo a la sección de chats
-    Entonces veo al prestador "Juan Pérez" con la foto de perfil "https://cdn.loresuelvo.test/jp.jpg" en mi lista de chats
-    Y veo al prestador "Laura Gómez" con la foto de perfil "https://cdn.loresuelvo.test/lg.jpg" en mi lista de chats
+@wip
+Escenario: 03-VFP La ventana de chats muestra la foto de perfil de cada prestador con quien tengo conversación
+  Dado ya tengo una conversación con el prestador "Juan Pérez"
+  Y ya tengo una conversación con el prestador "Laura Gómez"
+  Cuando accedo a la sección de chats
+  Entonces veo al prestador "Juan Pérez" con la foto de perfil "https://cdn.loresuelvo.test/jp.jpg" en mi lista de chats
+  Y veo al prestador "Laura Gómez" con la foto de perfil "https://cdn.loresuelvo.test/lg.jpg" en mi lista de chats
