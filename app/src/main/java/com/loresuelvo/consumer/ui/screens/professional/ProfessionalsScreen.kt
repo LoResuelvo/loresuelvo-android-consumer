@@ -339,7 +339,7 @@ fun ProviderAvatar(
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape)
-                    .testTag(PROVIDER_AVATAR_IMAGE_TAG),
+                    .testTag("provider-profile-photo-$name"),
             )
         }
         Text(
@@ -364,7 +364,6 @@ const val PROVIDER_AVATAR_TAG: String = "provider-avatar"
  * attempted to load a remote photo (rather than going straight to
  * the initial-letter fallback).
  */
-const val PROVIDER_AVATAR_IMAGE_TAG: String = "provider-avatar-image"
 
 @Preview(showBackground = true, name = "Professionals · Ready")
 @Composable

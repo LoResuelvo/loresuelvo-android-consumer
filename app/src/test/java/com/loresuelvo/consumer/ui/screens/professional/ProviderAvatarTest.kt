@@ -63,7 +63,7 @@ class ProviderAvatarTest {
         // Initial letter is painted.
         composeTestRule.onNodeWithText("A").assertIsDisplayed()
         // No Coil image was kicked off.
-        composeTestRule.onNodeWithTag(PROVIDER_AVATAR_IMAGE_TAG)
+        composeTestRule.onNodeWithTag("provider-profile-photo-Agustina")
             .assertDoesNotExist()
     }
 
@@ -85,7 +85,7 @@ class ProviderAvatarTest {
 
         composeTestRule.onNodeWithTag(PROVIDER_AVATAR_TAG).assertIsDisplayed()
         composeTestRule.onNodeWithText("J").assertIsDisplayed()
-        composeTestRule.onNodeWithTag(PROVIDER_AVATAR_IMAGE_TAG)
+        composeTestRule.onNodeWithTag("provider-profile-photo-Juan")
             .assertDoesNotExist()
     }
 
@@ -108,7 +108,7 @@ class ProviderAvatarTest {
         composeTestRule.onNodeWithTag(PROVIDER_AVATAR_TAG).assertIsDisplayed()
         // The Coil image slot is present even before the request
         // resolves (it paints the initial fallback underneath).
-        composeTestRule.onNodeWithTag(PROVIDER_AVATAR_IMAGE_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag("provider-profile-photo-Agustina").assertIsDisplayed()
         // Initial is still painted underneath the image slot so the
         // avatar never looks blank while loading.
         composeTestRule.onNodeWithText("A").assertIsDisplayed()

@@ -34,7 +34,6 @@ Característica: Ver la foto de perfil del prestador
       | prov-001 | Juan  | Pérez   | Plomería      | 1           | https://cdn.loresuelvo.test/jp.jpg |
       | prov-002 | Laura | Gómez   | Electricidad  | 2           | https://cdn.loresuelvo.test/lg.jpg |
 
-  @wip
   Escenario: 01-VFP La lista de prestadores expone la foto de perfil al filtrar por rubro
     Dado estoy en la pantalla Home del consumidor
     Cuando toco la tarjeta de la categoría "Plomería"

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
@@ -184,6 +185,35 @@ class ProfessionalsAcceptanceTest {
             .assertIsDisplayed()
     }
 
+    @Test
+    fun tapping_a_category_tile_exposes_provider_profile_photo() {
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule
+                .onAllNodesWithText("Plomería")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule
+            .onAllNodesWithText("Plomería")[0]
+            .performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule
+                .onAllNodesWithText("Juan Pérez")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule
+            .onNodeWithText("Juan Pérez")
+            .assertIsDisplayed()
+
+        composeTestRule
+            .onNodeWithTag("provider-profile-photo-Juan")
+            .assertIsDisplayed()
+    }
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface SessionStoreEntryPoint {
@@ -235,12 +265,20 @@ class ProfessionalsAcceptanceTest {
             1 -> ProvidersOutcome.Success(
                 listOf(
                     Provider(
-                        id = 1, name = "Carlos", surname = "López",
-                        categoryId = 1, categoryName = "Plomería", profilePhotoUrl = null,
+                        id = 1,
+                        name = "Juan",
+                        surname = "Pérez",
+                        categoryId = 1,
+                        categoryName = "Plomería",
+                        profilePhotoUrl = "https://cdn.loresuelvo.test/jp.jpg",
                     ),
                     Provider(
-                        id = 2, name = "Diego", surname = "Díaz",
-                        categoryId = 1, categoryName = "Plomería", profilePhotoUrl = null,
+                        id = 2,
+                        name = "Diego",
+                        surname = "Díaz",
+                        categoryId = 1,
+                        categoryName = "Plomería",
+                        profilePhotoUrl = null,
                     ),
                 ),
             )
