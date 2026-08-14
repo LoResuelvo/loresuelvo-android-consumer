@@ -268,13 +268,14 @@ class SendMessagesWorld : AutoCloseable {
         lastMessageContent: String? = "Hola Juan, necesito una mano",
         lastMessageSender: ConversationSender = ConversationSender.Consumer,
         updatedOnEpochMillis: Long = 0L,
+        profilePhotoUrl: String? = null,
     ) {
         val counterpart = ConversationCounterpart(
             id = 20L,
             name = counterpartName,
             surname = counterpartSurname,
             categoryName = categoryName,
-            profilePhotoUrl = null,
+            profilePhotoUrl = profilePhotoUrl,
         )
         val seededMessage = lastMessageContent?.let { content ->
             ConversationMessage(

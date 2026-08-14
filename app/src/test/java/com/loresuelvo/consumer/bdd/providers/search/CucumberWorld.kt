@@ -21,6 +21,19 @@ import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationsUseCase
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel
+import com.loresuelvo.consumer.domain.conversation.ConversationDetail
+import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
+import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
+import com.loresuelvo.consumer.data.api.WebSocketClient
+import com.loresuelvo.consumer.domain.conversation.ConversationSender
+import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
+import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
+import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
+import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +44,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import com.loresuelvo.consumer.domain.realtime.WsEvent
 
 /**
  * Per-scenario world for the search-providers BDD specs. Owns a
@@ -55,6 +69,20 @@ class CucumberWorld : AutoCloseable {
     private lateinit var viewModel: ProfessionalsViewModel
     private lateinit var conversationRepo: FakeConversationRepository
     private lateinit var messagesListViewModel: MessagesListViewModel
+    private lateinit var conversationViewModel: ConversationViewModel
+
+    private val observedConversationUiStates = mutableListOf<ConversationUiState>()
+
+    private val wsEvents = MutableSharedFlow<WsEvent>(
+        replay = 0,
+        extraBufferCapacity = 64,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    private val fakeWebSocketClient: WebSocketClient = mockk(relaxed = true) {
+        every { events } returns wsEvents
+        every { start() } returns Unit
+    }
 
     private val observedUiStates: MutableList<ProfessionalsUiState> = mutableListOf()
     private val observedMessagesUiStates = mutableListOf<MessagesListUiState>()
@@ -111,6 +139,12 @@ class CucumberWorld : AutoCloseable {
             GetConversationsUseCase(conversationRepo),
         )
 
+        conversationViewModel = ConversationViewModel(
+            getConversationById = GetConversationByIdUseCase(conversationRepo),
+            sendMessage = SendMessageUseCase(conversationRepo),
+            webSocketClient = fakeWebSocketClient,
+        )
+
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
         }
@@ -118,6 +152,12 @@ class CucumberWorld : AutoCloseable {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             messagesListViewModel.uiState.collect {
                 observedMessagesUiStates += it
+            }
+        }
+
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            conversationViewModel.uiState.collect {
+                observedConversationUiStates += it
             }
         }
 
@@ -163,6 +203,18 @@ class CucumberWorld : AutoCloseable {
             )
         }
         providerRepo.setSeed(providers.toList())
+    }
+
+    fun openConversationFor(providerFullName: String) {
+        val provider = providers.first {
+            "${it.name} ${it.surname}" == providerFullName
+        }
+
+        val conversationId = "conversation-${provider.id}"
+
+        conversationViewModel.load(conversationId)
+
+        scheduler.advanceUntilIdle()
     }
 
     /**
@@ -221,6 +273,8 @@ class CucumberWorld : AutoCloseable {
 
     fun lastUiState(): ProfessionalsUiState = observedUiStates.last()
 
+    fun lastConversationUiState(): ConversationUiState = observedConversationUiStates.last()
+
     fun observedStates(): List<ProfessionalsUiState> = observedUiStates.toList()
 
     fun seedConversationWithProvider(providerFullName: String) {
@@ -228,20 +282,31 @@ class CucumberWorld : AutoCloseable {
             "${it.name} ${it.surname}" == providerFullName
         }
 
-        conversationRepo.addConversation(
-            Conversation(
-                id = "conversation-${provider.id}",
-                status = ConversationStatus.Pending,
-                counterpart = ConversationCounterpart(
-                    id = provider.id.toLong(),
-                    name = provider.name,
-                    surname = provider.surname,
-                    categoryName = provider.categoryName,
-                    profilePhotoUrl = provider.profilePhotoUrl,
-                ),
-                lastMessage = null,
-                updatedOnEpochMillis = 0L,
+        val conversation = Conversation(
+            id = "conversation-${provider.id}",
+            status = ConversationStatus.Pending,
+            counterpart = ConversationCounterpart(
+                id = provider.id.toLong(),
+                name = provider.name,
+                surname = provider.surname,
+                categoryName = provider.categoryName,
+                profilePhotoUrl = provider.profilePhotoUrl,
             ),
+            lastMessage = null,
+            updatedOnEpochMillis = 0L,
+        )
+
+        val detail = ConversationDetail(
+            id = conversation.id,
+            status = conversation.status,
+            counterpart = conversation.counterpart,
+            messages = emptyList(),
+            updatedOnEpochMillis = conversation.updatedOnEpochMillis,
+        )
+
+        conversationRepo.addConversation(
+            conversation = conversation,
+            detail = detail,
         )
     }
 
@@ -273,23 +338,38 @@ class CucumberWorld : AutoCloseable {
     }
 
     private class FakeConversationRepository : ConversationRepository {
-
         private val conversations = mutableListOf<Conversation>()
+        private val details = mutableMapOf<String, ConversationDetail>()
 
-        fun addConversation(conversation: Conversation) {
+        fun addConversation(
+            conversation: Conversation,
+            detail: ConversationDetail,
+        ) {
             conversations.removeAll { it.id == conversation.id }
             conversations += conversation
+            details[conversation.id] = detail
         }
 
-        override suspend fun getConversations(): ConversationsOutcome = ConversationsOutcome.Success(conversations.toList())
+        override suspend fun getConversations(): ConversationsOutcome =
+            ConversationsOutcome.Success(conversations.toList())
 
-        override suspend fun getConversationById(conversationId: String) = throw UnsupportedOperationException(
-            "FakeConversationRepository: detail not needed by VFP scenarios",
-        )
+        override suspend fun getConversationById(
+            conversationId: String,
+        ): ConversationDetailOutcome =
+            details[conversationId]
+                ?.let { ConversationDetailOutcome.Success(it) }
+                ?: ConversationDetailOutcome.Failure.Server(
+                    code = 404,
+                    message = "Conversation not found",
+                )
 
-        override suspend fun sendMessage(conversationId: String, content: String) = throw UnsupportedOperationException(
-            "FakeConversationRepository: send not needed by VFP scenarios",
-        )
+        override suspend fun sendMessage(
+            conversationId: String,
+            content: String,
+        ): SendMessageOutcome =
+            throw UnsupportedOperationException(
+                "FakeConversationRepository: send not needed by VFP scenarios",
+            )
     }
 
     private class FakeCategoryRepository(

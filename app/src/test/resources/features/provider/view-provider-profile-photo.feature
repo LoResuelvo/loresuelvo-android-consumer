@@ -40,7 +40,6 @@ Característica: Ver la foto de perfil del prestador
     Entonces llego a la lista de prestadores del rubro "Plomería"
     Y la tarjeta del prestador "Juan Pérez" expone la foto de perfil "https://cdn.loresuelvo.test/jp.jpg"
 
-@wip
 Escenario: 02-VFP El header del chat muestra la foto de perfil del prestador con el que converso
   Dado ya tengo una conversación con el prestador "Juan Pérez"
   Cuando accedo a la sección de chats

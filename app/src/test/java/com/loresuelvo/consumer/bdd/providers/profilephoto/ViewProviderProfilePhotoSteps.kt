@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.bdd.providers.profilephoto
 
 import com.loresuelvo.consumer.bdd.providers.search.CucumberWorld
 import com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState
+import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import io.cucumber.datatable.DataTable
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -61,6 +62,7 @@ class ViewProviderProfilePhotoSteps {
 
     @Given("ya tengo una conversación con el prestador {string}")
     fun yaTengoUnaConversacionConElPrestador(providerFullName: String) {
+        world.startScenario()
         world.seedConversationWithProvider(providerFullName)
     }
 
@@ -72,6 +74,36 @@ class ViewProviderProfilePhotoSteps {
     @When("toco la tarjeta de la categoría {string}")
     fun tocoLaTarjetaDeLaCategoria(categoryName: String) {
         world.tapCategoryCard(categoryName)
+    }
+
+    @When("abro la conversación con {string}")
+    fun abroLaConversacionCon(providerFullName: String) {
+        world.openConversationFor(providerFullName)
+    }
+
+    @Then("el header del chat muestra la foto de perfil {string} del prestador {string}")
+    fun elHeaderDelChatMuestraLaFotoDePerfil(
+        expectedPhotoUrl: String,
+        providerFullName: String,
+    ) {
+        val state = world.lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val detail = (state as ConversationUiState.Ready).detail
+
+        assertEquals(
+            providerFullName,
+            "${detail.counterpart.name} ${detail.counterpart.surname}",
+        )
+
+        assertEquals(
+            expectedPhotoUrl,
+            detail.counterpart.profilePhotoUrl,
+        )
     }
 
     @Then("veo al prestador {string} con la foto de perfil {string} en mi lista de chats")
