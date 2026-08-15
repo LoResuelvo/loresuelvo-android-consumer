@@ -104,6 +104,18 @@
     <string name="conversation_transient_error_retry">Reintentar</string>
     <string name="conversation_transient_error_dismiss">Descartar</string>
     <string name="conversation_new_message_banner">Nuevo mensaje</string>
+    <!-- Conversation · media attach (01-MM onwards) -->
+    <string name="conversation_attach_content_description">Adjuntar archivo</string>
+    <string name="conversation_attach_gallery">Galería</string>
+    <string name="conversation_attach_camera">Cámara</string>
+    <string name="conversation_attach_audio">Audio</string>
+    <string name="conversation_media_preview_send">Enviar</string>
+    <string name="conversation_media_preview_discard">Descartar</string>
+    <string name="conversation_media_preview_image_content_description">Vista previa de la imagen adjunta</string>
+    <string name="conversation_media_preview_file_name_format">%1$s · %2$s</string>
+    <string name="conversation_transient_media_error_network">No pudimos enviar el archivo. Revisá tu conexión.</string>
+    <string name="conversation_transient_media_error_server">No pudimos enviar el archivo. Reintentá.</string>
+    <string name="conversation_transient_media_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contactar</string>
     <string name="contact_provider_modal_title">Crear solicitud de trabajo</string>

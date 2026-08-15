@@ -400,6 +400,27 @@ private fun ConversationRoute(
         viewModel.load(conversationId)
     }
 
+    // The picker is remembered at the route level so the
+    // ActivityResultLauncher survives recompositions. The
+    // `ActivityResultContracts.PickVisualMedia` contract returns
+    // a single `Uri` (or `null` if the user backed out); the
+    // route feeds that `Uri` straight into the VM's
+    // `onAttachImageFromGallery`. 01-MM only wires the gallery
+    // option; camera (02-MM) and audio (03-MM) will add their
+    // own launchers in their respective commits.
+    val sheetState = androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
+    val showAttachSheet: Boolean = sheetState.value
+    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onAttachImageFromGallery(uri)
+        }
+        sheetState.value = false
+    }
+
     com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
         state = state,
         onPromptChange = viewModel::onPromptChange,
@@ -407,6 +428,19 @@ private fun ConversationRoute(
         onBackClick = { navController.popBackStack() },
         onRetryClick = { viewModel.load(conversationId) },
         onErrorDismiss = viewModel::onErrorDismiss,
+        onAttachClick = { sheetState.value = true },
+        onGalleryClick = {
+            galleryLauncher.launch(
+                androidx.activity.result.PickVisualMediaRequest(
+                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
+                ),
+            )
+        },
+        onConfirmMediaSend = viewModel::onConfirmMediaSend,
+        onDiscardMedia = viewModel::onDiscardMediaPreview,
+        onMediaErrorDismiss = viewModel::onErrorDismiss,
+        onAttachSheetDismiss = { sheetState.value = false },
+        showAttachSheet = showAttachSheet,
         onScrollPositionChanged = viewModel::onScrollPositionChanged,
         onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
     )

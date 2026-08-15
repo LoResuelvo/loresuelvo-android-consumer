@@ -60,6 +60,19 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
  *    surfaces as a card pinned above the composer with retry +
  *    dismiss callbacks.
  *
+ * Media attach surface (01-MM onwards):
+ *  - The [ChatInputBar] receives `onAttachClick = { showAttachSheet = true }`
+ *    so the `+` button is rendered to the LEFT of the prompt.
+ *  - Tapping the button surfaces [MediaAttachSheet]; tapping
+ *    "Galería" calls [onGalleryClick] (the host owns the
+ *    `ActivityResultContracts.PickVisualMedia` launcher) which
+ *    ultimately drives [ConversationViewModel.onAttachImageFromGallery].
+ *  - Once a media is staged, [MediaPreviewCard] renders between
+ *    the list and the composer with Send + Discard actions.
+ *  - The transient-media-error card lives just above the
+ *    composer and uses the same retry / dismiss pattern as the
+ *    text transient error card.
+ *
  * Auto-scroll: a [LaunchedEffect] keyed on the message count
  * scrolls to the freshly-added bubble so the consumer's just-
  * sent message is always visible. We deliberately do NOT
@@ -81,6 +94,13 @@ fun ConversationScreen(
     onBackClick: () -> Unit,
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onAttachClick: () -> Unit = {},
+    onGalleryClick: () -> Unit = {},
+    onConfirmMediaSend: () -> Unit = {},
+    onDiscardMedia: () -> Unit = {},
+    onMediaErrorDismiss: () -> Unit = {},
+    onAttachSheetDismiss: () -> Unit = {},
+    showAttachSheet: Boolean = false,
     onScrollPositionChanged: (Boolean) -> Unit = {},
     onUnreadBannerTapped: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -100,6 +120,11 @@ fun ConversationScreen(
                 onSendClick = onSendClick,
                 onBackClick = onBackClick,
                 onErrorDismiss = onErrorDismiss,
+                onAttachClick = onAttachClick,
+                onGalleryClick = onGalleryClick,
+                onConfirmMediaSend = onConfirmMediaSend,
+                onDiscardMedia = onDiscardMedia,
+                onMediaErrorDismiss = onMediaErrorDismiss,
                 onScrollPositionChanged = onScrollPositionChanged,
                 onUnreadBannerTapped = onUnreadBannerTapped,
             )
@@ -108,6 +133,11 @@ fun ConversationScreen(
                 onRetryClick = onRetryClick,
             )
         }
+        MediaAttachSheet(
+            show = showAttachSheet,
+            onDismiss = onAttachSheetDismiss,
+            onGalleryClick = onGalleryClick,
+        )
     }
 }
 
@@ -174,6 +204,11 @@ private fun ReadyState(
     onSendClick: () -> Unit,
     onBackClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onAttachClick: () -> Unit,
+    onGalleryClick: () -> Unit,
+    onConfirmMediaSend: () -> Unit,
+    onDiscardMedia: () -> Unit,
+    onMediaErrorDismiss: () -> Unit,
     onScrollPositionChanged: (Boolean) -> Unit,
     onUnreadBannerTapped: () -> Unit,
 ) {
@@ -251,12 +286,28 @@ private fun ReadyState(
                 onDismiss = onErrorDismiss,
             )
         }
+        if (state.pendingMedia != null) {
+            MediaPreviewCard(
+                pendingMedia = state.pendingMedia,
+                sending = state.sendingMedia,
+                onSendClick = onConfirmMediaSend,
+                onDiscardClick = onDiscardMedia,
+            )
+            if (state.transientMediaError != null) {
+                MediaTransientErrorCard(
+                    failure = state.transientMediaError,
+                    onRetryClick = onConfirmMediaSend,
+                    onDismiss = onMediaErrorDismiss,
+                )
+            }
+        }
         ChatInputBar(
             promptInput = state.promptInput,
             canSend = state.promptInput.isNotBlank() && !state.sending,
             sending = state.sending,
             onPromptChange = onPromptChange,
             onSendClick = onSendClick,
+            onAttachClick = onAttachClick,
         )
     }
 }
@@ -354,3 +405,73 @@ const val CONVERSATION_LIST_TAG: String = "conversation-list"
 const val CONVERSATION_TRANSIENT_ERROR_TAG: String = "conversation-transient-error"
 const val CONVERSATION_TRANSIENT_ERROR_RETRY_TAG: String = "conversation-transient-error-retry"
 const val CONVERSATION_TRANSIENT_ERROR_DISMISS_TAG: String = "conversation-transient-error-dismiss"
+
+/**
+ * Companion of [TransientErrorCard] for the media upload path
+ * (01-MM). Same visual treatment (`errorContainer` surface +
+ * dismiss / retry row), but the typed failure is the media-side
+ * [SendMessageOutcome.Failure] and the copy uses the
+ * `conversation_transient_media_error_*` strings so the wording
+ * matches the file-attachment context.
+ */
+@Composable
+private fun MediaTransientErrorCard(
+    failure: SendMessageOutcome.Failure,
+    onRetryClick: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val message = when (failure) {
+        is SendMessageOutcome.Failure.Network ->
+            stringResource(R.string.conversation_transient_media_error_network)
+        is SendMessageOutcome.Failure.Server ->
+            stringResource(R.string.conversation_transient_media_error_server)
+        is SendMessageOutcome.Failure.Unauthorized ->
+            stringResource(R.string.conversation_transient_media_error_unauthorized)
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .testTag(CONVERSATION_TRANSIENT_MEDIA_ERROR_TAG),
+        color = MaterialTheme.colorScheme.errorContainer,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag(CONVERSATION_TRANSIENT_MEDIA_ERROR_DISMISS_TAG),
+                ) {
+                    Text(
+                        text = stringResource(R.string.conversation_transient_error_dismiss),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                TextButton(
+                    onClick = onRetryClick,
+                    modifier = Modifier.testTag(CONVERSATION_TRANSIENT_MEDIA_ERROR_RETRY_TAG),
+                ) {
+                    Text(
+                        text = stringResource(R.string.conversation_transient_error_retry),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+        }
+    }
+}
+
+const val CONVERSATION_TRANSIENT_MEDIA_ERROR_TAG: String = "conversation-transient-media-error"
+const val CONVERSATION_TRANSIENT_MEDIA_ERROR_RETRY_TAG: String = "conversation-transient-media-error-retry"
+const val CONVERSATION_TRANSIENT_MEDIA_ERROR_DISMISS_TAG: String = "conversation-transient-media-error-dismiss"
