@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -55,8 +56,18 @@ import com.loresuelvo.consumer.R
  *    without resorting to a second spinner (the in-flight
  *    indicator already lives in the chat's typing bubble).
  *
+ * Attach affordance (added in 01-MM for the provider chat):
+ *  - When [onAttachClick] is non-null, a leading `+` button is
+ *    rendered to the LEFT of the prompt field. The button opens
+ *    the host's media-attach sheet (the bar does NOT own the
+ *    sheet state — the host composable is the single owner).
+ *  - When [onAttachClick] is null (e.g. the AI diagnostic chat
+ *    that has no media surface), the leading button is omitted
+ *    and the bar's layout collapses to the prompt + send pair.
+ *
  * Stateless: every input/output goes through the callbacks; the
- * parent owns state via [ChatViewModel].
+ * parent owns state via [ChatViewModel] or
+ * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel].
  */
 @Composable
 fun ChatInputBar(
@@ -65,6 +76,7 @@ fun ChatInputBar(
     sending: Boolean,
     onPromptChange: (String) -> Unit,
     onSendClick: () -> Unit,
+    onAttachClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -80,6 +92,34 @@ fun ChatInputBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // Leading `+` affordance (01-MM). Optional so the AI
+        // diagnostic chat (no media surface) keeps its original
+        // layout.
+        if (onAttachClick != null) {
+            Surface(
+                onClick = onAttachClick,
+                modifier = Modifier
+                    .size(48.dp)
+                    .testTag(ATTACH_BUTTON_TAG),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Add,
+                        contentDescription = stringResource(
+                            R.string.conversation_attach_content_description,
+                        ),
+                        modifier = Modifier.testTag(ATTACH_ICON_TAG),
+                    )
+                }
+            }
+        }
+
         BasicTextField(
             value = promptInput,
             onValueChange = onPromptChange,
@@ -173,6 +213,19 @@ const val SEND_BUTTON_TAG: String = "chat-send-button"
  * testTag is always present when the bar is mounted.
  */
 const val SEND_ICON_TAG: String = "chat-send-icon"
+
+/**
+ * Compose testTag for the leading `+` attach button (01-MM). Only
+ * present when the host supplies [ChatInputBar]'s `onAttachClick`
+ * callback — the AI diagnostic chat does not.
+ */
+const val ATTACH_BUTTON_TAG: String = "chat-attach-button"
+
+/**
+ * Compose testTag for the `+` icon inside the attach button.
+ * Same visibility rules as [ATTACH_BUTTON_TAG].
+ */
+const val ATTACH_ICON_TAG: String = "chat-attach-icon"
 
 /**
  * Compose testTag for the [androidx.compose.material3.HorizontalDivider]
