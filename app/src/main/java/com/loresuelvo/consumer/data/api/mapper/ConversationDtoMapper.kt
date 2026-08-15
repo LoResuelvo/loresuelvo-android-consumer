@@ -4,12 +4,14 @@ import com.loresuelvo.consumer.data.api.dto.ConversationCounterpartDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
+import com.loresuelvo.consumer.data.api.dto.MessageImageDto
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
 import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
+import com.loresuelvo.consumer.domain.conversation.MediaReference
 
 /**
  * DTO → domain translation for the consumer ↔ provider
@@ -77,7 +79,40 @@ internal fun ConversationMessageDto.toDomain(): ConversationMessage {
         sender = sender,
         content = content,
         createdOnEpochMillis = parseIsoMillisOrZero(createdOn) ?: 0L,
+        media = images.firstOrNull()?.toMediaReference(),
     )
+}
+
+/**
+ * Wire image → domain [MediaReference.Image]. Audio and other
+ * future kinds are dispatched by the image's `mimeType`
+ * declaration (the backend echoes `audio/...` for audio
+ * uploads); a non-image mime falls back to `Image` with the URL
+ * so the bubble still renders instead of crashing on an
+ * unhandled variant.
+ */
+private fun MessageImageDto.toMediaReference(): MediaReference {
+    val normalizedMime = mimeType.lowercase()
+    return if (normalizedMime.startsWith("audio/")) {
+        // Duration is not part of the wire envelope today; the
+        // UI hides the duration counter for messages loaded via
+        // the legacy GET path. Audio messages uploaded through
+        // `POST /messages` (multipart) carry the duration in
+        // the multipart response and are mapped by the
+        // repository's `sendMediaMessage` instead.
+        MediaReference.Audio(
+            url = url,
+            mimeType = mimeType,
+            originalName = originalName,
+            durationMillis = 0L,
+        )
+    } else {
+        MediaReference.Image(
+            url = url,
+            mimeType = mimeType,
+            originalName = originalName,
+        )
+    }
 }
 
 internal fun String.toConversationStatus(): ConversationStatus =

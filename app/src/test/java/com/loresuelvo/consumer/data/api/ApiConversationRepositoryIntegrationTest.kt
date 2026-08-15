@@ -9,6 +9,8 @@ import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
@@ -467,6 +469,115 @@ class ApiConversationRepositoryIntegrationTest {
         )
 
         val outcome = repository.sendMessage("1", "hola")
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Network)
+    }
+
+    // ---- sendMediaMessage (multipart) ---------------------------------
+
+    @Test
+    fun sendMediaMessage_posts_multipart_and_maps_image_response() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 42,
+                      "sender_role": "consumer",
+                      "content": "",
+                      "created_on": "2026-08-15T10:00:00Z",
+                      "images": [
+                        {
+                          "id": "img-1",
+                          "url": "https://cdn.loresuelvo.test/foto-baño.jpg",
+                          "original_name": "foto-baño.jpg",
+                          "mime_type": "image/jpeg"
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val upload = MediaUpload.Image(
+            bytes = byteArrayOf(0x01, 0x02, 0x03),
+            mimeType = "image/jpeg",
+            originalName = "foto-baño.jpg",
+        )
+        val outcome = repository.sendMediaMessage(conversationId = "1", media = upload)
+
+        val recorded = server.takeRequest()
+        assertEquals("POST", recorded.method)
+        assertEquals("/conversations/1/messages", recorded.path)
+        // The request must be `multipart/form-data` (Retrofit's
+        // @Multipart annotation sets this header) and the file
+        // part must carry the original name in the disposition.
+        val contentType = recorded.getHeader("Content-Type") ?: ""
+        assertTrue(
+            "expected multipart/form-data, was '$contentType'",
+            contentType.startsWith("multipart/form-data"),
+        )
+        val body = recorded.body.readUtf8()
+        assertTrue(
+            "body must carry the file name in the disposition, was '$body'",
+            body.contains("name=\"file\"") && body.contains("foto-baño.jpg"),
+        )
+
+        assertTrue(outcome is SendMessageOutcome.Success)
+        val success = outcome as SendMessageOutcome.Success
+        assertEquals("42", success.message.id)
+        assertEquals("", success.message.content)
+        val media = success.message.media
+        assertTrue(
+            "expected MediaReference.Image, was $media",
+            media is MediaReference.Image,
+        )
+        assertEquals(
+            "https://cdn.loresuelvo.test/foto-baño.jpg",
+            (media as MediaReference.Image).url,
+        )
+        assertEquals("image/jpeg", media.mimeType)
+        assertEquals("foto-baño.jpg", media.originalName)
+    }
+
+    @Test
+    fun sendMediaMessage_413_maps_to_Server_failure() = runBlocking {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(413)
+                .setHeader("Content-Type", "application/json")
+                .setBody("""{"error":"payload_too_large","message":"image > 5MB"}"""),
+        )
+
+        val outcome = repository.sendMediaMessage(
+            conversationId = "1",
+            media = MediaUpload.Image(
+                bytes = byteArrayOf(0x01),
+                mimeType = "image/jpeg",
+                originalName = "huge.jpg",
+            ),
+        )
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Server)
+        assertEquals(413, (outcome as SendMessageOutcome.Failure.Server).code)
+    }
+
+    @Test
+    fun sendMediaMessage_transport_drop_returns_Network_failure() = runBlocking {
+        server.enqueue(
+            MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START),
+        )
+
+        val outcome = repository.sendMediaMessage(
+            conversationId = "1",
+            media = MediaUpload.Image(
+                bytes = byteArrayOf(0x01),
+                mimeType = "image/jpeg",
+                originalName = "x.jpg",
+            ),
+        )
 
         assertTrue(outcome is SendMessageOutcome.Failure.Network)
     }

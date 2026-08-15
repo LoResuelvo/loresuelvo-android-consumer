@@ -7,6 +7,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -55,5 +56,13 @@ class FakeConversationRepository @Inject constructor() : ConversationRepository 
     ): SendMessageOutcome = SendMessageOutcome.Failure.Server(
         code = 500,
         message = "FakeConversationRepository: sendMessage not implemented",
+    )
+
+    override suspend fun sendMediaMessage(
+        conversationId: String,
+        media: MediaUpload,
+    ): SendMessageOutcome = SendMessageOutcome.Failure.Server(
+        code = 500,
+        message = "FakeConversationRepository: sendMediaMessage not implemented",
     )
 }

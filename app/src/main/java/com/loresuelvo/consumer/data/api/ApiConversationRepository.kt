@@ -6,9 +6,14 @@ import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 /**
  * Default implementation of [ConversationRepository] against the
@@ -52,6 +57,27 @@ class ApiConversationRepository @Inject constructor(
         val dto = backendApi.postMessage(
             conversationId,
             SendMessageRequestDto(content = content),
+        )
+        SendMessageOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapSendFailure(t)
+    }
+
+    override suspend fun sendMediaMessage(
+        conversationId: String,
+        media: MediaUpload,
+    ): SendMessageOutcome = try {
+        val part = MultipartBody.Part.createFormData(
+            name = "file",
+            filename = media.originalName,
+            body = media.bytes.toRequestBody(
+                contentType = media.mimeType.toMediaTypeOrNull(),
+            ),
+        )
+        val dto = backendApi.postMessageWithMedia(
+            conversationId = conversationId,
+            file = part,
+            content = null,
         )
         SendMessageOutcome.Success(dto.toDomain())
     } catch (t: Throwable) {

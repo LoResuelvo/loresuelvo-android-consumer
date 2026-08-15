@@ -17,9 +17,13 @@ import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
 import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -231,6 +235,31 @@ interface BackendApi {
     suspend fun postMessage(
         @Path("conversationId") conversationId: String,
         @Body body: SendMessageRequestDto,
+    ): ConversationMessageDto
+
+    /**
+     * `POST /conversations/{conversationId}/messages` — multipart
+     * variant that uploads a media file (image or audio) and
+     * appends the resulting bubble to the conversation. The
+     * `file` part carries the bytes (the repository sets the
+     * `Content-Disposition` filename + the per-kind
+     * `Content-Type`); `content` is an optional text caption
+     * the consumer can layer on top of the attachment.
+     *
+     * The response mirrors the JSON `postMessage` endpoint
+     * (same [ConversationMessageDto] wire shape, with
+     * `images[]` populated by the server). The repository in
+     * `ApiConversationRepository` collapses the first image into
+     * a [com.loresuelvo.consumer.domain.conversation.MediaReference]
+     * and surfaces it on the resulting
+     * [com.loresuelvo.consumer.domain.conversation.ConversationMessage].
+     */
+    @Multipart
+    @POST("conversations/{conversationId}/messages")
+    suspend fun postMessageWithMedia(
+        @Path("conversationId") conversationId: String,
+        @Part file: MultipartBody.Part,
+        @Part("content") content: RequestBody? = null,
     ): ConversationMessageDto
 
     /**
