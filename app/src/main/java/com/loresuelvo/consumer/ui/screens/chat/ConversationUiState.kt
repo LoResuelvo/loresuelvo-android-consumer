@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import android.net.Uri
 import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
@@ -45,6 +46,18 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
  *    to the bottom. Cleared when the user scrolls back to the
  *    bottom OR when a fresh message arrives while they're
  *    already at the bottom.
+ *
+ * Media attachment state (01-MM onwards):
+ *  - [Ready.pendingMedia] — the locally-attached media awaiting
+ *    confirmation. `null` when nothing is staged.
+ *  - [Ready.attachingMedia] — `true` while the
+ *    [com.loresuelvo.consumer.data.media.MediaReader] is reading
+ *    the URI from the picker.
+ *  - [Ready.sendingMedia] — `true` while the multipart upload is
+ *    in flight.
+ *  - [Ready.transientMediaError] — typed failure from the read
+ *    or the upload. Renders an inline card above the input bar
+ *    with retry / dismiss CTAs.
  */
 sealed interface ConversationUiState {
 
@@ -58,7 +71,53 @@ sealed interface ConversationUiState {
         val lastAttemptedPrompt: String? = null,
         val isAtBottom: Boolean = true,
         val hasUnreadIncoming: Boolean = false,
+        val pendingMedia: PendingMedia? = null,
+        val attachingMedia: Boolean = false,
+        val sendingMedia: Boolean = false,
+        val transientMediaError: SendMessageOutcome.Failure? = null,
     ) : ConversationUiState
 
     data class Error(val failure: ConversationDetailOutcome.Failure) : ConversationUiState
+}
+
+/**
+ * Locally-attached media awaiting the user's confirmation. The
+ * data class lives in the UI layer because it carries the
+ * Android `Uri` (used to render the preview thumbnail) and the
+ * bytes (cached for the confirm step so we don't re-read the
+ * file). The screen renders a preview card from this state and
+ * clears it on send-success or on explicit discard.
+ *
+ * Bytes are cached (rather than re-reading from the URI on
+ * confirm) to keep the upload deterministic — the file system
+ * can revoke the temporary URI permission between attach and
+ * confirm, which would otherwise crash the upload with a
+ * permission-denied `IOException` that's hard to distinguish
+ * from a transient network failure.
+ */
+data class PendingMedia(
+    val localUri: Uri,
+    val mimeType: String,
+    val originalName: String,
+    val sizeBytes: Long,
+    val bytes: ByteArray,
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PendingMedia) return false
+        return localUri == other.localUri &&
+            mimeType == other.mimeType &&
+            originalName == other.originalName &&
+            sizeBytes == other.sizeBytes &&
+            bytes.contentEquals(other.bytes)
+    }
+
+    override fun hashCode(): Int {
+        var result = localUri.hashCode()
+        result = 31 * result + mimeType.hashCode()
+        result = 31 * result + originalName.hashCode()
+        result = 31 * result + sizeBytes.hashCode()
+        result = 31 * result + bytes.contentHashCode()
+        return result
+    }
 }

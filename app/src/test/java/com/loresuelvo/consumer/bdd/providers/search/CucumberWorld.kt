@@ -142,6 +142,8 @@ class CucumberWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = GetConversationByIdUseCase(conversationRepo),
             sendMessage = SendMessageUseCase(conversationRepo),
+            sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(conversationRepo),
+            mediaReader = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
 
@@ -369,6 +371,14 @@ class CucumberWorld : AutoCloseable {
         ): SendMessageOutcome =
             throw UnsupportedOperationException(
                 "FakeConversationRepository: send not needed by VFP scenarios",
+            )
+
+        override suspend fun sendMediaMessage(
+            conversationId: String,
+            media: com.loresuelvo.consumer.domain.conversation.MediaUpload,
+        ): SendMessageOutcome =
+            throw UnsupportedOperationException(
+                "FakeConversationRepository: sendMediaMessage not needed by VFP scenarios",
             )
     }
 

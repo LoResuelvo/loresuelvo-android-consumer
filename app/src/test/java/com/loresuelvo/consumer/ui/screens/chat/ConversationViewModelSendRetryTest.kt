@@ -1,11 +1,13 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import com.loresuelvo.consumer.data.api.WebSocketClient
+import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
+import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -42,6 +44,8 @@ class ConversationViewModelSendRetryTest {
     private val testDispatcher = StandardTestDispatcher()
     private val getConversationById = mockk<GetConversationByIdUseCase>()
     private val sendMessage = mockk<SendMessageUseCase>()
+    private val sendMediaMessage = mockk<SendMediaMessageUseCase>(relaxed = true)
+    private val mediaReader = mockk<MediaReader>(relaxed = true)
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var viewModel: ConversationViewModel
 
@@ -70,7 +74,7 @@ class ConversationViewModelSendRetryTest {
                     updatedOnEpochMillis = 0L,
                 ),
             )
-        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
     }
@@ -107,7 +111,7 @@ class ConversationViewModelSendRetryTest {
             )
         coEvery { sendMessage("1", "primera") } returns
             SendMessageOutcome.Failure.Server(500, "boom")
-        viewModel = ConversationViewModel(getConversationById, sendMessage, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onPromptChange("primera")

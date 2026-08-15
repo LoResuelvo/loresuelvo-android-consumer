@@ -1,13 +1,17 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.data.api.WebSocketClient
+import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
+import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -68,6 +72,8 @@ import kotlinx.coroutines.launch
 class ConversationViewModel @Inject constructor(
     private val getConversationById: GetConversationByIdUseCase,
     private val sendMessage: SendMessageUseCase,
+    private val sendMediaMessage: SendMediaMessageUseCase,
+    private val mediaReader: MediaReader,
     private val webSocketClient: WebSocketClient,
 ) : ViewModel() {
 
@@ -281,6 +287,174 @@ class ConversationViewModel @Inject constructor(
                     transientError = failure,
                     // `lastAttemptedPrompt` is preserved so the
                     // retry CTA can resubmit it.
+                )
+            } else {
+                state
+            }
+        }
+    }
+
+    // ---- Media attachment (01-MM onwards) --------------------------
+
+    /**
+     * Reads the URI the picker returned (gallery / camera /
+     * audio) via [MediaReader], packages the result as a
+     * [PendingMedia] (bytes cached for the confirm step), and
+     * exposes it on the state. The `attachingMedia` flag flips
+     * true for the duration of the read so the screen can show a
+     * spinner on the attach card.
+     *
+     * Read failures are translated to `SendMessageOutcome.Failure.Network`
+     * so the existing transient-error card can render the copy
+     * without a new error surface — the cause is the same kind
+     * of I/O failure the user would see if the backend was
+     * unreachable.
+     */
+    fun onAttachImageFromGallery(uri: Uri) {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        _uiState.update { current ->
+            if (current is ConversationUiState.Ready) {
+                current.copy(
+                    attachingMedia = true,
+                    transientMediaError = null,
+                )
+            } else {
+                current
+            }
+        }
+        viewModelScope.launch {
+            try {
+                val media = mediaReader.read(uri)
+                val image = media as? MediaUpload.Image
+                    ?: throw IllegalStateException(
+                        "Expected MediaUpload.Image from gallery, got ${media::class.simpleName}",
+                    )
+                _uiState.update { current ->
+                    if (current is ConversationUiState.Ready) {
+                        current.copy(
+                            attachingMedia = false,
+                            pendingMedia = PendingMedia(
+                                localUri = uri,
+                                mimeType = image.mimeType,
+                                originalName = image.originalName,
+                                sizeBytes = image.bytes.size.toLong(),
+                                bytes = image.bytes,
+                            ),
+                        )
+                    } else {
+                        current
+                    }
+                }
+            } catch (t: Throwable) {
+                _uiState.update { current ->
+                    if (current is ConversationUiState.Ready) {
+                        current.copy(
+                            attachingMedia = false,
+                            transientMediaError =
+                                SendMessageOutcome.Failure.Network(t),
+                        )
+                    } else {
+                        current
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Discards the staged [PendingMedia] and any transient media
+     * error. No-op outside `Ready`. Bytes are released to the GC
+     * alongside the `pendingMedia` field clear.
+     */
+    fun onDiscardMediaPreview() {
+        _uiState.update { state ->
+            if (state is ConversationUiState.Ready) {
+                state.copy(
+                    pendingMedia = null,
+                    attachingMedia = false,
+                    sendingMedia = false,
+                    transientMediaError = null,
+                )
+            } else {
+                state
+            }
+        }
+    }
+
+    /**
+     * Confirms the staged [PendingMedia] and uploads it through
+     * the [SendMediaMessageUseCase]. The pending bytes are read
+     * directly from the state (cached at attach time) so we
+     * don't depend on the picker URI still being readable — that
+     * permission can be revoked between attach and confirm.
+     *
+     * On success, the server-persisted bubble is appended to
+     * `detail.messages` and the preview cleared. On failure, the
+     * preview is kept (so the user can retry without re-picking)
+     * and the typed failure surfaces in `transientMediaError`.
+     */
+    fun onConfirmMediaSend() {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        val pending = state.pendingMedia ?: return
+        if (state.sendingMedia) return
+
+        _uiState.update { current ->
+            if (current is ConversationUiState.Ready) {
+                current.copy(
+                    sendingMedia = true,
+                    transientMediaError = null,
+                )
+            } else {
+                current
+            }
+        }
+
+        viewModelScope.launch {
+            val upload = MediaUpload.Image(
+                bytes = pending.bytes,
+                mimeType = pending.mimeType,
+                originalName = pending.originalName,
+            )
+            when (val outcome = sendMediaMessage(state.detail.id, upload)) {
+                is SendMessageOutcome.Success ->
+                    applyMediaServerResponse(outcome.message)
+                is SendMessageOutcome.Failure.Network ->
+                    applyMediaSendFailure(outcome)
+                is SendMessageOutcome.Failure.Server ->
+                    applyMediaSendFailure(outcome)
+                is SendMessageOutcome.Failure.Unauthorized ->
+                    applyMediaSendFailure(outcome)
+            }
+        }
+    }
+
+    private fun applyMediaServerResponse(sentMessage: ConversationMessage) {
+        _uiState.update { state ->
+            if (state is ConversationUiState.Ready) {
+                state.copy(
+                    sendingMedia = false,
+                    pendingMedia = null,
+                    transientMediaError = null,
+                    detail = state.detail.copy(
+                        messages = state.detail.messages + sentMessage,
+                    ),
+                )
+            } else {
+                state
+            }
+        }
+    }
+
+    private fun applyMediaSendFailure(failure: SendMessageOutcome.Failure) {
+        _uiState.update { state ->
+            if (state is ConversationUiState.Ready) {
+                state.copy(
+                    sendingMedia = false,
+                    transientMediaError = failure,
+                    // `pendingMedia` is preserved so the retry CTA
+                    // can resubmit without the user re-picking.
                 )
             } else {
                 state

@@ -167,6 +167,8 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
+            sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(fakeConversationRepo),
+            mediaReader = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
 
@@ -437,6 +439,8 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
+            sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(fakeConversationRepo),
+            mediaReader = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
         // No observer for the new instance — the BDD re-entry
@@ -458,6 +462,8 @@ class SendMessagesWorld : AutoCloseable {
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,
             sendMessage = sendMessageUseCase,
+            sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(fakeConversationRepo),
+            mediaReader = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -586,5 +592,13 @@ class SendMessagesWorld : AutoCloseable {
                 ),
             )
         }
+
+        override suspend fun sendMediaMessage(
+            conversationId: String,
+            media: com.loresuelvo.consumer.domain.conversation.MediaUpload,
+        ): SendMessageOutcome = SendMessageOutcome.Failure.Server(
+            code = 500,
+            message = "FakeConversationRepository: sendMediaMessage not implemented",
+        )
     }
 }
