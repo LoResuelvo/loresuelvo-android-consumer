@@ -88,6 +88,12 @@ sealed interface ConversationUiState {
  * file). The screen renders a preview card from this state and
  * clears it on send-success or on explicit discard.
  *
+ * [localUri] is nullable because the BDD world (and any future
+ * programmatic attach scenario) constructs a [MediaUpload]
+ * without going through the Android picker, so there is no URI
+ * to surface. The preview card falls back to the placeholder
+ * thumbnail when `localUri` is `null`.
+ *
  * Bytes are cached (rather than re-reading from the URI on
  * confirm) to keep the upload deterministic — the file system
  * can revoke the temporary URI permission between attach and
@@ -96,7 +102,7 @@ sealed interface ConversationUiState {
  * from a transient network failure.
  */
 data class PendingMedia(
-    val localUri: Uri,
+    val localUri: Uri?,
     val mimeType: String,
     val originalName: String,
     val sizeBytes: Long,
@@ -113,7 +119,7 @@ data class PendingMedia(
     }
 
     override fun hashCode(): Int {
-        var result = localUri.hashCode()
+        var result = localUri?.hashCode() ?: 0
         result = 31 * result + mimeType.hashCode()
         result = 31 * result + originalName.hashCode()
         result = 31 * result + sizeBytes.hashCode()

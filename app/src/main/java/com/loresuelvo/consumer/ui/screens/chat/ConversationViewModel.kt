@@ -315,10 +315,7 @@ class ConversationViewModel @Inject constructor(
         if (state !is ConversationUiState.Ready) return
         _uiState.update { current ->
             if (current is ConversationUiState.Ready) {
-                current.copy(
-                    attachingMedia = true,
-                    transientMediaError = null,
-                )
+                current.copy(attachingMedia = true, transientMediaError = null)
             } else {
                 current
             }
@@ -326,38 +323,62 @@ class ConversationViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 val media = mediaReader.read(uri)
-                val image = media as? MediaUpload.Image
-                    ?: throw IllegalStateException(
-                        "Expected MediaUpload.Image from gallery, got ${media::class.simpleName}",
-                    )
-                _uiState.update { current ->
-                    if (current is ConversationUiState.Ready) {
-                        current.copy(
-                            attachingMedia = false,
-                            pendingMedia = PendingMedia(
-                                localUri = uri,
-                                mimeType = image.mimeType,
-                                originalName = image.originalName,
-                                sizeBytes = image.bytes.size.toLong(),
-                                bytes = image.bytes,
-                            ),
-                        )
-                    } else {
-                        current
-                    }
-                }
+                onAttachMedia(media, sourceUri = uri)
             } catch (t: Throwable) {
-                _uiState.update { current ->
-                    if (current is ConversationUiState.Ready) {
-                        current.copy(
-                            attachingMedia = false,
-                            transientMediaError =
-                                SendMessageOutcome.Failure.Network(t),
-                        )
-                    } else {
-                        current
-                    }
-                }
+                applyAttachFailure(t)
+            }
+        }
+    }
+
+    /**
+     * Stage a [MediaUpload] for confirmation. The canonical
+     * attach surface for non-`Uri` callers (the BDD world, future
+     * programmatic attach scenarios). The host's
+     * `onAttachImageFromGallery` reads the picker URI via
+     * [MediaReader] and forwards the result here with the
+     * original `sourceUri` so the preview card can render the
+     * real thumbnail.
+     *
+     * Only [MediaUpload.Image] is wired in 01-MM — the camera
+     * (02-MM) and audio (03-MM) scenarios will introduce their
+     * own entry points that hand off the right subtype.
+     */
+    fun onAttachMedia(media: MediaUpload, sourceUri: Uri? = null) {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        val image = media as? MediaUpload.Image
+            ?: throw IllegalStateException(
+                "Expected MediaUpload.Image, got ${media::class.simpleName}",
+            )
+        _uiState.update { current ->
+            if (current is ConversationUiState.Ready) {
+                current.copy(
+                    attachingMedia = false,
+                    pendingMedia = PendingMedia(
+                        localUri = sourceUri,
+                        mimeType = image.mimeType,
+                        originalName = image.originalName,
+                        sizeBytes = image.bytes.size.toLong(),
+                        bytes = image.bytes,
+                    ),
+                    transientMediaError = null,
+                )
+            } else {
+                current
+            }
+        }
+    }
+
+    private fun applyAttachFailure(t: Throwable) {
+        _uiState.update { state ->
+            if (state is ConversationUiState.Ready) {
+                state.copy(
+                    attachingMedia = false,
+                    transientMediaError =
+                        SendMessageOutcome.Failure.Network(t),
+                )
+            } else {
+                state
             }
         }
     }
