@@ -55,4 +55,30 @@ interface ConversationRepository {
         conversationId: String,
         content: String,
     ): SendMessageOutcome
+
+    /**
+     * Uploads a media attachment and appends the resulting
+     * bubble to the given conversation. Distinct from
+     * [sendMessage] because the wire is multipart (`POST
+     * /conversations/{id}/messages` with a `file` part) and the
+     * success payload carries a populated [ConversationMessage.media]
+     * referencing the server-issued URL.
+     *
+     * Kept as a separate method rather than overloading
+     * [sendMessage] so the implementation can switch on
+     * [MediaUpload] without nullable ceremony at every call site
+     * and so the existing text-only round-trip stays exactly as
+     * it is (no JSON body drift, no media-aware branches in the
+     * happy path). The use case layer (`SendMediaMessageUseCase`)
+     * is the single place that decides whether to go through
+     * this method or [sendMessage].
+     *
+     * The repository never throws on HTTP / network failures:
+     * every exception is mapped to a typed [SendMessageOutcome.Failure]
+     * the same way [sendMessage] does.
+     */
+    suspend fun sendMediaMessage(
+        conversationId: String,
+        media: MediaUpload,
+    ): SendMessageOutcome
 }
