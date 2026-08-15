@@ -30,7 +30,6 @@ Característica: Enviar fotos o audios en el chat
     Dado estoy autenticado como consumidor
     Y tengo una conversación abierta con el prestador "Juan Pérez"
 
-  @wip
   Escenario: 01-MM Adjuntar una imagen desde la galería del dispositivo
     Dado que estoy en la conversación con "Juan Pérez"
     Cuando toco el botón de adjuntar imagen desde la galería
