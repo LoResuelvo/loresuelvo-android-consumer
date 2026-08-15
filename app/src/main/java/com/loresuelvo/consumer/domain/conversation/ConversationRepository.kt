@@ -76,9 +76,21 @@ interface ConversationRepository {
      * The repository never throws on HTTP / network failures:
      * every exception is mapped to a typed [SendMessageOutcome.Failure]
      * the same way [sendMessage] does.
+     *
+     * The default implementation throws so that the port can be
+     * extended incrementally: an adapter that does NOT yet
+     * support media (e.g. a feature-flagged `OfflineRepository`,
+     * an integration test fake that only exercises the text
+     * path) doesn't have to add an empty body. Real adapters
+     * (`ApiConversationRepository`) override this method with a
+     * concrete implementation; the JVM unit tests of
+     * `SendMediaMessageUseCase` mock the port with MockK and
+     * never reach the default.
      */
     suspend fun sendMediaMessage(
         conversationId: String,
         media: MediaUpload,
-    ): SendMessageOutcome
+    ): SendMessageOutcome = throw UnsupportedOperationException(
+        "sendMediaMessage is not implemented by this ConversationRepository",
+    )
 }
