@@ -37,7 +37,6 @@ Característica: Enviar fotos o audios en el chat
     Entonces veo la vista previa de la imagen seleccionada
     Y puedo confirmar el envío o descartarla
 
-  @wip
   Escenario: 02-MM Capturar una imagen con la cámara del dispositivo
     Dado que estoy en la conversación con "Juan Pérez"
     Cuando toco el botón de adjuntar imagen desde la cámara

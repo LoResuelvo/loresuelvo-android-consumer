@@ -99,6 +99,60 @@ class SendMediaSteps {
     }
 
     /**
+     * "toco el botón de adjuntar imagen desde la cámara" —
+     * mirrors the gallery step but for the camera source. The
+     * camera intent (`ActivityResultContracts.TakePicture`)
+     * ultimately calls `vm.onAttachImageFromGallery(uri)` with
+     * the FileProvider-backed URI once the camera activity
+     * returns; the BDD short-circuits the system camera and
+     * stages the `pendingMedia` directly via `onAttachMedia`,
+     * the canonical non-Uri entry point.
+     */
+    @When("toco el botón de adjuntar imagen desde la cámara")
+    fun iTapAttachImageFromCamera() {
+        // 02-MM pins the filename in the next `And` step
+        // ("capturo la foto ..."); the world fallbacks to the
+        // Gherkin's named file when the `And` step fires.
+        world.chooseFromGallery()
+    }
+
+    /**
+     * "capturo la foto 'gotera-baño.jpg'" — the camera activity
+     * has returned with success and the route calls
+     * `vm.onAttachImageFromGallery(uri)`. The world stages a
+     * `MediaUpload.Image` with the named filename via
+     * `onAttachMedia` (the same path the production code goes
+     * through after the MediaReader reads the URI).
+     */
+    @And("capturo la foto {string}")
+    fun iCaptureThePhoto(filename: String) {
+        world.chooseFromGallery(filename)
+    }
+
+    /**
+     * "veo la vista previa de la foto capturada" — same
+     * observable as 01-MM's gallery preview: the
+     * [ConversationUiState.Ready.pendingMedia] field becomes
+     * non-null after the camera result is staged. The wording
+     * is distinct so the Gherkin reads naturally for each
+     * source; the assertion is identical because the VM
+     * doesn't differentiate between gallery and camera.
+     */
+    @Then("veo la vista previa de la foto capturada")
+    fun iSeeThePreviewOfTheCapturedPhoto() {
+        val state = world.lastConversationUiState()
+        assertTrue(
+            "expected Ready after camera attach, was $state",
+            state is ConversationUiState.Ready,
+        )
+        val ready = state as ConversationUiState.Ready
+        assertNotNull(
+            "expected pendingMedia to be populated after camera capture, was ${ready.pendingMedia}",
+            ready.pendingMedia,
+        )
+    }
+
+    /**
      * "veo la vista previa de la imagen seleccionada" — the
      * [com.loresuelvo.consumer.ui.screens.chat.ConversationUiState.Ready.pendingMedia]
      * field becomes non-null once
