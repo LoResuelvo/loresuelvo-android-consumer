@@ -96,6 +96,7 @@ fun ConversationScreen(
     onErrorDismiss: () -> Unit,
     onAttachClick: () -> Unit = {},
     onGalleryClick: () -> Unit = {},
+    onCameraClick: () -> Unit = {},
     onConfirmMediaSend: () -> Unit = {},
     onDiscardMedia: () -> Unit = {},
     onMediaErrorDismiss: () -> Unit = {},
@@ -137,6 +138,7 @@ fun ConversationScreen(
             show = showAttachSheet,
             onDismiss = onAttachSheetDismiss,
             onGalleryClick = onGalleryClick,
+            onCameraClick = onCameraClick,
         )
     }
 }

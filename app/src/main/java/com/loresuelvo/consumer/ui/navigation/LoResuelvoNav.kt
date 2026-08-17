@@ -421,6 +421,28 @@ private fun ConversationRoute(
         sheetState.value = false
     }
 
+    // The camera launcher writes the captured photo to a
+    // `FileProvider`-backed URI in the app's cache directory. We
+    // hold the URI in a `remember`-backed `MutableState` so the
+    // result callback can pick it up after the camera activity
+    // returns. The `FileProvider` is declared in `AndroidManifest.xml`
+    // with the `${applicationId}.fileprovider` authority and the
+    // `file_paths.xml` resource grants access to `cacheDir/camera/`.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val cameraOutputUriState = androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<android.net.Uri?>(null)
+    }
+    val cameraLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.TakePicture(),
+    ) { success ->
+        val uri = cameraOutputUriState.value
+        if (success && uri != null) {
+            viewModel.onAttachImageFromGallery(uri)
+        }
+        cameraOutputUriState.value = null
+        sheetState.value = false
+    }
+
     com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
         state = state,
         onPromptChange = viewModel::onPromptChange,
@@ -436,6 +458,11 @@ private fun ConversationRoute(
                 ),
             )
         },
+        onCameraClick = {
+            val uri = createCameraOutputUri(context)
+            cameraOutputUriState.value = uri
+            cameraLauncher.launch(uri)
+        },
         onConfirmMediaSend = viewModel::onConfirmMediaSend,
         onDiscardMedia = viewModel::onDiscardMediaPreview,
         onMediaErrorDismiss = viewModel::onErrorDismiss,
@@ -444,4 +471,11 @@ private fun ConversationRoute(
         onScrollPositionChanged = viewModel::onScrollPositionChanged,
         onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
     )
+}
+
+private fun createCameraOutputUri(context: android.content.Context): android.net.Uri {
+    val cameraDir = java.io.File(context.cacheDir, "camera").apply { mkdirs() }
+    val file = java.io.File(cameraDir, "capture_${System.currentTimeMillis()}.jpg")
+    val authority = "${context.packageName}.fileprovider"
+    return androidx.core.content.FileProvider.getUriForFile(context, authority, file)
 }

@@ -78,9 +78,9 @@ fun MediaAttachSheet(
                 onClick = onGalleryClick,
                 testTag = MEDIA_ATTACH_GALLERY_ROW_TAG,
             )
-            // Camera + audio are placeholders for 02-MM / 03-MM.
-            // Rendered disabled until those scenarios land the
-            // matching impl.
+            // Camera (02-MM) is wired. Audio (03-MM) is still a
+            // placeholder — rendered disabled until the
+            // recording flow lands.
             MediaAttachEntry(
                 icon = Icons.Filled.PhotoCamera,
                 label = stringResource(R.string.conversation_attach_camera),

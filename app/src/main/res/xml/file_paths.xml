@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Paths exposed by the `FileProvider` declared in `AndroidManifest.xml`
+  (added for 02-MM). The camera capture writes the photo to
+  `cacheDir/camera/`, so we expose `cache-path` with a `name="camera"`
+  subdirectory. The provider runs in the app's process; the
+  `<files-path>` + `<external-path>` entries are not used today
+  but kept as a forward-compatible skeleton for future media
+  flows that may want to persist attachments outside the cache.
+-->
+<paths>
+    <cache-path
+        name="camera"
+        path="camera/" />
+    <files-path
+        name="attachments"
+        path="attachments/" />
+</paths>
