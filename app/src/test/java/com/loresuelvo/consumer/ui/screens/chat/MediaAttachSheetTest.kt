@@ -1,11 +1,11 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.assertIsDisplayed
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -14,34 +14,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose unit tests for [MediaAttachSheet] in isolation.
+ * Compose unit tests for [MediaAttachSheet].
  *
- * What this test pins:
- *  - the sheet's three rows render in a stable order (Galería /
- *    Cámara / Audio), each with its own `testTag` for the
- *    acceptance suite to target.
- *  - rows with a wired callback expose a click action
- *    (`assertHasClickAction`) — the disable / enable contract
- *    is provable via the semantics tree.
- *  - the sheet dismisses (via `show = false`) and the rows
- *    unmount.
+ * The attach sheet exposes only the media sources that are currently
+ * part of the provider-chat UX:
  *
- * Robolectric is required because the `ModalBottomSheet`
- * composable uses Android-only theming inside the test surface.
+ *  - Galería — wired in 01-MM.
+ *  - Cámara — wired in 02-MM.
  *
- * Why no `performClick()` here? `ModalBottomSheet`'s scrim
- * intercepts clicks under Robolectric's JVM window manager
- * even after `waitForIdle()` — the click hits the scrim, which
- * dismisses the sheet rather than reaching the inner row. The
- * actual click → callback contract is exercised by:
- *  - [ConversationMediaAttachScreenTest.gallery_row_has_click_action] —
- *    pins the `assertHasClickAction` wiring without trying to
- *    click (the sheet's gesture interference is unrelated to
- *    the row's correctness);
- *  - the e2e suite on a real device — the production
- *    `MainActivity` + system gesture handler prove the end-to-
- *    end click path under the platform's actual window
- *    manager.
+ * Audio recording is intentionally NOT part of this sheet. The
+ * conversation composer exposes the microphone directly when the
+ * text input is empty, WhatsApp-style, and therefore audio recording
+ * must not regress into the `+` attachment menu.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
@@ -51,39 +35,61 @@ class MediaAttachSheetTest {
     val composeTestRule = createComposeRule()
 
     @Test
-    fun rows_render_in_galeria_camera_audio_order() {
+    fun rows_render_gallery_and_camera() {
         composeTestRule.setContent {
             MediaAttachSheet(
                 show = true,
                 onDismiss = {},
                 onGalleryClick = {},
-                onCameraClick = null,
-                onAudioClick = null,
+                onCameraClick = {},
             )
         }
+
         composeTestRule.waitForIdle()
 
         composeTestRule
             .onNodeWithTag(MEDIA_ATTACH_SHEET_TAG)
             .assertIsDisplayed()
+
         composeTestRule
             .onNodeWithTag(MEDIA_ATTACH_GALLERY_ROW_TAG)
             .assertIsDisplayed()
+
         composeTestRule
             .onNodeWithTag(MEDIA_ATTACH_CAMERA_ROW_TAG)
             .assertIsDisplayed()
-        composeTestRule
-            .onNodeWithTag(MEDIA_ATTACH_AUDIO_ROW_TAG)
-            .assertIsDisplayed()
+
         composeTestRule
             .onNodeWithText("Galería")
             .assertIsDisplayed()
+
         composeTestRule
             .onNodeWithText("Cámara")
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun audio_row_does_not_exist() {
+        composeTestRule.setContent {
+            MediaAttachSheet(
+                show = true,
+                onDismiss = {},
+                onGalleryClick = {},
+                onCameraClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
         composeTestRule
-            .onNodeWithText("Audio")
-            .assertIsDisplayed()
+            .onAllNodesWithText("Audio")
+            .fetchSemanticsNodes()
+            .let { nodes ->
+                assertTrue(
+                    "Audio should not be rendered in the attach sheet",
+                    nodes.isEmpty(),
+                )
+            }
     }
 
     @Test
@@ -94,17 +100,11 @@ class MediaAttachSheetTest {
                 onDismiss = {},
                 onGalleryClick = {},
                 onCameraClick = null,
-                onAudioClick = null,
             )
         }
+
         composeTestRule.waitForIdle()
 
-        // The gallery callback is wired → the row exposes a
-        // click action. Pinning this here so a regression in
-        // the `Surface(onClick = onClick ?: {})` contract
-        // (e.g. accidentally gating on `enabled` instead of
-        // `onClick != null`) surfaces as a unit-test failure
-        // before the e2e suite reports it as a UI flake.
         composeTestRule
             .onNodeWithTag(MEDIA_ATTACH_GALLERY_ROW_TAG)
             .assertHasClickAction()
@@ -112,40 +112,38 @@ class MediaAttachSheetTest {
 
     @Test
     fun camera_row_is_clickable_when_callback_is_provided() {
-        // Same pinning as gallery but for the 02-MM affordance.
         composeTestRule.setContent {
             MediaAttachSheet(
                 show = true,
                 onDismiss = {},
                 onGalleryClick = {},
                 onCameraClick = {},
-                onAudioClick = null,
             )
         }
+
         composeTestRule.waitForIdle()
+
         composeTestRule
             .onNodeWithTag(MEDIA_ATTACH_CAMERA_ROW_TAG)
             .assertHasClickAction()
     }
 
     @Test
-    fun audio_row_is_clickable_when_callback_is_provided() {
-        // 03-MM wires the audio callback; pinning the click
-        // action so the future impl doesn't break the row's
-        // affordance.
+    fun camera_row_is_displayed_when_callback_is_null() {
         composeTestRule.setContent {
             MediaAttachSheet(
                 show = true,
                 onDismiss = {},
                 onGalleryClick = {},
                 onCameraClick = null,
-                onAudioClick = {},
             )
         }
+
         composeTestRule.waitForIdle()
+
         composeTestRule
-            .onNodeWithTag(MEDIA_ATTACH_AUDIO_ROW_TAG)
-            .assertHasClickAction()
+            .onNodeWithTag(MEDIA_ATTACH_CAMERA_ROW_TAG)
+            .assertIsDisplayed()
     }
 
     @Test
@@ -156,20 +154,33 @@ class MediaAttachSheetTest {
                 onDismiss = {},
                 onGalleryClick = {},
                 onCameraClick = null,
-                onAudioClick = null,
             )
         }
+
         composeTestRule.waitForIdle()
 
-        composeTestRule
-            .onNodeWithTag(MEDIA_ATTACH_SHEET_TAG)
-            .assertDoesNotExist()
-        composeTestRule
-            .onAllNodesWithText("Galería")
-            .fetchSemanticsNodes()
-            .let { nodes -> assertTrue(
-                "gallery row should not exist when sheet is hidden, was $nodes",
-                nodes.isEmpty(),
-            ) }
+        assertTrue(
+            "attach sheet should not exist when show is false",
+            composeTestRule
+                .onAllNodesWithText("Galería")
+                .fetchSemanticsNodes()
+                .isEmpty(),
+        )
+
+        assertTrue(
+            "gallery row should not exist when show is false",
+            composeTestRule
+                .onAllNodesWithText("Galería")
+                .fetchSemanticsNodes()
+                .isEmpty(),
+        )
+
+        assertTrue(
+            "camera row should not exist when show is false",
+            composeTestRule
+                .onAllNodesWithText("Cámara")
+                .fetchSemanticsNodes()
+                .isEmpty(),
+        )
     }
 }

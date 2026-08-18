@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,7 +55,6 @@ fun MediaAttachSheet(
     onDismiss: () -> Unit,
     onGalleryClick: (() -> Unit)?,
     onCameraClick: (() -> Unit)? = null,
-    onAudioClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     if (!show) return
@@ -86,12 +84,6 @@ fun MediaAttachSheet(
                 label = stringResource(R.string.conversation_attach_camera),
                 onClick = onCameraClick,
                 testTag = MEDIA_ATTACH_CAMERA_ROW_TAG,
-            )
-            MediaAttachEntry(
-                icon = Icons.Filled.Mic,
-                label = stringResource(R.string.conversation_attach_audio),
-                onClick = onAudioClick,
-                testTag = MEDIA_ATTACH_AUDIO_ROW_TAG,
             )
         }
     }
@@ -146,4 +138,3 @@ private fun MediaAttachEntry(
 const val MEDIA_ATTACH_SHEET_TAG: String = "media-attach-sheet"
 const val MEDIA_ATTACH_GALLERY_ROW_TAG: String = "media-attach-gallery-row"
 const val MEDIA_ATTACH_CAMERA_ROW_TAG: String = "media-attach-camera-row"
-const val MEDIA_ATTACH_AUDIO_ROW_TAG: String = "media-attach-audio-row"
