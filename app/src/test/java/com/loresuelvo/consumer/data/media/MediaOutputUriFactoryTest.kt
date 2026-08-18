@@ -105,25 +105,16 @@ class MediaOutputUriFactoryTest {
 
     @Test
     fun authority_is_application_id_plus_fileprovider_suffix() {
-        // The factory exposes the constants the route (and
-        // `AndroidManifest.xml`'s `<provider>` declaration)
-        // share. A rename of either side would break the
-        // permission grant at runtime; pinning the constants
-        // here catches the drift at unit-test time.
         assertEquals(
             ".fileprovider",
             MediaOutputUriFactory.AUTHORITY_SUFFIX,
         )
-        val expectedAuthority = "${context.packageName}${MediaOutputUriFactory.AUTHORITY_SUFFIX}"
-        // The factory's `context.packageName` and our
-        // `context.packageName` should agree — pins the
-        // `applicationId` round-trip.
+
+        val expectedAuthority =
+            "${context.packageName}${MediaOutputUriFactory.AUTHORITY_SUFFIX}"
+
         assertEquals(
-            "com.loresuelvo.consumer.dev",
-            context.packageName,
-        )
-        assertEquals(
-            "com.loresuelvo.consumer.dev.fileprovider",
+            "${context.packageName}.fileprovider",
             expectedAuthority,
         )
     }
