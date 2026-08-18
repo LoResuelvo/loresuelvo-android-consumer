@@ -109,6 +109,7 @@
     <string name="conversation_attach_gallery">Galería</string>
     <string name="conversation_attach_camera">Cámara</string>
     <string name="conversation_attach_audio">Audio</string>
+    <string name="conversation_record_audio_content_description">Grabar audio</string>
     <string name="conversation_media_preview_send">Enviar</string>
     <string name="conversation_media_preview_discard">Descartar</string>
     <string name="conversation_media_preview_image_content_description">Vista previa de la imagen adjunta</string>

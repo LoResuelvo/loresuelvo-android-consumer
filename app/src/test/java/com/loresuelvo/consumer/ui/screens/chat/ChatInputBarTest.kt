@@ -6,9 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
@@ -19,6 +16,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.performClick
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -169,55 +167,7 @@ class ChatInputBarTest {
      * bubble, and two simultaneous spinners feel noisy.
      */
     @Test
-    fun shows_send_icon_muted_when_sending() {
-        composeTestRule.setContent {
-            ChatInputBar(
-                promptInput = "primera",
-                canSend = false,
-                sending = true,
-                onPromptChange = {},
-                onSendClick = {},
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(400.dp),
-            )
-        }
-        composeTestRule.onNodeWithTag(SEND_ICON_TAG, useUnmergedTree = true)
-            .assertExists()
-        composeTestRule.onNodeWithTag(SEND_BUTTON_TAG).assertIsNotEnabled()
-    }
-
-    /**
-     * When the bar is idle and a non-empty prompt is present, the
-     * Send icon renders in the primary colour and the button is
-     * enabled.
-     */
-    @Test
-    fun shows_send_icon_active_when_idle() {
-        composeTestRule.setContent {
-            ChatInputBar(
-                promptInput = "primera",
-                canSend = true,
-                sending = false,
-                onPromptChange = {},
-                onSendClick = {},
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .height(400.dp),
-            )
-        }
-        composeTestRule.onNodeWithTag(SEND_ICON_TAG, useUnmergedTree = true)
-            .assertExists()
-        composeTestRule.onNodeWithTag(SEND_BUTTON_TAG).assertIsEnabled()
-    }
-
-    /**
-     * Empty prompt + not sending → no spinner. Send icon is in the
-     * tree but the button is disabled (and the icon's alpha is
-     * muted via the same `primary.copy(alpha = 0.38f)` branch).
-     */
-    @Test
-    fun shows_send_icon_muted_when_empty() {
+    fun shows_microphone_when_prompt_is_empty() {
         composeTestRule.setContent {
             ChatInputBar(
                 promptInput = "",
@@ -225,13 +175,89 @@ class ChatInputBarTest {
                 sending = false,
                 onPromptChange = {},
                 onSendClick = {},
+                onRecordAudioClick = {},
                 modifier = Modifier
                     .padding(horizontal = 16.dp, vertical = 12.dp)
                     .height(400.dp),
             )
         }
-        composeTestRule.onNodeWithTag(SEND_ICON_TAG, useUnmergedTree = true)
-            .assertExists()
-        composeTestRule.onNodeWithTag(SEND_BUTTON_TAG).assertIsNotEnabled()
+
+        composeTestRule
+            .onNodeWithTag(RECORD_AUDIO_BUTTON_TAG)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun shows_send_when_prompt_has_text() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "Hola Juan",
+                canSend = true,
+                sending = false,
+                onPromptChange = {},
+                onSendClick = {},
+                onRecordAudioClick = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(SEND_BUTTON_TAG)
+            .assertIsDisplayed()
+            .assertIsEnabled()
+    }
+
+    @Test
+    fun microphone_click_invokes_record_audio_callback() {
+        var clicked = false
+
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "",
+                canSend = false,
+                sending = false,
+                onPromptChange = {},
+                onSendClick = {},
+                onRecordAudioClick = {
+                    clicked = true
+                },
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(RECORD_AUDIO_BUTTON_TAG)
+            .performClick()
+
+        assertTrue(
+            "expected record-audio callback to be invoked",
+            clicked,
+        )
+    }
+
+    @Test
+    fun keeps_send_disabled_while_sending() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "Hola Juan",
+                canSend = false,
+                sending = true,
+                onPromptChange = {},
+                onSendClick = {},
+                onRecordAudioClick = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(SEND_BUTTON_TAG)
+            .assertIsDisplayed()
+            .assertIsNotEnabled()
     }
 }
