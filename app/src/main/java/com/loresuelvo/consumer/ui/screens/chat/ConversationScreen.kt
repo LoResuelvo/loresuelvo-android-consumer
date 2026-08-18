@@ -97,6 +97,7 @@ fun ConversationScreen(
     onAttachClick: () -> Unit = {},
     onGalleryClick: () -> Unit = {},
     onCameraClick: () -> Unit = {},
+    onRecordAudioClick: () -> Unit = {},
     onConfirmMediaSend: () -> Unit = {},
     onDiscardMedia: () -> Unit = {},
     onMediaErrorDismiss: () -> Unit = {},
@@ -123,6 +124,7 @@ fun ConversationScreen(
                 onErrorDismiss = onErrorDismiss,
                 onAttachClick = onAttachClick,
                 onGalleryClick = onGalleryClick,
+                onRecordAudioClick = onRecordAudioClick,
                 onConfirmMediaSend = onConfirmMediaSend,
                 onDiscardMedia = onDiscardMedia,
                 onMediaErrorDismiss = onMediaErrorDismiss,
@@ -208,6 +210,7 @@ private fun ReadyState(
     onErrorDismiss: () -> Unit,
     onAttachClick: () -> Unit,
     onGalleryClick: () -> Unit,
+    onRecordAudioClick: () -> Unit,
     onConfirmMediaSend: () -> Unit,
     onDiscardMedia: () -> Unit,
     onMediaErrorDismiss: () -> Unit,
@@ -309,6 +312,7 @@ private fun ReadyState(
             sending = state.sending,
             onPromptChange = onPromptChange,
             onSendClick = onSendClick,
+            onRecordAudioClick = onRecordAudioClick,
             onAttachClick = onAttachClick,
         )
     }
