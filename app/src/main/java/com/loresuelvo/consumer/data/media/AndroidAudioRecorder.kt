@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.media
 import android.content.Context
 import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID
@@ -41,7 +42,12 @@ class AndroidAudioRecorder @Inject constructor(
         )
 
         return runCatching {
-            val mediaRecorder = MediaRecorder(context)
+            val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(context)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }
 
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
             mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
