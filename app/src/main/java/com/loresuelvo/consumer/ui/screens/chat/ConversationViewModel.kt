@@ -14,6 +14,7 @@ import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUs
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.data.media.AudioRecorder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,6 +77,7 @@ class ConversationViewModel @Inject constructor(
     private val sendMediaMessage: SendMediaMessageUseCase,
     private val mediaReader: MediaReader,
     private val mediaMetadataRetriever: MediaMetadataRetrieverReader,
+    private val audioRecorder: AudioRecorder,
     private val webSocketClient: WebSocketClient,
 ) : ViewModel() {
 
@@ -509,11 +511,20 @@ class ConversationViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val upload = MediaUpload.Image(
-                bytes = pending.bytes,
-                mimeType = pending.mimeType,
-                originalName = pending.originalName,
-            )
+            val upload = when (pending.kind) {
+                PendingMediaKind.IMAGE -> MediaUpload.Image(
+                    bytes = pending.bytes,
+                    mimeType = pending.mimeType,
+                    originalName = pending.originalName,
+                )
+
+                PendingMediaKind.AUDIO -> MediaUpload.Audio(
+                    bytes = pending.bytes,
+                    mimeType = pending.mimeType,
+                    originalName = pending.originalName,
+                    durationMillis = pending.durationMillis,
+                )
+            }
             when (val outcome = sendMediaMessage(state.detail.id, upload)) {
                 is SendMessageOutcome.Success ->
                     applyMediaServerResponse(outcome.message)
@@ -555,6 +566,93 @@ class ConversationViewModel @Inject constructor(
                 )
             } else {
                 state
+            }
+        }
+    }
+
+    fun onStartAudioRecording() {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        if (state.recordingAudio || state.attachingMedia || state.sendingMedia) return
+
+        val result = audioRecorder.start()
+
+        if (result.isSuccess) {
+            _uiState.update { current ->
+                if (current is ConversationUiState.Ready) {
+                    current.copy(
+                        recordingAudio = true,
+                        transientMediaError = null,
+                    )
+                } else {
+                    current
+                }
+            }
+        } else {
+            applyAttachFailure(
+                result.exceptionOrNull()
+                    ?: IllegalStateException("Could not start audio recording"),
+            )
+        }
+    }
+
+    fun onStopAudioRecording() {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        if (!state.recordingAudio) return
+
+        val result = audioRecorder.stop()
+
+        if (result.isSuccess) {
+            val uri = result.getOrNull()
+
+            if (uri == null) {
+                applyAttachFailure(
+                    IllegalStateException("Audio recorder returned an empty Uri"),
+                )
+                return
+            }
+
+            _uiState.update { current ->
+                if (current is ConversationUiState.Ready) {
+                    current.copy(recordingAudio = false)
+                } else {
+                    current
+                }
+            }
+
+            onAttachAudioFromUri(uri)
+        } else {
+            _uiState.update { current ->
+                if (current is ConversationUiState.Ready) {
+                    current.copy(recordingAudio = false)
+                } else {
+                    current
+                }
+            }
+
+            applyAttachFailure(
+                result.exceptionOrNull()
+                    ?: IllegalStateException("Could not stop audio recording"),
+            )
+        }
+    }
+
+    fun onCancelAudioRecording() {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        if (!state.recordingAudio) return
+
+        audioRecorder.cancel()
+
+        _uiState.update { current ->
+            if (current is ConversationUiState.Ready) {
+                current.copy(
+                    recordingAudio = false,
+                    transientMediaError = null,
+                )
+            } else {
+                current
             }
         }
     }

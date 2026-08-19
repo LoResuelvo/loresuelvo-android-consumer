@@ -20,6 +20,7 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.data.media.AudioRecorder
 import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.atomic.AtomicReference
@@ -92,6 +93,7 @@ class SendMediaWorld : AutoCloseable {
     private val sendMessage = SendMessageUseCase(fakeRepo)
     private val sendMedia = SendMediaMessageUseCase(fakeRepo)
     private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
+    private val audioRecorder = mockk<com.loresuelvo.consumer.data.media.AudioRecorder>(relaxed = true)
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
 
     private lateinit var viewModel: ConversationViewModel
@@ -125,6 +127,7 @@ class SendMediaWorld : AutoCloseable {
             sendMediaMessage = sendMedia,
             mediaReader = mediaReader,
             mediaMetadataRetriever = mediaMetadataRetriever,
+            audioRecorder = audioRecorder,
             webSocketClient = fakeWebSocketClient,
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

@@ -58,6 +58,8 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
  *  - [Ready.transientMediaError] — typed failure from the read
  *    or the upload. Renders an inline card above the input bar
  *    with retry / dismiss CTAs.
+ *  - [Ready.recordingAudio] — `true` while the system voice
+ *    recorder is actively recording audio for the 03-MM flow.
  */
 sealed interface ConversationUiState {
 
@@ -73,6 +75,7 @@ sealed interface ConversationUiState {
         val hasUnreadIncoming: Boolean = false,
         val pendingMedia: PendingMedia? = null,
         val attachingMedia: Boolean = false,
+        val recordingAudio: Boolean = false,
         val sendingMedia: Boolean = false,
         val transientMediaError: SendMessageOutcome.Failure? = null,
     ) : ConversationUiState

@@ -38,6 +38,7 @@ import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderViewModel
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.data.media.AudioRecorder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -110,6 +111,7 @@ class SendMessagesWorld : AutoCloseable {
     // production-equivalent load path runs.
     private lateinit var conversationViewModel: ConversationViewModel
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
+    private val audioRecorder = mockk<AudioRecorder>(relaxed = true)
     private val wsEvents: kotlinx.coroutines.flow.MutableSharedFlow<WsEvent> =
         kotlinx.coroutines.flow.MutableSharedFlow(
             replay = 0,
@@ -172,6 +174,7 @@ class SendMessagesWorld : AutoCloseable {
             sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(fakeConversationRepo),
             mediaReader = io.mockk.mockk(relaxed = true),
             mediaMetadataRetriever = io.mockk.mockk(relaxed = true),
+            audioRecorder = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
 
@@ -445,6 +448,7 @@ class SendMessagesWorld : AutoCloseable {
             sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(fakeConversationRepo),
             mediaReader = io.mockk.mockk(relaxed = true),
             mediaMetadataRetriever = io.mockk.mockk(relaxed = true),
+            audioRecorder = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
         // No observer for the new instance — the BDD re-entry
@@ -469,6 +473,7 @@ class SendMessagesWorld : AutoCloseable {
             sendMediaMessage = com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase(fakeConversationRepo),
             mediaReader = io.mockk.mockk(relaxed = true),
             mediaMetadataRetriever = io.mockk.mockk(relaxed = true),
+            audioRecorder = io.mockk.mockk(relaxed = true),
             webSocketClient = fakeWebSocketClient,
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

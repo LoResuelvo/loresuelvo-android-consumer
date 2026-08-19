@@ -13,11 +13,19 @@ import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.data.media.AudioRecorder
+import android.net.Uri
+import io.mockk.Runs
+import io.mockk.just
+import io.mockk.verify
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -35,7 +43,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-
+import org.junit.Assert.assertNotNull
 /**
  * Unit tests for [ConversationViewModel] — load + prompt flow.
  * Companion file
@@ -53,8 +61,9 @@ class ConversationViewModelTest {
     private val getConversationById = mockk<GetConversationByIdUseCase>()
     private val sendMessage = mockk<SendMessageUseCase>()
     private val sendMediaMessage = mockk<SendMediaMessageUseCase>(relaxed = true)
-    private val mediaReader = mockk<MediaReader>(relaxed = true)
-    private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
+    private val mediaReader = mockk<MediaReader>()
+    private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>()
+    private val audioRecorder = mockk<AudioRecorder>()
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var webSocketEvents: MutableSharedFlow<WsEvent>
     private lateinit var viewModel: ConversationViewModel
@@ -76,6 +85,18 @@ class ConversationViewModelTest {
         messages = messages,
         updatedOnEpochMillis = 0L,
     )
+
+    private fun createViewModel(): ConversationViewModel {
+        return ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            mediaMetadataRetriever,
+            audioRecorder,
+            webSocketClient,
+        )
+    }
 
     @Before
     fun setUp() {
@@ -108,7 +129,7 @@ class ConversationViewModelTest {
             kotlinx.coroutines.awaitCancellation()
         }
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         advanceUntilIdle()
 
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
@@ -118,9 +139,9 @@ class ConversationViewModelTest {
     fun load_with_success_transitions_to_Ready_with_detail() = runTest {
         val detail = detail(id = "1")
         coEvery { getConversationById("1") } returns
-            ConversationDetailOutcome.Success(detail)
+            ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -138,7 +159,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Failure.Server(500, "boom")
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -155,7 +176,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Failure.Network(cause)
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -207,7 +228,7 @@ class ConversationViewModelTest {
             ConversationDetailOutcome.Success(rehydratedDetail),
         )
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         val firstState = viewModel.uiState.value as ConversationUiState.Ready
@@ -217,7 +238,7 @@ class ConversationViewModelTest {
         // the NavBackStackEntry, the VM goes out of scope). Build a
         // fresh one and re-load; the backend returns the persisted
         // message that the consumer sent before navigating away.
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -235,7 +256,7 @@ class ConversationViewModelTest {
     fun onPromptChange_updates_field_on_Ready() = runTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -250,7 +271,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } coAnswers {
             kotlinx.coroutines.awaitCancellation()
         }
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         advanceUntilIdle()
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
 
@@ -283,7 +304,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         val ready = viewModel.uiState.value as ConversationUiState.Ready
@@ -307,7 +328,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -342,7 +363,7 @@ class ConversationViewModelTest {
                 ),
             )
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -384,7 +405,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -409,7 +430,7 @@ class ConversationViewModelTest {
             kotlinx.coroutines.awaitCancellation()
         }
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         // No load() call yet → state is Loading.
         webSocketEvents.tryEmit(providerEvent(messageId = "100"))
 
@@ -426,7 +447,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         // Default state: isAtBottom = true.
@@ -453,7 +474,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onScrollPositionChanged(atBottom = false)
@@ -477,7 +498,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onScrollPositionChanged(atBottom = false)
@@ -503,7 +524,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onScrollPositionChanged(atBottom = false)
@@ -530,7 +551,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         viewModel.load("1")
         advanceUntilIdle()
         val before = viewModel.uiState.value as ConversationUiState.Ready
@@ -545,9 +566,446 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } coAnswers {
             kotlinx.coroutines.awaitCancellation()
         }
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
+        viewModel = createViewModel()
         // State is Loading.
         viewModel.onScrollPositionChanged(atBottom = false)
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
+    }
+
+    // Tests for controlling audio
+    @Test
+    fun onStartAudioRecording_starts_recording() = runTest {
+        coEvery { getConversationById(any()) } returns
+        ConversationDetailOutcome.Success(detail())
+        
+        every { audioRecorder.start() } returns Result.success(Unit)
+        
+        viewModel = createViewModel()
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onStartAudioRecording()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertTrue(state.recordingAudio)
+        verify(exactly = 1) { audioRecorder.start() }
+    }
+
+    @Test
+    fun onStartAudioRecording_does_nothing_when_already_recording() = runTest {
+        coEvery { getConversationById(any()) } returns
+            ConversationDetailOutcome.Success(detail())
+
+        every { audioRecorder.start() } returns Result.success(Unit)
+
+        viewModel = createViewModel()
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onStartAudioRecording()
+        viewModel.onStartAudioRecording()
+
+        verify(exactly = 1) { audioRecorder.start() }
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertTrue(state.recordingAudio)
+    }
+
+    @Test
+    fun onStartAudioRecording_surfaces_error_when_start_fails() = runTest {
+        coEvery { getConversationById(any()) } returns
+            ConversationDetailOutcome.Success(detail())
+
+        val error = IllegalStateException("microphone unavailable")
+
+        every { audioRecorder.start() } returns Result.failure(error)
+
+        viewModel = createViewModel()
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onStartAudioRecording()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertTrue(state.transientMediaError is SendMessageOutcome.Failure.Network)
+        assertEquals(
+            error,
+            (state.transientMediaError as SendMessageOutcome.Failure.Network).cause,
+        )
+        assertTrue(!state.recordingAudio)
+    }
+
+    // Tests for canceling audio recording
+    @Test
+    fun onCancelAudioRecording_cancels_recording() = runTest {
+        coEvery { getConversationById(any()) } returns
+            ConversationDetailOutcome.Success(detail())
+
+        every { audioRecorder.start() } returns Result.success(Unit)
+        every { audioRecorder.cancel() } just Runs
+
+        viewModel = createViewModel()
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onStartAudioRecording()
+        viewModel.onCancelAudioRecording()
+
+        verify(exactly = 1) { audioRecorder.cancel() }
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertTrue(!state.recordingAudio)
+        assertNull(state.transientMediaError)
+    }
+
+    // Important test
+    @Test
+    fun onCancelAudioRecording_does_nothing_when_not_recording() = runTest {
+        coEvery { getConversationById(any()) } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = createViewModel()
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onCancelAudioRecording()
+
+        verify(exactly = 0) { audioRecorder.cancel() }
+    }
+
+    // Test pending audio
+    @Test
+    fun onStopAudioRecording_creates_pending_audio_with_duration() = runTest {
+        coEvery {
+            getConversationById(any())
+        } returns ConversationDetailOutcome.Success(detail())
+
+        every {
+            audioRecorder.start()
+        } returns Result.success(Unit)
+
+        val audioUri = mockk<Uri>(relaxed = true)
+        val audioBytes = byteArrayOf(1, 2, 3, 4)
+
+        every {
+            audioRecorder.stop()
+        } returns Result.success(audioUri)
+
+        coEvery {
+            mediaReader.read(audioUri)
+        } returns MediaUpload.Audio(
+            bytes = audioBytes,
+            mimeType = "audio/mp4",
+            originalName = "nota-voz.m4a",
+            durationMillis = 0L,
+        )
+
+        coEvery {
+            mediaMetadataRetriever.extractDurationMillis(audioUri)
+        } returns 5_000L
+
+        viewModel = createViewModel()
+
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        assertTrue(
+            "Expected Ready after load, was ${viewModel.uiState.value}",
+            viewModel.uiState.value is ConversationUiState.Ready,
+        )
+
+        viewModel.onStartAudioRecording()
+
+        assertTrue(
+            "Expected recordingAudio=true after start, was ${viewModel.uiState.value}",
+            (viewModel.uiState.value as ConversationUiState.Ready).recordingAudio,
+        )
+
+        viewModel.onStopAudioRecording()
+
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+
+        assertTrue(
+            "Expected Ready but was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+        val pending = ready.pendingMedia
+
+        assertNotNull(
+            "pendingMedia should not be null. State=$ready",
+            pending,
+        )
+
+        assertEquals(
+            PendingMediaKind.AUDIO,
+            pending?.kind,
+        )
+
+        assertEquals(
+            audioUri,
+            pending?.localUri,
+        )
+
+        assertEquals(
+            "audio/mp4",
+            pending?.mimeType,
+        )
+
+        assertEquals(
+            "nota-voz.m4a",
+            pending?.originalName,
+        )
+
+        assertEquals(
+            audioBytes.size.toLong(),
+            pending?.sizeBytes,
+        )
+
+        assertEquals(
+            5_000L,
+            pending?.durationMillis,
+        )
+
+        assertTrue(!ready.recordingAudio)
+        assertTrue(!ready.attachingMedia)
+
+        verify(exactly = 1) {
+            audioRecorder.start()
+        }
+
+        verify(exactly = 1) {
+            audioRecorder.stop()
+        }
+
+        coVerify(exactly = 1) {
+            mediaReader.read(audioUri)
+        }
+
+        coVerify(exactly = 1) {
+            mediaMetadataRetriever.extractDurationMillis(audioUri)
+        }
+    }
+
+    // Test unknown duration
+    @Test
+    fun onStopAudioRecording_uses_zero_duration_when_metadata_is_unavailable() = runTest {
+        coEvery {
+            getConversationById(any())
+        } returns ConversationDetailOutcome.Success(detail())
+
+        val audioUri = mockk<Uri>(relaxed = true)
+        val audioBytes = byteArrayOf(1, 2, 3)
+
+        every {
+            audioRecorder.start()
+        } returns Result.success(Unit)
+
+        every {
+            audioRecorder.stop()
+        } returns Result.success(audioUri)
+
+        coEvery {
+            mediaReader.read(audioUri)
+        } returns MediaUpload.Audio(
+            bytes = audioBytes,
+            mimeType = "audio/mp4",
+            originalName = "nota-voz.m4a",
+            durationMillis = 0L,
+        )
+
+        coEvery {
+            mediaMetadataRetriever.extractDurationMillis(audioUri)
+        } returns null
+
+        viewModel = createViewModel()
+
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        assertTrue(
+            "Expected Ready after load, was ${viewModel.uiState.value}",
+            viewModel.uiState.value is ConversationUiState.Ready,
+        )
+
+        viewModel.onStartAudioRecording()
+        viewModel.onStopAudioRecording()
+
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+
+        assertTrue(
+            "Expected Ready but was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+        val pending = ready.pendingMedia
+
+        assertNotNull(
+            "pendingMedia should not be null. State=$ready",
+            pending,
+        )
+
+        assertEquals(
+            PendingMediaKind.AUDIO,
+            pending?.kind,
+        )
+
+        assertEquals(
+            audioUri,
+            pending?.localUri,
+        )
+
+        assertEquals(
+            "audio/mp4",
+            pending?.mimeType,
+        )
+
+        assertEquals(
+            "nota-voz.m4a",
+            pending?.originalName,
+        )
+
+        assertEquals(
+            audioBytes.size.toLong(),
+            pending?.sizeBytes,
+        )
+
+        assertEquals(
+            0L,
+            pending?.durationMillis,
+        )
+
+        assertTrue(!ready.recordingAudio)
+        assertTrue(!ready.attachingMedia)
+
+        verify(exactly = 1) {
+            audioRecorder.start()
+        }
+
+        verify(exactly = 1) {
+            audioRecorder.stop()
+        }
+
+        coVerify(exactly = 1) {
+            mediaReader.read(audioUri)
+        }
+
+        coVerify(exactly = 1) {
+            mediaMetadataRetriever.extractDurationMillis(audioUri)
+        }
+    }
+
+    // Test confirm send of audio with duration
+    @Test
+    fun onConfirmMediaSend_sends_audio_with_duration() = runTest {
+        coEvery { getConversationById(any()) } returns
+            ConversationDetailOutcome.Success(detail())
+
+        viewModel = createViewModel()
+
+        val audioBytes = byteArrayOf(10, 20, 30)
+
+        val pending = PendingMedia(
+            localUri = Uri.parse("content://test/audio/nota.m4a"),
+            mimeType = "audio/mp4",
+            originalName = "nota.m4a",
+            sizeBytes = audioBytes.size.toLong(),
+            bytes = audioBytes,
+            kind = PendingMediaKind.AUDIO,
+            durationMillis = 5_000L,
+        )
+
+        val sentMessage = ConversationMessage(
+            id = "audio-1",
+            sender = ConversationSender.Consumer,
+            content = "",
+            createdOnEpochMillis = 1_000L,
+        )
+
+        coEvery {
+            sendMediaMessage(
+                detail().id,
+                match { upload ->
+                    upload is MediaUpload.Audio &&
+                        upload.bytes.contentEquals(audioBytes) &&
+                        upload.mimeType == "audio/mp4" &&
+                        upload.originalName == "nota.m4a" &&
+                        upload.durationMillis == 5_000L
+                },
+            )
+        } returns SendMessageOutcome.Success(sentMessage)
+
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onAttachMedia(
+            media = MediaUpload.Audio(
+                bytes = audioBytes,
+                mimeType = "audio/mp4",
+                originalName = "nota.m4a",
+                durationMillis = 5_000L,
+            ),
+            sourceUri = pending.localUri,
+        )
+
+        viewModel.onConfirmMediaSend()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            sendMediaMessage(
+                detail().id,
+                match { upload ->
+                    upload is MediaUpload.Audio &&
+                        upload.bytes.contentEquals(audioBytes) &&
+                        upload.durationMillis == 5_000L
+                },
+            )
+        }
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertNull(state.pendingMedia)
+        assertTrue(!state.sendingMedia)
+    }
+
+    // Test error when stop audio recording
+    @Test
+    fun onStopAudioRecording_surfaces_error_when_stop_fails() = runTest {
+        coEvery { getConversationById(any()) } returns
+            ConversationDetailOutcome.Success(detail())
+
+        val error = IllegalStateException("failed to stop recorder")
+
+        every { audioRecorder.start() } returns Result.success(Unit)
+        every { audioRecorder.stop() } returns Result.failure(error)
+
+        viewModel = createViewModel()
+        viewModel.load(detail().id)
+        advanceUntilIdle()
+
+        viewModel.onStartAudioRecording()
+        viewModel.onStopAudioRecording()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertTrue(!state.recordingAudio)
+        assertTrue(
+            state.transientMediaError is SendMessageOutcome.Failure.Network,
+        )
+        assertEquals(
+            error,
+            (state.transientMediaError as SendMessageOutcome.Failure.Network).cause,
+        )
+
+        verify(exactly = 1) { audioRecorder.stop() }
     }
 }
