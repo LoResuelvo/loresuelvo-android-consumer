@@ -16,6 +16,7 @@ import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
+import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -73,6 +74,7 @@ class ConversationViewModelAttachImageTest {
     private val getConversationById = mockk<GetConversationByIdUseCase>()
     private val sendMessage = mockk<SendMessageUseCase>(relaxed = true)
     private val sendMediaMessage = mockk<SendMediaMessageUseCase>()
+    private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val mediaReader = mockk<MediaReader>()
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var webSocketEvents: MutableSharedFlow<WsEvent>
@@ -129,6 +131,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -162,6 +165,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -198,6 +202,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -229,6 +234,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -258,6 +264,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -310,6 +317,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -351,6 +359,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -376,6 +385,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         advanceUntilIdle()
@@ -415,6 +425,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -451,6 +462,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")
@@ -484,6 +496,7 @@ class ConversationViewModelAttachImageTest {
             sendMessage,
             sendMediaMessage,
             mediaReader,
+            mediaMetadataRetriever,
             webSocketClient,
         )
         viewModel.load("1")

@@ -13,6 +13,7 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
+import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -74,6 +75,7 @@ class ConversationViewModel @Inject constructor(
     private val sendMessage: SendMessageUseCase,
     private val sendMediaMessage: SendMediaMessageUseCase,
     private val mediaReader: MediaReader,
+    private val mediaMetadataRetriever: MediaMetadataRetrieverReader,
     private val webSocketClient: WebSocketClient,
 ) : ViewModel() {
 
@@ -324,6 +326,62 @@ class ConversationViewModel @Inject constructor(
             try {
                 val media = mediaReader.read(uri)
                 onAttachMedia(media, sourceUri = uri)
+            } catch (t: Throwable) {
+                applyAttachFailure(t)
+            }
+        }
+    }
+
+    /**
+     * Reads the audio Uri the system's voice recorder returned
+     * (03-MM) via [MediaReader], then extracts the recording's
+     * duration via [com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader]
+     * and stages the `MediaUpload.Audio` payload. The bytes +
+     * duration path is the canonical "audio attach" entry point
+     * — the route's `RecordSound()` launcher simply forwards
+     * the result Uri here without any post-processing.
+     *
+     * Audio-mime routing happens inside [mediaReader]:
+     * image URIs come back as `MediaUpload.Image` (where this
+     * method effectively becomes a no-op staging). Audio URIs
+     * are upgraded with the duration before being handed to the
+     * [onAttachMedia] dispatcher.
+     *
+     * `null` duration (corrupt file, codec not supported, codec
+     * without a duration header) falls back to `0L` so the
+     * preview player can still render — the production code
+     * never crashes on a non-fatal decoder warning.
+     */
+    fun onAttachAudioFromUri(uri: Uri) {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        _uiState.update { current ->
+            if (current is ConversationUiState.Ready) {
+                current.copy(attachingMedia = true, transientMediaError = null)
+            } else {
+                current
+            }
+        }
+        viewModelScope.launch {
+            try {
+                val baseMedia = mediaReader.read(uri)
+                val withDuration = if (baseMedia is MediaUpload.Audio) {
+                    val duration = mediaMetadataRetriever.extractDurationMillis(uri) ?: 0L
+                    MediaUpload.Audio(
+                        bytes = baseMedia.bytes,
+                        mimeType = baseMedia.mimeType,
+                        originalName = baseMedia.originalName,
+                        durationMillis = duration,
+                    )
+                } else {
+                    // Defensive: the system's voice recorder always
+                    // returns an audio mime, but if a future
+                    // contract change lets it return an image or
+                    // a mime we don't handle, fall through with
+                    // what we read instead of crashing.
+                    baseMedia
+                }
+                onAttachMedia(withDuration, sourceUri = uri)
             } catch (t: Throwable) {
                 applyAttachFailure(t)
             }

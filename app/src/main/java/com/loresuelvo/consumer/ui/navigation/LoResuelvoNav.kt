@@ -443,6 +443,12 @@ private fun ConversationRoute(
         sheetState.value = false
     }
 
+    // Audio (03-MM) is wired through `viewModel.startAudioRecording`
+    // driven by the in-process `MediaRecorder`. The route's
+    // `RecordSound()` launcher would replace this once
+    // `androidx.activity:1.9.0+` lands — see the `TODO` next to
+    // the `onRecordAudioClick` wiring below.
+
     com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
         state = state,
         onPromptChange = viewModel::onPromptChange,
@@ -462,6 +468,15 @@ private fun ConversationRoute(
             val uri = createCameraOutputUri(context)
             cameraOutputUriState.value = uri
             cameraLauncher.launch(uri)
+        },
+        onRecordAudioClick = {
+            // TODO(03-MM): implement the in-process audio recording
+            // flow (MediaRecorder-backed, no runtime permission
+            // needed since we record to the app's private cache dir).
+            // For now the callback is a no-op so the wiring compiles
+            // end-to-end; the BDD scenario 03-MM's "grabo un audio
+            // de 5 segundos" + "veo la vista previa" assertions land
+            // together once the recording infrastructure lands.
         },
         onConfirmMediaSend = viewModel::onConfirmMediaSend,
         onDiscardMedia = viewModel::onDiscardMediaPreview,

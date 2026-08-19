@@ -292,12 +292,6 @@ class CompleteProfileScreenAcceptanceTest {
         abstract fun bindConversationRepository(
             repository: com.loresuelvo.consumer.testdi.FakeConversationRepository,
         ): com.loresuelvo.consumer.domain.conversation.ConversationRepository
-
-        @Binds
-        @Singleton
-        abstract fun bindMediaReader(
-            reader: com.loresuelvo.consumer.testdi.FakeMediaReader,
-        ): com.loresuelvo.consumer.data.media.MediaReader
     }
 
     @Singleton

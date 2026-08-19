@@ -7,8 +7,6 @@ import com.loresuelvo.consumer.data.api.ApiJobRequestRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
-import com.loresuelvo.consumer.data.media.AndroidMediaReader
-import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
@@ -72,10 +70,4 @@ abstract class RepositoryModule {
     abstract fun bindConversationRepository(
         impl: ApiConversationRepository,
     ): ConversationRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindMediaReader(
-        impl: AndroidMediaReader,
-    ): MediaReader
 }

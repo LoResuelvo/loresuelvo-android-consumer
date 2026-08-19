@@ -13,6 +13,7 @@ import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
+import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -53,6 +54,7 @@ class ConversationViewModelTest {
     private val sendMessage = mockk<SendMessageUseCase>()
     private val sendMediaMessage = mockk<SendMediaMessageUseCase>(relaxed = true)
     private val mediaReader = mockk<MediaReader>(relaxed = true)
+    private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var webSocketEvents: MutableSharedFlow<WsEvent>
     private lateinit var viewModel: ConversationViewModel
@@ -106,7 +108,7 @@ class ConversationViewModelTest {
             kotlinx.coroutines.awaitCancellation()
         }
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         advanceUntilIdle()
 
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
@@ -118,7 +120,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail)
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -136,7 +138,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Failure.Server(500, "boom")
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -153,7 +155,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Failure.Network(cause)
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -205,7 +207,7 @@ class ConversationViewModelTest {
             ConversationDetailOutcome.Success(rehydratedDetail),
         )
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         val firstState = viewModel.uiState.value as ConversationUiState.Ready
@@ -215,7 +217,7 @@ class ConversationViewModelTest {
         // the NavBackStackEntry, the VM goes out of scope). Build a
         // fresh one and re-load; the backend returns the persisted
         // message that the consumer sent before navigating away.
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -233,7 +235,7 @@ class ConversationViewModelTest {
     fun onPromptChange_updates_field_on_Ready() = runTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -248,7 +250,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } coAnswers {
             kotlinx.coroutines.awaitCancellation()
         }
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         advanceUntilIdle()
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)
 
@@ -281,7 +283,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         val ready = viewModel.uiState.value as ConversationUiState.Ready
@@ -305,7 +307,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -340,7 +342,7 @@ class ConversationViewModelTest {
                 ),
             )
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -382,7 +384,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
 
@@ -407,7 +409,7 @@ class ConversationViewModelTest {
             kotlinx.coroutines.awaitCancellation()
         }
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         // No load() call yet → state is Loading.
         webSocketEvents.tryEmit(providerEvent(messageId = "100"))
 
@@ -424,7 +426,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         // Default state: isAtBottom = true.
@@ -451,7 +453,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onScrollPositionChanged(atBottom = false)
@@ -475,7 +477,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onScrollPositionChanged(atBottom = false)
@@ -501,7 +503,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onScrollPositionChanged(atBottom = false)
@@ -528,7 +530,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
 
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         val before = viewModel.uiState.value as ConversationUiState.Ready
@@ -543,7 +545,7 @@ class ConversationViewModelTest {
         coEvery { getConversationById("1") } coAnswers {
             kotlinx.coroutines.awaitCancellation()
         }
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         // State is Loading.
         viewModel.onScrollPositionChanged(atBottom = false)
         assertEquals(ConversationUiState.Loading, viewModel.uiState.value)

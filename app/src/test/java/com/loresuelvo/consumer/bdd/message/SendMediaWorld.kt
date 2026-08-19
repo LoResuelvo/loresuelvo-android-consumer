@@ -19,6 +19,7 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCa
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
+import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import io.mockk.every
 import io.mockk.mockk
 import java.util.concurrent.atomic.AtomicReference
@@ -90,6 +91,8 @@ class SendMediaWorld : AutoCloseable {
     private val getConversationById = GetConversationByIdUseCase(fakeRepo)
     private val sendMessage = SendMessageUseCase(fakeRepo)
     private val sendMedia = SendMediaMessageUseCase(fakeRepo)
+    private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
+    private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
 
     private lateinit var viewModel: ConversationViewModel
     private val observedConversationStates = mutableListOf<ConversationUiState>()
@@ -120,7 +123,8 @@ class SendMediaWorld : AutoCloseable {
             getConversationById = getConversationById,
             sendMessage = sendMessage,
             sendMediaMessage = sendMedia,
-            mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+            mediaReader = mediaReader,
+            mediaMetadataRetriever = mediaMetadataRetriever,
             webSocketClient = fakeWebSocketClient,
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

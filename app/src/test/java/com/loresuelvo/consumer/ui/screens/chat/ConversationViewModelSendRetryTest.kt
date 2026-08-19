@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
+import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -46,6 +47,7 @@ class ConversationViewModelSendRetryTest {
     private val sendMessage = mockk<SendMessageUseCase>()
     private val sendMediaMessage = mockk<SendMediaMessageUseCase>(relaxed = true)
     private val mediaReader = mockk<MediaReader>(relaxed = true)
+    private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var viewModel: ConversationViewModel
 
@@ -74,7 +76,7 @@ class ConversationViewModelSendRetryTest {
                     updatedOnEpochMillis = 0L,
                 ),
             )
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
     }
@@ -111,7 +113,7 @@ class ConversationViewModelSendRetryTest {
             )
         coEvery { sendMessage("1", "primera") } returns
             SendMessageOutcome.Failure.Server(500, "boom")
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onPromptChange("primera")

@@ -152,12 +152,6 @@ class RealBackendFlowE2ETest {
         abstract fun bindConversationRepository(
             impl: FakeConversationRepository,
         ): ConversationRepository
-
-        @Binds
-        @Singleton
-        abstract fun bindMediaReader(
-            reader: com.loresuelvo.consumer.testdi.FakeMediaReader,
-        ): com.loresuelvo.consumer.data.media.MediaReader
     }
 }
 
