@@ -81,6 +81,22 @@ sealed interface ConversationUiState {
 }
 
 /**
+ * Visual kind discriminator for [PendingMedia]. The sealed
+ * hierarchy was deliberately flattened to a string-shaped
+ * enum so the existing JSON test data (`PendingMedia(...)`
+ * constructor calls in the unit and Compose layers) keeps
+ * compiling — adding a new variant only requires updating the
+ * mapper inside the preview composable, not the data class
+ * shape.
+ *
+ *  - [IMAGE] — gallery picker (01-MM), camera capture (02-MM),
+ *    future inline camera shortcut.
+ *  - [AUDIO] — system voice recorder (03-MM). Carries
+ *    [PendingMedia.durationMillis] for the player scrubber.
+ */
+enum class PendingMediaKind { IMAGE, AUDIO }
+
+/**
  * Locally-attached media awaiting the user's confirmation. The
  * data class lives in the UI layer because it carries the
  * Android `Uri` (used to render the preview thumbnail) and the
@@ -100,6 +116,9 @@ sealed interface ConversationUiState {
  * confirm, which would otherwise crash the upload with a
  * permission-denied `IOException` that's hard to distinguish
  * from a transient network failure.
+ *
+ * [durationMillis] is `0` for non-audio media. The audio
+ * preview uses it to seed the player scrubber (03-MM).
  */
 data class PendingMedia(
     val localUri: Uri?,
@@ -107,6 +126,8 @@ data class PendingMedia(
     val originalName: String,
     val sizeBytes: Long,
     val bytes: ByteArray,
+    val kind: PendingMediaKind = PendingMediaKind.IMAGE,
+    val durationMillis: Long = 0L,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -115,7 +136,9 @@ data class PendingMedia(
             mimeType == other.mimeType &&
             originalName == other.originalName &&
             sizeBytes == other.sizeBytes &&
-            bytes.contentEquals(other.bytes)
+            bytes.contentEquals(other.bytes) &&
+            kind == other.kind &&
+            durationMillis == other.durationMillis
     }
 
     override fun hashCode(): Int {

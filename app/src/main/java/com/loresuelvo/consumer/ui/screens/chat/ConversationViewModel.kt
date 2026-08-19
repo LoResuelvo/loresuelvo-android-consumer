@@ -333,34 +333,52 @@ class ConversationViewModel @Inject constructor(
     /**
      * Stage a [MediaUpload] for confirmation. The canonical
      * attach surface for non-`Uri` callers (the BDD world, future
-     * programmatic attach scenarios). The host's
-     * `onAttachImageFromGallery` reads the picker URI via
-     * [MediaReader] and forwards the result here with the
+     * programmatic attach scenarios, and the audio recorder
+     * flow that hands off a pre-built `MediaUpload.Audio` from
+     * the route's [MediaMetadataRetriever] pass).
+     *
+     * Dispatches by [MediaUpload] subtype so the preview card
+     * knows how to render the staged media:
+     *  - `MediaUpload.Image` → [PendingMediaKind.IMAGE], no
+     *    duration (image bubbles don't have a scrubber).
+     *  - `MediaUpload.Audio` → [PendingMediaKind.AUDIO],
+     *    durationMillis populated from the recorder / metadata
+     *    retriever so the player can drive its progress bar
+     *    (03-MM).
+     *
+     * The host's `onAttachImageFromGallery` reads the picker URI
+     * via [MediaReader] and forwards the result here with the
      * original `sourceUri` so the preview card can render the
      * real thumbnail.
-     *
-     * Only [MediaUpload.Image] is wired in 01-MM — the camera
-     * (02-MM) and audio (03-MM) scenarios will introduce their
-     * own entry points that hand off the right subtype.
      */
     fun onAttachMedia(media: MediaUpload, sourceUri: Uri? = null) {
         val state = _uiState.value
         if (state !is ConversationUiState.Ready) return
-        val image = media as? MediaUpload.Image
-            ?: throw IllegalStateException(
-                "Expected MediaUpload.Image, got ${media::class.simpleName}",
+        val pending = when (media) {
+            is MediaUpload.Image -> PendingMedia(
+                localUri = sourceUri,
+                mimeType = media.mimeType,
+                originalName = media.originalName,
+                sizeBytes = media.bytes.size.toLong(),
+                bytes = media.bytes,
+                kind = PendingMediaKind.IMAGE,
+                durationMillis = 0L,
             )
+            is MediaUpload.Audio -> PendingMedia(
+                localUri = sourceUri,
+                mimeType = media.mimeType,
+                originalName = media.originalName,
+                sizeBytes = media.bytes.size.toLong(),
+                bytes = media.bytes,
+                kind = PendingMediaKind.AUDIO,
+                durationMillis = media.durationMillis,
+            )
+        }
         _uiState.update { current ->
             if (current is ConversationUiState.Ready) {
                 current.copy(
                     attachingMedia = false,
-                    pendingMedia = PendingMedia(
-                        localUri = sourceUri,
-                        mimeType = image.mimeType,
-                        originalName = image.originalName,
-                        sizeBytes = image.bytes.size.toLong(),
-                        bytes = image.bytes,
-                    ),
+                    pendingMedia = pending,
                     transientMediaError = null,
                 )
             } else {

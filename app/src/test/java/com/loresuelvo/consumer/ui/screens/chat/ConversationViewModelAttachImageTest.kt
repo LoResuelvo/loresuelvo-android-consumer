@@ -392,6 +392,120 @@ class ConversationViewModelAttachImageTest {
             viewModel.uiState.value,
         )
     }
+
+    // ---- Audio attach path (03-MM) -------------------------------------
+
+    private val audioBytes = byteArrayOf(0x00, 0x01, 0x02, 0x03)
+    private val audioMime = "audio/mp4"
+    private val audioName = "nota-voz.m4a"
+    private val audioDuration = 5_000L
+    private val audioUpload = MediaUpload.Audio(
+        bytes = audioBytes,
+        mimeType = audioMime,
+        originalName = audioName,
+        durationMillis = audioDuration,
+    )
+
+    @Test
+    fun onAttachMedia_with_Audio_populates_pendingMedia_with_audio_kind_and_duration() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onAttachMedia(audioUpload, sourceUri = null)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        val pending = state.pendingMedia
+        assertNotNull("pendingMedia must be populated for audio", pending)
+        assertEquals(PendingMediaKind.AUDIO, pending!!.kind)
+        assertEquals(audioMime, pending.mimeType)
+        assertEquals(audioName, pending.originalName)
+        assertEquals(audioBytes.size.toLong(), pending.sizeBytes)
+        assertTrue(pending.bytes.contentEquals(audioBytes))
+        // 03-MM: the audio preview player seeds its scrubber
+        // from `durationMillis` — pinning it here so a future
+        // refactor that drops the field surfaces as a unit-test
+        // failure before the player UI does.
+        assertEquals(
+            "durationMillis must propagate from MediaUpload.Audio to PendingMedia",
+            audioDuration,
+            pending.durationMillis,
+        )
+    }
+
+    @Test
+    fun onAttachMedia_with_Image_populates_pendingMedia_with_image_kind() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        val imageUpload = MediaUpload.Image(
+            bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte()),
+            mimeType = "image/jpeg",
+            originalName = "img.jpg",
+        )
+        viewModel.onAttachMedia(imageUpload)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        val pending = state.pendingMedia
+        assertNotNull(pending)
+        assertEquals(PendingMediaKind.IMAGE, pending!!.kind)
+        assertEquals(0L, pending.durationMillis)
+    }
+
+    @Test
+    fun onAttachMedia_audio_replaces_image_in_pendingMedia() = runTest {
+        // Image first → switch to audio → pendingMedia should
+        // carry the audio payload, not the previous image.
+        // Pinning this so the dispatcher's else-branch can't
+        // accidentally append instead of overwrite.
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onAttachMedia(
+            MediaUpload.Image(
+                bytes = byteArrayOf(0xFF.toByte()),
+                mimeType = "image/jpeg",
+                originalName = "first.jpg",
+            ),
+        )
+        advanceUntilIdle()
+        viewModel.onAttachMedia(audioUpload)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        val pending = state.pendingMedia
+        assertEquals(PendingMediaKind.AUDIO, pending!!.kind)
+        assertEquals(audioName, pending.originalName)
+        assertEquals(audioDuration, pending.durationMillis)
+    }
 }
 
 /** MockK's `any()` is auto-resolved inside `coVerify { }` /
