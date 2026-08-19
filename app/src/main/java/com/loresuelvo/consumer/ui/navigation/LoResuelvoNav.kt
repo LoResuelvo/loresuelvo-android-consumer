@@ -469,15 +469,8 @@ private fun ConversationRoute(
             cameraOutputUriState.value = uri
             cameraLauncher.launch(uri)
         },
-        onRecordAudioClick = {
-            // TODO(03-MM): implement the in-process audio recording
-            // flow (MediaRecorder-backed, no runtime permission
-            // needed since we record to the app's private cache dir).
-            // For now the callback is a no-op so the wiring compiles
-            // end-to-end; the BDD scenario 03-MM's "grabo un audio
-            // de 5 segundos" + "veo la vista previa" assertions land
-            // together once the recording infrastructure lands.
-        },
+        onStartAudioRecording = viewModel::onStartAudioRecording,
+        onStopAudioRecording = viewModel::onStopAudioRecording,
         onConfirmMediaSend = viewModel::onConfirmMediaSend,
         onDiscardMedia = viewModel::onDiscardMediaPreview,
         onMediaErrorDismiss = viewModel::onErrorDismiss,

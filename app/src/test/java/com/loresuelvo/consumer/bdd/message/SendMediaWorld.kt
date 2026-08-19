@@ -23,6 +23,7 @@ import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.coEvery
 import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -35,6 +36,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import android.net.Uri
 
 /**
  * Per-scenario world for the US "Send photos / audio in the chat"
@@ -84,6 +86,8 @@ class SendMediaWorld : AutoCloseable {
         extraBufferCapacity = 64,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
+
+    private val uriCache = mutableMapOf<String, Uri>()
     private val fakeWebSocketClient: WebSocketClient = mockk(relaxed = true) {
         every { events } returns wsEvents
         every { start() } returns Unit
@@ -236,6 +240,45 @@ class SendMediaWorld : AutoCloseable {
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()
+    }
+
+    private fun fakeUri(value: String): Uri = 
+        uriCache.getOrPut(value) { mockk(relaxed = true) }
+        
+    fun startAudioRecording() {
+        every {
+            audioRecorder.start()
+        } returns Result.success(Unit)
+
+        viewModel.onStartAudioRecording()
+        scheduler.advanceUntilIdle()
+    }
+
+    fun recordAudioFor(seconds: Int) {
+        require(seconds > 0)
+
+        val audioUri = fakeUri("content://test/audio/nota-${seconds}s.m4a")
+        val audioBytes = ByteArray(10)
+
+        every {
+            audioRecorder.stop()
+        } returns Result.success(audioUri)
+
+        coEvery {
+            mediaReader.read(audioUri)
+        } returns MediaUpload.Audio(
+            bytes = audioBytes,
+            mimeType = "audio/mp4",
+            originalName = "nota-${seconds}s.m4a",
+            durationMillis = seconds * 1_000L,
+        )
+
+        coEvery {
+            mediaMetadataRetriever.extractDurationMillis(audioUri)
+        } returns seconds * 1_000L
+
+        viewModel.onStopAudioRecording()
+        scheduler.advanceUntilIdle()
     }
 
     /**

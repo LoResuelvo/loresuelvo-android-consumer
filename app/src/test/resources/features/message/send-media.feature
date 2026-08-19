@@ -44,7 +44,6 @@ Característica: Enviar fotos o audios en el chat
     Entonces veo la vista previa de la foto capturada
     Y puedo confirmar el envío o descartarla
 
-  @wip
   Escenario: 03-MM Grabar un audio y enviarlo
     Dado que estoy en la conversación con "Juan Pérez"
     Cuando toco el botón de grabar audio

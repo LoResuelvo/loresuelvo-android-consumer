@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,50 +35,33 @@ import com.loresuelvo.consumer.R
 /**
  * Bottom-of-screen prompt composer for the chat screen.
  *
- * Auto-grow behaviour (scenarios 07-DIA / 08-DIA):
- *  - The [BasicTextField] has `maxLines = 6` so it grows up to
- *    six visible lines as the user types; once the user types a
- *    seventh line the field stays at the cap and the overflowing
- *    content scrolls vertically inside the field.
- *  - The vertical scroll uses the standard
- *    [rememberScrollState] so cursor position is preserved across
- *    recompositions.
- *  - This matches the Gherkin: "permite visualizar hasta 6
- *    líneas de contenido sin scroll" + "el campo de texto
- *    mantiene una altura máxima de 6 líneas" + "puedo desplazarme
- *    mediante scroll dentro del campo".
+ * Supports:
+ * - Text messages
+ * - Media attachment
+ * - Audio recording
  *
- * Send-button states (ticket 2 of the chat-UX backlog):
- *  - When `canSend = true` (non-empty prompt AND not mid-flight),
- *    the [Icons.AutoMirrored.Filled.Send] icon renders in the
- *    primary colour and the button is enabled.
- *  - When `canSend = false` (empty prompt OR round-trip in flight),
- *    the same icon stays in the tree but drops to `primary` with
- *    `alpha = 0.38f` so the disabled state is unmistakable
- *    without resorting to a second spinner (the in-flight
- *    indicator already lives in the chat's typing bubble).
+ * Audio recording behaviour:
+ * - Idle + empty prompt -> microphone button.
+ * - Recording -> stop button.
+ * - Empty prompt + not recording -> microphone starts recording.
+ * - Recording button -> stops recording.
  *
- * Attach affordance (added in 01-MM for the provider chat):
- *  - When [onAttachClick] is non-null, a leading `+` button is
- *    rendered to the LEFT of the prompt field. The button opens
- *    the host's media-attach sheet (the bar does NOT own the
- *    sheet state — the host composable is the single owner).
- *  - When [onAttachClick] is null (e.g. the AI diagnostic chat
- *    that has no media surface), the leading button is omitted
- *    and the bar's layout collapses to the prompt + send pair.
+ * The parent owns the actual recording lifecycle through:
+ * [onStartAudioRecording]
+ * [onStopAudioRecording]
  *
- * Stateless: every input/output goes through the callbacks; the
- * parent owns state via [ChatViewModel] or
- * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel].
+ * The component itself is stateless.
  */
 @Composable
 fun ChatInputBar(
     promptInput: String,
     canSend: Boolean,
     sending: Boolean,
+    recordingAudio: Boolean,
     onPromptChange: (String) -> Unit,
     onSendClick: () -> Unit,
-    onRecordAudioClick: (() -> Unit)? = null,
+    onStartAudioRecording: () -> Unit,
+    onStopAudioRecording: () -> Unit,
     onAttachClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -89,15 +73,17 @@ fun ChatInputBar(
                 start = 16.dp,
                 end = 16.dp,
                 top = 12.dp,
-                bottom = 20.dp
+                bottom = 20.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Leading `+` affordance (01-MM). Optional so the AI
-        // diagnostic chat (no media surface) keeps its original
-        // layout.
-        if (onAttachClick != null) {
+
+        // ------------------------------------------------------------
+        // Attach button
+        // ------------------------------------------------------------
+
+        if (onAttachClick != null && !recordingAudio) {
             Surface(
                 onClick = onAttachClick,
                 modifier = Modifier
@@ -122,100 +108,149 @@ fun ChatInputBar(
             }
         }
 
+        // ------------------------------------------------------------
+        // Text input
+        // ------------------------------------------------------------
+
         BasicTextField(
             value = promptInput,
             onValueChange = onPromptChange,
+            enabled = !recordingAudio,
             modifier = Modifier
                 .weight(1f)
                 .background(
                     color = MaterialTheme.colorScheme.surface,
                     shape = RoundedCornerShape(24.dp),
                 )
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                // 08-DIA: vertical scroll inside the capped field so
-                // lines 7+ stay reachable without growing the
-                // surface past the Gherkin cap.
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 12.dp,
+                )
                 .verticalScroll(rememberScrollState())
                 .testTag(CHAT_INPUT_FIELD_TAG),
             textStyle = MaterialTheme.typography.bodyLarge.copy(
                 color = MaterialTheme.colorScheme.onSurface,
             ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            // 07-DIA: field grows up to 6 lines.
-            // 08-DIA: lines beyond 6 stay reachable via vertical scroll.
+            cursorBrush = SolidColor(
+                MaterialTheme.colorScheme.primary,
+            ),
             maxLines = CHAT_INPUT_MAX_LINES,
             singleLine = false,
             decorationBox = { inner ->
                 if (promptInput.isEmpty()) {
                     Text(
-                        text = stringResource(R.string.chat_input_placeholder),
+                        text = stringResource(
+                            R.string.chat_input_placeholder,
+                        ),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Start,
                     )
                 }
+
                 inner()
             },
         )
 
-        // WhatsApp-style trailing action:
-        // Empty prompt → microphone.
-        // Non-empty prompt → send.
-        // While sending, the send action remains visible but disabled.
-        // Audio recording is only available when the prompt is empty.
-        if (promptInput.isBlank() && !sending && onRecordAudioClick != null) {
-            Surface(
-                onClick = onRecordAudioClick,
-                modifier = Modifier
-                    .size(48.dp)
-                    .testTag(RECORD_AUDIO_BUTTON_TAG),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize(),
+        // ------------------------------------------------------------
+        // Recording / Send button
+        // ------------------------------------------------------------
+
+        when {
+            // Currently recording -> STOP
+            recordingAudio -> {
+                Surface(
+                    onClick = onStopAudioRecording,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(STOP_AUDIO_RECORDING_BUTTON_TAG),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError,
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Mic,
-                        contentDescription = stringResource(
-                            R.string.conversation_record_audio_content_description,
-                        ),
-                        modifier = Modifier.testTag(RECORD_AUDIO_ICON_TAG),
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Stop,
+                            contentDescription = stringResource(
+                                R.string.conversation_stop_audio_recording_content_description,
+                            ),
+                            modifier = Modifier.testTag(
+                                STOP_AUDIO_RECORDING_ICON_TAG,
+                            ),
+                        )
+                    }
                 }
             }
-        } else {
-            Surface(
-                onClick = onSendClick,
-                enabled = canSend,
-                modifier = Modifier
-                    .size(48.dp)
-                    .testTag(SEND_BUTTON_TAG),
-                shape = CircleShape,
-                color = if (canSend) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.38f)
-                },
-                contentColor = if (canSend) {
-                    MaterialTheme.colorScheme.onPrimary
-                } else {
-                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.38f)
-                },
-            ) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize(),
+
+            // Empty prompt -> START RECORDING
+            promptInput.isBlank() && !sending -> {
+                Surface(
+                    onClick = onStartAudioRecording,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(RECORD_AUDIO_BUTTON_TAG),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.Send,
-                        contentDescription = stringResource(
-                            R.string.chat_send_content_description,
-                        ),
-                        modifier = Modifier.testTag(SEND_ICON_TAG),
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Mic,
+                            contentDescription = stringResource(
+                                R.string.conversation_record_audio_content_description,
+                            ),
+                            modifier = Modifier.testTag(
+                                RECORD_AUDIO_ICON_TAG,
+                            ),
+                        )
+                    }
+                }
+            }
+
+            // Non-empty prompt -> SEND
+            else -> {
+                Surface(
+                    onClick = onSendClick,
+                    enabled = canSend,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .testTag(SEND_BUTTON_TAG),
+                    shape = CircleShape,
+                    color = if (canSend) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.primary.copy(
+                            alpha = 0.38f,
+                        )
+                    },
+                    contentColor = if (canSend) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onPrimary.copy(
+                            alpha = 0.38f,
+                        )
+                    },
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Send,
+                            contentDescription = stringResource(
+                                R.string.chat_send_content_description,
+                            ),
+                            modifier = Modifier.testTag(
+                                SEND_ICON_TAG,
+                            ),
+                        )
+                    }
                 }
             }
         }
@@ -223,10 +258,7 @@ fun ChatInputBar(
 }
 
 /**
- * Compose testTag for the prompt [BasicTextField]. Exposed
- * publicly so the Compose-test in `src/test/.../ChatInputBarTest.kt`
- * can measure the field's height across single- and multi-line
- * contents without depending on text-content assertions.
+ * Compose testTag for the prompt BasicTextField.
  */
 const val CHAT_INPUT_FIELD_TAG: String = "chat_input-field"
 
@@ -236,44 +268,22 @@ const val CHAT_INPUT_FIELD_TAG: String = "chat_input-field"
 const val SEND_BUTTON_TAG: String = "chat-send-button"
 
 /**
- * Compose testTag for the Send icon. The icon is rendered in both
- * idle and disabled states — only the alpha changes — so the
- * testTag is always present when the bar is mounted.
+ * Compose testTag for the Send icon.
  */
 const val SEND_ICON_TAG: String = "chat-send-icon"
 
 /**
- * Compose testTag for the leading `+` attach button (01-MM). Only
- * present when the host supplies [ChatInputBar]'s `onAttachClick`
- * callback — the AI diagnostic chat does not.
+ * Compose testTag for the leading `+` attach button.
  */
 const val ATTACH_BUTTON_TAG: String = "chat-attach-button"
 
 /**
- * Compose testTag for the `+` icon inside the attach button.
- * Same visibility rules as [ATTACH_BUTTON_TAG].
+ * Compose testTag for the `+` icon.
  */
 const val ATTACH_ICON_TAG: String = "chat-attach-icon"
 
 /**
- * Compose testTag for the [androidx.compose.material3.HorizontalDivider]
- * that separates the chat surface from the composer (WhatsApp-style
- * border between the list and the input). Lives next to the input
- * so the divider travels with the composer across IME insets.
- */
-const val CHAT_INPUT_DIVIDER_TAG: String = "chat-input-divider"
-
-/**
- * Maximum visible lines for the prompt field (scenarios 07 / 08-DIA).
- * Kept as a top-level constant so the test can reference the same
- * value the implementation uses.
- */
-const val CHAT_INPUT_MAX_LINES: Int = 6
-
-/**
- * Compose testTag for the trailing microphone button.
- * Only rendered when the prompt is empty and audio recording
- * is available.
+ * Compose testTag for the microphone button.
  */
 const val RECORD_AUDIO_BUTTON_TAG: String = "chat-record-audio-button"
 
@@ -281,3 +291,26 @@ const val RECORD_AUDIO_BUTTON_TAG: String = "chat-record-audio-button"
  * Compose testTag for the microphone icon.
  */
 const val RECORD_AUDIO_ICON_TAG: String = "chat-record-audio-icon"
+
+/**
+ * Compose testTag for the stop-recording button.
+ */
+const val STOP_AUDIO_RECORDING_BUTTON_TAG: String =
+    "chat-stop-audio-recording-button"
+
+/**
+ * Compose testTag for the stop-recording icon.
+ */
+const val STOP_AUDIO_RECORDING_ICON_TAG: String =
+    "chat-stop-audio-recording-icon"
+
+/**
+ * Compose testTag for the chat input divider.
+ */
+const val CHAT_INPUT_DIVIDER_TAG: String =
+    "chat-input-divider"
+
+/**
+ * Maximum visible lines for the prompt field.
+ */
+const val CHAT_INPUT_MAX_LINES: Int = 6

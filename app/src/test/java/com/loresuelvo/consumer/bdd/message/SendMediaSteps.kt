@@ -210,6 +210,96 @@ class SendMediaSteps {
         )
     }
 
+    // ---- Scenario 03-MM ---------------------------------------------
+
+    @When("toco el botón de grabar audio")
+    fun iTapRecordAudioButton() {
+        world.startAudioRecording()
+    }
+
+    @And("grabo un audio de {int} segundos")
+    fun iRecordAudioForSeconds(seconds: Int) {
+        world.recordAudioFor(seconds)
+    }
+
+    @Then("veo la vista previa del audio grabado")
+    fun iSeeTheRecordedAudioPreview() {
+        val state = world.lastConversationUiState()
+
+        println("=== 03-MM PREVIEW STATE ===")
+        println(state)
+
+        assertTrue(
+            "expected Ready after audio recording, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        println("=== 03-MM PENDING MEDIA ===")
+        println(ready.pendingMedia)
+
+        assertNotNull(
+            "expected pending audio after recording, was ${ready.pendingMedia}",
+            ready.pendingMedia,
+        )
+
+        assertEquals(
+            "expected pending media to be AUDIO",
+            com.loresuelvo.consumer.ui.screens.chat.PendingMediaKind.AUDIO,
+            ready.pendingMedia?.kind,
+        )
+
+        assertEquals(
+            "expected recording duration",
+            5_000L,
+            ready.pendingMedia?.durationMillis,
+        )
+    }
+
+    @And("puedo reproducirlo antes de enviarlo")
+    fun iCanPlayTheRecordedAudio() {
+        val state = world.lastConversationUiState()
+
+        println("=== 03-MM PLAY STATE ===")
+        println(state)
+
+        assertTrue(
+            "expected Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        assertNotNull(
+            "expected audio preview to be available",
+            ready.pendingMedia,
+        )
+
+        assertEquals(
+            "expected pending media to be AUDIO",
+            com.loresuelvo.consumer.ui.screens.chat.PendingMediaKind.AUDIO,
+            ready.pendingMedia?.kind,
+        )
+
+        assertEquals(
+            "expected audio duration to be 5 seconds",
+            5_000L,
+            ready.pendingMedia?.durationMillis,
+        )
+    }
+
+    @And("puedo confirmar el envío")
+    fun iCanConfirmTheSend() {
+        println("=== 03-MM CONFIRM STATE ===")
+        println(world.lastConversationUiState())
+
+        world.confirmSend()
+
+        println("=== 03-MM AFTER CONFIRM ===")
+        println(world.lastConversationUiState())
+    }
+
     private fun assertTrue(message: String, condition: Boolean) {
         if (!condition) throw AssertionError(message)
     }

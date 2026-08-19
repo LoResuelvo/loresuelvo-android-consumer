@@ -95,8 +95,11 @@ fun ChatScreen(
                     promptInput = promptInput,
                     canSend = canSend,
                     sending = sending,
+                    recordingAudio = false,
                     onPromptChange = onPromptChange,
                     onSendClick = onSendClick,
+                    onStartAudioRecording = {},
+                    onStopAudioRecording = {},
                 )
             }
         },
