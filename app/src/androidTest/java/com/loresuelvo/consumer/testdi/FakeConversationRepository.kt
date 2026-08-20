@@ -41,6 +41,11 @@ import javax.inject.Singleton
 class FakeConversationRepository @Inject constructor() : ConversationRepository {
 
     private var detailSeed: ConversationDetail? = null
+    private var conversationsSeed: List<Conversation>? = null
+
+    fun setConversationsSeed(conversations: List<Conversation>) {
+        conversationsSeed = conversations
+    }
 
     fun setDetailSeed(detail: ConversationDetail) {
         detailSeed = detail
@@ -48,6 +53,7 @@ class FakeConversationRepository @Inject constructor() : ConversationRepository 
 
     fun clear() {
         detailSeed = null
+        conversationsSeed = null
     }
 
     override suspend fun getConversationById(
@@ -61,9 +67,8 @@ class FakeConversationRepository @Inject constructor() : ConversationRepository 
 
         return ConversationDetailOutcome.Success(seeded)
     }
-
     override suspend fun getConversations(): ConversationsOutcome =
-        ConversationsOutcome.Success(emptyList())
+        ConversationsOutcome.Success(conversationsSeed ?: emptyList())
 
     override suspend fun sendMessage(
         conversationId: String,
