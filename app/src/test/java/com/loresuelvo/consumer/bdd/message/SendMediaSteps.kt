@@ -300,6 +300,28 @@ class SendMediaSteps {
         println(world.lastConversationUiState())
     }
 
+    // ---- Scenario 04-MM ---------------------------------------------
+
+    @Given("que envié una imagen en la conversación con {string}")
+    fun iSentAnImage(counterpartName: String) {
+        world.seedConversationWithSentImage(counterpartName)
+    }
+
+    @When("accedo a esa conversación")
+    fun iAccessThatConversation() {
+        world.openConversation()
+    }
+
+    @Then("veo la burbuja de la imagen enviada en el hilo")
+    fun iSeeTheSentImageBubble() {
+        world.assertSentImageBubbleIsVisible()
+    }
+
+    @And("la burbuja expone la miniatura de la imagen enviada")
+    fun theBubbleExposesTheImageThumbnail() {
+        world.assertSentImageThumbnailIsVisible()
+    }
+
     private fun assertTrue(message: String, condition: Boolean) {
         if (!condition) throw AssertionError(message)
     }

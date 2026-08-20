@@ -281,6 +281,85 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    // ---- Scenario 04-MM ---------------------------------------------
+
+    fun seedConversationWithSentImage(counterpartName: String) {
+        val counterpart = knownCounterparts[counterpartName]
+            ?: error("Unknown counterpart: $counterpartName")
+
+        fakeRepo.setDetailSeed(
+            ConversationDetail(
+                id = "1",
+                status = ConversationStatus.Pending,
+                counterpart = counterpart,
+                messages = listOf(
+                    ConversationMessage(
+                        id = "media-msg-1",
+                        sender = ConversationSender.Consumer,
+                        content = "",
+                        createdOnEpochMillis = 1_700_000_000_000L,
+                        media = MediaReference.Image(
+                            id = "img-file-id",
+                            url = "https://cdn.loresuelvo.test/gotera-baño.jpg",
+                            mimeType = "image/jpeg",
+                            originalName = "gotera-baño.jpg",
+                        ),
+                    ),
+                ),
+                updatedOnEpochMillis = 1_700_000_000_000L,
+            ),
+        )
+    }
+
+    fun assertSentImageBubbleIsVisible() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val imageMessage = ready.detail.messages.firstOrNull {
+            it.id == "media-msg-1" &&
+                it.sender is ConversationSender.Consumer &&
+                it.media is MediaReference.Image
+        }
+
+        assertTrue(
+            "expected sent image message to be present in the conversation",
+            imageMessage != null,
+        )
+    }
+
+    fun assertSentImageThumbnailIsVisible() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val image = ready.detail.messages
+            .firstOrNull { it.id == "media-msg-1" }
+            ?.media as? MediaReference.Image
+
+        val actualImage = image
+            ?: error("expected sent image message to contain an image")
+
+        assertTrue(
+            "expected sent image to have a URL",
+            actualImage.url.isNotBlank(),
+        )
+    }
+
+    private fun assertTrue(message: String, condition: Boolean) {
+        if (!condition) throw AssertionError(message)
+    }
+    
     /**
      * Fake [ConversationRepository] for the media BDD. Always
      * returns Success on `sendMediaMessage` with a fresh
@@ -334,10 +413,11 @@ class SendMediaWorld : AutoCloseable {
         override suspend fun sendMessage(
             conversationId: String,
             content: String,
-        ): SendMessageOutcome = SendMessageOutcome.Failure.Server(
-            code = 500,
-            message = "FakeConversationRepository: sendMessage not exercised",
-        )
+        ): SendMessageOutcome =
+            SendMessageOutcome.Failure.Server(
+                code = 500,
+                message = "FakeConversationRepository: sendMessage not exercised",
+            )
 
         override suspend fun sendMediaMessage(
             conversationId: String,

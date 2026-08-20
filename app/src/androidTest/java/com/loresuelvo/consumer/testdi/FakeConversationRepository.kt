@@ -40,15 +40,30 @@ import javax.inject.Singleton
 @Singleton
 class FakeConversationRepository @Inject constructor() : ConversationRepository {
 
-    override suspend fun getConversations(): ConversationsOutcome =
-        ConversationsOutcome.Success(emptyList())
+    private var detailSeed: ConversationDetail? = null
+
+    fun setDetailSeed(detail: ConversationDetail) {
+        detailSeed = detail
+    }
+
+    fun clear() {
+        detailSeed = null
+    }
 
     override suspend fun getConversationById(
         conversationId: String,
-    ): ConversationDetailOutcome = ConversationDetailOutcome.Failure.Server(
-        code = 404,
-        message = "FakeConversationRepository: no detail seeded",
-    )
+    ): ConversationDetailOutcome {
+        val seeded = detailSeed
+            ?: return ConversationDetailOutcome.Failure.Server(
+                code = 404,
+                message = "FakeConversationRepository: no detail seeded",
+            )
+
+        return ConversationDetailOutcome.Success(seeded)
+    }
+
+    override suspend fun getConversations(): ConversationsOutcome =
+        ConversationsOutcome.Success(emptyList())
 
     override suspend fun sendMessage(
         conversationId: String,
