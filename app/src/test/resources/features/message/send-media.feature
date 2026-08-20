@@ -52,7 +52,6 @@ Característica: Enviar fotos o audios en el chat
     Y puedo reproducirlo antes de enviarlo
     Y puedo confirmar el envío
 
-  @wip
   Escenario: 04-MM La imagen enviada se muestra correctamente en la conversación
     Dado que envié una imagen en la conversación con "Juan Pérez"
     Cuando accedo a esa conversación
