@@ -88,6 +88,7 @@ class ConversationViewModelAttachImageTest {
     private val imageMime = "image/jpeg"
     private val imageName = "foto-baño.jpg"
     private val serverImage = MediaReference.Image(
+        id = "img-file-id",
         url = "https://cdn.loresuelvo.test/foto-baño.jpg",
         mimeType = imageMime,
         originalName = imageName,

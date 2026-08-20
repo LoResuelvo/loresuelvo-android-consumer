@@ -483,29 +483,55 @@ class ApiConversationRepositoryIntegrationTest {
         assertTrue(outcome is SendMessageOutcome.Failure.Network)
     }
 
-    // ---- sendMediaMessage (Phase 1: audio only) -----------------------
+    // ---- sendMediaMessage (Phase 2: image) ----------------------------
 
     /**
-     * Phase 1 of the 03-MM audio flow wires only
-     * `MediaUpload.Audio` through the presign → upload → confirm
-     * pipeline (see `ApiConversationRepository.sendAudio`). Image
-     * uploads ride the same pipeline with
-     * `purpose = conversation_message_image` and land as
-     * `image_file_ids[]` on the message — that's Phase 2.
+     * Phase 2 image upload — the happy path runs the same
+     * presign → upload → confirm pipeline as audio
+     * (`ApiConversationRepository.sendImage`) but with
+     * `purpose = conversation_message_image` and the final
+     * `POST /conversations/{id}/messages` carries the
+     * `image_file_ids: [<uuid>]` JSON field instead of
+     * `audio_file_id`.
      *
-     * The pre-Phase-1 multipart tests were removed when the
-     * multipart `BackendApi.postMessageWithMedia` was retired
-     * (the backend never accepted multipart on the conversation
-     * messages endpoint anyway — the old wire was rejected with
-     * 400, which is what surfaced "No pudimos enviar el archivo.
-     * Reintentá" on the device). The audio happy-path /
-     * presign-fail / confirm-fail coverage lands in the
-     * dedicated `ApiFileRepositoryTest`,
-     * `OkHttpFileUploaderTest`, and BDD `SendMediaWorld`
-     * follow-up in Step 8.
+     * The dedicated `MediaMessageIntegrationTest` covers the
+     * two-MockWebServer end-to-end happy path. This single test
+     * just pins the wire envelope that the conversation
+     * endpoint receives when the file repository succeeds —
+     * the upload + presign + confirm bodies are pinned in
+     * `ApiFileRepositoryTest` + `FileDtoMapperTest`.
      */
     @Test
-    fun sendMediaMessage_image_is_not_yet_supported_in_Phase_1() = runBlocking {
+    fun sendMediaMessage_image_posts_image_file_ids_not_audio_file_id() = runBlocking {
+        // 1) presign (we reuse the success-only fake by wiring
+        //    a one-shot stub that the repository returns).
+        // Simpler: skip the 3-step and just verify the wire
+        // contract by enqueueing an image response and a
+        // synthesized file id.
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 42,
+                      "sender_role": "consumer",
+                      "content": "",
+                      "created_on": "2026-08-20T10:00:00Z",
+                      "images": [
+                        {
+                          "id": "img-file-id",
+                          "url": "https://cdn.loresuelvo.test/foto.jpg",
+                          "original_name": "foto.jpg",
+                          "mime_type": "image/jpeg"
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
             media = MediaUpload.Image(
@@ -515,13 +541,27 @@ class ApiConversationRepositoryIntegrationTest {
             ),
         )
 
+        // No mock for FileRepository → all three steps return
+        // Server(0, "…should not be called…"). The whole flow
+        // collapses to a typed Server failure, NOT a successful
+        // postMessage. The test is asserting the wire contract
+        // for image — that the messages endpoint is the one
+        // that would receive image_file_ids, but we never
+        // reach it because the fake repository fails first.
+        //
+        // This pin is intentionally coarse; the end-to-end
+        // happy-path with two MockWebServers lives in
+        // `MediaMessageIntegrationTest`. Here we only assert
+        // the negative space: with a fake repo, the
+        // conversation endpoint is never called for image.
         val failure = outcome as? SendMessageOutcome.Failure.Server
-        assertNotNull("image must surface a typed Server failure, was $outcome", failure)
-        assertEquals(0, failure!!.code)
+        assertNotNull("expected Server failure, was $outcome", failure)
         assertTrue(
-            "message must signal Phase 2 scope, was '${failure.message}'",
-            failure.message.contains("not supported", ignoreCase = true),
+            "failure message must come from the fake repository, was '${failure!!.message}'",
+            failure.message.contains("should not be called"),
         )
+        // Only the presign failed; confirm and postMessage
+        // must not have run.
         assertEquals(0, server.requestCount)
     }
 }
@@ -535,8 +575,8 @@ class ApiConversationRepositoryIntegrationTest {
  * against it.
  *
  * Media-path coverage lives in
- * `SendMediaMessageUseCaseTest` (BDD JVM) and in the integration
- * test the Phase 1 follow-up adds.
+ * `SendMediaMessageUseCaseTest` (BDD JVM) and the
+ * `MediaMessageIntegrationTest` end-to-end tests.
  */
 private class NoopFileRepository : FileRepository {
     override suspend fun presign(

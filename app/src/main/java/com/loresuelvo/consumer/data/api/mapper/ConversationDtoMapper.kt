@@ -122,6 +122,7 @@ private fun MessageAudioDto.toMediaReference(): MediaReference =
  */
 private fun MessageImageDto.toMediaReference(): MediaReference =
     MediaReference.Image(
+        id = id,
         url = url,
         mimeType = mimeType,
         originalName = originalName,

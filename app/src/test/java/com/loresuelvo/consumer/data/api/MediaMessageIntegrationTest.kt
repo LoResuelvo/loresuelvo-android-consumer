@@ -22,9 +22,10 @@ import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
 /**
- * End-to-end coverage of the consumer ↔ provider chat audio
- * upload (scenario 03-MM). Drives `ApiConversationRepository
- * .sendMediaMessage(audio)` against two `MockWebServer`s:
+ * End-to-end coverage of the consumer ↔ provider chat
+ * `sendMediaMessage` flow for both audio (scenario 03-MM) and
+ * image (Phase 2). Drives `ApiConversationRepository
+ * .sendMediaMessage(...)` against two `MockWebServer`s:
  *
  *  - the **backend** server (presign / confirm /
  *    `POST /conversations/{id}/messages`)
@@ -35,20 +36,23 @@ import java.util.concurrent.TimeUnit
  * `openapi/paths/files-presign.yaml`,
  * `openapi/paths/file-confirm.yaml` and
  * `openapi/paths/conversation-messages.yaml`, plus the Go
- * backend's reference flow in
- * `features/steps/send_audio_test.go` `consumerSentAudioInActiveChat`.
+ * backend's reference flows in `features/steps/send_audio_test.go`
+ * `consumerSentAudioInActiveChat` and `attach_message_images_test.go`
+ * `consumerAttachesImagesToMessage`.
  *
  * Critical invariants:
- *  - presign body carries `purpose = "conversation_message_audio"`.
+ *  - presign body carries the right `purpose` per subtype
+ *    (`conversation_message_audio` vs `conversation_message_image`).
  *  - The upload URL + headers from the presign response go
  *    verbatim to the storage `PUT` (no Auth0 token).
- *  - The confirmed file id round-trips through the JSON
- *    `audio_file_id` of the final `POST /messages`.
+ *  - The confirmed file id round-trips through the JSON field
+ *    of the final `POST /messages` (`audio_file_id` for audio,
+ *    `image_file_ids: [<uuid>]` for image).
  *  - `content` is empty on the final message (audio is
  *    exclusive — backend's
  *    `internal/domain/conversation/service.go:113-115`).
  */
-class AudioMessageIntegrationTest {
+class MediaMessageIntegrationTest {
 
     private lateinit var backend: MockWebServer
     private lateinit var storage: MockWebServer
@@ -376,6 +380,183 @@ class AudioMessageIntegrationTest {
         // postMessage must not.
         assertEquals(2, backend.requestCount)
         assertEquals(1, storage.requestCount)
+    }
+
+    @Test
+    fun image_happy_path_runs_presign_upload_confirm_postMessage_in_order() = runBlocking {
+        // 1) presign returns a pre-signed URL pointing at the
+        //    storage server, with purpose=conversation_message_image.
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "file_id": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+                      "key": "files/2026/08/conversation_message_image/9f8e7d6c.jpg",
+                      "upload_url": "${storage.url("/upload/bucket/key")}",
+                      "headers": {
+                        "Content-Type": "image/jpeg"
+                      }
+                    }
+                    """.trimIndent(),
+                ),
+        )
+        // 2) storage accepts the bytes.
+        storage.enqueue(MockResponse().setResponseCode(200))
+        // 3) confirm returns the validated image (no nested audio block).
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+                      "original_name": "foto.jpg",
+                      "mime_type": "image/jpeg",
+                      "type": "image"
+                    }
+                    """.trimIndent(),
+                ),
+        )
+        // 4) postMessage returns the persisted bubble carrying
+        //    the image inside `images[]` (no `audio` block).
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(201)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 100,
+                      "sender_role": "consumer",
+                      "content": "",
+                      "created_on": "2026-08-20T10:00:00Z",
+                      "images": [
+                        {
+                          "id": "9f8e7d6c-5b4a-3210-fedc-ba9876543210",
+                          "url": "https://storage.example/private/foto.jpg?signature=...",
+                          "original_name": "foto.jpg",
+                          "mime_type": "image/jpeg"
+                        }
+                      ]
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val imageBytes = byteArrayOf(0x10, 0x20, 0x30)
+        val outcome = repository.sendMediaMessage(
+            conversationId = "1",
+            media = MediaUpload.Image(
+                bytes = imageBytes,
+                mimeType = "image/jpeg",
+                originalName = "foto.jpg",
+            ),
+        )
+
+        val success = outcome as? SendMessageOutcome.Success
+        assertNotNull("expected Success, was $outcome", success)
+        val message = success!!.message
+        assertEquals("100", message.id)
+        assertEquals("", message.content)
+        val media = message.media
+        assertTrue(
+            "expected MediaReference.Image, was $media",
+            media is MediaReference.Image,
+        )
+        val image = media as MediaReference.Image
+        assertEquals("9f8e7d6c-5b4a-3210-fedc-ba9876543210", image.id)
+        assertEquals("image/jpeg", image.mimeType)
+        assertEquals("foto.jpg", image.originalName)
+        assertEquals(
+            "https://storage.example/private/foto.jpg?signature=...",
+            image.url,
+        )
+
+        // presign request — must carry conversation_message_image.
+        val presignRecorded = backend.takeRequest()
+        assertEquals("POST", presignRecorded.method)
+        assertEquals("/files/presign", presignRecorded.path)
+        val presignBody = presignRecorded.body.readUtf8()
+        assertTrue(
+            "presign must carry conversation_message_image, was '$presignBody'",
+            presignBody.contains("\"purpose\":\"conversation_message_image\"") &&
+                presignBody.contains("\"original_name\":\"foto.jpg\"") &&
+                presignBody.contains("\"mime_type\":\"image/jpeg\"") &&
+                presignBody.contains("\"size_bytes\":3"),
+        )
+
+        // storage upload PUT.
+        val uploadRecorded = storage.takeRequest()
+        assertEquals("PUT", uploadRecorded.method)
+        assertEquals("/upload/bucket/key", uploadRecorded.path)
+        assertEquals("image/jpeg", uploadRecorded.getHeader("Content-Type"))
+        assertEquals(imageBytes.size.toLong(), uploadRecorded.bodySize)
+
+        // confirm request.
+        val confirmRecorded = backend.takeRequest()
+        assertEquals("POST", confirmRecorded.method)
+        assertEquals(
+            "/files/9f8e7d6c-5b4a-3210-fedc-ba9876543210/confirm",
+            confirmRecorded.path,
+        )
+
+        // postMessage request — image_file_ids plural with
+        // empty content. NOT audio_file_id.
+        val postRecorded = backend.takeRequest()
+        assertEquals("POST", postRecorded.method)
+        assertEquals("/conversations/1/messages", postRecorded.path)
+        val postBody = postRecorded.body.readUtf8()
+        assertTrue(
+            "postMessage must carry image_file_ids[] with empty content, was '$postBody'",
+            postBody.contains(
+                "\"image_file_ids\":[\"9f8e7d6c-5b4a-3210-fedc-ba9876543210\"]",
+            ) &&
+                postBody.contains("\"content\":\"\""),
+        )
+        assertTrue(
+            "postMessage must NOT carry audio_file_id for image, was '$postBody'",
+            !postBody.contains("audio_file_id"),
+        )
+    }
+
+    @Test
+    fun image_presign_rejects_unsupported_mime_with_server_failure() = runBlocking {
+        // Backend validates mime against
+        // `conversationMessageImagePolicy.AllowedMimeTypes =
+        // {image/jpeg, image/png, image/webp}`. Sending
+        // `image/gif` returns 400 with
+        // `ErrMessageImageNotAvailable` — pinned here so a
+        // regression that drops the mime check surfaces
+        // immediately.
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(400)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """{"error":"Unsupported conversation image","message":"gif not allowed"}""",
+                ),
+        )
+
+        val outcome = repository.sendMediaMessage(
+            conversationId = "1",
+            media = MediaUpload.Image(
+                bytes = byteArrayOf(0x01),
+                mimeType = "image/gif",
+                originalName = "animado.gif",
+            ),
+        )
+
+        val failure = outcome as? SendMessageOutcome.Failure.Server
+        assertNotNull("expected Server failure, was $outcome", failure)
+        assertEquals(400, failure!!.code)
+        assertEquals("gif not allowed", failure.message)
+        // presign failed; storage and postMessage must not have run.
+        assertEquals(0, storage.requestCount)
+        assertEquals(1, backend.requestCount)
     }
 
     /**

@@ -20,6 +20,11 @@ package com.loresuelvo.consumer.domain.file
  *  - `conversation_message_video` — private MP4/H.264 video
  *    attached to a conversation message. Backend policy caps
  *    it at 50 MiB, 120 seconds and 1920×1920 px.
+ *  - `conversation_message_image` — private JPEG/PNG/WebP
+ *    image attached to a conversation message. Backend
+ *    policy caps it at 5 MiB per file and 5 files per
+ *    message; the consumer app currently sends one image per
+ *    message (single-valued `MediaReference.Image`).
  *
  * The job-request and work-order completion image purposes are
  * out of scope for the consumer app today; if a future flow
@@ -30,4 +35,5 @@ enum class FilePurpose {
     PROFILE_PHOTO,
     CONVERSATION_MESSAGE_AUDIO,
     CONVERSATION_MESSAGE_VIDEO,
+    CONVERSATION_MESSAGE_IMAGE,
 }

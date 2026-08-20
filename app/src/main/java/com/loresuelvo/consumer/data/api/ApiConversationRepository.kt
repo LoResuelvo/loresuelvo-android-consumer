@@ -83,34 +83,34 @@ class ApiConversationRepository @Inject constructor(
     }
 
     /**
-     * Audio-only path for Phase 1: the WebM/Opus bytes go
-     * through the presign → upload → confirm pipeline with
-     * `purpose = conversation_message_audio`, and the backend's
-     * returned `ConfirmedFile.id` (UUID) becomes the JSON
-     * `audio_file_id` on the final `POST /messages` call. Audio
-     * is exclusive (no `content`, no `image_file_ids`, no
-     * `video_file_id`) per
-     * `openapi/components/schemas/send-message-request.yaml`
-     * `not.anyOf` rules — see also the backend's
-     * `internal/domain/conversation/service.go:113-115` that
-     * returns `ErrMessageAudioMustBeExclusive`.
+     * Dispatches on [MediaUpload] subtype and runs the
+     * presign → upload → confirm dance before posting the
+     * JSON message body. Both subtypes share the file-upload
+     * pipeline through [FileRepository]; only the `purpose`,
+     * the field on the JSON message (`audio_file_id` vs
+     * `image_file_ids[]`), and the diagnostic log tag differ.
      *
-     * Image attachments are not yet supported on this code
-     * path; the Phase 2 iteration will dispatch on
-     * [MediaUpload] subtype and use `image_file_ids[]` against
-     * the same `files/presign` + `files/{id}/confirm` flow
-     * with `purpose = conversation_message_image`.
+     *  - Audio: `purpose = conversation_message_audio`,
+     *    `audio_file_id = <uuid>`. Audio is exclusive on the
+     *    message (no `content` / `image_file_ids` /
+     *    `video_file_id`) per the OpenAPI `not.anyOf` rules and
+     *    the backend's
+     *    `internal/domain/conversation/service.go:113-115`
+     *    `ErrMessageAudioMustBeExclusive`.
+     *  - Image: `purpose = conversation_message_image`,
+     *    `image_file_ids = [<uuid>]`. The consumer app sends
+     *    one image per message (single-valued
+     *    `MediaReference.Image`); the backend accepts up to
+     *    five (`MaxConversationMessageImages = 5` in
+     *    `internal/domain/file/upload_policy.go:12`). A future
+     *    multi-image iteration fans out to multiple IDs.
      */
     override suspend fun sendMediaMessage(
         conversationId: String,
         media: MediaUpload,
     ): SendMessageOutcome = when (media) {
         is MediaUpload.Audio -> sendAudio(conversationId, media)
-        is MediaUpload.Image ->
-            SendMessageOutcome.Failure.Server(
-                code = 0,
-                message = "Image attachments are not supported yet",
-            )
+        is MediaUpload.Image -> sendImage(conversationId, media)
     }
 
     private suspend fun sendAudio(
@@ -123,14 +123,78 @@ class ApiConversationRepository @Inject constructor(
                 "mime=${audio.mimeType} size=${audio.bytes.size}B " +
                 "originalName=${audio.originalName}",
         )
+        val fileId = when (
+            val r = runPresignUploadConfirm(
+                originalName = audio.originalName,
+                mimeType = audio.mimeType,
+                bytes = audio.bytes,
+                purpose = FilePurpose.CONVERSATION_MESSAGE_AUDIO,
+            )
+        ) {
+            is UploadFlow.Failure -> return r.failure
+            is UploadFlow.Success -> r.fileId
+        }
+        return postMessageWithAudioFileId(conversationId, fileId)
+    }
+
+    private suspend fun sendImage(
+        conversationId: String,
+        image: MediaUpload.Image,
+    ): SendMessageOutcome {
+        Log.d(
+            TAG,
+            "sendImage start: conversationId=$conversationId " +
+                "mime=${image.mimeType} size=${image.bytes.size}B " +
+                "originalName=${image.originalName}",
+        )
+        val fileId = when (
+            val r = runPresignUploadConfirm(
+                originalName = image.originalName,
+                mimeType = image.mimeType,
+                bytes = image.bytes,
+                purpose = FilePurpose.CONVERSATION_MESSAGE_IMAGE,
+            )
+        ) {
+            is UploadFlow.Failure -> return r.failure
+            is UploadFlow.Success -> r.fileId
+        }
+        return postMessageWithImageFileId(conversationId, fileId)
+    }
+
+    /**
+     * Outcome of the presign → upload → confirm pipeline. The
+     * repository never throws: every HTTP / network failure is
+     * mapped here so the caller (the message dispatcher) just
+     * returns the carried [SendMessageOutcome.Failure] verbatim.
+     */
+    private sealed interface UploadFlow {
+        data class Success(val fileId: String) : UploadFlow
+        data class Failure(val failure: SendMessageOutcome.Failure) : UploadFlow
+    }
+
+    /**
+     * Runs the three-step upload flow for [bytes] under
+     * [purpose]. Returns the backend-issued file UUID on
+     * success, or the typed [SendMessageOutcome.Failure] on
+     * the first failure (logged with `purpose` for triage). The
+     * caller maps [UploadFlow.Failure] back into the same
+     * failure hierarchy the user already sees on the existing
+     * media error card.
+     */
+    private suspend fun runPresignUploadConfirm(
+        originalName: String,
+        mimeType: String,
+        bytes: ByteArray,
+        purpose: FilePurpose,
+    ): UploadFlow {
         // 1) presign
         val presignResult = when (
             val outcome = fileRepository.presign(
                 PresignUploadRequest(
-                    originalName = audio.originalName,
-                    mimeType = audio.mimeType,
-                    sizeBytes = audio.bytes.size,
-                    purpose = FilePurpose.CONVERSATION_MESSAGE_AUDIO,
+                    originalName = originalName,
+                    mimeType = mimeType,
+                    sizeBytes = bytes.size,
+                    purpose = purpose,
                 ),
             )
         ) {
@@ -138,11 +202,11 @@ class ApiConversationRepository @Inject constructor(
             is PresignUploadOutcome.Failure -> {
                 Log.w(
                     TAG,
-                    "presign failed: ${outcome::class.simpleName} " +
+                    "presign[$purpose] failed: ${outcome::class.simpleName} " +
                         "code=${(outcome as? PresignUploadOutcome.Failure.Server)?.code} " +
                         "message=${(outcome as? PresignUploadOutcome.Failure.Server)?.message}",
                 )
-                return collapsePresignFailure(outcome)
+                return UploadFlow.Failure(collapsePresignFailure(outcome))
             }
         }
 
@@ -151,57 +215,76 @@ class ApiConversationRepository @Inject constructor(
             val outcome = fileRepository.uploadBytes(
                 uploadUrl = presignResult.uploadUrl,
                 headers = presignResult.headers,
-                bytes = audio.bytes,
+                bytes = bytes,
             )
         ) {
             is UploadBytesOutcome.Success -> Unit
             is UploadBytesOutcome.Failure -> {
                 Log.w(
                     TAG,
-                    "uploadBytes failed: ${outcome::class.simpleName} " +
+                    "uploadBytes[$purpose] failed: ${outcome::class.simpleName} " +
                         "code=${(outcome as? UploadBytesOutcome.Failure.Server)?.code} " +
                         "url=$presignResult.uploadUrl",
                 )
-                return collapseUploadFailure(outcome)
+                return UploadFlow.Failure(collapseUploadFailure(outcome))
             }
         }
 
         // 3) confirm
-        val confirmedId = when (
+        return when (
             val outcome = fileRepository.confirm(
                 fileId = presignResult.fileId,
                 request = ConfirmUploadRequest(
                     key = presignResult.key,
-                    mimeType = audio.mimeType,
-                    sizeBytes = audio.bytes.size,
+                    mimeType = mimeType,
+                    sizeBytes = bytes.size,
                 ),
             )
         ) {
-            is ConfirmUploadOutcome.Success -> outcome.file.id
+            is ConfirmUploadOutcome.Success ->
+                UploadFlow.Success(outcome.file.id)
             is ConfirmUploadOutcome.Failure -> {
                 Log.w(
                     TAG,
-                    "confirm failed: ${outcome::class.simpleName} " +
+                    "confirm[$purpose] failed: ${outcome::class.simpleName} " +
                         "code=${(outcome as? ConfirmUploadOutcome.Failure.Server)?.code} " +
                         "message=${(outcome as? ConfirmUploadOutcome.Failure.Server)?.message}",
                 )
-                return collapseConfirmFailure(outcome)
+                UploadFlow.Failure(collapseConfirmFailure(outcome))
             }
         }
+    }
 
-        // 4) post the JSON message with audio_file_id
-        return try {
-            val dto = backendApi.postMessage(
-                conversationId,
-                SendMessageRequestDto(
-                    content = "",
-                    audioFileId = confirmedId,
-                ),
-            )
-            SendMessageOutcome.Success(dto.toDomain())
-        } catch (t: Throwable) {
-            mapSendFailure(t)
-        }
+    private suspend fun postMessageWithAudioFileId(
+        conversationId: String,
+        fileId: String,
+    ): SendMessageOutcome = try {
+        val dto = backendApi.postMessage(
+            conversationId,
+            SendMessageRequestDto(
+                content = "",
+                audioFileId = fileId,
+            ),
+        )
+        SendMessageOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapSendFailure(t)
+    }
+
+    private suspend fun postMessageWithImageFileId(
+        conversationId: String,
+        fileId: String,
+    ): SendMessageOutcome = try {
+        val dto = backendApi.postMessage(
+            conversationId,
+            SendMessageRequestDto(
+                content = "",
+                imageFileIds = listOf(fileId),
+            ),
+        )
+        SendMessageOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapSendFailure(t)
     }
 
     private fun collapsePresignFailure(

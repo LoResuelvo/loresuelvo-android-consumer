@@ -79,6 +79,7 @@ class SendMediaMessageUseCaseTest {
                 content = "",
                 createdOnEpochMillis = 1_700_000_000_000L,
                 media = MediaReference.Image(
+                    id = "img-file-id",
                     url = "https://cdn.loresuelvo.test/foto-baño.jpg",
                     mimeType = "image/jpeg",
                     originalName = "foto-baño.jpg",

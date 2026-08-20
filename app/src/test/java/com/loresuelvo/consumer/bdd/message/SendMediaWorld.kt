@@ -357,6 +357,7 @@ class SendMediaWorld : AutoCloseable {
                     content = "",
                     createdOnEpochMillis = 1_700_000_000_000L,
                     media = MediaReference.Image(
+                        id = "img-file-id",
                         url = "https://cdn.loresuelvo.test/${image.originalName}",
                         mimeType = image.mimeType,
                         originalName = image.originalName,

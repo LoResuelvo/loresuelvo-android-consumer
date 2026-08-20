@@ -31,12 +31,15 @@ sealed interface MediaReference {
     val originalName: String
 
     /**
-     * Image attachment. Carries no extra fields beyond the common
-     * [url] / [mimeType] / [originalName] — the backend stores
-     * dimensions as part of the URL response, not the wire
-     * envelope.
+     * Image attachment. Carries the backend-issued [id] (UUID)
+     * for traceability with the conversation message, the
+     * private time-limited [url] the bubble downloads, the
+     * declared [mimeType] (`image/jpeg`, `image/png` or
+     * `image/webp` for the consumer ↔ provider flow), and the
+     * [originalName] the user picked.
      */
     data class Image(
+        val id: String,
         override val url: String,
         override val mimeType: String,
         override val originalName: String,
