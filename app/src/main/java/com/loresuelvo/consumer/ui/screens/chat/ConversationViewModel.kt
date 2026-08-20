@@ -572,8 +572,14 @@ class ConversationViewModel @Inject constructor(
 
     fun onStartAudioRecording() {
         val state = _uiState.value
-        if (state !is ConversationUiState.Ready) return
-        if (state.recordingAudio || state.attachingMedia || state.sendingMedia) return
+
+        if (state !is ConversationUiState.Ready) {
+            return
+        }
+
+        if (state.recordingAudio || state.attachingMedia || state.sendingMedia) {
+            return
+        }
 
         val result = audioRecorder.start()
 

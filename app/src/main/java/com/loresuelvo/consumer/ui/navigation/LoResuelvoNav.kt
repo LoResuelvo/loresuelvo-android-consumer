@@ -20,6 +20,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import android.Manifest
+import android.content.pm.PackageManager
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination
 import com.loresuelvo.consumer.ui.components.bottomnav.LoResuelvoBottomBar
@@ -39,6 +41,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 
 /**
  * Composition root for the app. Hosts the navigation graph, the
@@ -443,6 +448,15 @@ private fun ConversationRoute(
         sheetState.value = false
     }
 
+    val audioPermissionLauncher =
+        rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+        ) { granted ->
+            if (granted) {
+                viewModel.onStartAudioRecording()
+            }
+        }
+
     // Audio (03-MM) is wired through `viewModel.startAudioRecording`
     // driven by the in-process `MediaRecorder`. The route's
     // `RecordSound()` launcher would replace this once
@@ -469,7 +483,20 @@ private fun ConversationRoute(
             cameraOutputUriState.value = uri
             cameraLauncher.launch(uri)
         },
-        onStartAudioRecording = viewModel::onStartAudioRecording,
+        onStartAudioRecording = {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.RECORD_AUDIO,
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (hasPermission) {
+                viewModel.onStartAudioRecording()
+            } else {
+                audioPermissionLauncher.launch(
+                    Manifest.permission.RECORD_AUDIO,
+                )
+            }
+        },
         onStopAudioRecording = viewModel::onStopAudioRecording,
         onConfirmMediaSend = viewModel::onConfirmMediaSend,
         onDiscardMedia = viewModel::onDiscardMediaPreview,
