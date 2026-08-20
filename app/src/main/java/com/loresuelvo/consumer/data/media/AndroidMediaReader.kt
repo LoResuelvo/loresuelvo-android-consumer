@@ -92,6 +92,25 @@ class AndroidMediaReader @Inject constructor(
      * caller falls back to [DEFAULT_MIME] so the upload still
      * ships rather than crashing on a backend that rejects
      * empty `Content-Type`.
+     *
+     * `.webm` resolves to `audio/webm` (NOT `video/webm`)
+     * because the only producer of WebM files in this app is
+     * `AndroidAudioRecorder`, which writes an audio-only Opus
+     * stream inside a WebM container. Mapping it to
+     * `video/webm` would route the audio upload to the
+     * `MediaUpload.Image` branch (since the dispatch below
+     * keys on the audio prefix, image prefix, or `else`) and
+     * the backend would reject the presign with
+     * `ErrUnsupportedMessageAudio` because
+     * `conversationMessageAudioPolicy.AllowedMimeTypes` only
+     * accepts `audio/webm`.
+     *
+     * If a future iteration adds video recording
+     * (`MediaRecorder` with both audio and video tracks), the
+     * inference must distinguish audio-only vs audio+video
+     * WebM — either via `MediaMetadataRetriever` probing or
+     * by having the recorder return the `MediaUpload.Audio` /
+     * `MediaUpload.Video` directly (bypassing this inference).
      */
     private fun inferMimeFromUri(uri: Uri): String? {
         val last = uri.lastPathSegment ?: return null
@@ -103,8 +122,8 @@ class AndroidMediaReader @Inject constructor(
             "png" -> "image/png"
             "webp" -> "image/webp"
             "gif" -> "image/gif"
-            "mp4" -> "audio/mp4"
-            "m4a" -> "audio/mp4"
+            "mp4" -> "video/mp4"
+            "webm" -> "audio/webm"
             "aac" -> "audio/aac"
             "ogg" -> "audio/ogg"
             "wav" -> "audio/wav"

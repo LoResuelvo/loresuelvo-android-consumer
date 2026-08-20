@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.di
 import com.loresuelvo.consumer.data.api.ApiCategoryRepository
 import com.loresuelvo.consumer.data.api.ApiConversationRepository
 import com.loresuelvo.consumer.data.api.ApiDiagnosisRepository
+import com.loresuelvo.consumer.data.api.ApiFileRepository
 import com.loresuelvo.consumer.data.api.ApiJobRequestRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
@@ -12,6 +13,7 @@ import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.file.FileRepository
 import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import dagger.Binds
@@ -70,4 +72,10 @@ abstract class RepositoryModule {
     abstract fun bindConversationRepository(
         impl: ApiConversationRepository,
     ): ConversationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFileRepository(
+        impl: ApiFileRepository,
+    ): FileRepository
 }

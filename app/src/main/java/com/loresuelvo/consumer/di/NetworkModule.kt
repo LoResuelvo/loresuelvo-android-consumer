@@ -6,6 +6,8 @@ import com.loresuelvo.consumer.data.api.ApiConfig
 import com.loresuelvo.consumer.data.api.AuthInterceptor
 import com.loresuelvo.consumer.data.api.BackendApi
 import com.loresuelvo.consumer.data.api.RetryOn401Authenticator
+import com.loresuelvo.consumer.data.api.upload.FileUploader
+import com.loresuelvo.consumer.data.api.upload.OkHttpFileUploader
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -98,4 +100,38 @@ object NetworkModule {
         .replaceFirst("https://", "wss://")
         .replaceFirst("http://", "ws://")
         .let { "$it/ws" }
+
+    /**
+     * Dedicated `OkHttpClient` for the pre-signed storage PUT
+     * (`FileUploader`). It deliberately omits [AuthInterceptor]
+     * and [RetryOn401Authenticator]: pre-signed storage URLs
+     * authenticate via the storage signature, not the Auth0
+     * bearer, and any retry would re-sign with a different
+     * expiry and likely fail. Timeouts match the REST client
+     * so a stuck upload surfaces at the same rate the chat
+     * input bar expects.
+     */
+    @Provides
+    @Singleton
+    @Named("uploadOkHttp")
+    fun provideUploadOkHttpClient(): OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(ApiConfig.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(ApiConfig.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .writeTimeout(ApiConfig.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .callTimeout(ApiConfig.CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .also {
+            if (BuildConfig.DEBUG) {
+                val logger = HttpLoggingInterceptor().apply {
+                    level = HttpLoggingInterceptor.Level.BODY
+                }
+                it.addInterceptor(logger)
+            }
+        }
+        .build()
+
+    @Provides
+    @Singleton
+    fun provideFileUploader(
+        @Named("uploadOkHttp") client: OkHttpClient,
+    ): FileUploader = OkHttpFileUploader(client)
 }

@@ -39,7 +39,7 @@ class SendMediaMessageUseCaseTest {
     private val sampleAudio = MediaUpload.Audio(
         bytes = byteArrayOf(0x10, 0x20, 0x30),
         mimeType = "audio/mp4",
-        originalName = "nota-voz.m4a",
+        originalName = "nota-voz.webm",
         durationMillis = 5_000L,
     )
 
@@ -106,9 +106,10 @@ class SendMediaMessageUseCaseTest {
                 content = "",
                 createdOnEpochMillis = 1_700_000_000_000L,
                 media = MediaReference.Audio(
-                    url = "https://cdn.loresuelvo.test/nota-voz.m4a",
+                    id = "audio-file-id",
+                    url = "https://cdn.loresuelvo.test/nota-voz.webm",
                     mimeType = "audio/mp4",
-                    originalName = "nota-voz.m4a",
+                    originalName = "nota-voz.webm",
                     durationMillis = 5_000L,
                 ),
             ),

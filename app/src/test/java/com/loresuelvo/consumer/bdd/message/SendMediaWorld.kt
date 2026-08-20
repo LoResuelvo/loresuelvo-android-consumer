@@ -257,7 +257,7 @@ class SendMediaWorld : AutoCloseable {
     fun recordAudioFor(seconds: Int) {
         require(seconds > 0)
 
-        val audioUri = fakeUri("content://test/audio/nota-${seconds}s.m4a")
+        val audioUri = fakeUri("content://test/audio/nota-${seconds}s.webm")
         val audioBytes = ByteArray(10)
 
         every {
@@ -269,7 +269,7 @@ class SendMediaWorld : AutoCloseable {
         } returns MediaUpload.Audio(
             bytes = audioBytes,
             mimeType = "audio/mp4",
-            originalName = "nota-${seconds}s.m4a",
+            originalName = "nota-${seconds}s.webm",
             durationMillis = seconds * 1_000L,
         )
 

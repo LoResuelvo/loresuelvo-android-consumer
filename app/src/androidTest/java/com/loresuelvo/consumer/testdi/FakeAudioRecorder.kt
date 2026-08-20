@@ -9,7 +9,7 @@ class FakeAudioRecorder @Inject constructor() : AudioRecorder {
     var startResult: Result<Unit> = Result.success(Unit)
 
     var stopResult: Result<Uri> = Result.success(
-        Uri.parse("content://test.audio/recording.m4a"),
+        Uri.parse("content://test.audio/recording.webm"),
     )
 
     var startCalls: Int = 0

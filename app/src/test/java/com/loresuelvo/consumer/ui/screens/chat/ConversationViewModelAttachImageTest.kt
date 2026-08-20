@@ -417,7 +417,7 @@ class ConversationViewModelAttachImageTest {
 
     private val audioBytes = byteArrayOf(0x00, 0x01, 0x02, 0x03)
     private val audioMime = "audio/mp4"
-    private val audioName = "nota-voz.m4a"
+    private val audioName = "nota-voz.webm"
     private val audioDuration = 5_000L
     private val audioUpload = MediaUpload.Audio(
         bytes = audioBytes,

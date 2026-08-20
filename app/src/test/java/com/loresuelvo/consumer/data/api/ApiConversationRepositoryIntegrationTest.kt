@@ -9,9 +9,15 @@ import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
-import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
+import com.loresuelvo.consumer.domain.file.ConfirmUploadOutcome
+import com.loresuelvo.consumer.domain.file.ConfirmUploadRequest
+import com.loresuelvo.consumer.domain.file.FileRepository
+import com.loresuelvo.consumer.domain.file.PresignUploadOutcome
+import com.loresuelvo.consumer.domain.file.PresignUploadRequest
+import com.loresuelvo.consumer.domain.file.PresignUploadResult
+import com.loresuelvo.consumer.domain.file.UploadBytesOutcome
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -45,6 +51,7 @@ class ApiConversationRepositoryIntegrationTest {
 
     private lateinit var server: MockWebServer
     private lateinit var repository: ApiConversationRepository
+    private val fileRepository = NoopFileRepository()
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
@@ -67,7 +74,10 @@ class ApiConversationRepositoryIntegrationTest {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
         val backendApi = retrofit.create(BackendApi::class.java)
-        repository = ApiConversationRepository(backendApi = backendApi)
+        repository = ApiConversationRepository(
+            backendApi = backendApi,
+            fileRepository = fileRepository,
+        )
     }
 
     @After
@@ -473,112 +483,83 @@ class ApiConversationRepositoryIntegrationTest {
         assertTrue(outcome is SendMessageOutcome.Failure.Network)
     }
 
-    // ---- sendMediaMessage (multipart) ---------------------------------
+    // ---- sendMediaMessage (Phase 1: audio only) -----------------------
 
+    /**
+     * Phase 1 of the 03-MM audio flow wires only
+     * `MediaUpload.Audio` through the presign → upload → confirm
+     * pipeline (see `ApiConversationRepository.sendAudio`). Image
+     * uploads ride the same pipeline with
+     * `purpose = conversation_message_image` and land as
+     * `image_file_ids[]` on the message — that's Phase 2.
+     *
+     * The pre-Phase-1 multipart tests were removed when the
+     * multipart `BackendApi.postMessageWithMedia` was retired
+     * (the backend never accepted multipart on the conversation
+     * messages endpoint anyway — the old wire was rejected with
+     * 400, which is what surfaced "No pudimos enviar el archivo.
+     * Reintentá" on the device). The audio happy-path /
+     * presign-fail / confirm-fail coverage lands in the
+     * dedicated `ApiFileRepositoryTest`,
+     * `OkHttpFileUploaderTest`, and BDD `SendMediaWorld`
+     * follow-up in Step 8.
+     */
     @Test
-    fun sendMediaMessage_posts_multipart_and_maps_image_response() = runBlocking {
-        server.enqueue(
-            MockResponse()
-                .setResponseCode(200)
-                .setHeader("Content-Type", "application/json")
-                .setBody(
-                    """
-                    {
-                      "id": 42,
-                      "sender_role": "consumer",
-                      "content": "",
-                      "created_on": "2026-08-15T10:00:00Z",
-                      "images": [
-                        {
-                          "id": "img-1",
-                          "url": "https://cdn.loresuelvo.test/foto-baño.jpg",
-                          "original_name": "foto-baño.jpg",
-                          "mime_type": "image/jpeg"
-                        }
-                      ]
-                    }
-                    """.trimIndent(),
-                ),
-        )
-
-        val upload = MediaUpload.Image(
-            bytes = byteArrayOf(0x01, 0x02, 0x03),
-            mimeType = "image/jpeg",
-            originalName = "foto-baño.jpg",
-        )
-        val outcome = repository.sendMediaMessage(conversationId = "1", media = upload)
-
-        val recorded = server.takeRequest()
-        assertEquals("POST", recorded.method)
-        assertEquals("/conversations/1/messages", recorded.path)
-        // The request must be `multipart/form-data` (Retrofit's
-        // @Multipart annotation sets this header) and the file
-        // part must carry the original name in the disposition.
-        val contentType = recorded.getHeader("Content-Type") ?: ""
-        assertTrue(
-            "expected multipart/form-data, was '$contentType'",
-            contentType.startsWith("multipart/form-data"),
-        )
-        val body = recorded.body.readUtf8()
-        assertTrue(
-            "body must carry the file name in the disposition, was '$body'",
-            body.contains("name=\"file\"") && body.contains("foto-baño.jpg"),
-        )
-
-        assertTrue(outcome is SendMessageOutcome.Success)
-        val success = outcome as SendMessageOutcome.Success
-        assertEquals("42", success.message.id)
-        assertEquals("", success.message.content)
-        val media = success.message.media
-        assertTrue(
-            "expected MediaReference.Image, was $media",
-            media is MediaReference.Image,
-        )
-        assertEquals(
-            "https://cdn.loresuelvo.test/foto-baño.jpg",
-            (media as MediaReference.Image).url,
-        )
-        assertEquals("image/jpeg", media.mimeType)
-        assertEquals("foto-baño.jpg", media.originalName)
-    }
-
-    @Test
-    fun sendMediaMessage_413_maps_to_Server_failure() = runBlocking {
-        server.enqueue(
-            MockResponse()
-                .setResponseCode(413)
-                .setHeader("Content-Type", "application/json")
-                .setBody("""{"error":"payload_too_large","message":"image > 5MB"}"""),
-        )
-
+    fun sendMediaMessage_image_is_not_yet_supported_in_Phase_1() = runBlocking {
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
             media = MediaUpload.Image(
                 bytes = byteArrayOf(0x01),
                 mimeType = "image/jpeg",
-                originalName = "huge.jpg",
+                originalName = "foto.jpg",
             ),
         )
 
-        assertTrue(outcome is SendMessageOutcome.Failure.Server)
-        assertEquals(413, (outcome as SendMessageOutcome.Failure.Server).code)
-    }
-
-    @Test
-    fun sendMediaMessage_transport_drop_returns_Network_failure() = runBlocking {
-        server.enqueue(
-            MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START),
+        val failure = outcome as? SendMessageOutcome.Failure.Server
+        assertNotNull("image must surface a typed Server failure, was $outcome", failure)
+        assertEquals(0, failure!!.code)
+        assertTrue(
+            "message must signal Phase 2 scope, was '${failure.message}'",
+            failure.message.contains("not supported", ignoreCase = true),
         )
-
-        val outcome = repository.sendMediaMessage(
-            conversationId = "1",
-            media = MediaUpload.Image(
-                bytes = byteArrayOf(0x01),
-                mimeType = "image/jpeg",
-                originalName = "x.jpg",
-            ),
-        )
-
-        assertTrue(outcome is SendMessageOutcome.Failure.Network)
+        assertEquals(0, server.requestCount)
     }
+}
+
+/**
+ * Test fake for [FileRepository] used by this integration test:
+ * `ApiConversationRepository` requires the dependency today but
+ * the text-only scenarios here never exercise the media path, so
+ * the fake short-circuits every method to `Server(0, …)` and
+ * surfaces the call for any future test that wants to assert
+ * against it.
+ *
+ * Media-path coverage lives in
+ * `SendMediaMessageUseCaseTest` (BDD JVM) and in the integration
+ * test the Phase 1 follow-up adds.
+ */
+private class NoopFileRepository : FileRepository {
+    override suspend fun presign(
+        request: PresignUploadRequest,
+    ): PresignUploadOutcome = PresignUploadOutcome.Failure.Server(
+        code = 0,
+        message = "NoopFileRepository.presign should not be called from this test",
+    )
+
+    override suspend fun uploadBytes(
+        uploadUrl: String,
+        headers: Map<String, String>,
+        bytes: ByteArray,
+    ): UploadBytesOutcome = UploadBytesOutcome.Failure.Server(
+        code = 0,
+        message = "NoopFileRepository.uploadBytes should not be called from this test",
+    )
+
+    override suspend fun confirm(
+        fileId: String,
+        request: ConfirmUploadRequest,
+    ): ConfirmUploadOutcome = ConfirmUploadOutcome.Failure.Server(
+        code = 0,
+        message = "NoopFileRepository.confirm should not be called from this test",
+    )
 }

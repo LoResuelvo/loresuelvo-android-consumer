@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.data.api.dto.AiConversationSummaryDto
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
+import com.loresuelvo.consumer.data.api.dto.ConfirmFileRequestDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
@@ -11,19 +12,18 @@ import com.loresuelvo.consumer.data.api.dto.CreateConversationRequestDto
 import com.loresuelvo.consumer.data.api.dto.CreateJobRequestDto
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
 import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
+import com.loresuelvo.consumer.data.api.dto.FileResponseDto
 import com.loresuelvo.consumer.data.api.dto.JobRequestDto
+import com.loresuelvo.consumer.data.api.dto.PresignFileRequestDto
+import com.loresuelvo.consumer.data.api.dto.PresignFileResponseDto
 import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
 import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -237,30 +237,75 @@ interface BackendApi {
         @Body body: SendMessageRequestDto,
     ): ConversationMessageDto
 
+    // ---- File upload (presign / confirm) ----------------------------
+
     /**
-     * `POST /conversations/{conversationId}/messages` — multipart
-     * variant that uploads a media file (image or audio) and
-     * appends the resulting bubble to the conversation. The
-     * `file` part carries the bytes (the repository sets the
-     * `Content-Disposition` filename + the per-kind
-     * `Content-Type`); `content` is an optional text caption
-     * the consumer can layer on top of the attachment.
+     * `POST /files/presign` — request a direct upload URL for a
+     * media file the client intends to attach to a business
+     * resource later (conversation message audio/video/image,
+     * profile photo, job-request image, work-order completion
+     * image). The backend creates a pending `File` row owned by
+     * the authenticated user, returns its `file_id` + `key`, plus
+     * the pre-signed `upload_url` and the exact `headers` the
+     * client must send on the subsequent `PUT`.
      *
-     * The response mirrors the JSON `postMessage` endpoint
-     * (same [ConversationMessageDto] wire shape, with
-     * `images[]` populated by the server). The repository in
-     * `ApiConversationRepository` collapses the first image into
-     * a [com.loresuelvo.consumer.domain.conversation.MediaReference]
-     * and surfaces it on the resulting
-     * [com.loresuelvo.consumer.domain.conversation.ConversationMessage].
+     * The `upload_url` is signed by the storage adapter (S3 in
+     * prod, in-memory in tests); it does NOT require the Auth0
+     * bearer token. The client must apply [PresignFileResponseDto.headers]
+     * verbatim — stripping `Content-Type` (or any other signed
+     * header) will fail the upload. See
+     * `openapi/paths/files-presign.yaml` and
+     * `internal/domain/file/service.go` `RequestUpload`.
+     *
+     * For conversation audio the body MUST use
+     * `purpose = "conversation_message_audio"` and
+     * `mime_type = "audio/webm"` (validated by
+     * `conversationMessageAudioPolicy` in
+     * `internal/domain/file/upload_policy.go`).
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
      */
-    @Multipart
-    @POST("conversations/{conversationId}/messages")
-    suspend fun postMessageWithMedia(
-        @Path("conversationId") conversationId: String,
-        @Part file: MultipartBody.Part,
-        @Part("content") content: RequestBody? = null,
-    ): ConversationMessageDto
+    @POST("files/presign")
+    suspend fun presignFile(
+        @Body body: PresignFileRequestDto,
+    ): PresignFileResponseDto
+
+    /**
+     * `POST /files/{fileID}/confirm` — tell the backend the bytes
+     * were uploaded to the storage object the presign endpoint
+     * returned. The backend cross-checks the `key`, `mime_type`,
+     * `size_bytes` against the storage object's actual metadata,
+     * then (for audio/video) re-validates the codec and duration
+     * against the `UploadPolicy` before flipping the file to
+     * `confirmed`. Mismatches surface as 400 with
+     * `ErrFileNotAvailable`.
+     *
+     * The response is a [FileResponseDto]; for audio the
+     * nested `audio.{codec, duration_seconds}` carries the
+     * backend-observed codec (must be `opus` for
+     * `conversation_message_audio`) and duration rounded up to
+     * whole seconds. The returned `id` is what the client passes
+     * as `audio_file_id` to `POST /conversations/{id}/messages`
+     * (mirrors the webapp's `sendAudioMessage` flow; see the
+     * backend's `features/steps/send_audio_test.go`).
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @POST("files/{fileID}/confirm")
+    suspend fun confirmFile(
+        @Path("fileID") fileID: String,
+        @Body body: ConfirmFileRequestDto,
+    ): FileResponseDto
 
     /**
      * `POST /ws-tickets` — fetches a short-lived signed JWT the

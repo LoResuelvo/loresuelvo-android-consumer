@@ -699,7 +699,7 @@ class ConversationViewModelTest {
         } returns MediaUpload.Audio(
             bytes = audioBytes,
             mimeType = "audio/mp4",
-            originalName = "nota-voz.m4a",
+            originalName = "nota-voz.webm",
             durationMillis = 0L,
         )
 
@@ -759,7 +759,7 @@ class ConversationViewModelTest {
         )
 
         assertEquals(
-            "nota-voz.m4a",
+            "nota-voz.webm",
             pending?.originalName,
         )
 
@@ -816,7 +816,7 @@ class ConversationViewModelTest {
         } returns MediaUpload.Audio(
             bytes = audioBytes,
             mimeType = "audio/mp4",
-            originalName = "nota-voz.m4a",
+            originalName = "nota-voz.webm",
             durationMillis = 0L,
         )
 
@@ -870,7 +870,7 @@ class ConversationViewModelTest {
         )
 
         assertEquals(
-            "nota-voz.m4a",
+            "nota-voz.webm",
             pending?.originalName,
         )
 
@@ -915,9 +915,9 @@ class ConversationViewModelTest {
         val audioBytes = byteArrayOf(10, 20, 30)
 
         val pending = PendingMedia(
-            localUri = Uri.parse("content://test/audio/nota.m4a"),
+            localUri = Uri.parse("content://test/audio/nota.webm"),
             mimeType = "audio/mp4",
-            originalName = "nota.m4a",
+            originalName = "nota.webm",
             sizeBytes = audioBytes.size.toLong(),
             bytes = audioBytes,
             kind = PendingMediaKind.AUDIO,
@@ -938,7 +938,7 @@ class ConversationViewModelTest {
                     upload is MediaUpload.Audio &&
                         upload.bytes.contentEquals(audioBytes) &&
                         upload.mimeType == "audio/mp4" &&
-                        upload.originalName == "nota.m4a" &&
+                        upload.originalName == "nota.webm" &&
                         upload.durationMillis == 5_000L
                 },
             )
@@ -951,7 +951,7 @@ class ConversationViewModelTest {
             media = MediaUpload.Audio(
                 bytes = audioBytes,
                 mimeType = "audio/mp4",
-                originalName = "nota.m4a",
+                originalName = "nota.webm",
                 durationMillis = 5_000L,
             ),
             sourceUri = pending.localUri,

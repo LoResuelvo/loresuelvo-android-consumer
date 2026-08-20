@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.data.api.dto.ConversationCounterpartDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
 import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
+import com.loresuelvo.consumer.data.api.dto.MessageAudioDto
 import com.loresuelvo.consumer.data.api.dto.MessageImageDto
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
@@ -79,41 +80,52 @@ internal fun ConversationMessageDto.toDomain(): ConversationMessage {
         sender = sender,
         content = content,
         createdOnEpochMillis = parseIsoMillisOrZero(createdOn) ?: 0L,
-        media = images.firstOrNull()?.toMediaReference(),
+        // The backend guarantees at most one of `audio` /
+        // `video` / non-empty `images` per persisted message
+        // (see `internal/domain/conversation/service.go`
+        // `sendParticipantMessage`). Audio wins when present so
+        // the bubble renders the player; the image / video
+        // branches fall through when the message carries an
+        // image-only or video-only attachment.
+        media = audio?.toMediaReference()
+            ?: images.firstOrNull()?.toMediaReference(),
     )
 }
 
 /**
- * Wire image → domain [MediaReference.Image]. Audio and other
- * future kinds are dispatched by the image's `mimeType`
- * declaration (the backend echoes `audio/...` for audio
- * uploads); a non-image mime falls back to `Image` with the URL
- * so the bubble still renders instead of crashing on an
- * unhandled variant.
+ * Wire `audio` block → domain [MediaReference.Audio]. The
+ * backend emits `duration_seconds` as a positive whole-second
+ * integer (1–300, rounded up); the domain keeps
+ * `durationMillis` (matching the local player / preview
+ * pipeline) so the bubble counter and the player share a
+ * single `Long` field. `* 1000L` is safe — the backend rounds
+ * up, so `5.42 s` becomes `6 s → 6000 ms`, which is the
+ * rounded-up value the bubble should display.
  */
-private fun MessageImageDto.toMediaReference(): MediaReference {
-    val normalizedMime = mimeType.lowercase()
-    return if (normalizedMime.startsWith("audio/")) {
-        // Duration is not part of the wire envelope today; the
-        // UI hides the duration counter for messages loaded via
-        // the legacy GET path. Audio messages uploaded through
-        // `POST /messages` (multipart) carry the duration in
-        // the multipart response and are mapped by the
-        // repository's `sendMediaMessage` instead.
-        MediaReference.Audio(
-            url = url,
-            mimeType = mimeType,
-            originalName = originalName,
-            durationMillis = 0L,
-        )
-    } else {
-        MediaReference.Image(
-            url = url,
-            mimeType = mimeType,
-            originalName = originalName,
-        )
-    }
-}
+private fun MessageAudioDto.toMediaReference(): MediaReference =
+    MediaReference.Audio(
+        id = id,
+        url = url,
+        mimeType = mimeType,
+        originalName = originalName,
+        durationMillis = durationSeconds.toLong() * 1000L,
+    )
+
+/**
+ * Wire image → domain [MediaReference.Image]. The mapper no
+ * longer dispatches on `mimeType`: an audio bubble always
+ * arrives under the dedicated `audio` block (mapped above) and
+ * the `images` block is image-only by the backend contract
+ * (`conversationMessageImagePolicy.AllowedMimeTypes` is
+ * `image/{jpeg,png,webp}`). Carrying the mime through
+ * unchanged keeps the bubble's mime-aware rendering honest.
+ */
+private fun MessageImageDto.toMediaReference(): MediaReference =
+    MediaReference.Image(
+        url = url,
+        mimeType = mimeType,
+        originalName = originalName,
+    )
 
 internal fun String.toConversationStatus(): ConversationStatus =
     when (lowercase()) {

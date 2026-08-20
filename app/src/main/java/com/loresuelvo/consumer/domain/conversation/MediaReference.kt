@@ -43,11 +43,18 @@ sealed interface MediaReference {
     ) : MediaReference
 
     /**
-     * Audio attachment. Carries the recording's duration in
-     * milliseconds so the chat bubble can render a `mm:ss`
-     * counter without a second round-trip to fetch it.
+     * Audio attachment. Carries the backend-issued [id] (UUID)
+     * for traceability with the conversation message, the
+     * private time-limited [url] the bubble streams, the
+     * declared [mimeType] (`audio/webm` for the consumer ↔
+     * provider flow), the [originalName] the user picked, and
+     * the [durationMillis] the backend rounded up from
+     * `duration_seconds × 1000` so the chat bubble can render
+     * a `mm:ss` counter without a second round-trip to fetch
+     * it.
      */
     data class Audio(
+        val id: String,
         override val url: String,
         override val mimeType: String,
         override val originalName: String,

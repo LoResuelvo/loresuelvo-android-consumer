@@ -18,7 +18,7 @@ class AudioRecorderTest {
     private class FakeAudioRecorder : AudioRecorder {
 
         private val recordedUri =
-            Uri.parse("content://test.audio/recording.m4a")
+            Uri.parse("content://test.audio/recording.webm")
 
         var recording = false
         var startCalls = 0
@@ -94,7 +94,7 @@ class AudioRecorderTest {
 
         assertTrue(result.isSuccess)
         assertEquals(
-            Uri.parse("content://test.audio/recording.m4a"),
+            Uri.parse("content://test.audio/recording.webm"),
             result.getOrNull(),
         )
         assertFalse(recorder.recording)

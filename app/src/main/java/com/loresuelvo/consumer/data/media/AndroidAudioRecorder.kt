@@ -38,7 +38,7 @@ class AndroidAudioRecorder @Inject constructor(
 
         val file = File(
             context.cacheDir,
-            "audio-${UUID.randomUUID()}.m4a",
+            "audio-${UUID.randomUUID()}.webm",
         )
 
         return runCatching {
@@ -50,8 +50,8 @@ class AndroidAudioRecorder @Inject constructor(
             }
 
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.WEBM)
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.OPUS)
             mediaRecorder.setOutputFile(file.absolutePath)
 
             mediaRecorder.prepare()
