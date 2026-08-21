@@ -339,6 +339,28 @@ class SendMediaSteps {
         world.assertSentAudioDurationIsVisible()
     }
 
+    // ---- Scenario 06-MM ---------------------------------------------
+
+    @Given("que el prestador {string} me envió una imagen")
+    fun theProviderSentMeAnImage(counterpartName: String) {
+        world.seedConversationWithReceivedImage(counterpartName)
+    }
+
+    @When("accedo a la conversación con {string}")
+    fun iAccessTheConversationWith(counterpartName: String) {
+        world.openConversation()
+    }
+
+    @When("toco la burbuja de la imagen recibida")
+    fun iTapTheReceivedImageBubble() {
+        world.tapReceivedImageBubble()
+    }
+
+    @Then("la imagen se abre en pantalla completa")
+    fun theImageOpensFullscreen() {
+        world.assertReceivedImageIsOpenFullscreen()
+    }
+
     // ---- Scenario 11-MM ---------------------------------------------
 
     @Given("que tengo un audio enviado en la conversación con {string}")

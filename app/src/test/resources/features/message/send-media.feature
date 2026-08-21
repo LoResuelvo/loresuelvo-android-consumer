@@ -64,7 +64,6 @@ Característica: Enviar fotos o audios en el chat
     Entonces veo la burbuja del audio enviado en el hilo
     Y la burbuja muestra la duración del audio enviado
 
-  @wip
   Escenario: 06-MM Visualizar una imagen recibida del prestador
     Dado que el prestador "Juan Pérez" me envió una imagen
     Cuando accedo a la conversación con "Juan Pérez"

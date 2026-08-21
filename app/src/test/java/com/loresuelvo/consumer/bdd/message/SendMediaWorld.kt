@@ -365,6 +365,65 @@ class SendMediaWorld : AutoCloseable {
         if (!condition) throw AssertionError(message)
     }
 
+    // ---- Scenario 06-MM ---------------------------------------------
+
+    fun seedConversationWithReceivedImage(counterpartName: String) {
+        val counterpart = knownCounterparts[counterpartName]
+            ?: error("Unknown counterpart: $counterpartName")
+
+        fakeRepo.setDetailSeed(
+            ConversationDetail(
+                id = "1",
+                status = ConversationStatus.Pending,
+                counterpart = counterpart,
+                messages = listOf(
+                    ConversationMessage(
+                        id = "image-msg-1",
+                        sender = ConversationSender.Provider,
+                        content = "",
+                        createdOnEpochMillis = 1_700_000_000_000L,
+                        media = MediaReference.Image(
+                            id = "img-file-id",
+                            url = "https://cdn.loresuelvo.test/gotera-baño.jpg",
+                            mimeType = "image/jpeg",
+                            originalName = "gotera-baño.jpg",
+                        ),
+                    ),
+                ),
+                updatedOnEpochMillis = 1_700_000_000_000L,
+            ),
+        )
+    }
+
+    fun tapReceivedImageBubble() {
+        viewModel.onImageClick("image-msg-1")
+        scheduler.advanceUntilIdle()
+    }
+
+    fun assertReceivedImageIsOpenFullscreen() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val fullscreenImage = ready.fullscreenImage
+
+        assertTrue(
+            "expected the tapped image to open fullscreen, " +
+                "but fullscreenImage was null",
+            fullscreenImage != null,
+        )
+
+        assertEquals(
+            "gotera-baño.jpg",
+            fullscreenImage?.originalName,
+        )
+    }
+
     // ---- Scenario 05-MM ---------------------------------------------
 
     fun seedConversationWithSentAudio(counterpartName: String) {
