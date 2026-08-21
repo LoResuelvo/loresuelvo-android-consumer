@@ -424,6 +424,42 @@ class SendMediaWorld : AutoCloseable {
         )
     }
 
+    // ---- Scenario 07-MM ---------------------------------------------
+
+    fun seedConversationWithReceivedAudio(counterpartName: String) {
+        val counterpart = knownCounterparts[counterpartName]
+            ?: error("Unknown counterpart: $counterpartName")
+
+        fakeRepo.setDetailSeed(
+            ConversationDetail(
+                id = "1",
+                status = ConversationStatus.Pending,
+                counterpart = counterpart,
+                messages = listOf(
+                    ConversationMessage(
+                        id = "audio-msg-1",
+                        sender = ConversationSender.Provider,
+                        content = "",
+                        createdOnEpochMillis = 1_700_000_000_000L,
+                        media = MediaReference.Audio(
+                            id = "audio-file-id",
+                            url = "https://cdn.loresuelvo.test/nota-10s.webm",
+                            mimeType = "audio/webm",
+                            originalName = "nota-10s.webm",
+                            durationMillis = 10_000L,
+                        ),
+                    ),
+                ),
+                updatedOnEpochMillis = 1_700_000_000_000L,
+            ),
+        )
+    }
+
+    fun playReceivedAudio() {
+        viewModel.onPlayAudio("audio-msg-1")
+        scheduler.advanceUntilIdle()
+    }
+
     // ---- Scenario 05-MM ---------------------------------------------
 
     fun seedConversationWithSentAudio(counterpartName: String) {

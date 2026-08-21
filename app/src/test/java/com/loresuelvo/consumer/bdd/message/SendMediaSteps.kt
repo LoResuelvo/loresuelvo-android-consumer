@@ -361,6 +361,18 @@ class SendMediaSteps {
         world.assertReceivedImageIsOpenFullscreen()
     }
 
+    // ---- Scenario 07-MM ---------------------------------------------
+
+    @Given("que el prestador {string} me envió un audio")
+    fun theProviderSentMeAnAudio(counterpartName: String) {
+        world.seedConversationWithReceivedAudio(counterpartName)
+    }
+
+    @When("toco la burbuja del audio recibido")
+    fun iTapTheReceivedAudioBubble() {
+        world.playReceivedAudio()
+    }
+
     // ---- Scenario 11-MM ---------------------------------------------
 
     @Given("que tengo un audio enviado en la conversación con {string}")

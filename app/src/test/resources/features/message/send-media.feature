@@ -70,7 +70,6 @@ Característica: Enviar fotos o audios en el chat
     Y toco la burbuja de la imagen recibida
     Entonces la imagen se abre en pantalla completa
 
-  @wip
   Escenario: 07-MM Reproducir un audio recibido del prestador
     Dado que el prestador "Juan Pérez" me envió un audio
     Cuando accedo a la conversación con "Juan Pérez"
