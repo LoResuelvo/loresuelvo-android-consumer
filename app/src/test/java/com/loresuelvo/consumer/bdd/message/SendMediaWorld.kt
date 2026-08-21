@@ -38,6 +38,8 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import android.net.Uri
 
@@ -460,6 +462,74 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    // ---- Scenario 08-MM ---------------------------------------------
+
+    /**
+     * Forces the next `sendMediaMessage` call to surface as a
+     * typed [SendMessageOutcome.Failure.Network]. The fake keeps
+     * recording the call (so the BDD could still assert "we DID
+     * try to send") but doesn't append a bubble to the
+     * conversation.
+     */
+    fun simulateBackendNetworkFailure() {
+        fakeRepo.setSendMediaFailure(
+            SendMessageOutcome.Failure.Network(
+                cause = java.io.IOException("backend unreachable"),
+            ),
+        )
+    }
+
+    fun assertMediaSendFailureIsNetwork() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val failure = ready.transientMediaError
+
+        assertTrue(
+            "expected a transient media error after a failed send, " +
+                "but transientMediaError was null",
+            failure != null,
+        )
+
+        assertTrue(
+            "expected Network failure, was $failure",
+            failure is SendMessageOutcome.Failure.Network,
+        )
+
+        assertFalse(
+            "sendingMedia must flip back to false on failure",
+            ready.sendingMedia,
+        )
+
+        assertNotNull(
+            "pendingMedia must survive the failure for retry",
+            ready.pendingMedia,
+        )
+    }
+
+    fun assertNoMessageWasAppended() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        assertEquals(
+            "no message should be appended on a failed media send",
+            0,
+            ready.detail.messages.size,
+        )
+    }
+
     // ---- Scenario 05-MM ---------------------------------------------
 
     fun seedConversationWithSentAudio(counterpartName: String) {
@@ -619,6 +689,15 @@ class SendMediaWorld : AutoCloseable {
         private var detailSeed: ConversationDetail? = null
         private val sendMediaCalls = mutableListOf<MediaUpload.Image>()
         private val sendMediaCounter = AtomicReference(0)
+        private var sendMediaOutcome: SendMessageOutcome.Failure? = null
+
+        fun setSendMediaFailure(failure: SendMessageOutcome.Failure) {
+            sendMediaOutcome = failure
+        }
+
+        fun resetSendMediaOutcome() {
+            sendMediaOutcome = null
+        }
 
         fun setListSeed(conversations: List<Conversation>) {
             listSeed = conversations
@@ -670,6 +749,7 @@ class SendMediaWorld : AutoCloseable {
                     message = "FakeConversationRepository: only Image is wired",
                 )
             sendMediaCalls += image
+            sendMediaOutcome?.let { return it }
             val nextId = sendMediaCounter.updateAndGet { it + 1 }
             return SendMessageOutcome.Success(
                 ConversationMessage(

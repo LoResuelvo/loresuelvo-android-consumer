@@ -76,10 +76,10 @@ Característica: Enviar fotos o audios en el chat
     Y toco la burbuja del audio recibido
     Entonces el audio comienza a reproducirse
 
-  @wip
   Escenario: 08-MM Error de red al enviar una imagen
     Dado que el backend no responde
-    Cuando adjunto una imagen desde la galería y confirmo el envío
+    Cuando accedo a la conversación con "Juan Pérez"
+    Y adjunto una imagen desde la galería y confirmo el envío
     Entonces veo un error de red
     Y la imagen NO aparece en la conversación
 

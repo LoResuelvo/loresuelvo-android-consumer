@@ -373,6 +373,29 @@ class SendMediaSteps {
         world.playReceivedAudio()
     }
 
+    // ---- Scenario 08-MM ---------------------------------------------
+
+    @Given("que el backend no responde")
+    fun theBackendIsDown() {
+        world.simulateBackendNetworkFailure()
+    }
+
+    @When("adjunto una imagen desde la galería y confirmo el envío")
+    fun iAttachAnImageFromGalleryAndConfirm() {
+        world.chooseFromGallery()
+        world.confirmSend()
+    }
+
+    @Then("veo un error de red")
+    fun iSeeANetworkError() {
+        world.assertMediaSendFailureIsNetwork()
+    }
+
+    @And("la imagen NO aparece en la conversación")
+    fun theImageDoesNotAppearInTheConversation() {
+        world.assertNoMessageWasAppended()
+    }
+
     // ---- Scenario 11-MM ---------------------------------------------
 
     @Given("que tengo un audio enviado en la conversación con {string}")
