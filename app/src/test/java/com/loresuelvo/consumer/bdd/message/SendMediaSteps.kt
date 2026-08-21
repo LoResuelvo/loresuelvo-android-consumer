@@ -339,6 +339,33 @@ class SendMediaSteps {
         world.assertSentAudioDurationIsVisible()
     }
 
+    // ---- Scenario 11-MM ---------------------------------------------
+
+    @Given("que tengo un audio enviado en la conversación con {string}")
+    fun iHaveASentAudio(counterpartName: String) {
+        world.seedConversationWithSentAudio(counterpartName)
+    }
+
+    @When("presiono reproducir el audio")
+    fun iPressPlayTheAudio() {
+        world.playSentAudio()
+    }
+
+    @Then("el audio comienza a reproducirse")
+    fun theAudioStartsPlaying() {
+        world.assertAudioIsPlaying()
+    }
+
+    @And("veo avanzar la línea de progreso mientras se reproduce")
+    fun iSeeTheProgressLineAdvance() {
+        world.assertAudioProgressAdvanced()
+    }
+
+    @And("el tiempo transcurrido se actualiza")
+    fun elapsedTimeIsUpdated() {
+        world.assertElapsedAudioTimeUpdated()
+    }
+
     private fun assertTrue(message: String, condition: Boolean) {
         if (!condition) throw AssertionError(message)
     }
