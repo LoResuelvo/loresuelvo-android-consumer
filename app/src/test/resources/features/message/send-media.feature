@@ -58,7 +58,6 @@ Característica: Enviar fotos o audios en el chat
     Entonces veo la burbuja de la imagen enviada en el hilo
     Y la burbuja expone la miniatura de la imagen enviada
 
-  @wip
   Escenario: 05-MM El audio enviado se muestra correctamente en la conversación
     Dado que envié un audio en la conversación con "Juan Pérez"
     Cuando accedo a esa conversación

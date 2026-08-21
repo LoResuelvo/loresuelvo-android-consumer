@@ -322,6 +322,23 @@ class SendMediaSteps {
         world.assertSentImageThumbnailIsVisible()
     }
 
+    // ---- Scenario 05-MM ---------------------------------------------
+
+    @Given("que envié un audio en la conversación con {string}")
+    fun iSentAnAudio(counterpartName: String) {
+        world.seedConversationWithSentAudio(counterpartName)
+    }
+
+    @Then("veo la burbuja del audio enviado en el hilo")
+    fun iSeeTheSentAudioBubble() {
+        world.assertSentAudioBubbleIsVisible()
+    }
+
+    @And("la burbuja muestra la duración del audio enviado")
+    fun theBubbleShowsTheSentAudioDuration() {
+        world.assertSentAudioDurationIsVisible()
+    }
+
     private fun assertTrue(message: String, condition: Boolean) {
         if (!condition) throw AssertionError(message)
     }

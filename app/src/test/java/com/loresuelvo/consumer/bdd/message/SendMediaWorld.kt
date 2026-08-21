@@ -359,7 +359,83 @@ class SendMediaWorld : AutoCloseable {
     private fun assertTrue(message: String, condition: Boolean) {
         if (!condition) throw AssertionError(message)
     }
-    
+
+    // ---- Scenario 05-MM ---------------------------------------------
+
+    fun seedConversationWithSentAudio(counterpartName: String) {
+        val counterpart = knownCounterparts[counterpartName]
+            ?: error("Unknown counterpart: $counterpartName")
+
+        fakeRepo.setDetailSeed(
+            ConversationDetail(
+                id = "1",
+                status = ConversationStatus.Pending,
+                counterpart = counterpart,
+                messages = listOf(
+                    ConversationMessage(
+                        id = "audio-msg-1",
+                        sender = ConversationSender.Consumer,
+                        content = "",
+                        createdOnEpochMillis = 1_700_000_000_000L,
+                        media = MediaReference.Audio(
+                            id = "audio-file-id",
+                            url = "https://cdn.loresuelvo.test/nota-10s.webm",
+                            mimeType = "audio/webm",
+                            originalName = "nota-10s.webm",
+                            durationMillis = 10_000L,
+                        ),
+                    ),
+                ),
+                updatedOnEpochMillis = 1_700_000_000_000L,
+            ),
+        )
+    }
+
+    fun assertSentAudioBubbleIsVisible() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val audioMessage = ready.detail.messages.firstOrNull {
+            it.id == "audio-msg-1" &&
+                it.sender is ConversationSender.Consumer &&
+                it.media is MediaReference.Audio
+        }
+
+        assertTrue(
+            "expected sent audio message to be present in the conversation",
+            audioMessage != null,
+        )
+    }
+
+    fun assertSentAudioDurationIsVisible() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val audio = ready.detail.messages
+            .firstOrNull { it.id == "audio-msg-1" }
+            ?.media as? MediaReference.Audio
+
+        val actualAudio = audio
+            ?: error("expected sent audio message to contain audio")
+
+        assertTrue(
+            "expected sent audio duration to be 10 seconds",
+            actualAudio.durationMillis == 10_000L,
+        )
+    }
+
     /**
      * Fake [ConversationRepository] for the media BDD. Always
      * returns Success on `sendMediaMessage` with a fresh
