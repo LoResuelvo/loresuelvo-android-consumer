@@ -4,14 +4,19 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.performClick
+import androidx.compose.foundation.clickable
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.junit.Assert.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
@@ -173,5 +178,90 @@ class ConversationMessageBubbleTest {
         composeTestRule
             .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun audio_message_renders_progress_for_current_position() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = "audio-msg-1",
+                    isPlaying = true,
+                    currentPositionMillis = 2_000L,
+                ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun audio_message_shows_elapsed_time_while_playing() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = "audio-msg-1",
+                    isPlaying = true,
+                    currentPositionMillis = 2_000L,
+                ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("0:02")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun audio_message_shows_zero_elapsed_time_when_not_playing() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = null,
+                    isPlaying = false,
+                    currentPositionMillis = 0L,
+                ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithText("0:00")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun audio_message_play_button_invokes_callback() {
+        var playedMessageId: String? = null
+
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                onPlayAudio = { messageId ->
+                    playedMessageId = messageId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+            .performClick()
+
+        assertEquals(
+            "audio-msg-1",
+            playedMessageId,
+        )
     }
 }

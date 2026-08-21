@@ -6,10 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import coil3.compose.AsyncImage
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
 
 /**
  * WhatsApp-style bubble for a single message in a consumer ↔
@@ -30,11 +32,13 @@ import com.loresuelvo.consumer.domain.conversation.MediaReference
  * Text messages render their content normally.
  * Image messages render the referenced image inside the bubble.
  * Audio messages render a compact audio representation with
- * their duration, play button and progress line.
+ * playback controls and progress.
  */
 @Composable
 fun ConversationMessageBubble(
     message: ConversationMessage,
+    audioPlayback: AudioPlaybackState = AudioPlaybackState(),
+    onPlayAudio: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isConsumer = message.sender is ConversationSender.Consumer
@@ -85,20 +89,58 @@ fun ConversationMessageBubble(
                 }
 
                 is MediaReference.Audio -> {
+                    val isCurrentAudio =
+                        audioPlayback.messageId == message.id
+
+                    val currentPositionMillis =
+                        if (isCurrentAudio) {
+                            audioPlayback.currentPositionMillis
+                        } else {
+                            0L
+                        }
+
+                    val progress = if (media.durationMillis > 0L) {
+                        (
+                            currentPositionMillis.toFloat() /
+                                media.durationMillis.toFloat()
+                            ).coerceIn(0f, 1f)
+                    } else {
+                        0f
+                    }
+
                     Column(
                         modifier = Modifier
                             .testTag(CONVERSATION_MESSAGE_AUDIO_TAG),
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement =
+                                Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
                                 text = "▶",
                                 color = textColor,
                                 modifier = Modifier
+                                    .testTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+                                    .clickable {
+                                        onPlayAudio(message.id)
+                                    },
+                            )
+
+                            Text(
+                                text = formatAudioDuration(
+                                    currentPositionMillis,
+                                ),
+                                color = textColor,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier
                                     .testTag(
-                                        CONVERSATION_MESSAGE_AUDIO_PLAY_TAG,
+                                        CONVERSATION_MESSAGE_AUDIO_ELAPSED_TAG,
                                     ),
+                            )
+
+                            Text(
+                                text = "/",
+                                color = textColor,
                             )
 
                             Text(
@@ -114,14 +156,10 @@ fun ConversationMessageBubble(
                             )
                         }
 
-                        Box(
+                        LinearProgressIndicator(
+                            progress = { progress },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(
-                                    textColor.copy(alpha = 0.35f),
-                                )
                                 .testTag(
                                     CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG,
                                 ),
@@ -161,6 +199,9 @@ const val CONVERSATION_MESSAGE_AUDIO_TAG =
 
 const val CONVERSATION_MESSAGE_AUDIO_DURATION_TAG =
     "conversation-message-audio-duration"
+
+const val CONVERSATION_MESSAGE_AUDIO_ELAPSED_TAG =
+    "conversation-message-audio-elapsed"
 
 const val CONVERSATION_MESSAGE_AUDIO_PLAY_TAG =
     "conversation-message-audio-play"
