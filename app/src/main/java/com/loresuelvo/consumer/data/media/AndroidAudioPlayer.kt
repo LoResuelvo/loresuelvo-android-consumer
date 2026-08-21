@@ -5,6 +5,12 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 /**
  * Android implementation of [AudioPlayer].
@@ -16,6 +22,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class AndroidAudioPlayer @Inject constructor() : AudioPlayer {
 
     private var mediaPlayer: MediaPlayer? = null
+    private var progressJob: Job? = null
 
     private val _isPlaying = MutableStateFlow(false)
     override val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -45,6 +52,7 @@ class AndroidAudioPlayer @Inject constructor() : AudioPlayer {
             _isPlaying.value = true
 
             it.start()
+            startProgressUpdates()
         }
 
         player.setOnCompletionListener {
@@ -90,7 +98,28 @@ class AndroidAudioPlayer @Inject constructor() : AudioPlayer {
         _currentPositionMillis.value = 0L
     }
 
+    private fun startProgressUpdates() {
+        progressJob?.cancel()
+
+        progressJob = CoroutineScope(Dispatchers.Main.immediate).launch {
+            while (isActive) {
+                val player = mediaPlayer
+
+                if (player == null || !player.isPlaying) {
+                    break
+                }
+
+                _currentPositionMillis.value = player.currentPosition.toLong()
+
+                delay(100L)
+            }
+        }
+    }
+
     private fun releasePlayer() {
+        progressJob?.cancel()
+        progressJob = null
+
         mediaPlayer?.release()
         mediaPlayer = null
     }

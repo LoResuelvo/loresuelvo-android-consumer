@@ -37,6 +37,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import android.net.Uri
 
 /**
@@ -392,6 +394,9 @@ class SendMediaWorld : AutoCloseable {
                 updatedOnEpochMillis = 1_700_000_000_000L,
             ),
         )
+
+        viewModel.load("1")
+        scheduler.advanceUntilIdle()
     }
 
     fun assertSentAudioBubbleIsVisible() {
@@ -440,21 +445,67 @@ class SendMediaWorld : AutoCloseable {
     }
 
     fun playSentAudio() {
-        TODO("Implement 11-MM")
+        viewModel.onPlayAudio("audio-msg-1")
+        scheduler.advanceUntilIdle()
     }
-
+    
     fun assertAudioIsPlaying() {
-        TODO("Implement 11-MM")
+        assertTrue(
+            "expected audio player to be playing",
+            audioPlayer.isPlaying.value,
+        )
+
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        assertEquals(
+            "audio-msg-1",
+            ready.audioPlayback.messageId,
+        )
+
+        assertTrue(
+            "expected audio playback state to be playing",
+            ready.audioPlayback.isPlaying,
+        )
     }
 
     fun assertAudioProgressAdvanced() {
-        TODO("Implement 11-MM")
+        val before = audioPlayer.currentPositionMillis.value
+
+        audioPlayer.advanceBy(2_000L)
+        scheduler.advanceUntilIdle()
+
+        val after = audioPlayer.currentPositionMillis.value
+
+        assertTrue(
+            "expected audio progress to advance from $before ms, " +
+                "but remained at $after ms",
+            after > before,
+        )
     }
 
     fun assertElapsedAudioTimeUpdated() {
-        TODO("Implement 11-MM")
-    }
+        val state = lastConversationUiState()
 
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        assertEquals(
+            "expected elapsed audio time to be 2000 ms",
+            2_000L,
+            ready.audioPlayback.currentPositionMillis,
+        )
+    }
     /**
      * Fake [ConversationRepository] for the media BDD. Always
      * returns Success on `sendMediaMessage` with a fresh

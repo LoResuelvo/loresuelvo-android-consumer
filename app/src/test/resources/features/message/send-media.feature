@@ -99,7 +99,6 @@ Característica: Enviar fotos o audios en el chat
     Cuando descarto la vista previa
     Entonces NO se crea ninguna burbuja en la conversación
 
-  @wip
   Escenario: 11-MM Reproducir un audio enviado
     Dado que tengo un audio enviado en la conversación con "Juan Pérez"
     Cuando presiono reproducir el audio
