@@ -471,6 +471,7 @@ private fun ConversationRoute(
         onRetryClick = { viewModel.load(conversationId) },
         onErrorDismiss = viewModel::onErrorDismiss,
         onPlayAudio = viewModel::onPlayAudio,
+        onPauseAudio = viewModel::onPauseAudio,
         onAttachClick = { sheetState.value = true },
         onGalleryClick = {
             galleryLauncher.launch(

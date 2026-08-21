@@ -95,6 +95,7 @@ fun ConversationScreen(
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
     onPlayAudio: (String) -> Unit = {},
+    onPauseAudio: (String) -> Unit = {},
     onAttachClick: () -> Unit = {},
     onGalleryClick: () -> Unit = {},
     onCameraClick: () -> Unit = {},
@@ -125,6 +126,7 @@ fun ConversationScreen(
                 onBackClick = onBackClick,
                 onErrorDismiss = onErrorDismiss,
                 onPlayAudio = onPlayAudio,
+                onPauseAudio = onPauseAudio,
                 onAttachClick = onAttachClick,
                 onGalleryClick = onGalleryClick,
                 onStartAudioRecording = onStartAudioRecording,
@@ -213,6 +215,7 @@ private fun ReadyState(
     onBackClick: () -> Unit,
     onErrorDismiss: () -> Unit,
     onPlayAudio: (String) -> Unit,
+    onPauseAudio: (String) -> Unit,
     onAttachClick: () -> Unit,
     onGalleryClick: () -> Unit,
     onStartAudioRecording: () -> Unit,
@@ -270,6 +273,7 @@ private fun ReadyState(
                 listState = listState,
                 audioPlayback = state.audioPlayback,
                 onPlayAudio = onPlayAudio,
+                onPauseAudio = onPauseAudio,
             )
             // The unread banner overlays the list at the
             // bottom-edge of the scroll area (anchored to
@@ -334,6 +338,7 @@ private fun MessagesList(
     listState: LazyListState,
     audioPlayback: AudioPlaybackState,
     onPlayAudio: (String) -> Unit,
+    onPauseAudio: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -351,6 +356,7 @@ private fun MessagesList(
                 message = message,
                 audioPlayback = audioPlayback,
                 onPlayAudio = onPlayAudio,
+                onPauseAudio = onPauseAudio,
             )
         }
     }

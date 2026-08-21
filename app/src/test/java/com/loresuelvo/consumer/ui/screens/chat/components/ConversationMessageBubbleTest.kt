@@ -1,5 +1,12 @@
 package com.loresuelvo.consumer.ui.screens.chat.components
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -262,6 +269,128 @@ class ConversationMessageBubbleTest {
         assertEquals(
             "audio-msg-1",
             playedMessageId,
+        )
+    }
+
+    @Test
+    fun audio_message_progress_updates_when_current_position_changes() {
+        lateinit var playbackState: MutableState<AudioPlaybackState>
+
+        composeTestRule.setContent {
+            playbackState = remember {
+                mutableStateOf(
+                    AudioPlaybackState(
+                        messageId = "audio-msg-1",
+                        isPlaying = true,
+                        currentPositionMillis = 0L,
+                    ),
+                )
+            }
+
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = playbackState.value,
+            )
+        }
+
+        composeTestRule.waitForIdle()
+        assertProgress(0f)
+
+        playbackState.value = playbackState.value.copy(
+            currentPositionMillis = 5_000L,
+        )
+
+        composeTestRule.waitForIdle()
+        assertProgress(0.5f)
+    }
+
+    @Test
+    fun audio_message_play_button_shows_pause_icon_when_playing() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = "audio-msg-1",
+                    isPlaying = true,
+                    currentPositionMillis = 2_000L,
+                ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+            .assertTextEquals(PAUSE_ICON)
+    }
+
+    @Test
+    fun audio_message_play_button_shows_play_icon_when_not_playing() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = null,
+                    isPlaying = false,
+                    currentPositionMillis = 0L,
+                ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+            .assertTextEquals(PLAY_ICON)
+    }
+
+    @Test
+    fun audio_message_play_button_fires_onPauseAudio_when_currently_playing() {
+        var pausedMessageId: String? = null
+
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = "audio-msg-1",
+                    isPlaying = true,
+                    currentPositionMillis = 2_000L,
+                ),
+                onPlayAudio = { /* unused */ },
+                onPauseAudio = { messageId ->
+                    pausedMessageId = messageId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+            .performClick()
+
+        assertEquals(
+            "audio-msg-1",
+            pausedMessageId,
+        )
+    }
+
+    private fun assertProgress(expected: Float) {
+        val config = composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
+            .fetchSemanticsNode()
+            .config
+
+        assert(
+            config.contains(SemanticsProperties.ProgressBarRangeInfo),
+        ) { "expected LinearProgressIndicator to expose ProgressBarRangeInfo" }
+
+        val info = config[SemanticsProperties.ProgressBarRangeInfo]
+
+        assertEquals(
+            expected,
+            info.current,
+            0.001f,
         )
     }
 }

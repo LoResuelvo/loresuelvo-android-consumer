@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +13,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
@@ -39,6 +42,7 @@ fun ConversationMessageBubble(
     message: ConversationMessage,
     audioPlayback: AudioPlaybackState = AudioPlaybackState(),
     onPlayAudio: (String) -> Unit = {},
+    onPauseAudio: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isConsumer = message.sender is ConversationSender.Consumer
@@ -92,6 +96,9 @@ fun ConversationMessageBubble(
                     val isCurrentAudio =
                         audioPlayback.messageId == message.id
 
+                    val isThisPlaying =
+                        isCurrentAudio && audioPlayback.isPlaying
+
                     val currentPositionMillis =
                         if (isCurrentAudio) {
                             audioPlayback.currentPositionMillis
@@ -103,10 +110,16 @@ fun ConversationMessageBubble(
                         (
                             currentPositionMillis.toFloat() /
                                 media.durationMillis.toFloat()
-                            ).coerceIn(0f, 1f)
+                        ).coerceIn(0f, 1f)
                     } else {
                         0f
                     }
+
+                    val animatedProgress by animateFloatAsState(
+                        targetValue = progress,
+                        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+                        label = "AudioBubbleProgress",
+                    )
 
                     Column(
                         modifier = Modifier
@@ -117,12 +130,16 @@ fun ConversationMessageBubble(
                                 Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
-                                text = "▶",
+                                text = if (isThisPlaying) PAUSE_ICON else PLAY_ICON,
                                 color = textColor,
                                 modifier = Modifier
                                     .testTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
                                     .clickable {
-                                        onPlayAudio(message.id)
+                                        if (isThisPlaying) {
+                                            onPauseAudio(message.id)
+                                        } else {
+                                            onPlayAudio(message.id)
+                                        }
                                     },
                             )
 
@@ -157,7 +174,7 @@ fun ConversationMessageBubble(
                         }
 
                         LinearProgressIndicator(
-                            progress = { progress },
+                            progress = { animatedProgress },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag(
@@ -208,3 +225,6 @@ const val CONVERSATION_MESSAGE_AUDIO_PLAY_TAG =
 
 const val CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG =
     "conversation-message-audio-progress"
+
+internal const val PLAY_ICON = "\u25B6"
+internal const val PAUSE_ICON = "⏸"

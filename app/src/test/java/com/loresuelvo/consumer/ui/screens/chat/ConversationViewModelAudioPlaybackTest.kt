@@ -271,4 +271,150 @@ class ConversationViewModelAudioPlaybackTest {
             audioPlayer.lastPlayedUrl,
         )
     }
+
+    @Test
+    fun onPauseAudio_pauses_player_and_marks_state_as_paused() = runTest {
+        givenConversationIsLoaded()
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        assertTrue(audioPlayer.isPlaying.value)
+
+        viewModel.onPauseAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        assertFalse(audioPlayer.isPlaying.value)
+
+        val state =
+            viewModel.uiState.value as ConversationUiState.Ready
+
+        assertEquals(
+            "audio-msg-1",
+            state.audioPlayback.messageId,
+        )
+
+        assertFalse(state.audioPlayback.isPlaying)
+
+        assertEquals(
+            0L,
+            state.audioPlayback.currentPositionMillis,
+        )
+    }
+
+    @Test
+    fun onPauseAudio_ignores_unknown_message() = runTest {
+        givenConversationIsLoaded()
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        viewModel.onPauseAudio("does-not-exist")
+        advanceUntilIdle()
+
+        assertTrue(audioPlayer.isPlaying.value)
+    }
+
+    @Test
+    fun onPauseAudio_ignores_message_that_is_not_currently_playing() = runTest {
+        givenConversationIsLoaded()
+        advanceUntilIdle()
+
+        viewModel.onPauseAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        assertFalse(audioPlayer.isPlaying.value)
+
+        val state =
+            viewModel.uiState.value as ConversationUiState.Ready
+
+        assertEquals(
+            AudioPlaybackState(),
+            state.audioPlayback,
+        )
+    }
+
+    @Test
+    fun onPlayAudio_resumes_from_paused_position() = runTest {
+        givenConversationIsLoaded()
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        audioPlayer.advanceBy(3_000L)
+        advanceUntilIdle()
+
+        viewModel.onPauseAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        assertEquals(
+            3_000L,
+            audioPlayer.lastStartPositionMillis,
+        )
+
+        val state =
+            viewModel.uiState.value as ConversationUiState.Ready
+
+        assertTrue(state.audioPlayback.isPlaying)
+
+        assertEquals(
+            3_000L,
+            state.audioPlayback.currentPositionMillis,
+        )
+    }
+
+    @Test
+    fun onPlayAudio_starts_from_zero_when_switching_to_different_audio() = runTest {
+        val secondAudio = audioMessage(
+            id = "audio-msg-2",
+            durationMillis = 8_000L,
+        )
+        val detail = detailWithAudio().copy(
+            messages = detailWithAudio().messages + secondAudio,
+        )
+
+        coEvery {
+            getConversationById("1")
+        } returns ConversationDetailOutcome.Success(detail)
+
+        viewModel = createViewModel()
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        audioPlayer.advanceBy(2_500L)
+        advanceUntilIdle()
+
+        viewModel.onPauseAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-2")
+        advanceUntilIdle()
+
+        assertEquals(
+            0L,
+            audioPlayer.lastStartPositionMillis,
+        )
+
+        val state =
+            viewModel.uiState.value as ConversationUiState.Ready
+
+        assertEquals(
+            "audio-msg-2",
+            state.audioPlayback.messageId,
+        )
+
+        assertEquals(
+            0L,
+            state.audioPlayback.currentPositionMillis,
+        )
+    }
 }

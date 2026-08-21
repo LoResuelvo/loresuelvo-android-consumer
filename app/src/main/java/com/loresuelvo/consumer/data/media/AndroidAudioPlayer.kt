@@ -35,7 +35,9 @@ class AndroidAudioPlayer @Inject constructor() : AudioPlayer {
         url: String,
         startPositionMillis: Long,
     ) {
-        stop()
+        releasePlayer()
+
+        _currentPositionMillis.value = startPositionMillis
 
         val player = MediaPlayer()
 

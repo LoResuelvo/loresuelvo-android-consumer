@@ -429,16 +429,63 @@ class ConversationViewModel @Inject constructor(
         val media = message.media as? MediaReference.Audio
             ?: return
 
+        val playback = currentState.audioPlayback
+        val resumePosition = if (
+            playback.messageId == messageId &&
+            !playback.isPlaying
+        ) {
+            playback.currentPositionMillis
+        } else {
+            0L
+        }
+
         audioPlayer.play(
             url = media.url,
-            startPositionMillis = 0L,
+            startPositionMillis = resumePosition,
         )
 
         _uiState.value = currentState.copy(
             audioPlayback = AudioPlaybackState(
                 messageId = messageId,
                 isPlaying = true,
-                currentPositionMillis = 0L,
+                currentPositionMillis = resumePosition,
+            ),
+        )
+    }
+
+    /**
+     * Pauses the audio playback for [messageId] and flips the
+     * playback state to `isPlaying = false` while preserving
+     * `messageId` and `currentPositionMillis` so the bubble can
+     * still render the play button at the paused position.
+     *
+     * No-op when:
+     *  - the state isn't `Ready` (initial load / error);
+     *  - the message id doesn't match the currently playing
+     *    message (so tapping pause on a different bubble while
+     *    another one is playing doesn't accidentally stop the
+     *    active one — that would need a separate
+     *    "stop-and-switch" use case);
+     *  - the playback is already paused.
+     */
+    fun onPauseAudio(messageId: String) {
+        val currentState = _uiState.value
+
+        if (currentState !is ConversationUiState.Ready) {
+            return
+        }
+
+        val playback = currentState.audioPlayback
+
+        if (playback.messageId != messageId || !playback.isPlaying) {
+            return
+        }
+
+        audioPlayer.pause()
+
+        _uiState.value = currentState.copy(
+            audioPlayback = playback.copy(
+                isPlaying = false,
             ),
         )
     }
