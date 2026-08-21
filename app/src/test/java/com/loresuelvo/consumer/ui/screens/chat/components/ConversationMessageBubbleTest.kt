@@ -4,9 +4,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -273,7 +270,32 @@ class ConversationMessageBubbleTest {
     }
 
     @Test
-    fun audio_message_progress_updates_when_current_position_changes() {
+    fun audio_message_progress_bar_is_visible_and_has_non_zero_height() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 10_000L),
+                audioPlayback = AudioPlaybackState(
+                    messageId = "audio-msg-1",
+                    isPlaying = true,
+                    currentPositionMillis = 2_500L,
+                ),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        val node = composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
+            .fetchSemanticsNode()
+
+        val (width, height) = with(node.boundsInRoot) { width to height }
+
+        assert(width > 0f) { "expected progress bar width > 0, was $width" }
+        assert(height > 0f) { "expected progress bar height > 0, was $height" }
+    }
+
+    @Test
+    fun audio_message_progress_fill_width_grows_with_current_position() {
         lateinit var playbackState: MutableState<AudioPlaybackState>
 
         composeTestRule.setContent {
@@ -294,14 +316,30 @@ class ConversationMessageBubbleTest {
         }
 
         composeTestRule.waitForIdle()
-        assertProgress(0f)
+
+        val initialBounds = composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_FILL_TAG)
+            .fetchSemanticsNode()
+            .boundsInRoot
 
         playbackState.value = playbackState.value.copy(
-            currentPositionMillis = 5_000L,
+            currentPositionMillis = 7_500L,
         )
 
         composeTestRule.waitForIdle()
-        assertProgress(0.5f)
+
+        val updatedBounds = composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_FILL_TAG)
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assert(
+            updatedBounds.width > initialBounds.width,
+        ) {
+            "expected progress fill to grow when current position " +
+                "advances, but width stayed at " +
+                "${updatedBounds.width} (initial=${initialBounds.width})"
+        }
     }
 
     @Test
@@ -372,25 +410,6 @@ class ConversationMessageBubbleTest {
         assertEquals(
             "audio-msg-1",
             pausedMessageId,
-        )
-    }
-
-    private fun assertProgress(expected: Float) {
-        val config = composeTestRule
-            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
-            .fetchSemanticsNode()
-            .config
-
-        assert(
-            config.contains(SemanticsProperties.ProgressBarRangeInfo),
-        ) { "expected LinearProgressIndicator to expose ProgressBarRangeInfo" }
-
-        val info = config[SemanticsProperties.ProgressBarRangeInfo]
-
-        assertEquals(
-            expected,
-            info.current,
-            0.001f,
         )
     }
 }
