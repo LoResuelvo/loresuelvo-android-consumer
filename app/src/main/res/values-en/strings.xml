@@ -112,6 +112,7 @@
     <string name="conversation_media_preview_file_name_format">%1$s · %2$s</string>
     <string name="conversation_record_audio_content_description">Record audio</string>
     <string name="conversation_stop_audio_recording_content_description">Stop recording</string>
+    <string name="conversation_fullscreen_image_close_hint">Tap to close</string>
     <string name="conversation_transient_media_error_network">We couldn\'t send the file. Check your connection.</string>
     <string name="conversation_transient_media_error_server">We couldn\'t send the file. Try again.</string>
     <string name="conversation_transient_media_error_unauthorized">Your session expired. Please sign in again.</string>

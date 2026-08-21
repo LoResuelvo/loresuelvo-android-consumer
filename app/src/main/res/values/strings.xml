@@ -113,6 +113,7 @@
     <string name="conversation_media_preview_send">Enviar</string>
     <string name="conversation_media_preview_discard">Descartar</string>
     <string name="conversation_stop_audio_recording_content_description">Detener grabación de audio</string>
+    <string name="conversation_fullscreen_image_close_hint">Toca para cerrar</string>
     <string name="conversation_media_preview_image_content_description">Vista previa de la imagen adjunta</string>
     <string name="conversation_media_preview_file_name_format">%1$s · %2$s</string>
     <string name="conversation_transient_media_error_network">No pudimos enviar el archivo. Revisá tu conexión.</string>
