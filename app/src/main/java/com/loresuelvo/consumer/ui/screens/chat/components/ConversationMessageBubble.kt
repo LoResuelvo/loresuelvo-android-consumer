@@ -239,4 +239,4 @@ const val CONVERSATION_MESSAGE_AUDIO_FILL_TAG =
     "conversation-message-audio-fill"
 
 internal const val PLAY_ICON = "\u25B6"
-internal const val PAUSE_ICON = "⏸"
+internal const val PAUSE_ICON = "\u23F8"
