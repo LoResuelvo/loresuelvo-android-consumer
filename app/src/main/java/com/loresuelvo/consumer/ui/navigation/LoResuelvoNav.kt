@@ -472,6 +472,8 @@ private fun ConversationRoute(
         onErrorDismiss = viewModel::onErrorDismiss,
         onPlayAudio = viewModel::onPlayAudio,
         onPauseAudio = viewModel::onPauseAudio,
+        onImageClick = viewModel::onImageClick,
+        onFullscreenImageDismiss = viewModel::onFullscreenImageDismiss,
         onAttachClick = { sheetState.value = true },
         onGalleryClick = {
             galleryLauncher.launch(

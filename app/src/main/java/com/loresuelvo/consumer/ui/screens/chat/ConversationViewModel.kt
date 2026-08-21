@@ -491,6 +491,53 @@ class ConversationViewModel @Inject constructor(
     }
 
     /**
+     * Opens the fullscreen image viewer for [messageId] (06-MM).
+     *
+     * No-op when:
+     *  - the state isn't `Ready` (initial load / error);
+     *  - the message doesn't exist or isn't an image.
+     *
+     * The viewer is a `Dialog`-style overlay on top of the
+     * conversation screen, so the underlying conversation state
+     * stays untouched — scrolling, audio playback and the
+     * composer all keep working while the image is open. Tapping
+     * outside the image (or the close affordance) calls
+     * [onFullscreenImageDismiss] to clear the field.
+     */
+    fun onImageClick(messageId: String) {
+        val currentState = _uiState.value
+
+        if (currentState !is ConversationUiState.Ready) {
+            return
+        }
+
+        val media = currentState.detail.messages
+            .firstOrNull { it.id == messageId }
+            ?.media as? MediaReference.Image
+            ?: return
+
+        _uiState.value = currentState.copy(
+            fullscreenImage = media,
+        )
+    }
+
+    fun onFullscreenImageDismiss() {
+        val currentState = _uiState.value
+
+        if (currentState !is ConversationUiState.Ready) {
+            return
+        }
+
+        if (currentState.fullscreenImage == null) {
+            return
+        }
+
+        _uiState.value = currentState.copy(
+            fullscreenImage = null,
+        )
+    }
+
+    /**
      * Stage a [MediaUpload] for confirmation. The canonical
      * attach surface for non-`Uri` callers (the BDD world, future
      * programmatic attach scenarios, and the audio recorder

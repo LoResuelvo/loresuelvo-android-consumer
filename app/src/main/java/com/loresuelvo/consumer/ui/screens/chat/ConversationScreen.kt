@@ -96,6 +96,8 @@ fun ConversationScreen(
     onErrorDismiss: () -> Unit,
     onPlayAudio: (String) -> Unit = {},
     onPauseAudio: (String) -> Unit = {},
+    onImageClick: (String) -> Unit = {},
+    onFullscreenImageDismiss: () -> Unit = {},
     onAttachClick: () -> Unit = {},
     onGalleryClick: () -> Unit = {},
     onCameraClick: () -> Unit = {},
@@ -127,6 +129,7 @@ fun ConversationScreen(
                 onErrorDismiss = onErrorDismiss,
                 onPlayAudio = onPlayAudio,
                 onPauseAudio = onPauseAudio,
+                onImageClick = onImageClick,
                 onAttachClick = onAttachClick,
                 onGalleryClick = onGalleryClick,
                 onStartAudioRecording = onStartAudioRecording,
@@ -148,6 +151,13 @@ fun ConversationScreen(
             onGalleryClick = onGalleryClick,
             onCameraClick = onCameraClick,
         )
+
+        (state as? ConversationUiState.Ready)?.fullscreenImage?.let { image ->
+            FullScreenImageViewer(
+                image = image,
+                onDismiss = onFullscreenImageDismiss,
+            )
+        }
     }
 }
 
@@ -216,6 +226,7 @@ private fun ReadyState(
     onErrorDismiss: () -> Unit,
     onPlayAudio: (String) -> Unit,
     onPauseAudio: (String) -> Unit,
+    onImageClick: (String) -> Unit,
     onAttachClick: () -> Unit,
     onGalleryClick: () -> Unit,
     onStartAudioRecording: () -> Unit,
@@ -274,6 +285,7 @@ private fun ReadyState(
                 audioPlayback = state.audioPlayback,
                 onPlayAudio = onPlayAudio,
                 onPauseAudio = onPauseAudio,
+                onImageClick = onImageClick,
             )
             // The unread banner overlays the list at the
             // bottom-edge of the scroll area (anchored to
@@ -339,6 +351,7 @@ private fun MessagesList(
     audioPlayback: AudioPlaybackState,
     onPlayAudio: (String) -> Unit,
     onPauseAudio: (String) -> Unit,
+    onImageClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -357,6 +370,7 @@ private fun MessagesList(
                 audioPlayback = audioPlayback,
                 onPlayAudio = onPlayAudio,
                 onPauseAudio = onPauseAudio,
+                onImageClick = onImageClick,
             )
         }
     }

@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.ui.screens.chat
 import android.net.Uri
 import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 
 /**
@@ -79,6 +80,7 @@ sealed interface ConversationUiState {
         val audioPlayback: AudioPlaybackState = AudioPlaybackState(),
         val sendingMedia: Boolean = false,
         val transientMediaError: SendMessageOutcome.Failure? = null,
+        val fullscreenImage: MediaReference.Image? = null,
     ) : ConversationUiState
 
     data class Error(val failure: ConversationDetailOutcome.Failure) : ConversationUiState
