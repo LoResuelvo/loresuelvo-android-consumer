@@ -144,4 +144,34 @@ class ConversationMessageBubbleTest {
             .onNodeWithText("1:05")
             .assertIsDisplayed()
     }
+
+    @Test
+    fun audio_message_renders_play_button() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 5_000L),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun audio_message_renders_progress_line() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = audioMessage(durationMillis = 5_000L),
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
+            .assertIsDisplayed()
+    }
 }

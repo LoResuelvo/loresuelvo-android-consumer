@@ -3,8 +3,10 @@ package com.loresuelvo.consumer.ui.screens.chat.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,7 +30,7 @@ import com.loresuelvo.consumer.domain.conversation.MediaReference
  * Text messages render their content normally.
  * Image messages render the referenced image inside the bubble.
  * Audio messages render a compact audio representation with
- * their duration.
+ * their duration, play button and progress line.
  */
 @Composable
 fun ConversationMessageBubble(
@@ -83,23 +85,45 @@ fun ConversationMessageBubble(
                 }
 
                 is MediaReference.Audio -> {
-                    Row(
+                    Column(
                         modifier = Modifier
                             .testTag(CONVERSATION_MESSAGE_AUDIO_TAG),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(
-                            text = "▶",
-                            color = textColor,
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = "▶",
+                                color = textColor,
+                                modifier = Modifier
+                                    .testTag(
+                                        CONVERSATION_MESSAGE_AUDIO_PLAY_TAG,
+                                    ),
+                            )
 
-                        Text(
-                            text = formatAudioDuration(media.durationMillis),
-                            color = textColor,
-                            style = MaterialTheme.typography.bodyMedium,
+                            Text(
+                                text = formatAudioDuration(
+                                    media.durationMillis,
+                                ),
+                                color = textColor,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier
+                                    .testTag(
+                                        CONVERSATION_MESSAGE_AUDIO_DURATION_TAG,
+                                    ),
+                            )
+                        }
+
+                        Box(
                             modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(
+                                    textColor.copy(alpha = 0.35f),
+                                )
                                 .testTag(
-                                    CONVERSATION_MESSAGE_AUDIO_DURATION_TAG,
+                                    CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG,
                                 ),
                         )
                     }
@@ -137,3 +161,9 @@ const val CONVERSATION_MESSAGE_AUDIO_TAG =
 
 const val CONVERSATION_MESSAGE_AUDIO_DURATION_TAG =
     "conversation-message-audio-duration"
+
+const val CONVERSATION_MESSAGE_AUDIO_PLAY_TAG =
+    "conversation-message-audio-play"
+
+const val CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG =
+    "conversation-message-audio-progress"
