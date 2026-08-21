@@ -470,6 +470,7 @@ private fun ConversationRoute(
         onBackClick = { navController.popBackStack() },
         onRetryClick = { viewModel.load(conversationId) },
         onErrorDismiss = viewModel::onErrorDismiss,
+        onPlayAudio = viewModel::onPlayAudio,
         onAttachClick = { sheetState.value = true },
         onGalleryClick = {
             galleryLauncher.launch(
