@@ -16,6 +16,7 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import android.net.Uri
 import io.mockk.Runs
 import io.mockk.just
@@ -67,7 +68,8 @@ class ConversationViewModelTest {
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
     private lateinit var webSocketEvents: MutableSharedFlow<WsEvent>
     private lateinit var viewModel: ConversationViewModel
-
+    private lateinit var audioPlayer: FakeAudioPlayer
+    
     private fun detail(
         id: String = "1",
         status: ConversationStatus = ConversationStatus.Pending,
@@ -94,6 +96,7 @@ class ConversationViewModelTest {
             mediaReader,
             mediaMetadataRetriever,
             audioRecorder,
+            audioPlayer,
             webSocketClient,
         )
     }
@@ -101,15 +104,15 @@ class ConversationViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        // The VM's init {} subscribes to the WebSocket flow. Stub
-        // the flow as a MutableSharedFlow the test can push events
-        // into; relaxed-mock the rest of WebSocketClient so the
-        // VM's `start()` call doesn't throw.
+
+        audioPlayer = FakeAudioPlayer()
+
         webSocketEvents = MutableSharedFlow(
             replay = 0,
             extraBufferCapacity = 64,
             onBufferOverflow = BufferOverflow.DROP_OLDEST,
         )
+
         every { webSocketClient.events } returns webSocketEvents
         every { webSocketClient.start() } returns Unit
     }
@@ -1007,5 +1010,100 @@ class ConversationViewModelTest {
         )
 
         verify(exactly = 1) { audioRecorder.stop() }
+    }
+
+    // ---- Audio playback ----------------------------------------------------
+
+    @Test
+    fun onPlayAudio_starts_audio_playback() = runTest {
+        val audioMessage = ConversationMessage(
+            id = "audio-1",
+            sender = ConversationSender.Consumer,
+            content = "",
+            createdOnEpochMillis = 1_700_000_000_000L,
+            media = com.loresuelvo.consumer.domain.conversation.MediaReference.Audio(
+                id = "audio-file-1",
+                url = "https://cdn.loresuelvo.test/audio.webm",
+                mimeType = "audio/webm",
+                originalName = "audio.webm",
+                durationMillis = 5_000L,
+            ),
+        )
+
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(
+                detail(
+                    id = "1",
+                    messages = listOf(audioMessage),
+                ),
+            )
+
+        viewModel = createViewModel()
+
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-1")
+
+        assertEquals(
+            "https://cdn.loresuelvo.test/audio.webm",
+            audioPlayer.lastPlayedUrl,
+        )
+
+        assertEquals(
+            0L,
+            audioPlayer.lastStartPositionMillis,
+        )
+
+        assertTrue(audioPlayer.isPlaying.value)
+    }
+
+    @Test
+    fun onPlayAudio_does_nothing_when_message_does_not_exist() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(
+                detail(
+                    id = "1",
+                    messages = emptyList(),
+                ),
+            )
+
+        viewModel = createViewModel()
+
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("does-not-exist")
+
+        assertNull(audioPlayer.lastPlayedUrl)
+        assertFalse(audioPlayer.isPlaying.value)
+    }
+
+    @Test
+    fun onPlayAudio_does_nothing_for_text_message() = runTest {
+        val textMessage = ConversationMessage(
+            id = "text-1",
+            sender = ConversationSender.Consumer,
+            content = "Hola Juan",
+            createdOnEpochMillis = 1_700_000_000_000L,
+        )
+
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(
+                detail(
+                    id = "1",
+                    messages = listOf(textMessage),
+                ),
+            )
+
+        viewModel = createViewModel()
+
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("text-1")
+
+        assertNull(audioPlayer.lastPlayedUrl)
+        assertFalse(audioPlayer.isPlaying.value)
     }
 }

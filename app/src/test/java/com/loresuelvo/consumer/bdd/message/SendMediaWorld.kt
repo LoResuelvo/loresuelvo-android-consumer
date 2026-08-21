@@ -21,6 +21,7 @@ import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.coEvery
@@ -99,6 +100,7 @@ class SendMediaWorld : AutoCloseable {
     private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
     private val audioRecorder = mockk<com.loresuelvo.consumer.data.media.AudioRecorder>(relaxed = true)
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
+    private val audioPlayer = FakeAudioPlayer()
 
     private lateinit var viewModel: ConversationViewModel
     private val observedConversationStates = mutableListOf<ConversationUiState>()
@@ -132,6 +134,7 @@ class SendMediaWorld : AutoCloseable {
             mediaReader = mediaReader,
             mediaMetadataRetriever = mediaMetadataRetriever,
             audioRecorder = audioRecorder,
+            audioPlayer = audioPlayer,
             webSocketClient = fakeWebSocketClient,
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -434,6 +437,22 @@ class SendMediaWorld : AutoCloseable {
             "expected sent audio duration to be 10 seconds",
             actualAudio.durationMillis == 10_000L,
         )
+    }
+
+    fun playSentAudio() {
+        TODO("Implement 11-MM")
+    }
+
+    fun assertAudioIsPlaying() {
+        TODO("Implement 11-MM")
+    }
+
+    fun assertAudioProgressAdvanced() {
+        TODO("Implement 11-MM")
+    }
+
+    fun assertElapsedAudioTimeUpdated() {
+        TODO("Implement 11-MM")
     }
 
     /**

@@ -76,6 +76,7 @@ sealed interface ConversationUiState {
         val pendingMedia: PendingMedia? = null,
         val attachingMedia: Boolean = false,
         val recordingAudio: Boolean = false,
+        val audioPlayback: AudioPlaybackState = AudioPlaybackState(),
         val sendingMedia: Boolean = false,
         val transientMediaError: SendMessageOutcome.Failure? = null,
     ) : ConversationUiState

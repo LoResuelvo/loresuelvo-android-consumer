@@ -11,6 +11,7 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCa
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -33,8 +34,8 @@ import org.junit.Test
 /**
  * Send / retry / dismiss coverage for [ConversationViewModel].
  * Companion file `ConversationViewModelTest.kt` covers the load
- * + prompt surface. Splitting the two files keeps each within the
- * team's per-commit LoC budget.
+ * + prompt surface. Splitting the t audioPlayer,wo files keeps each within the
+ * team's pe audioPlayer,r-commit LoC budget.
  *
  * The setup here repeats the minimal seed from
  * `ConversationViewModelTest`: a Ready state with the given
@@ -51,6 +52,7 @@ class ConversationViewModelSendRetryTest {
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val audioRecorder = mockk<AudioRecorder>(relaxed = true)
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
+    private val audioPlayer = FakeAudioPlayer()
     private lateinit var viewModel: ConversationViewModel
 
     private fun serverMessage(id: String = "10", content: String = "hola") =
@@ -78,7 +80,7 @@ class ConversationViewModelSendRetryTest {
                     updatedOnEpochMillis = 0L,
                 ),
             )
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, audioRecorder, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, audioRecorder, audioPlayer, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
     }
@@ -115,7 +117,7 @@ class ConversationViewModelSendRetryTest {
             )
         coEvery { sendMessage("1", "primera") } returns
             SendMessageOutcome.Failure.Server(500, "boom")
-        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, audioRecorder, webSocketClient)
+        viewModel = ConversationViewModel(getConversationById, sendMessage, sendMediaMessage, mediaReader, mediaMetadataRetriever, audioRecorder, audioPlayer, webSocketClient)
         viewModel.load("1")
         advanceUntilIdle()
         viewModel.onPromptChange("primera")

@@ -15,6 +15,8 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCa
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.data.media.AudioPlayer
+import com.loresuelvo.consumer.domain.conversation.MediaReference
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -78,6 +80,7 @@ class ConversationViewModel @Inject constructor(
     private val mediaReader: MediaReader,
     private val mediaMetadataRetriever: MediaMetadataRetrieverReader,
     private val audioRecorder: AudioRecorder,
+    private val audioPlayer: AudioPlayer,
     private val webSocketClient: WebSocketClient,
 ) : ViewModel() {
 
@@ -388,6 +391,34 @@ class ConversationViewModel @Inject constructor(
                 applyAttachFailure(t)
             }
         }
+    }
+
+    fun onPlayAudio(messageId: String) {
+        val currentState = _uiState.value
+
+        if (currentState !is ConversationUiState.Ready) {
+            return
+        }
+
+        val message = currentState.detail.messages
+            .firstOrNull { it.id == messageId }
+            ?: return
+
+        val media = message.media as? MediaReference.Audio
+            ?: return
+
+        audioPlayer.play(
+            url = media.url,
+            startPositionMillis = 0L,
+        )
+
+        _uiState.value = currentState.copy(
+            audioPlayback = AudioPlaybackState(
+                messageId = messageId,
+                isPlaying = true,
+                currentPositionMillis = 0L,
+            ),
+        )
     }
 
     /**

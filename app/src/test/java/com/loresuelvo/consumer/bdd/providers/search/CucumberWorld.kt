@@ -32,6 +32,7 @@ import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
 import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.channels.BufferOverflow
@@ -66,6 +67,7 @@ class CucumberWorld : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + supervisorJob)
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val audioRecorder = mockk<AudioRecorder>(relaxed = true)
+    private val audioPlayer = FakeAudioPlayer()
 
     private lateinit var providerRepo: FakeProviderRepository
     private lateinit var categoryRepo: FakeCategoryRepository
@@ -150,6 +152,7 @@ class CucumberWorld : AutoCloseable {
             mediaReader = io.mockk.mockk(relaxed = true),
             mediaMetadataRetriever = mediaMetadataRetriever,
             audioRecorder = audioRecorder,
+            audioPlayer = audioPlayer,
             webSocketClient = fakeWebSocketClient,
         )
 
