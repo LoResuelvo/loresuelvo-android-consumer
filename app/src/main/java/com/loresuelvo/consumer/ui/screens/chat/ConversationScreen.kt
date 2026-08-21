@@ -94,6 +94,7 @@ fun ConversationScreen(
     onBackClick: () -> Unit,
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onPlayAudio: (String) -> Unit = {},
     onAttachClick: () -> Unit = {},
     onGalleryClick: () -> Unit = {},
     onCameraClick: () -> Unit = {},
@@ -123,6 +124,7 @@ fun ConversationScreen(
                 onSendClick = onSendClick,
                 onBackClick = onBackClick,
                 onErrorDismiss = onErrorDismiss,
+                onPlayAudio = onPlayAudio,
                 onAttachClick = onAttachClick,
                 onGalleryClick = onGalleryClick,
                 onStartAudioRecording = onStartAudioRecording,
@@ -210,6 +212,7 @@ private fun ReadyState(
     onSendClick: () -> Unit,
     onBackClick: () -> Unit,
     onErrorDismiss: () -> Unit,
+    onPlayAudio: (String) -> Unit,
     onAttachClick: () -> Unit,
     onGalleryClick: () -> Unit,
     onStartAudioRecording: () -> Unit,
@@ -265,6 +268,8 @@ private fun ReadyState(
             MessagesList(
                 messages = state.detail.messages,
                 listState = listState,
+                audioPlayback = state.audioPlayback,
+                onPlayAudio = onPlayAudio,
             )
             // The unread banner overlays the list at the
             // bottom-edge of the scroll area (anchored to
@@ -327,6 +332,8 @@ private fun ReadyState(
 private fun MessagesList(
     messages: List<com.loresuelvo.consumer.domain.conversation.ConversationMessage>,
     listState: LazyListState,
+    audioPlayback: AudioPlaybackState,
+    onPlayAudio: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -340,7 +347,11 @@ private fun MessagesList(
             items = messages,
             key = { it.id },
         ) { message ->
-            ConversationMessageBubble(message = message)
+            ConversationMessageBubble(
+                message = message,
+                audioPlayback = audioPlayback,
+                onPlayAudio = onPlayAudio,
+            )
         }
     }
 }

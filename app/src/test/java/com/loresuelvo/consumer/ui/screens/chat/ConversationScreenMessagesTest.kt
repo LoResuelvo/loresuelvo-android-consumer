@@ -19,6 +19,8 @@ import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
+import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_AUDIO_PLAY_TAG
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -59,6 +61,23 @@ class ConversationScreenMessagesTest {
         sender = sender,
         content = content,
         createdOnEpochMillis = 1_700_000_000_000L,
+    )
+
+    private fun audioMessage(
+        id: String = "audio-msg-1",
+        sender: ConversationSender = ConversationSender.Consumer,
+    ) = ConversationMessage(
+        id = id,
+        sender = sender,
+        content = "",
+        createdOnEpochMillis = 1_700_000_000_000L,
+        media = MediaReference.Audio(
+            id = "audio-file-id",
+            url = "https://cdn.loresuelvo.test/nota-10s.webm",
+            mimeType = "audio/webm",
+            originalName = "nota-10s.webm",
+            durationMillis = 10_000L,
+        ),
     )
 
     private fun detail(
@@ -132,6 +151,39 @@ class ConversationScreenMessagesTest {
         composeTestRule
             .onAllNodesWithTag(CONVERSATION_MESSAGE_BUBBLE_TAG)
             .assertCountEquals(0)
+    }
+
+    @Test
+    fun ready_state_audio_play_button_fires_onPlayAudio_with_message_id() {
+        var playedMessageId: String? = null
+
+        val audioMessage = audioMessage(id = "audio-msg-1")
+
+        composeTestRule.setContent {
+            ConversationScreen(
+                state = readyState(
+                    detail = detail(
+                        messages = listOf(audioMessage),
+                    ),
+                ),
+                onPromptChange = {},
+                onSendClick = {},
+                onBackClick = {},
+                onRetryClick = {},
+                onErrorDismiss = {},
+                onPlayAudio = { messageId ->
+                    playedMessageId = messageId
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+            .assertIsDisplayed()
+            .performClick()
+
+        assertTrue(playedMessageId == "audio-msg-1")
     }
 
     // ---- Composer --------------------------------------------------------
