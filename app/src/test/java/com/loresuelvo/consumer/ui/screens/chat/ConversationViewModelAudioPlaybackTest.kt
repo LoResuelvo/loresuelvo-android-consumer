@@ -171,6 +171,48 @@ class ConversationViewModelAudioPlaybackTest {
     }
 
     @Test
+    fun onPlayAudio_starts_audio_player_for_provider_audio_message() = runTest {
+        // Scenario 07-MM: a provider-sent audio message is played
+        // the same way as a consumer-sent one — the VM surface
+        // doesn't branch on sender.
+        coEvery {
+            getConversationById("1")
+        } returns ConversationDetailOutcome.Success(
+            detailWithAudio().copy(
+                messages = listOf(
+                    audioMessage().copy(
+                        sender = ConversationSender.Provider,
+                    ),
+                ),
+            ),
+        )
+
+        viewModel = createViewModel()
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onPlayAudio("audio-msg-1")
+        advanceUntilIdle()
+
+        assertEquals(
+            "https://cdn.loresuelvo.test/nota-10s.webm",
+            audioPlayer.lastPlayedUrl,
+        )
+
+        assertTrue(audioPlayer.isPlaying.value)
+
+        val state =
+            viewModel.uiState.value as ConversationUiState.Ready
+
+        assertEquals(
+            "audio-msg-1",
+            state.audioPlayback.messageId,
+        )
+
+        assertTrue(state.audioPlayback.isPlaying)
+    }
+
+    @Test
     fun onPlayAudio_updates_playback_state() = runTest {
         givenConversationIsLoaded()
         advanceUntilIdle()
