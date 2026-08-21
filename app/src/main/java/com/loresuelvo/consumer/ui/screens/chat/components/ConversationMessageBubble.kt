@@ -27,6 +27,8 @@ import com.loresuelvo.consumer.domain.conversation.MediaReference
  *
  * Text messages render their content normally.
  * Image messages render the referenced image inside the bubble.
+ * Audio messages render a compact audio representation with
+ * their duration.
  */
 @Composable
 fun ConversationMessageBubble(
@@ -67,13 +69,40 @@ fun ConversationMessageBubble(
         ) {
             when (val media = message.media) {
                 is MediaReference.Image -> {
-                    AsyncImage(
-                        model = media.url,
-                        contentDescription = media.originalName,
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
-                    )
+                    ) {
+                        AsyncImage(
+                            model = media.url,
+                            contentDescription = media.originalName,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                is MediaReference.Audio -> {
+                    Row(
+                        modifier = Modifier
+                            .testTag(CONVERSATION_MESSAGE_AUDIO_TAG),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = "▶",
+                            color = textColor,
+                        )
+
+                        Text(
+                            text = formatAudioDuration(media.durationMillis),
+                            color = textColor,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier
+                                .testTag(
+                                    CONVERSATION_MESSAGE_AUDIO_DURATION_TAG,
+                                ),
+                        )
+                    }
                 }
 
                 else -> {
@@ -89,8 +118,22 @@ fun ConversationMessageBubble(
     }
 }
 
+private fun formatAudioDuration(durationMillis: Long): String {
+    val totalSeconds = durationMillis / 1000
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+
+    return "%d:%02d".format(minutes, seconds)
+}
+
 const val CONVERSATION_MESSAGE_BUBBLE_TAG =
     "conversation-message-bubble"
 
 const val CONVERSATION_MESSAGE_IMAGE_TAG =
     "conversation-message-image"
+
+const val CONVERSATION_MESSAGE_AUDIO_TAG =
+    "conversation-message-audio"
+
+const val CONVERSATION_MESSAGE_AUDIO_DURATION_TAG =
+    "conversation-message-audio-duration"
