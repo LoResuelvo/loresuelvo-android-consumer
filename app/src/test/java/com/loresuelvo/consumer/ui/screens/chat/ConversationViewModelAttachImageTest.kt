@@ -368,6 +368,66 @@ class ConversationViewModelAttachImageTest {
     }
 
     @Test
+    fun onConfirmMediaSend_network_failure_surfaces_error_and_keeps_pending() = runTest {
+        // Scenario 08-MM: backend doesn't respond (network failure).
+        // The user must see a typed Network error and the message
+        // must NOT be appended to the conversation.
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            mediaMetadataRetriever,
+            audioRecorder,
+            audioPlayer,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        coEvery {
+            mediaReader.read(uri)
+        } returns MediaUpload.Image(imageBytes, imageMime, imageName)
+        viewModel.onAttachImageFromGallery(uri)
+        advanceUntilIdle()
+
+        val networkCause = IOException("backend unreachable")
+        coEvery {
+            sendMediaMessage(conversationId = "1", media = any())
+        } returns SendMessageOutcome.Failure.Network(networkCause)
+
+        viewModel.onConfirmMediaSend()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertFalse(state.sendingMedia)
+        assertNotNull(
+            "pendingMedia must survive a network failure for retry",
+            state.pendingMedia,
+        )
+
+        val failure = state.transientMediaError
+        assertTrue(
+            "expected Network failure, was $failure",
+            failure is SendMessageOutcome.Failure.Network,
+        )
+        assertSame(
+            networkCause,
+            (failure as SendMessageOutcome.Failure.Network).cause,
+        )
+
+        // The image must NOT have been appended to the conversation
+        // — only server-persisted messages go there.
+        assertEquals(
+            "image must not appear in the conversation on failure",
+            0,
+            state.detail.messages.size,
+        )
+    }
+
+    @Test
     fun onConfirmMediaSend_with_no_pending_is_a_no_op() = runTest {
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
