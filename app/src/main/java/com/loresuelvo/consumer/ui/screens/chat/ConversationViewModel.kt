@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 /**
@@ -90,24 +91,45 @@ class ConversationViewModel @Inject constructor(
     val uiState: StateFlow<ConversationUiState> = _uiState.asStateFlow()
 
     init {
-        // Start the WebSocket on first VM construction. The
-        // client is `@Singleton` and `start()` is idempotent, so
-        // the connection is shared across re-entries (when the
-        // user navigates Home and back, a fresh VM is created but
-        // the WS keeps streaming). The app-wide subscription below
-        // filters events to the currently-loaded conversation id
-        // and appends provider bubbles in real-time (scenario 07-IC)
-        // while ignoring other conversations' events (08-IC) and
-        // echoes of the consumer's own sends.
         webSocketClient.start()
+
         viewModelScope.launch {
             webSocketClient.events
-                .filter { event -> currentConversationIdMatches(event.conversationId) }
-                .filter { event -> event.message.sender == com.loresuelvo.consumer.domain.conversation.ConversationSender.Provider }
-                .collect { event -> appendIncomingMessage(event.message) }
+                .filter { event ->
+                    currentConversationIdMatches(event.conversationId)
+                }
+                .filter { event ->
+                    event.message.sender ==
+                        com.loresuelvo.consumer.domain.conversation.ConversationSender.Provider
+                }
+                .collect { event ->
+                    appendIncomingMessage(event.message)
+                }
+        }
+
+        viewModelScope.launch {
+            audioPlayer.currentPositionMillis.collect { positionMillis ->
+                _uiState.update { current ->
+                    if (current !is ConversationUiState.Ready) {
+                        return@update current
+                    }
+
+                    val playback = current.audioPlayback
+
+                    if (playback.messageId == null) {
+                        return@update current
+                    }
+
+                    current.copy(
+                        audioPlayback = playback.copy(
+                            currentPositionMillis = positionMillis,
+                        ),
+                    )
+                }
+            }
         }
     }
-
+    
     private fun currentConversationIdMatches(eventConversationId: Long): Boolean {
         val state = _uiState.value
         return state is ConversationUiState.Ready &&
