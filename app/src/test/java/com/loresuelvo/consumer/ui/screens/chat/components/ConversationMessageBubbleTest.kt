@@ -78,6 +78,31 @@ class ConversationMessageBubbleTest {
     }
 
     @Test
+    fun image_message_click_fires_onImageClick_with_message_id() {
+        var clickedMessageId: String? = null
+
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = imageMessage(),
+                onImageClick = { messageId ->
+                    clickedMessageId = messageId
+                },
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_IMAGE_TAG)
+            .performClick()
+
+        assertEquals(
+            "image-msg-1",
+            clickedMessageId,
+        )
+    }
+
+    @Test
     fun text_message_renders_content() {
         composeTestRule.setContent {
             ConversationMessageBubble(

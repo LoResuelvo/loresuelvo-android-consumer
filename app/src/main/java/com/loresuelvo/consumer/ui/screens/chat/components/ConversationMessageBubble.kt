@@ -6,25 +6,35 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
+import com.loresuelvo.consumer.ui.theme.BrandSecondary
 
 /**
  * WhatsApp-style bubble for a single message in a consumer ↔
@@ -41,6 +51,7 @@ fun ConversationMessageBubble(
     audioPlayback: AudioPlaybackState = AudioPlaybackState(),
     onPlayAudio: (String) -> Unit = {},
     onPauseAudio: (String) -> Unit = {},
+    onImageClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isConsumer = message.sender is ConversationSender.Consumer
@@ -80,12 +91,35 @@ fun ConversationMessageBubble(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .height(180.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(BrandSecondary)
+                            .clickable {
+                                onImageClick(message.id)
+                            }
                             .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        AsyncImage(
+                        SubcomposeAsyncImage(
                             model = media.url,
                             contentDescription = media.originalName,
-                            modifier = Modifier.fillMaxWidth(),
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxSize(),
+                            loading = {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color.White,
+                                )
+                            },
+                            error = {
+                                Icon(
+                                    imageVector = Icons.Filled.BrokenImage,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(32.dp),
+                                )
+                            },
                         )
                     }
                 }
@@ -219,6 +253,9 @@ const val CONVERSATION_MESSAGE_BUBBLE_TAG =
 
 const val CONVERSATION_MESSAGE_IMAGE_TAG =
     "conversation-message-image"
+
+const val CONVERSATION_MESSAGE_IMAGE_CONTENT_TAG =
+    "conversation-message-image-content"
 
 const val CONVERSATION_MESSAGE_AUDIO_TAG =
     "conversation-message-audio"
