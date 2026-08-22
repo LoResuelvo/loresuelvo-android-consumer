@@ -287,6 +287,12 @@ class ConversationViewModel @Inject constructor(
                     applySendFailure(outcome)
                 is SendMessageOutcome.Failure.Unauthorized ->
                     applySendFailure(outcome)
+                is SendMessageOutcome.Failure.PayloadTooLarge ->
+                    // Text messages can't trigger this branch
+                    // (no size limit on text), but the sealed
+                    // hierarchy forces the branch — keep parity
+                    // with the other Failure subtypes.
+                    applySendFailure(outcome)
             }
         }
     }
@@ -680,6 +686,8 @@ class ConversationViewModel @Inject constructor(
                 is SendMessageOutcome.Failure.Server ->
                     applyMediaSendFailure(outcome)
                 is SendMessageOutcome.Failure.Unauthorized ->
+                    applyMediaSendFailure(outcome)
+                is SendMessageOutcome.Failure.PayloadTooLarge ->
                     applyMediaSendFailure(outcome)
             }
         }

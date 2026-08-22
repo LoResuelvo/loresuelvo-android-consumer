@@ -33,5 +33,15 @@ sealed interface SendMessageOutcome {
 
         /** 401: Auth0 session expired or invalid. */
         data class Unauthorized(val message: String) : Failure
+
+        /**
+         * The media payload exceeded the client-side size
+         * limit (e.g. [com.loresuelvo.consumer.domain.conversation.MAX_AUDIO_BYTES]).
+         * The use case rejects oversized payloads before the
+         * network round-trip so the backend never sees them;
+         * [maxBytes] is the configured cap so the UI can show
+         * the user the actual limit.
+         */
+        data class PayloadTooLarge(val maxBytes: Long) : Failure
     }
 }

@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.domain.usecase.conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
+import com.loresuelvo.consumer.domain.conversation.MAX_AUDIO_BYTES
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
@@ -163,5 +164,60 @@ class SendMediaMessageUseCaseTest {
 
         assertTrue(outcome is SendMessageOutcome.Failure.Unauthorized)
         assertEquals("expired", (outcome as SendMessageOutcome.Failure.Unauthorized).message)
+    }
+
+    @Test
+    fun oversized_audio_returns_payload_too_large_without_calling_repo() = runTest {
+        // Scenario 09-MM: a recorded audio clip larger than the
+        // domain-defined `MAX_AUDIO_BYTES` is rejected by the
+        // use case so the backend never sees the request.
+        val oversized = sampleAudio.copy(
+            bytes = ByteArray(MAX_AUDIO_BYTES.toInt() + 1),
+        )
+
+        val outcome = useCase(conversationId, oversized)
+
+        assertTrue(
+            "expected PayloadTooLarge for oversized audio, was $outcome",
+            outcome is SendMessageOutcome.Failure.PayloadTooLarge,
+        )
+        assertEquals(
+            MAX_AUDIO_BYTES,
+            (outcome as SendMessageOutcome.Failure.PayloadTooLarge).maxBytes,
+        )
+        coVerify(exactly = 0) { conversationRepository.sendMediaMessage(any(), any()) }
+    }
+
+    @Test
+    fun audio_at_exact_limit_delegates_to_repository() = runTest {
+        val atLimit = sampleAudio.copy(
+            bytes = ByteArray(MAX_AUDIO_BYTES.toInt()),
+        )
+
+        val expected = SendMessageOutcome.Success(
+            ConversationMessage(
+                id = "102",
+                sender = ConversationSender.Consumer,
+                content = "",
+                createdOnEpochMillis = 1_700_000_000_000L,
+                media = MediaReference.Audio(
+                    id = "audio-file-id",
+                    url = "https://cdn.loresuelvo.test/nota-voz.webm",
+                    mimeType = "audio/mp4",
+                    originalName = "nota-voz.webm",
+                    durationMillis = 5_000L,
+                ),
+            ),
+        )
+        coEvery {
+            conversationRepository.sendMediaMessage(conversationId, atLimit)
+        } returns expected
+
+        val outcome = useCase(conversationId, atLimit)
+
+        assertEquals(expected, outcome)
+        coVerify(exactly = 1) {
+            conversationRepository.sendMediaMessage(conversationId, atLimit)
+        }
     }
 }
