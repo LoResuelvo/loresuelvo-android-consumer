@@ -262,10 +262,21 @@ class SendMediaWorld : AutoCloseable {
     }
 
     fun recordAudioFor(seconds: Int) {
+        recordAudioFor(seconds, sizeBytes = 10)
+    }
+
+    /**
+     * Records an audio clip of [seconds] with [sizeBytes] of
+     * payload. Scenario 09-MM passes a value larger than
+     * `MAX_AUDIO_BYTES` so the use case rejects the upload with
+     * `PayloadTooLarge` before it hits the repo.
+     */
+    fun recordAudioFor(seconds: Int, sizeBytes: Int) {
         require(seconds > 0)
+        require(sizeBytes >= 0)
 
         val audioUri = fakeUri("content://test/audio/nota-${seconds}s.webm")
-        val audioBytes = ByteArray(10)
+        val audioBytes = ByteArray(sizeBytes)
 
         every {
             audioRecorder.stop()
@@ -527,6 +538,41 @@ class SendMediaWorld : AutoCloseable {
             "no message should be appended on a failed media send",
             0,
             ready.detail.messages.size,
+        )
+    }
+
+    // ---- Scenario 09-MM ---------------------------------------------
+
+    fun assertMediaSendFailureIsPayloadTooLarge() {
+        val state = lastConversationUiState()
+
+        assertTrue(
+            "expected ConversationUiState.Ready, was $state",
+            state is ConversationUiState.Ready,
+        )
+
+        val ready = state as ConversationUiState.Ready
+
+        val failure = ready.transientMediaError
+
+        assertTrue(
+            "expected a transient media error, but transientMediaError was null",
+            failure != null,
+        )
+
+        assertTrue(
+            "expected PayloadTooLarge failure, was $failure",
+            failure is SendMessageOutcome.Failure.PayloadTooLarge,
+        )
+
+        assertFalse(
+            "sendingMedia must flip back to false on size failure",
+            ready.sendingMedia,
+        )
+
+        assertNotNull(
+            "pendingMedia must survive the failure for retry",
+            ready.pendingMedia,
         )
     }
 

@@ -83,10 +83,11 @@ Característica: Enviar fotos o audios en el chat
     Entonces veo un error de red
     Y la imagen NO aparece en la conversación
 
-  @wip
   Escenario: 09-MM Error al enviar un audio que excede el tamaño máximo permitido
-    Dado que grabé un audio que excede el tamaño máximo permitido
-    Cuando intento confirmar el envío
+    Dado que estoy en la conversación con "Juan Pérez"
+    Cuando toco el botón de grabar audio
+    Y grabo un audio que excede el tamaño máximo permitido
+    Y intento confirmar el envío
     Entonces veo un error de tamaño excedido
     Y el audio NO aparece en la conversación
 

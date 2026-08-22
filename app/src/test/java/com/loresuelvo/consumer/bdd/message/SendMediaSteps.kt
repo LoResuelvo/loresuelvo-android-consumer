@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.bdd.message
 
+import com.loresuelvo.consumer.domain.conversation.MAX_AUDIO_BYTES
 import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
@@ -393,6 +394,35 @@ class SendMediaSteps {
 
     @And("la imagen NO aparece en la conversación")
     fun theImageDoesNotAppearInTheConversation() {
+        world.assertNoMessageWasAppended()
+    }
+
+    // ---- Scenario 09-MM ---------------------------------------------
+
+    @And("grabo un audio que excede el tamaño máximo permitido")
+    fun iRecordedAnAudioThatExceedsTheMaxSize() {
+        // Use case rejects clips larger than MAX_AUDIO_BYTES with
+        // a typed PayloadTooLarge failure. The helper records a
+        // 5-second clip whose byte payload is one byte over the
+        // cap, so the rejection fires before the network round-trip.
+        world.recordAudioFor(
+            seconds = 5,
+            sizeBytes = (MAX_AUDIO_BYTES + 1).toInt(),
+        )
+    }
+
+    @When("intento confirmar el envío")
+    fun iTryToConfirmTheSend() {
+        world.confirmSend()
+    }
+
+    @Then("veo un error de tamaño excedido")
+    fun iSeeASizeExceededError() {
+        world.assertMediaSendFailureIsPayloadTooLarge()
+    }
+
+    @And("el audio NO aparece en la conversación")
+    fun theAudioDoesNotAppearInTheConversation() {
         world.assertNoMessageWasAppended()
     }
 
