@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
+import com.loresuelvo.consumer.domain.conversation.MAX_AUDIO_BYTES
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
@@ -422,6 +423,64 @@ class ConversationViewModelAttachImageTest {
         // — only server-persisted messages go there.
         assertEquals(
             "image must not appear in the conversation on failure",
+            0,
+            state.detail.messages.size,
+        )
+    }
+
+    @Test
+    fun onConfirmMediaSend_payload_too_large_audio_surfaces_typed_failure() = runTest {
+        // Scenario 09-MM: an audio clip larger than the domain
+        // size limit is rejected client-side; the user sees a
+        // specific "tamaño excedido" failure and the audio must
+        // NOT be appended to the conversation.
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            mediaMetadataRetriever,
+            audioRecorder,
+            audioPlayer,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onAttachMedia(audioUpload, sourceUri = null)
+        advanceUntilIdle()
+
+        coEvery {
+            sendMediaMessage(conversationId = "1", media = any())
+        } returns SendMessageOutcome.Failure.PayloadTooLarge(
+            maxBytes = MAX_AUDIO_BYTES,
+        )
+
+        viewModel.onConfirmMediaSend()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertFalse(state.sendingMedia)
+
+        val failure = state.transientMediaError
+        assertTrue(
+            "expected PayloadTooLarge failure, was $failure",
+            failure is SendMessageOutcome.Failure.PayloadTooLarge,
+        )
+        assertEquals(
+            MAX_AUDIO_BYTES,
+            (failure as SendMessageOutcome.Failure.PayloadTooLarge).maxBytes,
+        )
+
+        assertNotNull(
+            "pendingMedia must survive a size-exceeded failure for retry",
+            state.pendingMedia,
+        )
+
+        assertEquals(
+            "oversized audio must not appear in the conversation",
             0,
             state.detail.messages.size,
         )
