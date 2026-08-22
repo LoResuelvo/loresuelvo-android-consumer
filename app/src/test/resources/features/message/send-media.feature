@@ -91,9 +91,9 @@ Característica: Enviar fotos o audios en el chat
     Entonces veo un error de tamaño excedido
     Y el audio NO aparece en la conversación
 
-  @wip
   Escenario: 10-MM Cancelar el envío de una imagen antes de confirmar
-    Dado que seleccioné una imagen de la galería
+    Dado que estoy en la conversación con "Juan Pérez"
+    Y selecciono una imagen de la galería
     Y veo la vista previa de la imagen seleccionada
     Cuando descarto la vista previa
     Entonces NO se crea ninguna burbuja en la conversación

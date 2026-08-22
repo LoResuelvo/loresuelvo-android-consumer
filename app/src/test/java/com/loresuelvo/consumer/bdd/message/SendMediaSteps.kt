@@ -426,6 +426,32 @@ class SendMediaSteps {
         world.assertNoMessageWasAppended()
     }
 
+    // ---- Scenario 10-MM ---------------------------------------------
+
+    /**
+     * "selecciono una imagen de la galería" — equivalent to
+     * the 01-MM pick + select chain but stated as a single step
+     * (the user already picked before reaching the discard
+     * screen). The world collapses the picker + MediaReader
+     * pipeline into a single `chooseFromGallery()` call that
+     * stages a deterministic in-memory JPEG via `onAttachMedia`
+     * (canonical non-Uri entry point).
+     */
+    @Given("selecciono una imagen de la galería")
+    fun iSelectedAnImageFromTheGallery() {
+        world.chooseFromGallery()
+    }
+
+    @When("descarto la vista previa")
+    fun iDiscardThePreview() {
+        world.discardPreview()
+    }
+
+    @Then("NO se crea ninguna burbuja en la conversación")
+    fun noMessageBubbleIsCreatedInTheConversation() {
+        world.assertNoMessageWasAppended()
+    }
+
     // ---- Scenario 11-MM ---------------------------------------------
 
     @Given("que tengo un audio enviado en la conversación con {string}")
