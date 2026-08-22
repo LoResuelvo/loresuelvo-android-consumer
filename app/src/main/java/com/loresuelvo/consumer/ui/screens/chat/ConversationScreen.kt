@@ -389,6 +389,12 @@ private fun TransientErrorCard(
             stringResource(R.string.conversation_transient_error_server)
         is SendMessageOutcome.Failure.Unauthorized ->
             stringResource(R.string.conversation_transient_error_unauthorized)
+        is SendMessageOutcome.Failure.PayloadTooLarge ->
+            // The text-message path can't produce a
+            // PayloadTooLarge (text has no size limit), but the
+            // sealed type forces an explicit branch — fall back
+            // to the generic server copy defensively.
+            stringResource(R.string.conversation_transient_error_server)
     }
     Surface(
         modifier = Modifier
@@ -469,6 +475,10 @@ private fun MediaTransientErrorCard(
             stringResource(R.string.conversation_transient_media_error_server)
         is SendMessageOutcome.Failure.Unauthorized ->
             stringResource(R.string.conversation_transient_media_error_unauthorized)
+        is SendMessageOutcome.Failure.PayloadTooLarge ->
+            stringResource(
+                R.string.conversation_transient_media_error_payload_too_large,
+            )
     }
     Surface(
         modifier = Modifier

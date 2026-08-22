@@ -116,6 +116,7 @@
     <string name="conversation_transient_media_error_network">We couldn\'t send the file. Check your connection.</string>
     <string name="conversation_transient_media_error_server">We couldn\'t send the file. Try again.</string>
     <string name="conversation_transient_media_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="conversation_transient_media_error_payload_too_large">The file exceeds the maximum allowed size.</string>
     <string name="conversation_new_message_banner">New message</string>
     <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
