@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -7,8 +8,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.loresuelvo.consumer.data.media.MediaOutputUriFactory
 import com.loresuelvo.consumer.ui.navigation.Route
 
 /**
@@ -45,6 +50,16 @@ fun ChatRoute(
     val aiContactViewModel: AiDiagnosisContactViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
 
+    // The attach sheet visibility is owned by the route so the
+    // `+` button on the input bar can surface the gallery /
+    // camera options without losing the launcher state on
+    // recomposition.
+    var sheetVisible by remember { mutableStateOf(false) }
+
+    // Camera output URI factory from Hilt — backed by the
+    // existing `MediaOutputUriFactory` port.
+    val cameraOutputUriFactory = hiltViewModel<CameraOutputUriFactoryHolder>().factory
+
     // Resume a saved AI session when the route was opened with a
     // `conversationId` arg (Assistant list → tap a row). The VM
     // no-ops if the same conversation is already loaded, so this
@@ -80,6 +95,26 @@ fun ChatRoute(
         if (uri != null) {
             viewModel.onAttachImageFromGallery(uri)
         }
+        sheetVisible = false
+    }
+
+    // Camera launcher writes the captured photo to a
+    // FileProvider-backed URI in the app's cache directory
+    // (same pattern as the chat-with-provider surface — see
+    // `LoResuelvoNav.kt`). The `MediaOutputUriFactory` is the
+    // existing port for cache-backed content URIs; we resolve
+    // it through [CameraOutputUriFactoryHolder] so Hilt's
+    // singleton graph is reachable from the Composable layer.
+    var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture(),
+    ) { success ->
+        val uri = cameraOutputUri
+        if (success && uri != null) {
+            viewModel.onAttachImageFromCamera(uri)
+        }
+        cameraOutputUri = null
+        sheetVisible = false
     }
 
     ChatScreen(
@@ -103,6 +138,7 @@ fun ChatRoute(
             )
         },
         onBackClick = { navController.popBackStack() },
+        onAttachClick = { sheetVisible = true },
         onAttachImageFromGallery = {
             galleryLauncher.launch(
                 PickVisualMediaRequest(
@@ -110,5 +146,12 @@ fun ChatRoute(
                 ),
             )
         },
+        onAttachImageFromCamera = {
+            val uri = cameraOutputUriFactory.createCameraOutputUri()
+            cameraOutputUri = uri
+            cameraLauncher.launch(uri)
+        },
+        showAttachSheet = sheetVisible,
+        onAttachSheetDismiss = { sheetVisible = false },
     )
 }

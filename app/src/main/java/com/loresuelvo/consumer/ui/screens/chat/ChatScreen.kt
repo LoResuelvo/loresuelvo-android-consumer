@@ -67,8 +67,12 @@ fun ChatScreen(
     onErrorDismiss: () -> Unit,
     onContactClick: (Provider) -> Unit,
     onBackClick: () -> Unit,
+    onAttachClick: () -> Unit = {},
     onAttachImageFromGallery: () -> Unit = {},
+    onAttachImageFromCamera: () -> Unit = {},
     onRemoveAttachment: (Int) -> Unit = {},
+    showAttachSheet: Boolean = false,
+    onAttachSheetDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val initialMessage = ChatMessage(
@@ -114,7 +118,7 @@ fun ChatScreen(
                     onSendClick = onSendClick,
                     onStartAudioRecording = {},
                     onStopAudioRecording = {},
-                    onAttachClick = onAttachImageFromGallery,
+                    onAttachClick = onAttachClick,
                 )
             }
         },
@@ -154,6 +158,13 @@ fun ChatScreen(
             }
         }
     }
+
+    MediaAttachSheet(
+        show = showAttachSheet,
+        onDismiss = onAttachSheetDismiss,
+        onGalleryClick = onAttachImageFromGallery,
+        onCameraClick = onAttachImageFromCamera,
+    )
 }
 
 /**
