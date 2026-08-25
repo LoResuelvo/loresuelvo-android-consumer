@@ -78,65 +78,71 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Y selecciono la imagen "gotera-3.jpg"
     Entonces tengo 3 imágenes pendientes de envío en la conversación
     Y la vista previa muestra las 3 imágenes en orden de selección
-  @wip 
-  Escenario: 04-AIP Eliminar una imagen adjunta antes del envío
-    Dado que tengo 3 imágenes pendientes de envío en la conversación
-    Cuando descarto la segunda imagen pendiente
-    Entonces me quedan 2 imágenes pendientes de envío en la conversación
-    Y las imágenes restantes conservan su orden original
-  @wip 
-  Escenario: 05-AIP Cancelar todas las imágenes pendientes de envío
-    Dado que tengo 3 imágenes pendientes de envío en la conversación
-    Cuando cancelo todas las imágenes adjuntas
-    Entonces no tengo imágenes pendientes de envío en la conversación
-    Y el campo de mensaje sigue vacío
-  @wip 
-  Escenario: 06-AIP Enviar las imágenes para obtener un pre diagnóstico
+
+  @wip
+  Escenario: 04-AIP Eliminar una imagen pendiente antes del envío
+    Dado que tengo las imágenes "gotera-1.jpg", "gotera-2.jpg" y "gotera-3.jpg" pendientes de envío
+    Cuando elimino la imagen "gotera-2.jpg"
+    Entonces tengo 2 imágenes pendientes de envío
+    Y las imágenes pendientes son "gotera-1.jpg" y "gotera-3.jpg"
+    Y conservan su orden original
+
+  @wip
+  Escenario: 05-AIP Eliminar todas las imágenes pendientes antes del envío
+    Dado que tengo 3 imágenes pendientes de envío
+    Cuando elimino todas las imágenes pendientes
+    Entonces no tengo imágenes pendientes de envío
+
+  @wip
+  Escenario: 06-AIP Enviar imágenes adjuntas para obtener un pre diagnóstico
     Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
-    Y el backend acepta el flujo presign → upload → confirm con éxito
-    Y el backend acepta POST /chatbot/conversaciones/{convId}/messages con 200
-    Y la IA devuelve un assessment con categoría "Plomería"
-    Cuando escribo el mensaje "Tengo una gotera en el baño" en el campo de diagnóstico
+    Y la subida de archivos está disponible
+    Cuando escribo "Tengo una gotera en el baño"
     Y presiono "Diagnosticar"
-    Entonces el backend recibió presign + upload + confirm con la imagen "gotera-baño.jpg"
-    Y el backend recibió POST /chatbot/conversaciones/{convId}/messages con image_file_ids no vacío
-    Y la conversación muestra la burbuja con mi mensaje de texto
-    Y las imágenes adjuntas ya no quedan pendientes de envío
+    Entonces se sube la imagen "gotera-baño.jpg"
+    Y se envía el mensaje con la imagen adjunta
+    Y no tengo imágenes pendientes de envío
+
   @wip 
   Escenario: 07-AIP Pre diagnóstico generado tras el envío de imágenes
     Dado que envié la imagen "gotera-baño.jpg" y la IA devolvió un pre diagnóstico
     Cuando visualizo la respuesta del asistente
     Entonces veo la explicación del problema detectado por la IA
     Y veo la categoría detectada "Plomería"
-    Y veo el nivel de confianza del pre diagnóstico
-  @wip 
-  Escenario: 08-AIP Error de red al subir una imagen
-    Dado que el backend no responde
-    Y tengo la imagen "gotera-baño.jpg" pendiente de envío
-    Cuando escribo el mensaje "Tengo una gotera en el baño" en el campo de diagnóstico
-    Y presiono "Diagnosticar"
-    Entonces veo un error de carga de la imagen
-    Y la imagen continúa pendiente de envío para poder reintentar
-    Y no se envía el mensaje al backend
-  @wip 
-  Escenario: 09-AIP Reintentar la subida de imágenes tras una falla de red
-    Dado que la subida de la imagen "gotera-baño.jpg" falló por error de red
-    Cuando toco "Reintentar la carga de imágenes"
-    Entonces se reintenta el flujo presign → upload → confirm con la imagen pendiente
-    Y el mensaje se envía al backend al completarse la subida exitosamente
-  @wip 
-  Escenario: 10-AIP Error del servicio de IA al procesar las imágenes
+
+  @wip
+  Escenario: 08-AIP Mantener las imágenes pendientes cuando falla la subida
     Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
-    Y el backend acepta la subida de archivos con éxito
-    Y el servicio de IA falla al procesar el mensaje con las imágenes
-    Cuando escribo el mensaje "Tengo una gotera en el baño" en el campo de diagnóstico
+    Y la subida de la imagen falla por un error de red
+    Cuando escribo "Tengo una gotera en el baño"
     Y presiono "Diagnosticar"
+    Entonces veo un error al subir la imagen
+    Y la imagen continúa pendiente de envío
+    Y el mensaje no se envía
+
+  @wip
+  Escenario: 09-AIP Reintentar la subida de una imagen
+    Dado que la subida de "gotera-baño.jpg" falló
+    Y la imagen continúa pendiente de envío
+    Cuando reintento la carga de imágenes
+    Entonces la imagen se sube nuevamente
+    Y el mensaje se envía al completar la subida
+    Y la imagen deja de estar pendiente de envío
+
+  @wip
+  Escenario: 10-AIP Informar un error al procesar el pre diagnóstico
+    Dado que envié la imagen "gotera-baño.jpg"
+    Y el servicio de IA falla al procesar el mensaje
+    Cuando visualizo el resultado del envío
     Entonces veo un error de procesamiento del pre diagnóstico
-    Y la burbuja con las imágenes enviadas se conserva en la conversación
-    Y puedo reintentar el procesamiento del pre diagnóstico
-  @wip 
-  Escenario: 11-AIP Reintentar el procesamiento del pre diagnóstico tras una falla del servicio de IA
-    Dado que el procesamiento del pre diagnóstico falló por un error del servicio de IA
-    Cuando toco "Reintentar el procesamiento"
-    Entonces se reenvía el mensaje con las mismas imágenes adjuntas al servicio de IA
+    Y la imagen enviada permanece en la conversación
+    Y puedo reintentar el procesamiento
+    
+  @wip
+  Escenario: 11-AIP Reintentar el procesamiento del pre diagnóstico
+    Dado que el procesamiento del pre diagnóstico falló
+    Y la imagen "gotera-baño.jpg" ya fue enviada
+    Cuando reintento el procesamiento
+    Entonces se vuelve a procesar el mensaje enviado
+    Y no se vuelve a subir la imagen
     Y veo una respuesta del asistente en la conversación
