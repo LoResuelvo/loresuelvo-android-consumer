@@ -384,7 +384,7 @@ class CucumberWorld : AutoCloseable {
 
         override suspend fun sendMediaMessage(
             conversationId: String,
-            media: com.loresuelvo.consumer.domain.conversation.MediaUpload,
+            media: List<com.loresuelvo.consumer.domain.conversation.MediaUpload>,
         ): SendMessageOutcome =
             throw UnsupportedOperationException(
                 "FakeConversationRepository: sendMediaMessage not needed by VFP scenarios",

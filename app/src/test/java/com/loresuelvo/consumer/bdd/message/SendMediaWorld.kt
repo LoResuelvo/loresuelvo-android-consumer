@@ -37,6 +37,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.Job
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -105,6 +106,7 @@ class SendMediaWorld : AutoCloseable {
     private val audioRecorder = mockk<com.loresuelvo.consumer.data.media.AudioRecorder>(relaxed = true)
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val audioPlayer = FakeAudioPlayer()
+    private var uiStateJob: Job? = null
 
     private lateinit var viewModel: ConversationViewModel
     private val observedConversationStates = mutableListOf<ConversationUiState>()
@@ -128,9 +130,14 @@ class SendMediaWorld : AutoCloseable {
     )
 
     fun startScenario() {
-        if (started) return
-        started = true
-        Dispatchers.setMain(dispatcher)
+        if (!started) {
+            Dispatchers.setMain(dispatcher)
+            started = true
+        }
+
+        uiStateJob?.cancel()
+        observedConversationStates.clear()
+
         viewModel = ConversationViewModel(
             getConversationById = getConversationById,
             sendMessage = sendMessage,
@@ -141,9 +148,13 @@ class SendMediaWorld : AutoCloseable {
             audioPlayer = audioPlayer,
             webSocketClient = fakeWebSocketClient,
         )
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            viewModel.uiState.collect { observedConversationStates += it }
+
+        uiStateJob = scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.uiState.collect {
+                observedConversationStates += it
+            }
         }
+
         scheduler.advanceUntilIdle()
     }
 
@@ -241,10 +252,11 @@ class SendMediaWorld : AutoCloseable {
      * state mutated). Returns a triple so the assertion can
      * pin the original name + mime + byte payload.
      */
-    fun observedSendMediaCalls(): List<MediaUpload.Image> =
+    fun observedSendMediaCalls(): List<List<MediaUpload>> =
         fakeRepo.sendMediaCallsSnapshot()
 
     override fun close() {
+        uiStateJob?.cancel()
         supervisorJob.cancel()
         Dispatchers.resetMain()
     }
@@ -263,6 +275,21 @@ class SendMediaWorld : AutoCloseable {
 
     fun recordAudioFor(seconds: Int) {
         recordAudioFor(seconds, sizeBytes = 10)
+    }
+
+    fun captureFromCamera(filename: String = "gotera-baño.jpg") {
+        val media = MediaUpload.Image(
+            bytes = byteArrayOf(
+                0xFF.toByte(),
+                0xD8.toByte(),
+                0xFF.toByte(),
+            ),
+            mimeType = "image/jpeg",
+            originalName = filename,
+        )
+
+        viewModel.onAttachMedia(media, sourceUri = null)
+        scheduler.advanceUntilIdle()
     }
 
     /**
@@ -733,7 +760,7 @@ class SendMediaWorld : AutoCloseable {
     private class FakeConversationRepository : ConversationRepository {
         private var listSeed: List<Conversation> = emptyList()
         private var detailSeed: ConversationDetail? = null
-        private val sendMediaCalls = mutableListOf<MediaUpload.Image>()
+        private val sendMediaCalls = mutableListOf<List<MediaUpload>>()
         private val sendMediaCounter = AtomicReference(0)
         private var sendMediaOutcome: SendMessageOutcome.Failure? = null
 
@@ -753,7 +780,7 @@ class SendMediaWorld : AutoCloseable {
             detailSeed = detail
         }
 
-        fun sendMediaCallsSnapshot(): List<MediaUpload.Image> =
+        fun sendMediaCallsSnapshot(): List<List<MediaUpload>> =
             sendMediaCalls.toList()
 
         override suspend fun getConversations(): ConversationsOutcome =
@@ -787,16 +814,20 @@ class SendMediaWorld : AutoCloseable {
 
         override suspend fun sendMediaMessage(
             conversationId: String,
-            media: MediaUpload,
+            media: List<MediaUpload>,
         ): SendMessageOutcome {
-            val image = media as? MediaUpload.Image
-                ?: return SendMessageOutcome.Failure.Server(
-                    code = 500,
-                    message = "FakeConversationRepository: only Image is wired",
-                )
-            sendMediaCalls += image
+            media.forEach { entry ->
+                if (entry !is MediaUpload.Image) {
+                    return SendMessageOutcome.Failure.Server(
+                        code = 500,
+                        message = "FakeConversationRepository: only Image is wired",
+                    )
+                }
+            }
+            sendMediaCalls += media
             sendMediaOutcome?.let { return it }
             val nextId = sendMediaCounter.updateAndGet { it + 1 }
+            val firstImage = media.first() as MediaUpload.Image
             return SendMessageOutcome.Success(
                 ConversationMessage(
                     id = "media-msg-$nextId",
@@ -805,9 +836,9 @@ class SendMediaWorld : AutoCloseable {
                     createdOnEpochMillis = 1_700_000_000_000L,
                     media = MediaReference.Image(
                         id = "img-file-id",
-                        url = "https://cdn.loresuelvo.test/${image.originalName}",
-                        mimeType = image.mimeType,
-                        originalName = image.originalName,
+                        url = "https://cdn.loresuelvo.test/${firstImage.originalName}",
+                        mimeType = firstImage.mimeType,
+                        originalName = firstImage.originalName,
                     ),
                 ),
             )

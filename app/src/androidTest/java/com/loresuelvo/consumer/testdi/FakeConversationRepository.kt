@@ -80,7 +80,7 @@ class FakeConversationRepository @Inject constructor() : ConversationRepository 
 
     override suspend fun sendMediaMessage(
         conversationId: String,
-        media: MediaUpload,
+        media: List<MediaUpload>,
     ): SendMessageOutcome = SendMessageOutcome.Failure.Server(
         code = 500,
         message = "FakeConversationRepository: sendMediaMessage not implemented",

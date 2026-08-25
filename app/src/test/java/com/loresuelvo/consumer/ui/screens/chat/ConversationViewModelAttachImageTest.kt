@@ -155,12 +155,17 @@ class ConversationViewModelAttachImageTest {
         val state = viewModel.uiState.value as ConversationUiState.Ready
         assertFalse(state.attachingMedia)
         val pending = state.pendingMedia
-        assertNotNull("pendingMedia must be populated after attach", pending)
-        assertEquals(uri, pending!!.localUri)
-        assertEquals(imageMime, pending.mimeType)
-        assertEquals(imageName, pending.originalName)
-        assertEquals(imageBytes.size.toLong(), pending.sizeBytes)
-        assertTrue(pending.bytes.contentEquals(imageBytes))
+        assertEquals(
+            "pendingMedia must be populated after attach",
+            1,
+            pending.size,
+        )
+        val entry = pending.single()
+        assertEquals(uri, entry.localUri)
+        assertEquals(imageMime, entry.mimeType)
+        assertEquals(imageName, entry.originalName)
+        assertEquals(imageBytes.size.toLong(), entry.sizeBytes)
+        assertTrue(entry.bytes.contentEquals(imageBytes))
         assertNull(state.transientMediaError)
     }
 
@@ -200,7 +205,11 @@ class ConversationViewModelAttachImageTest {
             "successful attach must clear any prior transientMediaError",
             state.transientMediaError,
         )
-        assertNotNull(state.pendingMedia)
+        assertEquals(
+            "pendingMedia must contain the freshly-attached image",
+            1,
+            state.pendingMedia.size,
+        )
     }
 
     @Test
@@ -228,7 +237,10 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         assertFalse(state.attachingMedia)
-        assertNull(state.pendingMedia)
+        assertTrue(
+            "pendingMedia must be empty after discard / failure",
+            state.pendingMedia.isEmpty(),
+        )
         val failure = state.transientMediaError
         assertTrue(
             "expected Network failure, was $failure",
@@ -263,7 +275,10 @@ class ConversationViewModelAttachImageTest {
         viewModel.onDiscardMediaPreview()
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
-        assertNull(state.pendingMedia)
+        assertTrue(
+            "pendingMedia must be empty after discard / failure",
+            state.pendingMedia.isEmpty(),
+        )
         assertFalse(state.attachingMedia)
         assertFalse(state.sendingMedia)
         assertNull(state.transientMediaError)
@@ -299,11 +314,14 @@ class ConversationViewModelAttachImageTest {
         coEvery {
             sendMediaMessage(
                 conversationId = "1",
-                media = match {
-                    it is MediaUpload.Image &&
-                        it.bytes.contentEquals(imageBytes) &&
-                        it.mimeType == imageMime &&
-                        it.originalName == imageName
+                media = match { list ->
+                    list.size == 1 &&
+                        list.first().let {
+                            it is MediaUpload.Image &&
+                                it.bytes.contentEquals(imageBytes) &&
+                                it.mimeType == imageMime &&
+                                it.originalName == imageName
+                        }
                 },
             )
         } returns SendMessageOutcome.Success(serverMessage)
@@ -315,7 +333,10 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         assertFalse(state.sendingMedia)
-        assertNull(state.pendingMedia)
+        assertTrue(
+            "pendingMedia must be empty after discard / failure",
+            state.pendingMedia.isEmpty(),
+        )
         assertNull(state.transientMediaError)
         assertEquals(1, state.detail.messages.size)
         val bubble = state.detail.messages[0]
@@ -356,9 +377,10 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         assertFalse(state.sendingMedia)
-        assertNotNull(
+        assertEquals(
             "pendingMedia must survive a failed send for retry",
-            state.pendingMedia,
+            1,
+            state.pendingMedia.size,
         )
         val failure = state.transientMediaError
         assertTrue(
@@ -404,9 +426,10 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         assertFalse(state.sendingMedia)
-        assertNotNull(
+        assertEquals(
             "pendingMedia must survive a network failure for retry",
-            state.pendingMedia,
+            1,
+            state.pendingMedia.size,
         )
 
         val failure = state.transientMediaError
@@ -474,9 +497,10 @@ class ConversationViewModelAttachImageTest {
             (failure as SendMessageOutcome.Failure.PayloadTooLarge).maxBytes,
         )
 
-        assertNotNull(
+        assertEquals(
             "pendingMedia must survive a size-exceeded failure for retry",
-            state.pendingMedia,
+            1,
+            state.pendingMedia.size,
         )
 
         assertEquals(
@@ -508,7 +532,10 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         assertFalse(state.sendingMedia)
-        assertNull(state.pendingMedia)
+        assertTrue(
+            "pendingMedia must be empty after discard / failure",
+            state.pendingMedia.isEmpty(),
+        )
         coVerify(exactly = 0) { sendMediaMessage(any(), any()) }
     }
 
@@ -576,23 +603,24 @@ class ConversationViewModelAttachImageTest {
         viewModel.onAttachMedia(audioUpload, sourceUri = null)
         advanceUntilIdle()
 
-        val state = viewModel.uiState.value as ConversationUiState.Ready
+val state = viewModel.uiState.value as ConversationUiState.Ready
         val pending = state.pendingMedia
-        assertNotNull("pendingMedia must be populated for audio", pending)
-        assertEquals(PendingMediaKind.AUDIO, pending!!.kind)
-        assertEquals(audioMime, pending.mimeType)
-        assertEquals(audioName, pending.originalName)
-        assertEquals(audioBytes.size.toLong(), pending.sizeBytes)
-        assertTrue(pending.bytes.contentEquals(audioBytes))
+        assertEquals(
+            "pendingMedia must be populated for audio",
+            1,
+            pending.size,
+        )
+        val entry = pending.single()
+        assertEquals(PendingMediaKind.AUDIO, entry.kind)
+        assertEquals(audioMime, entry.mimeType)
+        assertEquals(audioName, entry.originalName)
+        assertEquals(audioBytes.size.toLong(), entry.sizeBytes)
+        assertTrue(entry.bytes.contentEquals(audioBytes))
         // 03-MM: the audio preview player seeds its scrubber
         // from `durationMillis` — pinning it here so a future
         // refactor that drops the field surfaces as a unit-test
         // failure before the player UI does.
-        assertEquals(
-            "durationMillis must propagate from MediaUpload.Audio to PendingMedia",
-            audioDuration,
-            pending.durationMillis,
-        )
+        assertEquals(audioDuration, entry.durationMillis)
     }
 
     @Test
@@ -622,9 +650,10 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         val pending = state.pendingMedia
-        assertNotNull(pending)
-        assertEquals(PendingMediaKind.IMAGE, pending!!.kind)
-        assertEquals(0L, pending.durationMillis)
+        assertEquals(1, pending.size)
+        val entry = pending.single()
+        assertEquals(PendingMediaKind.IMAGE, entry.kind)
+        assertEquals(0L, entry.durationMillis)
     }
 
     @Test
@@ -661,9 +690,55 @@ class ConversationViewModelAttachImageTest {
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
         val pending = state.pendingMedia
-        assertEquals(PendingMediaKind.AUDIO, pending!!.kind)
-        assertEquals(audioName, pending.originalName)
-        assertEquals(audioDuration, pending.durationMillis)
+        // Audio overrides a previously-staged image so the wire
+        // payload stays single-clip. The new state carries only
+        // the audio entry (size = 1).
+        assertEquals(1, pending.size)
+        val entry = pending.single()
+        assertEquals(PendingMediaKind.AUDIO, entry.kind)
+        assertEquals(audioName, entry.originalName)
+        assertEquals(audioDuration, entry.durationMillis)
+    }
+
+    @Test
+    fun onAttachMedia_with_two_images_appends_both_to_pendingMedia() = runTest {
+        // TDD for the multi-image contract: a second attach
+        // must APPEND, not replace. Pin the count + the order so
+        // a future refactor that drops the append-everywhere
+        // behaviour surfaces here before the BDD layer does.
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            mediaMetadataRetriever,
+            audioRecorder,
+            audioPlayer,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        coEvery { mediaReader.read(uri) } returnsMany listOf(
+            MediaUpload.Image(imageBytes, imageMime, "first.jpg"),
+            MediaUpload.Image(imageBytes, imageMime, "second.jpg"),
+        )
+        viewModel.onAttachImageFromGallery(uri)
+        advanceUntilIdle()
+        viewModel.onAttachImageFromGallery(uri)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        val pending = state.pendingMedia
+        assertEquals(
+            "two image attaches must stage two pending entries",
+            2,
+            pending.size,
+        )
+        assertEquals("first.jpg", pending[0].originalName)
+        assertEquals("second.jpg", pending[1].originalName)
     }
 }
 

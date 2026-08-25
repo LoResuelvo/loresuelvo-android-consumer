@@ -74,7 +74,7 @@ sealed interface ConversationUiState {
         val lastAttemptedPrompt: String? = null,
         val isAtBottom: Boolean = true,
         val hasUnreadIncoming: Boolean = false,
-        val pendingMedia: PendingMedia? = null,
+        val pendingMedia: List<PendingMedia> = emptyList(),
         val attachingMedia: Boolean = false,
         val recordingAudio: Boolean = false,
         val audioPlayback: AudioPlaybackState = AudioPlaybackState(),

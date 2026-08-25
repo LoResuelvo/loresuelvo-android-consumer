@@ -610,7 +610,7 @@ class SendMessagesWorld : AutoCloseable {
 
         override suspend fun sendMediaMessage(
             conversationId: String,
-            media: com.loresuelvo.consumer.domain.conversation.MediaUpload,
+            media: List<com.loresuelvo.consumer.domain.conversation.MediaUpload>,
         ): SendMessageOutcome = SendMessageOutcome.Failure.Server(
             code = 500,
             message = "FakeConversationRepository: sendMediaMessage not implemented",

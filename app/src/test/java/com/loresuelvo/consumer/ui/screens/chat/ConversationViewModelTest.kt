@@ -741,40 +741,19 @@ class ConversationViewModelTest {
         val ready = state as ConversationUiState.Ready
         val pending = ready.pendingMedia
 
-        assertNotNull(
-            "pendingMedia should not be null. State=$ready",
-            pending,
-        )
-
         assertEquals(
-            PendingMediaKind.AUDIO,
-            pending?.kind,
+            "pendingMedia should not be empty after recording audio. State=$ready",
+            1,
+            pending.size,
         )
+        val entry = pending.single()
 
-        assertEquals(
-            audioUri,
-            pending?.localUri,
-        )
-
-        assertEquals(
-            "audio/mp4",
-            pending?.mimeType,
-        )
-
-        assertEquals(
-            "nota-voz.webm",
-            pending?.originalName,
-        )
-
-        assertEquals(
-            audioBytes.size.toLong(),
-            pending?.sizeBytes,
-        )
-
-        assertEquals(
-            5_000L,
-            pending?.durationMillis,
-        )
+        assertEquals(PendingMediaKind.AUDIO, entry.kind)
+        assertEquals(audioUri, entry.localUri)
+        assertEquals("audio/mp4", entry.mimeType)
+        assertEquals("nota-voz.webm", entry.originalName)
+        assertEquals(audioBytes.size.toLong(), entry.sizeBytes)
+        assertEquals(5_000L, entry.durationMillis)
 
         assertTrue(!ready.recordingAudio)
         assertTrue(!ready.attachingMedia)
@@ -852,40 +831,19 @@ class ConversationViewModelTest {
         val ready = state as ConversationUiState.Ready
         val pending = ready.pendingMedia
 
-        assertNotNull(
-            "pendingMedia should not be null. State=$ready",
-            pending,
-        )
-
         assertEquals(
-            PendingMediaKind.AUDIO,
-            pending?.kind,
+            "pendingMedia should not be empty. State=$ready",
+            1,
+            pending.size,
         )
+        val entry = pending.single()
 
-        assertEquals(
-            audioUri,
-            pending?.localUri,
-        )
-
-        assertEquals(
-            "audio/mp4",
-            pending?.mimeType,
-        )
-
-        assertEquals(
-            "nota-voz.webm",
-            pending?.originalName,
-        )
-
-        assertEquals(
-            audioBytes.size.toLong(),
-            pending?.sizeBytes,
-        )
-
-        assertEquals(
-            0L,
-            pending?.durationMillis,
-        )
+        assertEquals(PendingMediaKind.AUDIO, entry.kind)
+        assertEquals(audioUri, entry.localUri)
+        assertEquals("audio/mp4", entry.mimeType)
+        assertEquals("nota-voz.webm", entry.originalName)
+        assertEquals(audioBytes.size.toLong(), entry.sizeBytes)
+        assertEquals(0L, entry.durationMillis)
 
         assertTrue(!ready.recordingAudio)
         assertTrue(!ready.attachingMedia)
@@ -937,12 +895,15 @@ class ConversationViewModelTest {
         coEvery {
             sendMediaMessage(
                 detail().id,
-                match { upload ->
-                    upload is MediaUpload.Audio &&
-                        upload.bytes.contentEquals(audioBytes) &&
-                        upload.mimeType == "audio/mp4" &&
-                        upload.originalName == "nota.webm" &&
-                        upload.durationMillis == 5_000L
+                match { list ->
+                    list.size == 1 &&
+                        list.first().let { upload ->
+                            upload is MediaUpload.Audio &&
+                                upload.bytes.contentEquals(audioBytes) &&
+                                upload.mimeType == "audio/mp4" &&
+                                upload.originalName == "nota.webm" &&
+                                upload.durationMillis == 5_000L
+                        }
                 },
             )
         } returns SendMessageOutcome.Success(sentMessage)
@@ -966,17 +927,23 @@ class ConversationViewModelTest {
         coVerify(exactly = 1) {
             sendMediaMessage(
                 detail().id,
-                match { upload ->
-                    upload is MediaUpload.Audio &&
-                        upload.bytes.contentEquals(audioBytes) &&
-                        upload.durationMillis == 5_000L
+                match { list ->
+                    list.size == 1 &&
+                        list.first().let { upload ->
+                            upload is MediaUpload.Audio &&
+                                upload.bytes.contentEquals(audioBytes) &&
+                                upload.durationMillis == 5_000L
+                        }
                 },
             )
         }
 
         val state = viewModel.uiState.value as ConversationUiState.Ready
 
-        assertNull(state.pendingMedia)
+        assertTrue(
+            "pendingMedia must be cleared after a successful send, was ${state.pendingMedia}",
+            state.pendingMedia.isEmpty(),
+        )
         assertTrue(!state.sendingMedia)
     }
 

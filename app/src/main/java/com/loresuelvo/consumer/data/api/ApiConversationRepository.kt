@@ -107,16 +107,49 @@ class ApiConversationRepository @Inject constructor(
      */
     override suspend fun sendMediaMessage(
         conversationId: String,
-        media: MediaUpload,
-    ): SendMessageOutcome = when (media) {
-        is MediaUpload.Audio -> sendAudio(conversationId, media)
-        is MediaUpload.Image -> sendImage(conversationId, media)
+        media: List<MediaUpload>,
+    ): SendMessageOutcome {
+        if (media.isEmpty()) {
+            return SendMessageOutcome.Failure.Server(
+                code = 0,
+                message = "Media payload is empty",
+            )
+        }
+        return when (val first = media.first()) {
+            is MediaUpload.Audio -> sendAudio(
+                conversationId,
+                media.map {
+                    require(it is MediaUpload.Audio) {
+                        "sendMediaMessage expects a homogeneous list; " +
+                            "got ${it::class.simpleName}"
+                    }
+                    it
+                },
+            )
+            is MediaUpload.Image -> sendImages(
+                conversationId,
+                media.map {
+                    require(it is MediaUpload.Image) {
+                        "sendMediaMessage expects a homogeneous list; " +
+                            "got ${it::class.simpleName}"
+                    }
+                    it
+                },
+            )
+        }
     }
 
     private suspend fun sendAudio(
         conversationId: String,
-        audio: MediaUpload.Audio,
+        audios: List<MediaUpload.Audio>,
     ): SendMessageOutcome {
+        // The wire payload only renders one audio per bubble so
+        // a multi-entry list surfaces a typed Server failure
+        // instead of silently dropping the rest.
+        val audio = audios.singleOrNull() ?: return SendMessageOutcome.Failure.Server(
+            code = 0,
+            message = "Audio messages accept exactly one clip",
+        )
         Log.d(
             TAG,
             "sendAudio start: conversationId=$conversationId " +
@@ -137,28 +170,36 @@ class ApiConversationRepository @Inject constructor(
         return postMessageWithAudioFileId(conversationId, fileId)
     }
 
-    private suspend fun sendImage(
+    private suspend fun sendImages(
         conversationId: String,
-        image: MediaUpload.Image,
+        images: List<MediaUpload.Image>,
     ): SendMessageOutcome {
         Log.d(
             TAG,
-            "sendImage start: conversationId=$conversationId " +
-                "mime=${image.mimeType} size=${image.bytes.size}B " +
-                "originalName=${image.originalName}",
+            "sendImages start: conversationId=$conversationId count=${images.size}",
         )
-        val fileId = when (
-            val r = runPresignUploadConfirm(
-                originalName = image.originalName,
-                mimeType = image.mimeType,
-                bytes = image.bytes,
-                purpose = FilePurpose.CONVERSATION_MESSAGE_IMAGE,
+        val fileIds = mutableListOf<String>()
+        for ((index, image) in images.withIndex()) {
+            Log.d(
+                TAG,
+                "sendImages[$index/${images.size}]: " +
+                    "mime=${image.mimeType} size=${image.bytes.size}B " +
+                    "originalName=${image.originalName}",
             )
-        ) {
-            is UploadFlow.Failure -> return r.failure
-            is UploadFlow.Success -> r.fileId
+            val fileId = when (
+                val r = runPresignUploadConfirm(
+                    originalName = image.originalName,
+                    mimeType = image.mimeType,
+                    bytes = image.bytes,
+                    purpose = FilePurpose.CONVERSATION_MESSAGE_IMAGE,
+                )
+            ) {
+                is UploadFlow.Failure -> return r.failure
+                is UploadFlow.Success -> r.fileId
+            }
+            fileIds += fileId
         }
-        return postMessageWithImageFileId(conversationId, fileId)
+        return postMessageWithImageFileIds(conversationId, fileIds)
     }
 
     /**
@@ -271,15 +312,15 @@ class ApiConversationRepository @Inject constructor(
         mapSendFailure(t)
     }
 
-    private suspend fun postMessageWithImageFileId(
+    private suspend fun postMessageWithImageFileIds(
         conversationId: String,
-        fileId: String,
+        fileIds: List<String>,
     ): SendMessageOutcome = try {
         val dto = backendApi.postMessage(
             conversationId,
             SendMessageRequestDto(
                 content = "",
-                imageFileIds = listOf(fileId),
+                imageFileIds = fileIds,
             ),
         )
         SendMessageOutcome.Success(dto.toDomain())

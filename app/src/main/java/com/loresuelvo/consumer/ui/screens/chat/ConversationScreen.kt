@@ -315,13 +315,18 @@ private fun ReadyState(
                 onDismiss = onErrorDismiss,
             )
         }
-        if (state.pendingMedia != null) {
-            MediaPreviewCard(
-                pendingMedia = state.pendingMedia,
-                sending = state.sendingMedia,
-                onSendClick = onConfirmMediaSend,
-                onDiscardClick = onDiscardMedia,
-            )
+        if (state.pendingMedia.isNotEmpty()) {
+            state.pendingMedia.forEachIndexed { index, attachment ->
+                MediaPreviewCard(
+                    pendingMedia = attachment,
+                    sending = state.sendingMedia,
+                    onSendClick = onConfirmMediaSend,
+                    onDiscardClick = onDiscardMedia,
+                    modifier = Modifier.testTag(
+                        "$CONVERSATION_ATTACHMENT_CARD_TAG_PREFIX-$index",
+                    ),
+                )
+            }
             if (state.transientMediaError != null) {
                 MediaTransientErrorCard(
                     failure = state.transientMediaError,
@@ -527,3 +532,11 @@ private fun MediaTransientErrorCard(
 const val CONVERSATION_TRANSIENT_MEDIA_ERROR_TAG: String = "conversation-transient-media-error"
 const val CONVERSATION_TRANSIENT_MEDIA_ERROR_RETRY_TAG: String = "conversation-transient-media-error-retry"
 const val CONVERSATION_TRANSIENT_MEDIA_ERROR_DISMISS_TAG: String = "conversation-transient-media-error-dismiss"
+
+/**
+ * Compose testTag prefix for the per-attachment preview card.
+ * Indexed (e.g. `conversation-attachment-card-0`) so the BDD step
+ * can target the right entry without depending on its display
+ * label.
+ */
+const val CONVERSATION_ATTACHMENT_CARD_TAG_PREFIX: String = "conversation-attachment-card"

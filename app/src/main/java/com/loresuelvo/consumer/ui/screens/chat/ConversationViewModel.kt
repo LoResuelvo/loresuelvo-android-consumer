@@ -589,9 +589,18 @@ class ConversationViewModel @Inject constructor(
         }
         _uiState.update { current ->
             if (current is ConversationUiState.Ready) {
+                // Images append so the consumer can stage several
+                // in one session; audio overrides the previous
+                // audio (a single recorder per message keeps the
+                // wire payload predictable).
+                val merged = if (pending.kind == PendingMediaKind.AUDIO) {
+                    listOf(pending)
+                } else {
+                    current.pendingMedia + pending
+                }
                 current.copy(
                     attachingMedia = false,
-                    pendingMedia = pending,
+                    pendingMedia = merged,
                     transientMediaError = null,
                 )
             } else {
@@ -623,7 +632,7 @@ class ConversationViewModel @Inject constructor(
         _uiState.update { state ->
             if (state is ConversationUiState.Ready) {
                 state.copy(
-                    pendingMedia = null,
+                    pendingMedia = emptyList(),
                     attachingMedia = false,
                     sendingMedia = false,
                     transientMediaError = null,
@@ -649,7 +658,8 @@ class ConversationViewModel @Inject constructor(
     fun onConfirmMediaSend() {
         val state = _uiState.value
         if (state !is ConversationUiState.Ready) return
-        val pending = state.pendingMedia ?: return
+        val pending = state.pendingMedia
+        if (pending.isEmpty()) return
         if (state.sendingMedia) return
 
         _uiState.update { current ->
@@ -664,19 +674,21 @@ class ConversationViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            val upload = when (pending.kind) {
-                PendingMediaKind.IMAGE -> MediaUpload.Image(
-                    bytes = pending.bytes,
-                    mimeType = pending.mimeType,
-                    originalName = pending.originalName,
-                )
+            val upload = pending.map { entry ->
+                when (entry.kind) {
+                    PendingMediaKind.IMAGE -> MediaUpload.Image(
+                        bytes = entry.bytes,
+                        mimeType = entry.mimeType,
+                        originalName = entry.originalName,
+                    )
 
-                PendingMediaKind.AUDIO -> MediaUpload.Audio(
-                    bytes = pending.bytes,
-                    mimeType = pending.mimeType,
-                    originalName = pending.originalName,
-                    durationMillis = pending.durationMillis,
-                )
+                    PendingMediaKind.AUDIO -> MediaUpload.Audio(
+                        bytes = entry.bytes,
+                        mimeType = entry.mimeType,
+                        originalName = entry.originalName,
+                        durationMillis = entry.durationMillis,
+                    )
+                }
             }
             when (val outcome = sendMediaMessage(state.detail.id, upload)) {
                 is SendMessageOutcome.Success ->
@@ -698,7 +710,7 @@ class ConversationViewModel @Inject constructor(
             if (state is ConversationUiState.Ready) {
                 state.copy(
                     sendingMedia = false,
-                    pendingMedia = null,
+                    pendingMedia = emptyList(),
                     transientMediaError = null,
                     detail = state.detail.copy(
                         messages = state.detail.messages + sentMessage,

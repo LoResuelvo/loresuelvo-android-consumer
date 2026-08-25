@@ -111,10 +111,8 @@ class SendMediaSteps {
      */
     @When("toco el botón de adjuntar imagen desde la cámara")
     fun iTapAttachImageFromCamera() {
-        // 02-MM pins the filename in the next `And` step
-        // ("capturo la foto ..."); the world fallbacks to the
-        // Gherkin's named file when the `And` step fires.
-        world.chooseFromGallery()
+        // La captura real ocurre en el siguiente step:
+        // "Y capturo la foto {string}"
     }
 
     /**
@@ -127,7 +125,7 @@ class SendMediaSteps {
      */
     @And("capturo la foto {string}")
     fun iCaptureThePhoto(filename: String) {
-        world.chooseFromGallery(filename)
+        world.captureFromCamera(filename)
     }
 
     /**
@@ -147,9 +145,10 @@ class SendMediaSteps {
             state is ConversationUiState.Ready,
         )
         val ready = state as ConversationUiState.Ready
-        assertNotNull(
+        assertEquals(
             "expected pendingMedia to be populated after camera capture, was ${ready.pendingMedia}",
-            ready.pendingMedia,
+            1,
+            ready.pendingMedia.size,
         )
     }
 
@@ -170,9 +169,10 @@ class SendMediaSteps {
             state is ConversationUiState.Ready,
         )
         val ready = state as ConversationUiState.Ready
-        assertNotNull(
+        assertEquals(
             "expected pendingMedia to be populated after attach, was ${ready.pendingMedia}",
-            ready.pendingMedia,
+            1,
+            ready.pendingMedia.size,
         )
     }
 
@@ -192,9 +192,10 @@ class SendMediaSteps {
             state is ConversationUiState.Ready,
         )
         val ready = state as ConversationUiState.Ready
-        assertNotNull(
+        assertEquals(
             "the preview must be present for confirm/discard, was ${ready.pendingMedia}",
-            ready.pendingMedia,
+            1,
+            ready.pendingMedia.size,
         )
         assertFalse(
             "no upload should be in flight yet",
@@ -240,21 +241,22 @@ class SendMediaSteps {
         println("=== 03-MM PENDING MEDIA ===")
         println(ready.pendingMedia)
 
-        assertNotNull(
-            "expected pending audio after recording, was ${ready.pendingMedia}",
-            ready.pendingMedia,
+        assertEquals(
+            "expected pending audio after recording",
+            1,
+            ready.pendingMedia.size,
         )
 
         assertEquals(
             "expected pending media to be AUDIO",
             com.loresuelvo.consumer.ui.screens.chat.PendingMediaKind.AUDIO,
-            ready.pendingMedia?.kind,
+            ready.pendingMedia.single().kind,
         )
 
         assertEquals(
             "expected recording duration",
             5_000L,
-            ready.pendingMedia?.durationMillis,
+            ready.pendingMedia.single().durationMillis,
         )
     }
 
@@ -272,21 +274,22 @@ class SendMediaSteps {
 
         val ready = state as ConversationUiState.Ready
 
-        assertNotNull(
+        assertEquals(
             "expected audio preview to be available",
-            ready.pendingMedia,
+            1,
+            ready.pendingMedia.size,
         )
 
         assertEquals(
             "expected pending media to be AUDIO",
             com.loresuelvo.consumer.ui.screens.chat.PendingMediaKind.AUDIO,
-            ready.pendingMedia?.kind,
+            ready.pendingMedia.single().kind,
         )
 
         assertEquals(
             "expected audio duration to be 5 seconds",
             5_000L,
-            ready.pendingMedia?.durationMillis,
+            ready.pendingMedia.single().durationMillis,
         )
     }
 

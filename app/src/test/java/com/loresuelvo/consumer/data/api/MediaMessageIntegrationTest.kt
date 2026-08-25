@@ -172,12 +172,12 @@ class MediaMessageIntegrationTest {
         val audioBytes = byteArrayOf(0x01, 0x02, 0x03, 0x04)
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Audio(
+            media = listOf(MediaUpload.Audio(
                 bytes = audioBytes,
                 mimeType = "audio/webm",
                 originalName = "nota-voz.webm",
                 durationMillis = 5_420L,
-            ),
+            )),
         )
 
         val success = outcome as? SendMessageOutcome.Success
@@ -290,12 +290,12 @@ class MediaMessageIntegrationTest {
 
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Audio(
+            media = listOf(MediaUpload.Audio(
                 bytes = byteArrayOf(0x01),
                 mimeType = "audio/webm",
                 originalName = "nota-voz.webm",
                 durationMillis = 0L,
-            ),
+            )),
         )
 
         val failure = outcome as? SendMessageOutcome.Failure.Server
@@ -320,12 +320,12 @@ class MediaMessageIntegrationTest {
 
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Audio(
+            media = listOf(MediaUpload.Audio(
                 bytes = byteArrayOf(0x01),
                 mimeType = "audio/webm",
                 originalName = "huge.webm",
                 durationMillis = 0L,
-            ),
+            )),
         )
 
         val failure = outcome as? SendMessageOutcome.Failure.Server
@@ -365,12 +365,12 @@ class MediaMessageIntegrationTest {
 
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Audio(
+            media = listOf(MediaUpload.Audio(
                 bytes = byteArrayOf(0x01),
                 mimeType = "audio/webm",
                 originalName = "bad-codec.webm",
                 durationMillis = 0L,
-            ),
+            )),
         )
 
         val failure = outcome as? SendMessageOutcome.Failure.Server
@@ -450,11 +450,11 @@ class MediaMessageIntegrationTest {
         val imageBytes = byteArrayOf(0x10, 0x20, 0x30)
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Image(
+            media = listOf(MediaUpload.Image(
                 bytes = imageBytes,
                 mimeType = "image/jpeg",
                 originalName = "foto.jpg",
-            ),
+            )),
         )
 
         val success = outcome as? SendMessageOutcome.Success
@@ -543,11 +543,11 @@ class MediaMessageIntegrationTest {
 
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Image(
+            media = listOf(MediaUpload.Image(
                 bytes = byteArrayOf(0x01),
                 mimeType = "image/gif",
                 originalName = "animado.gif",
-            ),
+            )),
         )
 
         val failure = outcome as? SendMessageOutcome.Failure.Server

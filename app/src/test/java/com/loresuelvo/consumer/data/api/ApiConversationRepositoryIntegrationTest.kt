@@ -534,10 +534,12 @@ class ApiConversationRepositoryIntegrationTest {
 
         val outcome = repository.sendMediaMessage(
             conversationId = "1",
-            media = MediaUpload.Image(
-                bytes = byteArrayOf(0x01),
-                mimeType = "image/jpeg",
-                originalName = "foto.jpg",
+            media = listOf(
+                MediaUpload.Image(
+                    bytes = byteArrayOf(0x01),
+                    mimeType = "image/jpeg",
+                    originalName = "foto.jpg",
+                ),
             ),
         )
 
