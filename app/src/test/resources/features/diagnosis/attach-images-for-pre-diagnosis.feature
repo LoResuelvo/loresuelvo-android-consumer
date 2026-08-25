@@ -62,7 +62,7 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Entonces la imagen queda pendiente de envío en la conversación
     Y puedo ver la vista previa de la imagen seleccionada
     Y puedo confirmar el envío o descartarla
-  @wip 
+    
   Escenario: 02-AIP Capturar una imagen con la cámara del dispositivo
     Cuando toco el botón de adjuntar imagen desde la cámara
     Y capturo la foto "fuga-cocina.jpg"

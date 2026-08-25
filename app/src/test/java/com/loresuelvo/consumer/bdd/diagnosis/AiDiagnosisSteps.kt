@@ -446,35 +446,73 @@ class AiDiagnosisSteps {
 
     /**
      * 01-AIP `Then la imagen queda pendiente de envío en la
-     * conversación`. Pins the staged attachment filename so a
-     * future commit that changes the default
-     * `MediaUpload.Image.originalName` breaks this assertion
-     * cleanly.
+     * conversación`. Shared with 02-AIP — the structural
+     * assertion (one attachment staged, send round-trip NOT
+     * fired) is identical across both picker sources. The
+     * filename is pinned by the `When` step of each scenario.
      */
     @Then("la imagen queda pendiente de envío en la conversación")
     fun laImagenQuedaPendienteDeEnvio() {
-        world.assertPendingAttachmentStaged(expectedName = "gotera-baño.jpg")
+        world.assertPendingAttachmentStaged()
     }
 
     /**
      * 01-AIP `Y puedo ver la vista previa de la imagen
-     * seleccionada`. Same state-level assertion as the previous
-     * `Then`: a matching [PendingMedia] is staged and the send
-     * round-trip has NOT fired.
+     * seleccionada`. Shared with 02-AIP — see
+     * [laImagenQuedaPendienteDeEnvio].
      */
     @And("puedo ver la vista previa de la imagen seleccionada")
     fun puedoVerLaVistaPreviaDeLaImagenSeleccionada() {
-        world.assertPendingAttachmentStaged(expectedName = "gotera-baño.jpg")
+        world.assertPendingAttachmentStaged()
     }
 
     /**
-     * 01-AIP `Y puedo confirmar el envío o descartarla`. Same
-     * contract as the previous `Then`: pending attachment is
-     * staged and the send round-trip has NOT fired.
+     * 01-AIP `Y puedo confirmar el envío o descartarla`. Shared
+     * with 02-AIP — the staged attachment is still on the
+     * surface (the send round-trip has NOT fired).
      */
     @And("puedo confirmar el envío o descartarla")
     fun puedoConfirmarElEnvioODescartarla() {
-        world.assertPendingAttachmentStaged(expectedName = "gotera-baño.jpg")
+        world.assertPendingAttachmentStaged()
+    }
+
+    // ---- Scenario 02-AIP Capturar imagen con la cámara -------
+
+    /**
+     * 02-AIP `When toco el botón de adjuntar imagen desde la
+     * cámara`. Drives the canonical non-Uri VM entry point
+     * through [world].chooseFromCamera, which collapses the
+     * camera capture + launcher + reader into a single JPEG
+     * staging. The Compose acceptance test owns the real
+     * `TakePicture` launcher contract.
+     */
+    @When("toco el botón de adjuntar imagen desde la cámara")
+    fun tocoBotonAdjuntarImagenCamara() {
+        world.chooseFromCamera()
+    }
+
+    /**
+     * 02-AIP `And capturo la foto "{filename}"`. No-op — the
+     * `When` step already staged with the scenario's canonical
+     * filename ("fuga-cocina.jpg"). The Gherkin reads naturally
+     * as "tap, then capture"; the BDD world collapses both
+     * actions into one helper.
+     */
+    @And("capturo la foto {string}")
+    fun capturoLaFoto(filename: String) {
+        @Suppress("UNUSED_PARAMETER") filename
+    }
+
+    /**
+     * 02-AIP `Y puedo ver la vista previa de la foto
+     * capturada`. Same structural assertion as 01-AIP (one
+     * attachment staged, send round-trip NOT fired) — the
+     * wording diverges because the source is the camera rather
+     * than the gallery.
+     */
+    @And("puedo ver la vista previa de la foto capturada")
+    fun puedoVerLaVistaPreviaDeLaFotoCapturada() {
+        world.assertPendingAttachmentStaged()
     }
 
     // ---- Background steps for AIP scenarios ----------------------

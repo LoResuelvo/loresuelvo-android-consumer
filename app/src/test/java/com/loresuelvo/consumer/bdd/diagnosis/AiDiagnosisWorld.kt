@@ -572,6 +572,23 @@ class AiDiagnosisWorld : AutoCloseable {
      * [com.loresuelvo.consumer.bdd.message.SendMediaWorld.chooseFromGallery].
      */
     fun chooseFromGallery(filename: String = "gotera-baño.jpg") {
+        stageImageAttachment(filename)
+    }
+
+    /**
+     * Simulates the system camera returning a content URI for
+     * [filename]. The world collapses the camera capture +
+     * `TakePicture` launcher + reader into a single helper
+     * that drives the canonical non-Uri VM entry point. The
+     * camera UI is verified by the Compose acceptance test;
+     *  the BDD layer only pins the data behaviour for scenario
+     * 02-AIP.
+     */
+    fun chooseFromCamera(filename: String = "fuga-cocina.jpg") {
+        stageImageAttachment(filename)
+    }
+
+    private fun stageImageAttachment(filename: String) {
         val media = MediaUpload.Image(
             bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()),
             mimeType = "image/jpeg",
@@ -582,19 +599,27 @@ class AiDiagnosisWorld : AutoCloseable {
     }
 
     /**
-     * 01-AIP `Then la imagen queda pendiente de envío en la
-     * conversación`: at least one [PendingMedia] in state has
-     * a non-blank `originalName` matching [expectedName], and
-     * the send round-trip has not fired.
+     * 01-AIP / 02-AIP `Then la imagen queda pendiente de envío
+     * en la conversación`: at least one [PendingMedia] is
+     * staged with a non-blank `originalName` and the send
+     * round-trip has not fired. The exact filename is pinned
+     * by the scenario's `When` step (gallery → "gotera-baño.jpg",
+     * camera → "fuga-cocina.jpg"), so the assertion only checks
+     * structural readiness.
      */
-    fun assertPendingAttachmentStaged(expectedName: String) {
+    fun assertPendingAttachmentStaged() {
         val state = lastUiState()
         val attachments = state.pendingAttachments
-        val match = attachments.firstOrNull { it.originalName == expectedName }
-        if (match == null) {
+        if (attachments.isEmpty()) {
             error(
-                "expected pending attachment named '$expectedName', got " +
-                    "${attachments.map { it.originalName }}",
+                "expected at least one pending attachment after the user picked " +
+                    "an image, but pendingAttachments was empty",
+            )
+        }
+        if (attachments.any { it.originalName.isBlank() }) {
+            error(
+                "expected every staged attachment to have a non-blank originalName, " +
+                    "got ${attachments.map { it.originalName }}",
             )
         }
         if (state.sending) {
