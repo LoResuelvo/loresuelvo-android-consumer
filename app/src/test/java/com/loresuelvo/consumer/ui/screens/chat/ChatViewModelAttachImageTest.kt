@@ -183,4 +183,31 @@ class ChatViewModelAttachImageTest {
 
         assertEquals(1, viewModel.uiState.value.pendingAttachments.size)
     }
+
+    @Test
+    fun onClearAttachments_empties_the_pending_list() = runTest {
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, "first.jpg"),
+            sourceUri = null,
+        )
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, "second.jpg"),
+            sourceUri = null,
+        )
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.pendingAttachments.size)
+
+        viewModel.onClearAttachments()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<PendingMedia>(), viewModel.uiState.value.pendingAttachments)
+    }
+
+    @Test
+    fun onClearAttachments_is_a_no_op_when_already_empty() = runTest {
+        // Stale recompositions must not crash the chat.
+        viewModel.onClearAttachments()
+        advanceUntilIdle()
+        assertEquals(emptyList<PendingMedia>(), viewModel.uiState.value.pendingAttachments)
+    }
 }

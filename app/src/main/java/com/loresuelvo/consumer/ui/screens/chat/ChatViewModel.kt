@@ -198,6 +198,21 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
+     * Discards every staged attachment (scenario 05-AIP).
+     * No-op when nothing is staged so a stale tap cannot
+     * accidentally land in an invalid state.
+     */
+    fun onClearAttachments() {
+        _uiState.update { current ->
+            if (current.pendingAttachments.isEmpty()) {
+                current
+            } else {
+                current.copy(pendingAttachments = emptyList())
+            }
+        }
+    }
+
+    /**
      * Loads a saved AI session. Called by [ChatRoute] when the
      * route was opened with a `conversationId` arg. The
      * conversationId is set to [state.conversationId] on success
