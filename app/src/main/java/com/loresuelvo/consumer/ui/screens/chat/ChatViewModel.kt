@@ -1,7 +1,10 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.Sender
@@ -57,6 +60,7 @@ import kotlinx.coroutines.launch
 class ChatViewModel @Inject constructor(
     private val sendDiagnosisPrompt: SendDiagnosisPromptUseCase,
     private val loadAiConversation: LoadAiConversationUseCase,
+    private val mediaReader: MediaReader,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -99,6 +103,59 @@ class ChatViewModel @Inject constructor(
 
     fun onErrorDismiss() {
         _uiState.update { it.copy(transientError = null) }
+    }
+
+    /**
+     * Reads the image URI the system's gallery picker returned
+     * via [MediaReader] and appends the staged bytes to
+     * `pendingAttachments`. Mirrors
+     * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel.onAttachImageFromGallery]
+     * in the chat-with-provider surface so the BDD layer drives
+     * the same wire contract on both VMs.
+     *
+     * Read failures land in a follow-up commit (08-AIP) that
+     * introduces a typed `pendingAttachmentError`; for now any
+     * [Throwable] from the picker drops the request silently so
+     * the BDD layer can pin the happy path without an extra
+     * flag.
+     */
+    fun onAttachImageFromGallery(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val media = mediaReader.read(uri)
+                onAttachMedia(media, sourceUri = uri)
+            } catch (_: Throwable) {
+                // See `pendingAttachments` Javadoc for the
+                // follow-up commit that introduces a typed
+                // attach error.
+            }
+        }
+    }
+
+    /**
+     * Canonical non-`Uri` entry point used by the BDD world and
+     * any future programmatic attach scenario. Appends an image
+     * to `pendingAttachments` preserving the call order (used
+     * by 03-AIP for multiple images). Audio is rejected for now
+     * — only images travel on the AI chat surface today; a
+     * future scenario can extend the `when` dispatch.
+     */
+    fun onAttachMedia(media: MediaUpload, sourceUri: Uri? = null) {
+        require(media is MediaUpload.Image) {
+            "AI chat only supports image attachments; got ${media::class.simpleName}"
+        }
+        val pending = PendingMedia(
+            localUri = sourceUri,
+            mimeType = media.mimeType,
+            originalName = media.originalName,
+            sizeBytes = media.bytes.size.toLong(),
+            bytes = media.bytes,
+            kind = PendingMediaKind.IMAGE,
+            durationMillis = 0L,
+        )
+        _uiState.update { current ->
+            current.copy(pendingAttachments = current.pendingAttachments + pending)
+        }
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
@@ -58,12 +59,13 @@ class ChatViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val useCase = mockk<SendDiagnosisPromptUseCase>()
     private val loadUseCase = mockk<LoadAiConversationUseCase>(relaxed = true)
+    private val mediaReader = mockk<MediaReader>(relaxed = true)
     private lateinit var viewModel: ChatViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ChatViewModel(useCase, loadUseCase)
+        viewModel = ChatViewModel(useCase, loadUseCase, mediaReader)
     }
 
     @After

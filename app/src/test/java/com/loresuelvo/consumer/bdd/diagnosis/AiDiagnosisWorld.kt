@@ -19,6 +19,7 @@ import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
 import com.loresuelvo.consumer.ui.screens.chat.ChatViewModel
 import com.loresuelvo.consumer.ui.screens.chat.errorLiteral
+import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +57,7 @@ class AiDiagnosisWorld : AutoCloseable {
     private val fakeRepo = FakeDiagnosisRepository()
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
     private val fakeAiConversationRepo = FakeAiConversationRepository()
+    private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
     private lateinit var createAiJobRequest: CreateAiJobRequestUseCase
     private lateinit var loadAiConversation: LoadAiConversationUseCase
@@ -97,7 +99,7 @@ class AiDiagnosisWorld : AutoCloseable {
         loadAiConversation = LoadAiConversationUseCase(fakeRepo)
         createAiJobRequest = CreateAiJobRequestUseCase(fakeAiJobRequestRepo)
         getConversations = GetAiConversationsUseCase(fakeAiConversationRepo)
-        viewModel = ChatViewModel(sendDiagnosisPrompt,loadAiConversation)
+        viewModel = ChatViewModel(sendDiagnosisPrompt, loadAiConversation, mediaReader)
         aiContactViewModel = AiDiagnosisContactViewModel(createAiJobRequest)
         assistantViewModel = AssistantViewModel(getConversations)
 
