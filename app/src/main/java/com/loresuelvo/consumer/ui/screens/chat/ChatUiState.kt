@@ -22,6 +22,12 @@ import com.loresuelvo.consumer.domain.provider.Provider
  *  - [recommendedProviders]: providers the AI suggests for the
  *    matched category. Populated alongside the
  *    `professional_required` outcome.
+ *  - [pendingAttachments]: images the consumer attached from the
+ *    gallery / camera but has not yet sent. Each entry is a
+ *    [PendingMedia] of kind [PendingMediaKind.IMAGE] carrying the
+ *    read bytes + mime + original name. The UI renders the
+ *    preview grid from this list. Introduced by 01-AIP; cleared
+ *    on send-success or explicit discard (05-AIP).
  */
 data class ChatUiState(
     val placeholderBody: String = "",
@@ -34,6 +40,7 @@ data class ChatUiState(
     val transientError: ChatError? = null,
     val lastAttemptedPrompt: String? = null,
     val preliminaryWarningVisible: Boolean = true,
+    val pendingAttachments: List<PendingMedia> = emptyList(),
 ) {
     val canSend: Boolean get() = promptInput.trim().isNotEmpty() && !sending
 }
