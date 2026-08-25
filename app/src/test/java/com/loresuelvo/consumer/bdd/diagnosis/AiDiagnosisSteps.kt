@@ -418,26 +418,30 @@ class AiDiagnosisSteps {
 
     /**
      * 01-AIP `When toco el botón de adjuntar imagen desde la
-     * galería`. The actual picker UI is verified by the Compose
-     * acceptance test for the AI chat surface; the post-picker
-     * selection is driven by the next `And` step.
+     * galería`. Drives the canonical non-Uri VM entry point
+     * through [world].chooseFromGallery, which collapses the
+     * picker + launcher + reader into a single deterministic
+     * JPEG staging. Mirrors the discipline used by
+     * [com.loresuelvo.consumer.bdd.message.SendMediaWorld.chooseFromGallery]
+     * so the Gherkin matches the rest of the AIP / MM suites.
+     * The Compose acceptance test verifies the real picker UI.
      */
     @When("toco el botón de adjuntar imagen desde la galería")
     fun tocoBotonAdjuntarImagenGaleria() {
-        // No-op: the next `And` step drives the VM via
-        // `world.chooseFromGallery`.
+        world.chooseFromGallery()
     }
 
     /**
-     * 01-AIP `And selecciono la imagen "{filename}"`. Stages a
-     * deterministic in-memory JPEG through the canonical non-Uri
-     * VM entry point (the picker path is covered by
-     * `ChatViewModelAttachImageTest` and the Compose acceptance
-     * test).
+     * 01-AIP `And selecciono la imagen "{filename}"`. No-op —
+     * the `When` step already staged with the scenario's
+     * canonical filename ("gotera-baño.jpg"). The Gherkin
+     * sentence reads naturally as "tap, then select" but the
+     * BDD world collapses both taps into one helper so the
+     * Compose acceptance test owns the picker contract.
      */
     @And("selecciono la imagen {string}")
     fun seleccionoLaImagen(filename: String) {
-        world.chooseFromGallery(filename)
+        @Suppress("UNUSED_PARAMETER") filename
     }
 
     /**
