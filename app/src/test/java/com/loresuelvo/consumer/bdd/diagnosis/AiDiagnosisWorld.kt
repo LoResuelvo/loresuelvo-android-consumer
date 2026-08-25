@@ -8,6 +8,7 @@ import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCas
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.usecase.assistant.GetAiConversationsUseCase
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateAiJobRequestUseCase
@@ -555,6 +556,52 @@ class AiDiagnosisWorld : AutoCloseable {
             if (fullName.isBlank()) {
                 error("expected provider to have a non-blank full name, was '$fullName'")
             }
+        }
+    }
+
+    // ---- 01-AIP / 02-AIP image attach helpers -----------------------
+
+    /**
+     * Simulates the gallery picker returning a content URI for
+     * [filename]. The world collapses picker + launcher + reader
+     * into a single helper that drives
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onAttachMedia]
+     * with a deterministic in-memory JPEG (the picker UI is
+     * verified by the Compose acceptance test). Mirrors the
+     * discipline used by
+     * [com.loresuelvo.consumer.bdd.message.SendMediaWorld.chooseFromGallery].
+     */
+    fun chooseFromGallery(filename: String = "gotera-baño.jpg") {
+        val media = MediaUpload.Image(
+            bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()),
+            mimeType = "image/jpeg",
+            originalName = filename,
+        )
+        viewModel.onAttachMedia(media, sourceUri = null)
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * 01-AIP `Then la imagen queda pendiente de envío en la
+     * conversación`: at least one [PendingMedia] in state has
+     * a non-blank `originalName` matching [expectedName], and
+     * the send round-trip has not fired.
+     */
+    fun assertPendingAttachmentStaged(expectedName: String) {
+        val state = lastUiState()
+        val attachments = state.pendingAttachments
+        val match = attachments.firstOrNull { it.originalName == expectedName }
+        if (match == null) {
+            error(
+                "expected pending attachment named '$expectedName', got " +
+                    "${attachments.map { it.originalName }}",
+            )
+        }
+        if (state.sending) {
+            error(
+                "pending attachments must NOT trigger the send round-trip; " +
+                    "state.sending was true. state=$state",
+            )
         }
     }
 

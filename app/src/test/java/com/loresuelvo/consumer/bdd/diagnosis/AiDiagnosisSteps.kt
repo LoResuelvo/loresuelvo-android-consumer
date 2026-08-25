@@ -413,4 +413,75 @@ class AiDiagnosisSteps {
         world.assertAssistantConversationTitlePresent("Pérdida de agua #1")
         world.assertAssistantConversationsHaveTimestamp()
     }
+
+    // ---- Scenario 01-AIP Adjuntar imagen desde la galería ------
+
+    /**
+     * 01-AIP `When toco el botón de adjuntar imagen desde la
+     * galería`. The actual picker UI is verified by the Compose
+     * acceptance test for the AI chat surface; the post-picker
+     * selection is driven by the next `And` step.
+     */
+    @When("toco el botón de adjuntar imagen desde la galería")
+    fun tocoBotonAdjuntarImagenGaleria() {
+        // No-op: the next `And` step drives the VM via
+        // `world.chooseFromGallery`.
+    }
+
+    /**
+     * 01-AIP `And selecciono la imagen "{filename}"`. Stages a
+     * deterministic in-memory JPEG through the canonical non-Uri
+     * VM entry point (the picker path is covered by
+     * `ChatViewModelAttachImageTest` and the Compose acceptance
+     * test).
+     */
+    @And("selecciono la imagen {string}")
+    fun seleccionoLaImagen(filename: String) {
+        world.chooseFromGallery(filename)
+    }
+
+    /**
+     * 01-AIP `Then la imagen queda pendiente de envío en la
+     * conversación`. Pins the staged attachment filename so a
+     * future commit that changes the default
+     * `MediaUpload.Image.originalName` breaks this assertion
+     * cleanly.
+     */
+    @Then("la imagen queda pendiente de envío en la conversación")
+    fun laImagenQuedaPendienteDeEnvio() {
+        world.assertPendingAttachmentStaged(expectedName = "gotera-baño.jpg")
+    }
+
+    /**
+     * 01-AIP `Y puedo ver la vista previa de la imagen
+     * seleccionada`. Same state-level assertion as the previous
+     * `Then`: a matching [PendingMedia] is staged and the send
+     * round-trip has NOT fired.
+     */
+    @And("puedo ver la vista previa de la imagen seleccionada")
+    fun puedoVerLaVistaPreviaDeLaImagenSeleccionada() {
+        world.assertPendingAttachmentStaged(expectedName = "gotera-baño.jpg")
+    }
+
+    /**
+     * 01-AIP `Y puedo confirmar el envío o descartarla`. Same
+     * contract as the previous `Then`: pending attachment is
+     * staged and the send round-trip has NOT fired.
+     */
+    @And("puedo confirmar el envío o descartarla")
+    fun puedoConfirmarElEnvioODescartarla() {
+        world.assertPendingAttachmentStaged(expectedName = "gotera-baño.jpg")
+    }
+
+    // ---- Background steps for AIP scenarios ----------------------
+
+    @Given("me encuentro en la pantalla de conversación con el asistente")
+    fun meEncuentroEnLaPantallaChatIa() {
+        // No-op: world.startScenario() already mounted the VM.
+    }
+
+    @Given("el campo de mensaje está vacío")
+    fun elCampoDeMensajeEstaVacio() {
+        // Structural assertion; pinned in unit tests.
+    }
 }

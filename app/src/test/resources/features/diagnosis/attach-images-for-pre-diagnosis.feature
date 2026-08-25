@@ -55,7 +55,7 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Dado estoy autenticado como consumidor
     Y me encuentro en la pantalla de conversación con el asistente
     Y el campo de mensaje está vacío
-  @wip 
+
   Escenario: 01-AIP Adjuntar una imagen desde la galería del dispositivo
     Cuando toco el botón de adjuntar imagen desde la galería
     Y selecciono la imagen "gotera-baño.jpg"
