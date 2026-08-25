@@ -120,6 +120,25 @@ class ChatViewModel @Inject constructor(
      * flag.
      */
     fun onAttachImageFromGallery(uri: Uri) {
+        readAndAttach(uri)
+    }
+
+    /**
+     * Reads the photo URI the system camera returned via
+     * [MediaReader] and appends the staged bytes to
+     * `pendingAttachments`. Mirrors
+     * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel.onAttachImageFromCamera]
+     * in the chat-with-provider surface. Kept distinct from
+     * [onAttachImageFromGallery] so the route can wire the
+     * `TakePicture` launcher through its own callback and the
+     * BDD layer can pinpoint which source fired (scenario
+     * 02-AIP).
+     */
+    fun onAttachImageFromCamera(uri: Uri) {
+        readAndAttach(uri)
+    }
+
+    private fun readAndAttach(uri: Uri) {
         viewModelScope.launch {
             try {
                 val media = mediaReader.read(uri)

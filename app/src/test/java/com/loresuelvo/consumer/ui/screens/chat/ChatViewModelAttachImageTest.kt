@@ -101,6 +101,33 @@ class ChatViewModelAttachImageTest {
     }
 
     @Test
+    fun onAttachImageFromCamera_with_valid_uri_appends_image_to_pendingAttachments() = runTest {
+        // Mirrors the gallery test but goes through the camera
+        // entry point (02-AIP). The VM collapses both URIs into
+        // the same read pipeline; what changes is the route's
+        // launcher wiring.
+        val cameraUri: Uri = mockk<Uri>(relaxed = true).also {
+            every { it.toString() } returns "content://cache/camera/42"
+        }
+        val cameraBytes = byteArrayOf(0xCA.toByte(), 0xFE.toByte())
+        val cameraName = "fuga-cocina.jpg"
+        coEvery { mediaReader.read(cameraUri) } returns
+            MediaUpload.Image(cameraBytes, imageMime, cameraName)
+
+        viewModel.onAttachImageFromCamera(cameraUri)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(1, state.pendingAttachments.size)
+        val pending = state.pendingAttachments.first()
+        assertEquals(cameraName, pending.originalName)
+        assertTrue(pending.bytes.contentEquals(cameraBytes))
+        assertFalse(state.sending)
+        coVerify(exactly = 1) { mediaReader.read(cameraUri) }
+        coVerify(exactly = 0) { useCase(any(), any()) }
+    }
+
+    @Test
     fun onAttachMedia_with_Image_appends_to_pendingAttachments_without_calling_mediaReader() =
         runTest {
             viewModel.onAttachMedia(
