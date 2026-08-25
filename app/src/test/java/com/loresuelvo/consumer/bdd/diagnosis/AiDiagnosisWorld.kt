@@ -640,6 +640,17 @@ class AiDiagnosisWorld : AutoCloseable {
     }
 
     /**
+     * 05-AIP: stage [count] synthetic images with deterministic
+     * filenames ("imagen-1.jpg", "imagen-2.jpg", ...) so the
+     * Gherkin can stay count-driven ( "tengo 3 imágenes
+     * pendientes" ) without spelling each name.
+     */
+    fun stageNImages(count: Int) {
+        val names = (1..count).map { "imagen-$it.jpg" }
+        stageImages(names)
+    }
+
+    /**
      * 04-AIP: discard the staged attachment whose
      * `originalName` matches [filename]. The VM exposes the
      * index-based variant ([com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRemoveAttachment]);
@@ -659,6 +670,15 @@ class AiDiagnosisWorld : AutoCloseable {
             )
         }
         viewModel.onRemoveAttachment(index)
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * 05-AIP: drop every staged attachment through the VM's
+     * "clear all" entry point.
+     */
+    fun clearAllAttachments() {
+        viewModel.onClearAttachments()
         scheduler.advanceUntilIdle()
     }
 

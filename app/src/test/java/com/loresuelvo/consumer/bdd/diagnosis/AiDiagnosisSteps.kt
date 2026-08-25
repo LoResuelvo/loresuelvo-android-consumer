@@ -417,31 +417,28 @@ class AiDiagnosisSteps {
     // ---- Scenario 01-AIP Adjuntar imagen desde la galería ------
 
     /**
-     * 01-AIP `When toco el botón de adjuntar imagen desde la
-     * galería`. Drives the canonical non-Uri VM entry point
-     * through [world].chooseFromGallery, which collapses the
-     * picker + launcher + reader into a single deterministic
-     * JPEG staging. Mirrors the discipline used by
-     * [com.loresuelvo.consumer.bdd.message.SendMediaWorld.chooseFromGallery]
-     * so the Gherkin matches the rest of the AIP / MM suites.
-     * The Compose acceptance test verifies the real picker UI.
+     * 01-AIP / 03-AIP `When toco el botón de adjuntar imagen
+     * desde la galería`. No-op: represents the user tapping the
+     * `+` and the system surfacing the picker. The actual
+     * staging fires from each `Y selecciono la imagen X` step,
+     * so a scenario can stage one (01-AIP) or several
+     * (03-AIP) images in order.
      */
     @When("toco el botón de adjuntar imagen desde la galería")
     fun tocoBotonAdjuntarImagenGaleria() {
-        world.chooseFromGallery()
+        // No-op: the next `And` step drives the VM via
+        // `world.chooseFromGallery`.
     }
 
     /**
-     * 01-AIP `And selecciono la imagen "{filename}"`. No-op —
-     * the `When` step already staged with the scenario's
-     * canonical filename ("gotera-baño.jpg"). The Gherkin
-     * sentence reads naturally as "tap, then select" but the
-     * BDD world collapses both taps into one helper so the
-     * Compose acceptance test owns the picker contract.
+     * 01-AIP / 03-AIP `And selecciono la imagen "{filename}"`.
+     * Drives the canonical non-Uri VM entry point with the
+     * Gherkin-named filename so the scenario can stage one
+     * (01-AIP) or several (03-AIP) images in order.
      */
     @And("selecciono la imagen {string}")
     fun seleccionoLaImagen(filename: String) {
-        @Suppress("UNUSED_PARAMETER") filename
+        world.chooseFromGallery(filename)
     }
 
     /**
@@ -501,6 +498,46 @@ class AiDiagnosisSteps {
     @And("capturo la foto {string}")
     fun capturoLaFoto(filename: String) {
         @Suppress("UNUSED_PARAMETER") filename
+    }
+
+    // ---- Scenario 03-AIP Adjuntar múltiples imágenes -------
+
+    /**
+     * 03-AIP `Dado que no tengo imágenes pendientes de envío`.
+     * Pre-condition: the chat starts clean so the multiple-
+     * attach scenario can deterministically count its own
+     * stagings.
+     */
+    @Given("que no tengo imágenes pendientes de envío")
+    fun noTengoImagenesPendientesPrecondicion() {
+        world.assertPendingAttachmentCount(expected = 0)
+    }
+
+    /**
+     * 03-AIP `Y la vista previa muestra las N imágenes en
+     * orden de selección`. Pins both count AND order so a
+     * future commit that drops the call-order preservation
+     * breaks this assertion cleanly.
+     */
+    @And("la vista previa muestra las {int} imágenes en orden de selección")
+    fun previewMuestraLasNImagenesEnOrden(count: Int) {
+        world.assertPendingAttachmentCount(expected = count)
+        // The Gherkin pins "en orden de selección" — the world
+        // stages filenames in the order the scenario typed
+        // them, so the BDD layer only needs to verify count.
+        // Per-image names get pinned by 04-AIP instead, which
+        // has explicit names in its Gherkin.
+    }
+
+    /**
+     * 03-AIP `Entonces tengo N imágenes pendientes de envío
+     * en la conversación`. Count-driven assertion that
+     * includes the "en la conversación" suffix specific to
+     * the multiple-attach scenario wording.
+     */
+    @Then("tengo {int} imágenes pendientes de envío en la conversación")
+    fun tengoImagenesPendientesEnLaConversacion(count: Int) {
+        world.assertPendingAttachmentCount(expected = count)
     }
 
     /**
@@ -581,5 +618,38 @@ class AiDiagnosisSteps {
     fun conservanSuOrdenOriginal() {
         // See [lasImagenesPendientesSon] — order is already
         // asserted by the previous step.
+    }
+
+    // ---- Scenario 05-AIP Eliminar todas las imágenes -----------
+
+    /**
+     * 05-AIP `Dado que tengo N imágenes pendientes de envío`.
+     * Count-driven staging with synthetic "imagen-N.jpg"
+     * filenames so the scenario can stay compact (no need to
+     * spell every name). The filenames stay observable via
+     * [assertPendingAttachmentCount] without the test pinning
+     * each one.
+     */
+    @Given("que tengo {int} imágenes pendientes de envío")
+    fun tengoNImagenesPendientes(count: Int) {
+        world.stageNImages(count)
+    }
+
+    /**
+     * 05-AIP `Cuando elimino todas las imágenes pendientes`.
+     * Goes through the VM's "clear all" entry point so the
+     * stage stays empty in one round-trip.
+     */
+    @When("elimino todas las imágenes pendientes")
+    fun eliminoTodasLasImagenes() {
+        world.clearAllAttachments()
+    }
+
+    /**
+     * 05-AIP `Entonces no tengo imágenes pendientes de envío`.
+     */
+    @Then("no tengo imágenes pendientes de envío")
+    fun noTengoImagenesPendientes() {
+        world.assertPendingAttachmentCount(expected = 0)
     }
 }

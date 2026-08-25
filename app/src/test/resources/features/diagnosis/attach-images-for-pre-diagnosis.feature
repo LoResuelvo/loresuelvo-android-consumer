@@ -70,8 +70,7 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Y puedo ver la vista previa de la foto capturada
     Y puedo confirmar el envío o descartarla
     
-  @wip 
-  Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
+Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Dado que no tengo imágenes pendientes de envío
     Cuando toco el botón de adjuntar imagen desde la galería
     Y selecciono la imagen "gotera-1.jpg"
