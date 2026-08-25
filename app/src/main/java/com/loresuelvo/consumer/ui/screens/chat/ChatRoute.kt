@@ -151,6 +151,16 @@ fun ChatRoute(
             cameraOutputUri = uri
             cameraLauncher.launch(uri)
         },
+        onConfirmAttachmentSend = { index ->
+            // 06-AIP wires the actual upload via
+            // FileRepository. Today the consumer can stage an
+            // image + preview + discard it; "Enviar" stays a
+            // no-op until the orchestrator lands.
+            @Suppress("UNUSED_PARAMETER") index
+        },
+        onDiscardAttachment = { index ->
+            viewModel.onRemoveAttachment(index)
+        },
         showAttachSheet = sheetVisible,
         onAttachSheetDismiss = { sheetVisible = false },
     )

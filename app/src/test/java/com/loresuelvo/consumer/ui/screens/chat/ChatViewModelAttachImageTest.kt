@@ -144,4 +144,43 @@ class ChatViewModelAttachImageTest {
             coVerify(exactly = 0) { mediaReader.read(any()) }
             coVerify(exactly = 0) { useCase(any(), any()) }
         }
+
+    @Test
+    fun onRemoveAttachment_filters_attachment_by_index() = runTest {
+        // Stage two images so the test exercises an out-of-order
+        // removal (the second, not the first).
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, "first.jpg"),
+            sourceUri = null,
+        )
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, "second.jpg"),
+            sourceUri = null,
+        )
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.value.pendingAttachments.size)
+
+        viewModel.onRemoveAttachment(index = 1)
+        advanceUntilIdle()
+
+        val remaining = viewModel.uiState.value.pendingAttachments
+        assertEquals(1, remaining.size)
+        assertEquals("first.jpg", remaining.single().originalName)
+    }
+
+    @Test
+    fun onRemoveAttachment_with_out_of_bounds_index_is_a_no_op() = runTest {
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, imageName),
+            sourceUri = null,
+        )
+        advanceUntilIdle()
+
+        // Stale recompositions must not crash the chat.
+        viewModel.onRemoveAttachment(index = 5)
+        viewModel.onRemoveAttachment(index = -1)
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.value.pendingAttachments.size)
+    }
 }

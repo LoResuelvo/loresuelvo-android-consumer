@@ -178,6 +178,26 @@ class ChatViewModel @Inject constructor(
     }
 
     /**
+     * Discards the staged attachment at [index] (scenario 04-AIP).
+     * The UI passes the index from the row that the user tapped
+     * "Descartar" on. Out-of-bounds indices are ignored so a stale
+     * recomposition cannot crash the chat.
+     */
+    fun onRemoveAttachment(index: Int) {
+        _uiState.update { current ->
+            if (index < 0 || index >= current.pendingAttachments.size) {
+                current
+            } else {
+                current.copy(
+                    pendingAttachments = current.pendingAttachments.toMutableList().apply {
+                        removeAt(index)
+                    },
+                )
+            }
+        }
+    }
+
+    /**
      * Loads a saved AI session. Called by [ChatRoute] when the
      * route was opened with a `conversationId` arg. The
      * conversationId is set to [state.conversationId] on success

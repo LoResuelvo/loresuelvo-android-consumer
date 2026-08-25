@@ -1,11 +1,9 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -70,7 +68,8 @@ fun ChatScreen(
     onAttachClick: () -> Unit = {},
     onAttachImageFromGallery: () -> Unit = {},
     onAttachImageFromCamera: () -> Unit = {},
-    onRemoveAttachment: (Int) -> Unit = {},
+    onConfirmAttachmentSend: (Int) -> Unit = {},
+    onDiscardAttachment: (Int) -> Unit = {},
     showAttachSheet: Boolean = false,
     onAttachSheetDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
@@ -101,13 +100,17 @@ fun ChatScreen(
                                 .padding(horizontal = 16.dp),
                 )
                 if (pendingAttachments.isNotEmpty()) {
-                    PendingAttachmentStrip(
-                        attachments = pendingAttachments,
-                        onRemove = onRemoveAttachment,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(CHAT_ATTACHMENT_STRIP_TAG),
-                    )
+                    pendingAttachments.forEachIndexed { index, attachment ->
+                        MediaPreviewCard(
+                            pendingMedia = attachment,
+                            sending = false,
+                            onSendClick = { onConfirmAttachmentSend(index) },
+                            onDiscardClick = { onDiscardAttachment(index) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("$CHAT_ATTACHMENT_CARD_TAG_PREFIX-$index"),
+                        )
+                    }
                 }
                 ChatInputBar(
                     promptInput = promptInput,
@@ -180,61 +183,4 @@ private const val INITIAL_MESSAGE_ID: String = "initial-assistant-welcome"
  * preview itself is provided by [PendingAttachmentStrip] below;
  * each row carries the original filename + a discard callback.
  */
-const val CHAT_ATTACHMENT_STRIP_TAG: String = "chat-attachment-strip"
-
-/**
- * Compose testTag for the per-attachment discard icon. Indexed
- * (e.g. `chat-attachment-discard-0`) so the BDD step can target
- * the right entry without depending on its display label.
- */
-const val CHAT_ATTACHMENT_DISCARD_TAG_PREFIX: String = "chat-attachment-discard"
-
-/**
- * Minimal preview strip rendered above the [ChatInputBar] while
- * the consumer has staged images. Each row carries the file's
- * original name + a close icon that fires [onRemove] with the
- * row's index. A richer [com.loresuelvo.consumer.ui.screens.chat.MediaPreviewCard]
- * lives next to the chat-with-provider surface and replaces this
- * once we ship the AIP send flow (06-AIP).
- *
- * The strip is purely presentational: the underlying state lives
- * on the VM (see [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.uiState]),
- * and the BDD layer drives it through
- * [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onAttachMedia]
- * for tests. The accept / discard UI mirrors the chat-with-provider
- * semantics so future 04-AIP / 05-AIP steps can build on it.
- */
-@Composable
-private fun PendingAttachmentStrip(
-    attachments: List<PendingMedia>,
-    onRemove: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        attachments.forEachIndexed { index, attachment ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp)
-                    .testTag("$CHAT_ATTACHMENT_DISCARD_TAG_PREFIX-$index"),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(
-                    text = attachment.originalName,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    text = stringResource(R.string.chat_attachment_discard),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .clickable { onRemove(index) }
-                        .padding(start = 8.dp)
-                        .testTag("$CHAT_ATTACHMENT_DISCARD_TAG_PREFIX-$index-button"),
-                )
-            }
-        }
-    }
-}
+const val CHAT_ATTACHMENT_CARD_TAG_PREFIX: String = "chat-attachment-card"
