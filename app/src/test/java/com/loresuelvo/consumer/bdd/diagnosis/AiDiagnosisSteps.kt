@@ -526,4 +526,60 @@ class AiDiagnosisSteps {
     fun elCampoDeMensajeEstaVacio() {
         // Structural assertion; pinned in unit tests.
     }
+
+    // ---- Scenario 04-AIP Eliminar una imagen pendiente -------
+
+    /**
+     * 04-AIP `Dado que tengo las imágenes "a", "b" y "c"
+     * pendientes de envío`. Pinned to three filenames so the
+     * Gherkin stays readable for the client. Each `{string}`
+     * carries one quoted filename; the world's staging helper
+     * preserves the call order so the "Y conservan su orden
+     * original" assertion later can verify it.
+     */
+    @Given("que tengo las imágenes {string}, {string} y {string} pendientes de envío")
+    fun tengoLasImagenesPendientes(first: String, second: String, third: String) {
+        world.stageImages(listOf(first, second, third))
+    }
+
+    /**
+     * 04-AIP `Cuando elimino la imagen "x"`. Discards by
+     * filename so the step stays Gherkin-friendly; the world
+     * translates it into the index-based VM call.
+     */
+    @When("elimino la imagen {string}")
+    fun eliminoLaImagen(filename: String) {
+        world.removeAttachmentByFilename(filename)
+    }
+
+    /**
+     * 04-AIP `Entonces tengo N imágenes pendientes de envío`.
+     */
+    @Then("tengo {int} imágenes pendientes de envío")
+    fun tengoImagenesPendientesCount(count: Int) {
+        world.assertPendingAttachmentCount(count)
+    }
+
+    /**
+     * 04-AIP `Y las imágenes pendientes son "x" y "y"`. The
+     * assertion checks both membership AND order so the
+     * companion "Y conservan su orden original" step stays a
+     * no-op rather than a redundant check.
+     */
+    @Then("las imágenes pendientes son {string} y {string}")
+    fun lasImagenesPendientesSon(first: String, second: String) {
+        world.assertPendingAttachmentsAre(listOf(first, second))
+    }
+
+    /**
+     * 04-AIP `Y conservan su orden original`. No-op: the
+     * previous step's assertion pins the order. The Gherkin
+     * sentence exists so the scenario reads naturally to the
+     * client.
+     */
+    @Then("conservan su orden original")
+    fun conservanSuOrdenOriginal() {
+        // See [lasImagenesPendientesSon] — order is already
+        // asserted by the previous step.
+    }
 }

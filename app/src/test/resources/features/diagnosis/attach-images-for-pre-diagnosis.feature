@@ -69,6 +69,7 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Entonces la imagen queda pendiente de envío en la conversación
     Y puedo ver la vista previa de la foto capturada
     Y puedo confirmar el envío o descartarla
+    
   @wip 
   Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Dado que no tengo imágenes pendientes de envío
@@ -79,7 +80,6 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Entonces tengo 3 imágenes pendientes de envío en la conversación
     Y la vista previa muestra las 3 imágenes en orden de selección
 
-  @wip
   Escenario: 04-AIP Eliminar una imagen pendiente antes del envío
     Dado que tengo las imágenes "gotera-1.jpg", "gotera-2.jpg" y "gotera-3.jpg" pendientes de envío
     Cuando elimino la imagen "gotera-2.jpg"
@@ -137,7 +137,7 @@ Característica: Adjuntar imágenes del problema al chat con IA
     Entonces veo un error de procesamiento del pre diagnóstico
     Y la imagen enviada permanece en la conversación
     Y puedo reintentar el procesamiento
-    
+
   @wip
   Escenario: 11-AIP Reintentar el procesamiento del pre diagnóstico
     Dado que el procesamiento del pre diagnóstico falló

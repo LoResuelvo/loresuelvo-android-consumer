@@ -630,6 +630,68 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
+    /**
+     * 03-AIP / 04-AIP: stage [filenames] in order through the
+     * canonical non-Uri VM entry point so the Gherkin can list
+     * the names inline.
+     */
+    fun stageImages(filenames: List<String>) {
+        filenames.forEach { stageImageAttachment(it) }
+    }
+
+    /**
+     * 04-AIP: discard the staged attachment whose
+     * `originalName` matches [filename]. The VM exposes the
+     * index-based variant ([com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRemoveAttachment]);
+     * the world translates the Gherkin-friendly filename into
+     * the index so the step def stays readable. Out-of-range
+     * matches surface as a BDD error rather than crashing.
+     */
+    fun removeAttachmentByFilename(filename: String) {
+        val state = lastUiState()
+        val index = state.pendingAttachments.indexOfFirst {
+            it.originalName == filename
+        }
+        if (index == -1) {
+            error(
+                "expected to find a staged attachment named '$filename', got " +
+                    "${state.pendingAttachments.map { it.originalName }}",
+            )
+        }
+        viewModel.onRemoveAttachment(index)
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * 04-AIP `Entonces tengo N imágenes pendientes de envío`:
+     * the staged list has exactly [expected] elements.
+     */
+    fun assertPendingAttachmentCount(expected: Int) {
+        val actual = lastUiState().pendingAttachments.size
+        if (actual != expected) {
+            error(
+                "expected $expected pending attachment(s), got $actual " +
+                    "(names=${lastUiState().pendingAttachments.map { it.originalName }})",
+            )
+        }
+    }
+
+    /**
+     * 04-AIP `Y las imágenes pendientes son "x" y "y"`: the
+     * staged list contains exactly [expectedFilenames] in
+     * order. Pinned alongside `assertPendingAttachmentCount`
+     * so a stray extra attachment surfaces cleanly.
+     */
+    fun assertPendingAttachmentsAre(expectedFilenames: List<String>) {
+        val actual = lastUiState().pendingAttachments.map { it.originalName }
+        if (actual != expectedFilenames) {
+            error(
+                "expected staged attachments in order ${expectedFilenames}, " +
+                    "got $actual",
+            )
+        }
+    }
+
 
     override fun close() {
         supervisorJob.cancel()
