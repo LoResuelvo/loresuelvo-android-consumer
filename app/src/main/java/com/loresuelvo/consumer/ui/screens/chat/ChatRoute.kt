@@ -1,5 +1,8 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -66,6 +69,19 @@ fun ChatRoute(
         }
     }
 
+    // Gallery picker for the AI diagnostic chat. 01-AIP wires
+    // the gallery path only; camera (02-AIP) adds its own
+    // launcher in its respective commit. The launcher is
+    // remembered at the route level so the result callback
+    // survives recompositions.
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onAttachImageFromGallery(uri)
+        }
+    }
+
     ChatScreen(
         promptInput = state.promptInput,
         canSend = state.canSend,
@@ -75,6 +91,7 @@ fun ChatRoute(
         recommendedProviders = state.recommendedProviders,
         transientError = state.transientError,
         preliminaryWarningVisible = state.preliminaryWarningVisible,
+        pendingAttachments = state.pendingAttachments,
         onPromptChange = viewModel::onPromptChange,
         onSendClick = viewModel::onSendClick,
         onRetryClick = viewModel::onRetryClick,
@@ -86,5 +103,12 @@ fun ChatRoute(
             )
         },
         onBackClick = { navController.popBackStack() },
+        onAttachImageFromGallery = {
+            galleryLauncher.launch(
+                PickVisualMediaRequest(
+                    ActivityResultContracts.PickVisualMedia.ImageOnly,
+                ),
+            )
+        },
     )
 }
