@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.data.api.dto.AssessmentDto
 import com.loresuelvo.consumer.data.api.dto.CategoryDto
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
+import com.loresuelvo.consumer.data.api.dto.MessageImageDto
 import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -74,6 +75,32 @@ class DiagnosisDtoMapperTest {
         val message = dto.toDomain()
 
         assertTrue(message.sender == com.loresuelvo.consumer.domain.diagnosis.Sender.Assistant)
+    }
+
+    @Test
+    fun maps_message_images_to_domain_references() {
+        val dto = ChatMessageDto(
+            id = 2L,
+            senderRole = "consumer",
+            content = "Así está la pérdida",
+            images = listOf(
+                MessageImageDto(
+                    id = "file-1",
+                    url = "https://cdn.example.test/chat/file-1.jpg",
+                    originalName = "perdida.jpg",
+                    mimeType = "image/jpeg",
+                ),
+            ),
+        )
+
+        val message = dto.toDomain()
+
+        assertEquals(1, message.images.size)
+        val image = message.images.single()
+        assertEquals("file-1", image.id)
+        assertEquals("https://cdn.example.test/chat/file-1.jpg", image.url)
+        assertEquals("perdida.jpg", image.originalName)
+        assertEquals("image/jpeg", image.mimeType)
     }
 
     @Test

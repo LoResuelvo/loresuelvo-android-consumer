@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import org.junit.Rule
 import org.junit.Test
@@ -260,5 +261,31 @@ class ChatScreenTest {
         composeTestRule
             .onAllNodesWithTag(ASSISTANT_AVATAR_TAG, useUnmergedTree = true)
             .assertCountEquals(2)
+    }
+
+    @Test
+    fun message_image_is_rendered_from_its_server_reference() {
+        val message = ChatMessage(
+            id = "consumer-1",
+            sender = Sender.Consumer,
+            content = "Así está la pérdida",
+            sentAtEpochMillis = 0L,
+            images = listOf(
+                ChatImage(
+                    id = "file-1",
+                    url = "https://cdn.example.test/chat/file-1.jpg",
+                    originalName = "perdida.jpg",
+                    mimeType = "image/jpeg",
+                ),
+            ),
+        )
+
+        composeTestRule.setContent {
+            MessageBubble(message)
+        }
+
+        composeTestRule
+            .onNodeWithTag(chatMessageImageTag(message.id, 0))
+            .assertExists()
     }
 }

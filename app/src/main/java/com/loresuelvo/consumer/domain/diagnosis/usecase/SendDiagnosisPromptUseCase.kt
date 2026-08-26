@@ -7,21 +7,25 @@ import javax.inject.Singleton
 
 /**
  * Application-layer use case that wraps
- * [DiagnosisRepository.sendPrompt] with a guard rail: an empty /
- * whitespace-only prompt must never reach the backend.
+ * [DiagnosisRepository.sendPrompt] with a guard rail: at least
+ * one of [prompt] or [imageFileIds] must be present — the
+ * consumer shouldn't be able to fire an empty round-trip.
  *
- *  - `prompt.trim().isEmpty()` ⇒
+ *  - `prompt.trim().isEmpty() && imageFileIds.isEmpty()` ⇒
  *    [SendDiagnosisPromptOutcome.Failure.Server] with `code = 0`
  *    (synthetic, non-HTTP). The ViewModel also short-circuits
- *    empty input via `canSend`; this is the defensive mirror in
- *    the domain layer.
- *  - non-empty prompt ⇒ delegated verbatim to the repository,
- *    including [existingConversationId] (used by the VM to pick
- *    between create-new and append-to-existing on the backend).
+ *    via `canSend`; this is the defensive mirror in the domain
+ *    layer.
+ *  - `prompt` non-empty ⇒ delegated verbatim to the repository
+ *    (text-only send).
+ *  - `prompt` empty BUT [imageFileIds] non-empty ⇒ delegated
+ *    verbatim (WhatsApp-style send-photo-without-text — the
+ *    AI diagnostic endpoint accepts `content=""` alongside
+ *    `image_file_ids[]`).
  *
  * The use case does NOT swallow typed repository failures (Network /
  * Server / Unauthorized): they propagate unchanged to the caller.
- * The single transformation it owns is the empty-prompt rule.
+ * The single transformation it owns is the empty-payload rule.
  */
 @Singleton
 class SendDiagnosisPromptUseCase @Inject constructor(
@@ -33,10 +37,10 @@ class SendDiagnosisPromptUseCase @Inject constructor(
         imageFileIds: List<String> = emptyList(),
     ): SendDiagnosisPromptOutcome {
         val trimmed = prompt.trim()
-        if (trimmed.isEmpty()) {
+        if (trimmed.isEmpty() && imageFileIds.isEmpty()) {
             return SendDiagnosisPromptOutcome.Failure.Server(
                 code = 0,
-                message = "Prompt is empty",
+                message = "Prompt and attachments are both empty",
             )
         }
         return diagnosisRepository.sendPrompt(

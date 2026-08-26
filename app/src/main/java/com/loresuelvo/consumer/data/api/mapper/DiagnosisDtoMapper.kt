@@ -2,6 +2,8 @@ package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.ChatMessageDto
 import com.loresuelvo.consumer.data.api.dto.DiagnosisDto
+import com.loresuelvo.consumer.data.api.dto.MessageImageDto
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.Sender
@@ -45,8 +47,16 @@ internal fun ChatMessageDto.toDomain(): ChatMessage {
         sender = sender,
         content = content,
         sentAtEpochMillis = sentAtEpochMillis,
+        images = images.orEmpty().map { it.toDomain() },
     )
 }
+
+private fun MessageImageDto.toDomain(): ChatImage = ChatImage(
+    id = id,
+    url = url,
+    originalName = originalName,
+    mimeType = mimeType,
+)
 
 /**
  * Best-effort ISO-8601 parser. We can't use `java.time.Instant`

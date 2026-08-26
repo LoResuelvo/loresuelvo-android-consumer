@@ -15,16 +15,17 @@ package com.loresuelvo.consumer.domain.diagnosis
  *    Stored as `Long` (not `java.time.Instant`) because `minSdk = 24`
  *    predates `java.time`; the UI converts to a localized timestamp
  *    for display.
+ *  - [images] are server-issued references to photos attached to
+ *    this message. They are empty for text-only messages.
  *
- * No `status`, `recommendations`, `assessment`, or `attachments` are
- * attached to a single message: those concerns belong to the
- * enclosing [Diagnosis] aggregate or to the conversation-level UI
- * state. This keeps the entity stable while the conversation shape
- * evolves.
+ * No `status`, `recommendations`, or `assessment` are attached to a
+ * single message: those concerns belong to the enclosing [Diagnosis]
+ * aggregate.
  */
 data class ChatMessage(
     val id: String,
     val sender: Sender,
     val content: String,
     val sentAtEpochMillis: Long,
+    val images: List<ChatImage> = emptyList(),
 )

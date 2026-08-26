@@ -7,6 +7,8 @@ import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCas
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.Sender
 import java.io.IOException
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -79,6 +81,73 @@ class ChatViewModelAttachImageTest {
     fun initial_pendingAttachments_is_empty_list() = runTest {
         advanceUntilIdle()
         assertEquals(emptyList<PendingMedia>(), viewModel.uiState.value.pendingAttachments)
+    }
+
+    @Test
+    fun canSend_is_true_when_only_attachments_staged_no_prompt() = runTest {
+        // WSP-style send: stage an image without typing a prompt.
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, imageName),
+            sourceUri = null,
+        )
+        advanceUntilIdle()
+        assertTrue(
+            "canSend must be true with staged attachments even when the " +
+                "prompt input is empty",
+            viewModel.uiState.value.canSend,
+        )
+    }
+
+    @Test
+    fun canSend_is_false_with_no_prompt_and_no_attachments() = runTest {
+        advanceUntilIdle()
+        assertFalse(
+            "canSend must remain false with nothing to send",
+            viewModel.uiState.value.canSend,
+        )
+    }
+
+    @Test
+    fun onSendClick_with_attachments_only_sends_image_only_round_trip() = runTest {
+        // WSP-style send path: prompt empty + attachment present ⇒
+        // the orchestrator must still be invoked with the
+        // attachment and a blank prompt.
+        val serverMessage = ChatMessage(
+            id = "srv-1",
+            sender = Sender.Assistant,
+            content = "Diagnóstico IA",
+            sentAtEpochMillis = 1_700_000_000_000L,
+        )
+        val serverDiagnosis = Diagnosis(
+            conversationId = "conv-1",
+            messages = emptyList(),
+        )
+        coEvery {
+            uploadAttachmentsAndSend(
+                prompt = any(),
+                conversationId = any(),
+                attachments = any(),
+            )
+        } returns SendDiagnosisPromptOutcome.Success(serverDiagnosis)
+
+        viewModel.onAttachMedia(
+            MediaUpload.Image(imageBytes, imageMime, imageName),
+            sourceUri = null,
+        )
+        advanceUntilIdle()
+        viewModel.onSendClick()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) {
+            uploadAttachmentsAndSend(
+                prompt = "",
+                conversationId = any(),
+                attachments = match { list -> list.single().originalName == imageName },
+            )
+        }
+        val state = viewModel.uiState.value
+        assertFalse(state.sending)
+        assertTrue(state.pendingAttachments.isEmpty())
     }
 
     @Test

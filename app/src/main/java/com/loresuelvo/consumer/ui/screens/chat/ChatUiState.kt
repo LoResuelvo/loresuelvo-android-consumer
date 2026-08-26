@@ -42,5 +42,6 @@ data class ChatUiState(
     val preliminaryWarningVisible: Boolean = true,
     val pendingAttachments: List<PendingMedia> = emptyList(),
 ) {
-    val canSend: Boolean get() = promptInput.trim().isNotEmpty() && !sending
+    val canSend: Boolean get() =
+        (promptInput.trim().isNotEmpty() || pendingAttachments.isNotEmpty()) && !sending
 }

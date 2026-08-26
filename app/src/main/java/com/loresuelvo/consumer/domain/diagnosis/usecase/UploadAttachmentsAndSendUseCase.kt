@@ -140,4 +140,3 @@ class UploadAttachmentsAndSendUseCase @Inject constructor(
      * variant so the VM can render a single error surface.
      */
 }
-

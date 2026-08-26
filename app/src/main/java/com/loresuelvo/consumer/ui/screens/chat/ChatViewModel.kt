@@ -75,7 +75,13 @@ class ChatViewModel @Inject constructor(
     fun onSendClick() {
         val state = _uiState.value
         val prompt = state.promptInput.trim()
-        if (prompt.isEmpty() || state.sending) return
+        // Either prompt text OR at least one staged attachment
+        // is required — the AI diagnostic endpoint accepts
+        // `content=""` when `image_file_ids[]` is non-empty
+        // (mirrors the WhatsApp-style send-photo-without-text
+        // UX the consumer asked for).
+        if (state.sending) return
+        if (prompt.isEmpty() && state.pendingAttachments.isEmpty()) return
 
         // Scenario 06-AIP: route the prompt through the upload
         // orchestrator when there are staged attachments. The
