@@ -778,4 +778,38 @@ class AiDiagnosisSteps {
     fun elMensajeNoSeEnvia() {
         world.assertDiagnosisPromptWasNotSent()
     }
+
+    // ---- Scenario 09-AIP Reintentar envío de imagen fallida ----
+    @Given("que la subida de {string} falló")
+    fun laSubidaDeLaImagenFallo(filename: String) {
+        world.stageImages(listOf(filename))
+        world.seedFileRepositoryNetworkFailure()
+        world.typePrompt("Tengo una gotera en el baño")
+        world.tapSend()
+    }
+
+    @When("reintento la carga de imágenes")
+    fun reintentoLaCargaDeImagenes() {
+        world.seedFileRepositorySuccess()
+        world.seedSuccessDiagnosis(
+            assistantContent = "Detectamos una posible gotera en el baño.",
+        )
+        world.simulateRetry()
+    }
+
+    @Then("la imagen se sube nuevamente")
+    fun laImagenSeSubeNuevamente() {
+        world.assertAttachmentUploadRetried("gotera-baño.jpg")
+    }
+
+    @Then("el mensaje se envía al completar la subida")
+    fun elMensajeSeEnviaAlCompletarLaSubida() {
+        world.assertDiagnosisPromptWasSent()
+    }
+
+    @Then("la imagen deja de estar pendiente de envío")
+    fun laImagenDejaDeEstarPendienteDeEnvio() {
+        world.assertPendingAttachmentCount(0)
+    }
+
 }

@@ -67,6 +67,7 @@ class AiDiagnosisWorld : AutoCloseable {
     private val dispatcher = StandardTestDispatcher(scheduler)
     private val supervisorJob = SupervisorJob()
     private val scope = CoroutineScope(dispatcher + supervisorJob)
+    private val presignAttemptCalls = mutableListOf<PresignUploadRequest>()
 
     private val fakeRepo = FakeDiagnosisRepository()
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
@@ -155,6 +156,9 @@ class AiDiagnosisWorld : AutoCloseable {
     }
 
     fun lastUiState(): ChatUiState = observedUiStates.last()
+
+    fun presignAttemptCallsSnapshot(): List<PresignUploadRequest> =
+    presignAttemptCalls.toList()
 
     fun lastTypedPromptSnapshot(): String = lastTypedPrompt
 
@@ -566,10 +570,14 @@ class AiDiagnosisWorld : AutoCloseable {
     }
 
     fun seedFileRepositoryNetworkFailure() {
-        coEvery { fileRepository.presign(any()) } returns
+        coEvery { fileRepository.presign(any()) } answers {
+            val request = firstArg<PresignUploadRequest>()
+            presignAttemptCalls += request
+
             PresignUploadOutcome.Failure.Network(
                 IOException("simulated network failure"),
             )
+        }
     }
 
     fun assertAttachmentUploadErrorVisible() {
@@ -590,6 +598,29 @@ class AiDiagnosisWorld : AutoCloseable {
             error(
                 "expected diagnosis prompt not to be sent after upload failure, " +
                     "but image_file_ids=$ids",
+            )
+        }
+    }
+    
+    fun assertAttachmentUploadRetried(filename: String) {
+        val count = presignAttemptCallsSnapshot().count {
+            it.originalName == filename
+        }
+
+        if (count < 2) {
+            error(
+                "expected '$filename' to be uploaded again, " +
+                    "but presign was attempted $count time(s)",
+            )
+        }
+    }
+
+    fun assertDiagnosisPromptWasSent() {
+        val ids = lastImageFileIdsSnapshot()
+
+        if (ids.isEmpty()) {
+            error(
+                "expected diagnosis prompt to be sent with image_file_ids",
             )
         }
     }
@@ -729,8 +760,12 @@ class AiDiagnosisWorld : AutoCloseable {
     fun seedFileRepositorySuccess() {
         coEvery { fileRepository.presign(any()) } answers {
             val request = firstArg<PresignUploadRequest>()
-            val id = "upload-${presignCalls.size + 1}"
+
+            presignAttemptCalls += request
             presignCalls += request
+
+            val id = "upload-${presignCalls.size}"
+
             PresignUploadOutcome.Success(
                 PresignUploadResult(
                     fileId = "file-${presignCalls.size}",

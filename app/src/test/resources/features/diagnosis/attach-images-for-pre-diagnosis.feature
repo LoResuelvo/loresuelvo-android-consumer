@@ -116,7 +116,6 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Y la imagen continúa pendiente de envío
     Y el mensaje no se envía
 
-  @wip
   Escenario: 09-AIP Reintentar la subida de una imagen
     Dado que la subida de "gotera-baño.jpg" falló
     Y la imagen continúa pendiente de envío
