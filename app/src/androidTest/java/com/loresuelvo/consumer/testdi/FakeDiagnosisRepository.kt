@@ -34,11 +34,13 @@ class FakeDiagnosisRepository @Inject constructor() : DiagnosisRepository {
     override suspend fun sendPrompt(
         content: String,
         existingConversationId: String?,
+        imageFileIds: List<String>,
     ): SendDiagnosisPromptOutcome =
         SendDiagnosisPromptOutcome.Failure.Server(
             code = 0,
             message = "FakeDiagnosisRepository: acceptance tests do not exercise the chat",
         )
+
     override suspend fun getAiConversation(
         conversationId: String,
     ): LoadAiConversationOutcome =

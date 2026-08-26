@@ -73,9 +73,4 @@ abstract class RepositoryModule {
         impl: ApiConversationRepository,
     ): ConversationRepository
 
-    @Binds
-    @Singleton
-    abstract fun bindFileRepository(
-        impl: ApiFileRepository,
-    ): FileRepository
 }
