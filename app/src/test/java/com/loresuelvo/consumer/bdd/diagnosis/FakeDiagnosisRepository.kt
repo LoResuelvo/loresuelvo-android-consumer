@@ -35,6 +35,7 @@ class FakeDiagnosisRepository : DiagnosisRepository {
     private val nextOutcomeRef = AtomicReference<SendDiagnosisPromptOutcome?>(null)
     private val nextLoadOutcomeRef = AtomicReference<LoadAiConversationOutcome?>(null)
     private val hangModeRef = AtomicReference(false)
+    private var lastImageFileIds: List<String> = emptyList()
 
     /**
      * Enqueue the next outcome to be returned by [sendPrompt].
@@ -68,7 +69,9 @@ class FakeDiagnosisRepository : DiagnosisRepository {
     override suspend fun sendPrompt(
         content: String,
         existingConversationId: String?,
+        imageFileIds: List<String>,
     ): SendDiagnosisPromptOutcome {
+        lastImageFileIds = imageFileIds
         if (hangModeRef.getAndSet(false)) {
             kotlinx.coroutines.awaitCancellation()
         }
@@ -79,6 +82,14 @@ class FakeDiagnosisRepository : DiagnosisRepository {
             )
         return outcome
     }
+
+    /**
+     * Snapshot of the [imageFileIds] passed to the last
+     * [sendPrompt] call. The BDD step that asserts "se envía el
+     * mensaje con la imagen adjunta" reads this back; the unit
+     * tests assert against [useCase] arguments directly.
+     */
+    fun lastImageFileIdsSnapshot(): List<String> = lastImageFileIds.toList()
 
     /**
      * Seed the outcome for the next [getAiConversation] call

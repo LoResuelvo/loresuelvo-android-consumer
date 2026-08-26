@@ -19,7 +19,18 @@ import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactEvent
 import com.loresuelvo.consumer.ui.screens.chat.AiDiagnosisContactViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
 import com.loresuelvo.consumer.ui.screens.chat.ChatViewModel
+import com.loresuelvo.consumer.domain.file.ConfirmUploadOutcome
+import com.loresuelvo.consumer.domain.file.ConfirmUploadRequest
+import com.loresuelvo.consumer.domain.file.ConfirmedFile
+import com.loresuelvo.consumer.domain.file.FilePurpose
+import com.loresuelvo.consumer.domain.file.FileRepository
+import com.loresuelvo.consumer.domain.file.PresignUploadOutcome
+import com.loresuelvo.consumer.domain.file.PresignUploadRequest
+import com.loresuelvo.consumer.domain.file.PresignUploadResult
+import com.loresuelvo.consumer.domain.file.UploadBytesOutcome
+import com.loresuelvo.consumer.domain.diagnosis.usecase.UploadAttachmentsAndSendUseCase
 import com.loresuelvo.consumer.ui.screens.chat.errorLiteral
+import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -59,7 +70,9 @@ class AiDiagnosisWorld : AutoCloseable {
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
     private val fakeAiConversationRepo = FakeAiConversationRepository()
     private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
+    private val fileRepository = mockk<FileRepository>(relaxed = true)
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
+    private lateinit var uploadAttachmentsAndSend: UploadAttachmentsAndSendUseCase
     private lateinit var createAiJobRequest: CreateAiJobRequestUseCase
     private lateinit var loadAiConversation: LoadAiConversationUseCase
     private lateinit var getConversations: GetAiConversationsUseCase
@@ -100,7 +113,16 @@ class AiDiagnosisWorld : AutoCloseable {
         loadAiConversation = LoadAiConversationUseCase(fakeRepo)
         createAiJobRequest = CreateAiJobRequestUseCase(fakeAiJobRequestRepo)
         getConversations = GetAiConversationsUseCase(fakeAiConversationRepo)
-        viewModel = ChatViewModel(sendDiagnosisPrompt, loadAiConversation, mediaReader)
+        uploadAttachmentsAndSend = UploadAttachmentsAndSendUseCase(
+            fileRepository = fileRepository,
+            sendDiagnosisPrompt = sendDiagnosisPrompt,
+        )
+        viewModel = ChatViewModel(
+            sendDiagnosisPrompt = sendDiagnosisPrompt,
+            loadAiConversation = loadAiConversation,
+            mediaReader = mediaReader,
+            uploadAttachmentsAndSend = uploadAttachmentsAndSend,
+        )
         aiContactViewModel = AiDiagnosisContactViewModel(createAiJobRequest)
         assistantViewModel = AssistantViewModel(getConversations)
 
@@ -597,6 +619,58 @@ class AiDiagnosisWorld : AutoCloseable {
         viewModel.onAttachMedia(media, sourceUri = null)
         scheduler.advanceUntilIdle()
     }
+
+    /**
+     * Seed [fileRepository] so the three-step upload pipeline
+     * returns Success for every attachment the consumer sends.
+     * Mirrors the pattern used by [FakeDiagnosisRepository]: the
+     * world records the calls so the BDD step "se sube la
+     * imagen X" can pin what was actually uploaded.
+     */
+    fun seedFileRepositorySuccess() {
+        coEvery { fileRepository.presign(any()) } answers {
+            val request = firstArg<PresignUploadRequest>()
+            val id = "upload-${presignCalls.size + 1}"
+            presignCalls += request
+            PresignUploadOutcome.Success(
+                PresignUploadResult(
+                    fileId = "file-${presignCalls.size}",
+                    key = "key-$id",
+                    uploadUrl = "https://upload.test/$id",
+                    headers = mapOf("Content-Type" to "image/jpeg"),
+                ),
+            )
+        }
+        coEvery { fileRepository.uploadBytes(any(), any(), any()) } returns
+            UploadBytesOutcome.Success
+        coEvery { fileRepository.confirm(any(), any()) } answers {
+            val fileId = firstArg<String>()
+            confirmCalls += fileId
+            ConfirmUploadOutcome.Success(
+                ConfirmedFile(
+                    id = fileId,
+                    mimeType = "image/jpeg",
+                    originalName = "stage-$fileId",
+                    codec = "",
+                    durationSeconds = 0,
+                ),
+            )
+        }
+    }
+
+    /** Captured [PresignUploadRequest]s, in call order. */
+    fun presignCallsSnapshot(): List<PresignUploadRequest> = presignCalls.toList()
+
+    /** Captured `confirm(fileId, ...)` calls, in call order. */
+    fun confirmCallsSnapshot(): List<String> = confirmCalls.toList()
+
+    /** Snapshot of the `image_file_ids[]` the orchestrator
+     *  passed to the last `sendDiagnosisPrompt` call. */
+    fun lastImageFileIdsSnapshot(): List<String> =
+        fakeRepo.lastImageFileIdsSnapshot()
+
+    private val presignCalls = mutableListOf<PresignUploadRequest>()
+    private val confirmCalls = mutableListOf<String>()
 
     /**
      * 01-AIP / 02-AIP `Then la imagen queda pendiente de envío

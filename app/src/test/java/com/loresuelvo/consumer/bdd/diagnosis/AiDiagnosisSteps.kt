@@ -502,6 +502,79 @@ class AiDiagnosisSteps {
 
     // ---- Scenario 03-AIP Adjuntar múltiples imágenes -------
 
+    // ---- Scenario 06-AIP Enviar imágenes + pre diagnóstico ----
+
+    /**
+     * 06-AIP `Dado que tengo la imagen "X" pendiente de envío`.
+     * Stages one attachment in isolation (the BDD world defaults
+     * the filename to the scenario's name so the assertion in
+     * `assertFileUploaded` matches verbatim).
+     */
+    @Given("que tengo la imagen {string} pendiente de envío")
+    fun tengoLaImagenPendiente(filename: String) {
+        world.stageImages(listOf(filename))
+    }
+
+    /**
+     * 06-AIP `Y la subida de archivos está disponible`. Wires the
+     * `FileRepository` mock so presign/upload/confirm all return
+     * Success with deterministic IDs, mirroring the production
+     * happy-path contract.
+     */
+    @And("la subida de archivos está disponible")
+    fun laSubidaDeArchivosEstaDisponible() {
+        world.seedFileRepositorySuccess()
+    }
+
+    /**
+     * 06-AIP `Cuando escribo "X"`. The text input lives on the
+     * chat VM; the step mirrors the existing 01-DIA prompt
+     * handler so the Gherkin can speak about the same input
+     * field in two flows.
+     */
+    @When("escribo {string}")
+    fun escribo(text: String) {
+        world.typePrompt(text)
+    }
+
+    /**
+     * 06-AIP `Entonces se sube la imagen "X"`. Pins that the
+     * upload pipeline ran with the staged filename as the
+     * presign's `originalName`. Two attachments staging two
+     * images would generate two presign calls in the order the
+     * scenario listed them.
+     */
+    @Then("se sube la imagen {string}")
+    fun seSubeLaImagen(filename: String) {
+        val calls = world.presignCallsSnapshot()
+        val match = calls.firstOrNull { it.originalName == filename }
+            ?: error(
+                "expected a presign call with originalName='$filename', " +
+                    "got ${calls.map { it.originalName }}",
+            )
+        // No-op pin: the assertion above is the contract. Keep
+        // the variable so the compiler does not flag an unused
+        // `match` should the helper evolve.
+        @Suppress("UNUSED_VARIABLE") val unused = match
+    }
+
+    /**
+     * 06-AIP `Y se envía el mensaje con la imagen adjunta`. The
+     * orchestrator dispatches the prompt with the joined
+     * `image_file_ids[]` after every upload confirms; the BDD
+     * step reads the last call off the fake repository.
+     */
+    @Then("se envía el mensaje con la imagen adjunta")
+    fun seEnviaElMensajeConLaImagenAdjunta() {
+        val ids = world.lastImageFileIdsSnapshot()
+        if (ids.isEmpty()) {
+            error(
+                "expected sendDiagnosisPrompt to be called with at least one " +
+                    "image_file_ids entry, got an empty list",
+            )
+        }
+    }
+
     /**
      * 03-AIP `Dado que no tengo imágenes pendientes de envío`.
      * Pre-condition: the chat starts clean so the multiple-

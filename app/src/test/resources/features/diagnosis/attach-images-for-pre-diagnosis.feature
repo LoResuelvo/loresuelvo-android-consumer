@@ -91,7 +91,6 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Cuando elimino todas las imágenes pendientes
     Entonces no tengo imágenes pendientes de envío
 
-  @wip
   Escenario: 06-AIP Enviar imágenes adjuntas para obtener un pre diagnóstico
     Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
     Y la subida de archivos está disponible
