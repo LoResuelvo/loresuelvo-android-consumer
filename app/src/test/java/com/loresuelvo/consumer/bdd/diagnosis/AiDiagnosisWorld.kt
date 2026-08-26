@@ -30,6 +30,7 @@ import com.loresuelvo.consumer.domain.file.PresignUploadResult
 import com.loresuelvo.consumer.domain.file.UploadBytesOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.UploadAttachmentsAndSendUseCase
 import com.loresuelvo.consumer.ui.screens.chat.errorLiteral
+import com.loresuelvo.consumer.ui.screens.chat.ChatError
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import java.io.IOException
 
 /**
  * Per-scenario world for the AI diagnostic chat BDD spec. Owns a
@@ -539,6 +541,57 @@ class AiDiagnosisWorld : AutoCloseable {
         )
         fakeRepo.enqueueOutcome(SendDiagnosisPromptOutcome.Success(diagnosis))
         tapSend()
+    }
+
+    fun seedDiagnosisSuccessForAttachment() {
+        val diagnosis = Diagnosis(
+            conversationId = "fake-conv",
+            messages = listOf(
+                ServerSideMessage(
+                    id = "user-server-1",
+                    sender = Sender.Consumer,
+                    content = lastTypedPromptSnapshot(),
+                ).toChatMessage(),
+                ServerSideMessage(
+                    id = "assistant-1",
+                    sender = Sender.Assistant,
+                    content = "Detectamos una posible pérdida de agua.",
+                ).toChatMessage(),
+            ),
+        )
+
+        fakeRepo.enqueueOutcome(
+            SendDiagnosisPromptOutcome.Success(diagnosis)
+        )
+    }
+
+    fun seedFileRepositoryNetworkFailure() {
+        coEvery { fileRepository.presign(any()) } returns
+            PresignUploadOutcome.Failure.Network(
+                IOException("simulated network failure"),
+            )
+    }
+
+    fun assertAttachmentUploadErrorVisible() {
+        val state = lastUiState()
+
+        if (state.transientError != ChatError.Network) {
+            error(
+                "expected ChatError.Network after attachment upload failure, " +
+                    "got ${state.transientError}",
+            )
+        }
+    }
+
+    fun assertDiagnosisPromptWasNotSent() {
+        val ids = lastImageFileIdsSnapshot()
+
+        if (ids.isNotEmpty()) {
+            error(
+                "expected diagnosis prompt not to be sent after upload failure, " +
+                    "but image_file_ids=$ids",
+            )
+        }
     }
 
     fun assertAssessmentVisible() {

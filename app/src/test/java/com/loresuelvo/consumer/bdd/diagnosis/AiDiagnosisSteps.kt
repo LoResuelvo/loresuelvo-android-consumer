@@ -526,6 +526,13 @@ class AiDiagnosisSteps {
         world.seedFileRepositorySuccess()
     }
 
+    @And("la IA acepta el mensaje con la imagen")
+    fun laIaAceptaElMensajeConLaImagen() {
+        world.seedSuccessDiagnosis(
+            assistantContent = "Detectamos una posible gotera en el baño.",
+        )
+    }
+
     /**
      * 06-AIP `Cuando escribo "X"`. The text input lives on the
      * chat VM; the step mirrors the existing 01-DIA prompt
@@ -748,5 +755,27 @@ class AiDiagnosisSteps {
     @Then("no tengo imágenes pendientes de envío")
     fun noTengoImagenesPendientes() {
         world.assertPendingAttachmentCount(expected = 0)
+    }
+
+    // ---- Scenario 08-AIP Mantener imágenes pendientes ante fallo ----
+
+    @And("la subida de la imagen falla por un error de red")
+    fun laSubidaDeLaImagenFallaPorUnErrorDeRed() {
+        world.seedFileRepositoryNetworkFailure()
+    }
+
+    @Then("veo un error al subir la imagen")
+    fun veoUnErrorAlSubirLaImagen() {
+        world.assertAttachmentUploadErrorVisible()
+    }
+
+    @Then("la imagen continúa pendiente de envío")
+    fun laImagenContinuaPendienteDeEnvio() {
+        world.assertPendingAttachmentStaged()
+    }
+
+    @Then("el mensaje no se envía")
+    fun elMensajeNoSeEnvia() {
+        world.assertDiagnosisPromptWasNotSent()
     }
 }

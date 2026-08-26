@@ -261,18 +261,13 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * 06-AIP happy path: route the prompt through the upload
-     * orchestrator. The attachments list is captured at the call
-     * site so a concurrent `onRemoveAttachment` cannot shrink the
-     * payload mid-upload.
-     */
     private fun fireSendWithAttachments(
         prompt: String,
         attachments: List<PendingMedia>,
         conversationId: String?,
     ) {
         val snapshot = _uiState.value
+
         _uiState.update {
             it.copy(
                 messages = snapshot.messages + optimisticMessage(prompt),
@@ -280,42 +275,80 @@ class ChatViewModel @Inject constructor(
                 sending = true,
                 transientError = null,
                 lastAttemptedPrompt = prompt,
-                pendingAttachments = emptyList(),
+                pendingAttachments = attachments,
             )
         }
+
         viewModelScope.launch {
             val outcome = uploadAttachmentsAndSend(
                 prompt = prompt,
                 conversationId = conversationId ?: "",
                 attachments = attachments,
             )
-            applyOutcome(outcome)
+            applyOutcome(
+                outcome = outcome,
+                attachments = attachments,
+            )
         }
     }
 
-    private fun applyOutcome(outcome: SendDiagnosisPromptOutcome) {
+    private fun applyOutcome(
+        outcome: SendDiagnosisPromptOutcome,
+        attachments: List<PendingMedia> = emptyList(),
+    ) {
         when (outcome) {
-            is SendDiagnosisPromptOutcome.Success -> applyServerResponse(outcome)
+            is SendDiagnosisPromptOutcome.Success ->
+                applyServerResponse(outcome)
+
             is SendDiagnosisPromptOutcome.Failure.Network ->
-                applySendFailure(ChatError.Network)
+                applySendFailure(
+                    error = ChatError.Network,
+                    pendingAttachments = attachments,
+                )
+
             is SendDiagnosisPromptOutcome.Failure.Server ->
-                applySendFailure(ChatError.ServiceUnavailable)
+                applySendFailure(
+                    error = ChatError.ServiceUnavailable,
+                    pendingAttachments = attachments,
+                )
+
             is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
-                applySendFailure(ChatError.Unauthorized(outcome.message))
+                applySendFailure(
+                    error = ChatError.Unauthorized(outcome.message),
+                    pendingAttachments = attachments,
+                )
         }
     }
 
-    private fun applyServerResponse(outcome: SendDiagnosisPromptOutcome.Success) {
+    private fun applySendFailure(
+        error: ChatError,
+        pendingAttachments: List<PendingMedia> = emptyList(),
+    ) {
+        _uiState.update {
+            it.copy(
+                sending = false,
+                transientError = error,
+                pendingAttachments = pendingAttachments,
+            )
+        }
+    }
+
+    private fun applyServerResponse(
+        outcome: SendDiagnosisPromptOutcome.Success,
+    ) {
         val diagnosis = outcome.diagnosis
+
         _uiState.update {
             it.copy(
                 sending = false,
                 conversationId = diagnosis.conversationId ?: it.conversationId,
                 messages = diagnosis.messages,
                 assessment = diagnosis.assessment ?: it.assessment,
-                recommendedProviders = diagnosis.recommendedProviders ?: it.recommendedProviders,
+                recommendedProviders =
+                    diagnosis.recommendedProviders ?: it.recommendedProviders,
                 transientError = null,
                 lastAttemptedPrompt = null,
+                pendingAttachments = emptyList(),
             )
         }
     }
@@ -331,19 +364,6 @@ class ChatViewModel @Inject constructor(
                 recommendedProviders = diagnosis.recommendedProviders ?: it.recommendedProviders,
                 transientError = null,
                 lastAttemptedPrompt = null,
-            )
-        }
-    }
-
-    private fun applySendFailure(error: ChatError) {
-        _uiState.update {
-            it.copy(
-                sending = false,
-                transientError = error,
-                // messages list is preserved so the user's optimistic
-                // bubble stays in place while the error card is shown;
-                // the producer can clear it via `onErrorDismiss` or
-                // successful `onRetryClick`.
             )
         }
     }

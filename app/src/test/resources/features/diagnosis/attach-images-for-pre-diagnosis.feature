@@ -94,6 +94,7 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
   Escenario: 06-AIP Enviar imágenes adjuntas para obtener un pre diagnóstico
     Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
     Y la subida de archivos está disponible
+    Y la IA acepta el mensaje con la imagen
     Cuando escribo "Tengo una gotera en el baño"
     Y presiono "Diagnosticar"
     Entonces se sube la imagen "gotera-baño.jpg"
@@ -106,7 +107,6 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Entonces veo la explicación del problema detectado
     Y veo la categoría detectada "Plomería"
 
-  @wip
   Escenario: 08-AIP Mantener las imágenes pendientes cuando falla la subida
     Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
     Y la subida de la imagen falla por un error de red
