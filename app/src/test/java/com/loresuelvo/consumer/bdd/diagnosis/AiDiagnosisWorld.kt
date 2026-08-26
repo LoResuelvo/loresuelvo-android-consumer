@@ -556,6 +556,52 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
+    /**
+     * 07-AIP `veo la explicación del problema detectado por la IA`.
+     * Pins that the AI produced at least one assistant message
+     * with non-blank content so the consumer has a textual
+     * diagnosis to read in the chat bubble.
+     */
+    fun assertAssistantExplanationVisible() {
+        val state = lastUiState()
+        val assistant = state.messages.lastOrNull { it.sender is com.loresuelvo.consumer.domain.diagnosis.Sender.Assistant }
+            ?: error(
+                "expected at least one Assistant message after the diagnosis " +
+                    "concluded, but state.messages=${state.messages}",
+            )
+        if (assistant.content.isBlank()) {
+            error(
+                "expected the assistant message to have non-blank content, " +
+                    "got '${assistant.content}'",
+            )
+        }
+    }
+
+    /**
+     * 07-AIP `veo la categoría detectada "Plomería"`. Pins the
+     * `problemCategory.name` of the `professional_required`
+     * assessment so the UI wire contract is locked.
+     */
+    fun assertAssessmentCategoryVisible(categoryName: String) {
+        val state = lastUiState()
+        val assessment = state.assessment
+            ?: error(
+                "expected an assessment to be visible after the diagnosis " +
+                    "concluded, but state.assessment was null. state=$state",
+            )
+        val category = assessment.problemCategory
+            ?: error(
+                "expected assessment.problemCategory to be set, " +
+                    "but it was null. assessment=$assessment",
+            )
+        if (category.name != categoryName) {
+            error(
+                "expected assessment.problemCategory.name to be '$categoryName', " +
+                    "got '${category.name}'",
+            )
+        }
+    }
+
     fun assertRecommendedProvidersVisible(categoryName: String) {
         val state = lastUiState()
         val providers = state.recommendedProviders

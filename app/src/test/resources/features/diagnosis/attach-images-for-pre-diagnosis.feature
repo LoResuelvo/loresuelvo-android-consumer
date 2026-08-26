@@ -100,11 +100,10 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Y se envía el mensaje con la imagen adjunta
     Y no tengo imágenes pendientes de envío
 
-  @wip 
   Escenario: 07-AIP Pre diagnóstico generado tras el envío de imágenes
     Dado que envié la imagen "gotera-baño.jpg" y la IA devolvió un pre diagnóstico
     Cuando visualizo la respuesta del asistente
-    Entonces veo la explicación del problema detectado por la IA
+    Entonces veo la explicación del problema detectado
     Y veo la categoría detectada "Plomería"
 
   @wip

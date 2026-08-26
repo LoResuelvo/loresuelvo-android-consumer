@@ -575,6 +575,30 @@ class AiDiagnosisSteps {
         }
     }
 
+    // ---- Scenario 07-AIP Pre diagnóstico generado -------
+
+    /**
+     * Drives the full happy path with
+     * a `professional_required` assessment so the assistant
+     * bubble + category pin from the next two steps land on a
+     * real conversation state.
+     */
+    @Given("que envié la imagen {string} y la IA devolvió un pre diagnóstico")
+    fun envieImagenYIaDevolvioPreDiagnostico(filename: String) {
+        world.stageImages(listOf(filename))
+        world.seedFileRepositorySuccess()
+        world.seedConcludedDiagnosis(categoryName = "Plomería")
+    }
+
+    /**
+     * The `professional_required` assessment's `problemCategory.name`
+     * is the wire the UI renders next to the explanation.
+     */
+    @Then("veo la categoría detectada {string}")
+    fun veoLaCategoriaDetectada(categoryName: String) {
+        world.assertAssessmentCategoryVisible(categoryName)
+    }
+
     /**
      * 03-AIP `Dado que no tengo imágenes pendientes de envío`.
      * Pre-condition: the chat starts clean so the multiple-
