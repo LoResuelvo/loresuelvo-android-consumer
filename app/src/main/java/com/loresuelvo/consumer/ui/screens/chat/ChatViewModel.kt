@@ -11,6 +11,7 @@ import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
+import com.loresuelvo.consumer.domain.diagnosis.usecase.UploadAttachmentsAndSendUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.util.UUID
 import javax.inject.Inject
@@ -61,6 +62,7 @@ class ChatViewModel @Inject constructor(
     private val sendDiagnosisPrompt: SendDiagnosisPromptUseCase,
     private val loadAiConversation: LoadAiConversationUseCase,
     private val mediaReader: MediaReader,
+    private val uploadAttachmentsAndSend: UploadAttachmentsAndSendUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatUiState())
@@ -74,6 +76,16 @@ class ChatViewModel @Inject constructor(
         val state = _uiState.value
         val prompt = state.promptInput.trim()
         if (prompt.isEmpty() || state.sending) return
+
+        // Scenario 06-AIP: route the prompt through the upload
+        // orchestrator when there are staged attachments. The
+        // orchestrator runs the presign → upload → confirm
+        // pipeline per attachment and then dispatches the prompt
+        // with the joined `image_file_ids[]`.
+        if (state.pendingAttachments.isNotEmpty()) {
+            fireSendWithAttachments(prompt, state.pendingAttachments, state.conversationId)
+            return
+        }
 
         val snapshot = state
         _uiState.update {
@@ -245,15 +257,51 @@ class ChatViewModel @Inject constructor(
     private fun fireSend(prompt: String, conversationId: String?) {
         viewModelScope.launch {
             val outcome = sendDiagnosisPrompt(prompt, conversationId)
-            when (outcome) {
-                is SendDiagnosisPromptOutcome.Success -> applyServerResponse(outcome)
-                is SendDiagnosisPromptOutcome.Failure.Network ->
-                    applySendFailure(ChatError.Network)
-                is SendDiagnosisPromptOutcome.Failure.Server ->
-                    applySendFailure(ChatError.ServiceUnavailable)
-                is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
-                    applySendFailure(ChatError.Unauthorized(outcome.message))
-            }
+            applyOutcome(outcome)
+        }
+    }
+
+    /**
+     * 06-AIP happy path: route the prompt through the upload
+     * orchestrator. The attachments list is captured at the call
+     * site so a concurrent `onRemoveAttachment` cannot shrink the
+     * payload mid-upload.
+     */
+    private fun fireSendWithAttachments(
+        prompt: String,
+        attachments: List<PendingMedia>,
+        conversationId: String?,
+    ) {
+        val snapshot = _uiState.value
+        _uiState.update {
+            it.copy(
+                messages = snapshot.messages + optimisticMessage(prompt),
+                promptInput = "",
+                sending = true,
+                transientError = null,
+                lastAttemptedPrompt = prompt,
+                pendingAttachments = emptyList(),
+            )
+        }
+        viewModelScope.launch {
+            val outcome = uploadAttachmentsAndSend(
+                prompt = prompt,
+                conversationId = conversationId ?: "",
+                attachments = attachments,
+            )
+            applyOutcome(outcome)
+        }
+    }
+
+    private fun applyOutcome(outcome: SendDiagnosisPromptOutcome) {
+        when (outcome) {
+            is SendDiagnosisPromptOutcome.Success -> applyServerResponse(outcome)
+            is SendDiagnosisPromptOutcome.Failure.Network ->
+                applySendFailure(ChatError.Network)
+            is SendDiagnosisPromptOutcome.Failure.Server ->
+                applySendFailure(ChatError.ServiceUnavailable)
+            is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
+                applySendFailure(ChatError.Unauthorized(outcome.message))
         }
     }
 

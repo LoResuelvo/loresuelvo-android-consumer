@@ -51,6 +51,7 @@ class ChatViewModelAttachImageTest {
     private val useCase = mockk<SendDiagnosisPromptUseCase>(relaxed = true)
     private val loadUseCase = mockk<LoadAiConversationUseCase>(relaxed = true)
     private val mediaReader = mockk<MediaReader>()
+    private val uploadAttachmentsAndSend = mockk<com.loresuelvo.consumer.domain.diagnosis.usecase.UploadAttachmentsAndSendUseCase>(relaxed = true)
     private lateinit var viewModel: ChatViewModel
 
     private val galleryUri: Uri = mockk<Uri>(relaxed = true).also {
@@ -63,7 +64,7 @@ class ChatViewModelAttachImageTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ChatViewModel(useCase, loadUseCase, mediaReader)
+        viewModel = ChatViewModel(useCase, loadUseCase, mediaReader, uploadAttachmentsAndSend)
     }
 
     @After
