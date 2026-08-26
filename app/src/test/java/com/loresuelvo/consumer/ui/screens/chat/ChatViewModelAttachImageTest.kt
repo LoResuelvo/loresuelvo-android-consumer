@@ -5,6 +5,9 @@ import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
+import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
+import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
+import java.io.IOException
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -211,4 +214,107 @@ class ChatViewModelAttachImageTest {
         advanceUntilIdle()
         assertEquals(emptyList<PendingMedia>(), viewModel.uiState.value.pendingAttachments)
     }
+
+    @Test
+    fun upload_failure_preserves_pending_attachments() = runTest {
+        val cause = IOException("network failure")
+
+        coEvery {
+            uploadAttachmentsAndSend(
+                prompt = "Tengo una gotera en el baño",
+                conversationId = any(),
+                attachments = any(),
+            )
+        } returns SendDiagnosisPromptOutcome.Failure.Network(cause)
+
+        viewModel.onAttachMedia(
+            MediaUpload.Image(
+                imageBytes,
+                imageMime,
+                imageName,
+            ),
+            sourceUri = null,
+        )
+
+        viewModel.onPromptChange("Tengo una gotera en el baño")
+        viewModel.onSendClick()
+
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+
+        assertFalse(state.sending)
+        assertEquals(ChatError.Network, state.transientError)
+
+        assertEquals(
+            "failed upload must preserve the pending attachment",
+            1,
+            state.pendingAttachments.size,
+        )
+        assertEquals(
+            imageName,
+            state.pendingAttachments.single().originalName,
+        )
+    }
+
+    @Test
+    fun retry_with_pending_attachments_retries_upload_and_clears_pending() =
+        runTest {
+            val cause = IOException("network failure")
+
+            coEvery {
+                uploadAttachmentsAndSend(
+                    prompt = "Tengo una gotera en el baño",
+                    conversationId = any(),
+                    attachments = any(),
+                )
+            } returnsMany listOf(
+                SendDiagnosisPromptOutcome.Failure.Network(cause),
+                SendDiagnosisPromptOutcome.Success(
+                    Diagnosis(
+                        conversationId = "conv-1",
+                        messages = emptyList(),
+                    ),
+                ),
+            )
+
+            viewModel.onAttachMedia(
+                MediaUpload.Image(
+                    imageBytes,
+                    imageMime,
+                    imageName,
+                ),
+                sourceUri = null,
+            )
+
+            viewModel.onPromptChange("Tengo una gotera en el baño")
+            viewModel.onSendClick()
+
+            advanceUntilIdle()
+
+            assertEquals(
+                "the failed upload must leave the attachment staged",
+                1,
+                viewModel.uiState.value.pendingAttachments.size,
+            )
+
+            viewModel.onRetryClick()
+            advanceUntilIdle()
+
+            coVerify(exactly = 2) {
+                uploadAttachmentsAndSend(
+                    prompt = "Tengo una gotera en el baño",
+                    conversationId = any(),
+                    attachments = any(),
+                )
+            }
+
+            val state = viewModel.uiState.value
+
+            assertFalse(state.sending)
+            assertTrue(state.pendingAttachments.isEmpty())
+            assertNull(state.transientError)
+            assertEquals("conv-1", state.conversationId)
+        }
+
 }

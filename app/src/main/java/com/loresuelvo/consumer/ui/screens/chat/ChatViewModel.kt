@@ -103,14 +103,28 @@ class ChatViewModel @Inject constructor(
     fun onRetryClick() {
         val state = _uiState.value
         val prompt = state.lastAttemptedPrompt
+
         if (prompt.isNullOrBlank() || state.sending) return
+
         _uiState.update {
             it.copy(
                 sending = true,
                 transientError = null,
             )
         }
-        fireSend(prompt, state.conversationId)
+
+        if (state.pendingAttachments.isNotEmpty()) {
+            fireSendWithAttachments(
+                prompt = prompt,
+                attachments = state.pendingAttachments,
+                conversationId = state.conversationId,
+            )
+        } else {
+            fireSend(
+                prompt = prompt,
+                conversationId = state.conversationId,
+            )
+        }
     }
 
     fun onErrorDismiss() {
