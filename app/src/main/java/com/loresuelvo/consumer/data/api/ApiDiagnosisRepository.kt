@@ -30,15 +30,22 @@ class ApiDiagnosisRepository @Inject constructor(
     override suspend fun sendPrompt(
         content: String,
         existingConversationId: String?,
+        imageFileIds: List<String>,
     ): SendDiagnosisPromptOutcome = try {
         val dto = if (existingConversationId == null) {
             backendApi.createConversation(
-                CreateConversationRequestDto(content = content),
+                CreateConversationRequestDto(
+                    content = content,
+                    imageFileIds = imageFileIds.takeIf { it.isNotEmpty() },
+                ),
             )
         } else {
             backendApi.sendMessage(
                 conversationId = existingConversationId,
-                body = SendMessageRequestDto(content = content),
+                body = SendMessageRequestDto(
+                    content = content,
+                    imageFileIds = imageFileIds.takeIf { it.isNotEmpty() },
+                ),
             )
         }
         SendDiagnosisPromptOutcome.Success(dto.toDomain())

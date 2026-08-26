@@ -30,6 +30,7 @@ class SendDiagnosisPromptUseCase @Inject constructor(
     suspend operator fun invoke(
         prompt: String,
         existingConversationId: String? = null,
+        imageFileIds: List<String> = emptyList(),
     ): SendDiagnosisPromptOutcome {
         val trimmed = prompt.trim()
         if (trimmed.isEmpty()) {
@@ -38,6 +39,10 @@ class SendDiagnosisPromptUseCase @Inject constructor(
                 message = "Prompt is empty",
             )
         }
-        return diagnosisRepository.sendPrompt(trimmed, existingConversationId)
+        return diagnosisRepository.sendPrompt(
+            content = trimmed,
+            existingConversationId = existingConversationId,
+            imageFileIds = imageFileIds,
+        )
     }
 }
