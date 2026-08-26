@@ -24,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,7 +33,6 @@ import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
-import com.loresuelvo.consumer.ui.theme.BrandSecondary
 
 /**
  * WhatsApp-style bubble for a single message in a consumer ↔
@@ -83,44 +81,51 @@ fun ConversationMessageBubble(
                 .widthIn(max = 320.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(bubbleColor)
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .padding(8.dp)
                 .testTag(CONVERSATION_MESSAGE_BUBBLE_TAG),
         ) {
             when (val media = message.media) {
                 is MediaReference.Image -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(BrandSecondary)
-                            .clickable {
-                                onImageClick(message.id)
-                            }
-                            .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        SubcomposeAsyncImage(
-                            model = media.url,
-                            contentDescription = media.originalName,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize(),
-                            loading = {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(32.dp),
-                                    strokeWidth = 2.dp,
-                                    color = Color.White,
-                                )
-                            },
-                            error = {
-                                Icon(
-                                    imageVector = Icons.Filled.BrokenImage,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(32.dp),
-                                )
-                            },
-                        )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { onImageClick(message.id) }
+                                .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            SubcomposeAsyncImage(
+                                model = media.url,
+                                contentDescription = media.originalName,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize(),
+                                loading = {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(32.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                },
+                                error = {
+                                    Icon(
+                                        imageVector = Icons.Filled.BrokenImage,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(32.dp),
+                                    )
+                                },
+                            )
+                        }
+                        if (message.content.isNotBlank()) {
+                            Text(
+                                text = message.content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor,
+                                overflow = TextOverflow.Visible,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            )
+                        }
                     }
                 }
 

@@ -103,6 +103,22 @@ class ConversationMessageBubbleTest {
     }
 
     @Test
+    fun image_message_with_caption_renders_both_photo_and_text() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = imageMessage().copy(content = "Mirá la pérdida"),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_IMAGE_TAG)
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("Mirá la pérdida")
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun text_message_renders_content() {
         composeTestRule.setContent {
             ConversationMessageBubble(
