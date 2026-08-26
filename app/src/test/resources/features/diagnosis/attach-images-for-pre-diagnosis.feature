@@ -86,7 +86,6 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Y las imágenes pendientes son "gotera-1.jpg" y "gotera-3.jpg"
     Y conservan su orden original
 
-  @wip
   Escenario: 05-AIP Eliminar todas las imágenes pendientes antes del envío
     Dado que tengo 3 imágenes pendientes de envío
     Cuando elimino todas las imágenes pendientes
