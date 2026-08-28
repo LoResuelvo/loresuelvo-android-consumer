@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 
 /**
  * Fullscreen image overlay for the conversation screen (06-MM).
@@ -46,6 +47,36 @@ fun FullScreenImageViewer(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    FullScreenImageViewerContent(
+        imageUrl = image.url,
+        imageName = image.originalName,
+        onDismiss = onDismiss,
+        modifier = modifier,
+    )
+}
+
+/** Fullscreen viewer for photos attached to an AI diagnostic message. */
+@Composable
+fun FullScreenImageViewer(
+    image: ChatImage,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FullScreenImageViewerContent(
+        imageUrl = image.url,
+        imageName = image.originalName,
+        onDismiss = onDismiss,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun FullScreenImageViewerContent(
+    imageUrl: String,
+    imageName: String,
+    onDismiss: () -> Unit,
+    modifier: Modifier,
+) {
     val interactionSource = remember { MutableInteractionSource() }
 
     Box(
@@ -61,8 +92,8 @@ fun FullScreenImageViewer(
         contentAlignment = Alignment.Center,
     ) {
         SubcomposeAsyncImage(
-            model = image.url,
-            contentDescription = image.originalName,
+            model = imageUrl,
+            contentDescription = imageName,
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .fillMaxSize()

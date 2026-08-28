@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 
 /**
  * Pure mapping from the current state to the index the messages
@@ -96,6 +97,7 @@ fun MessagesList(
     transientError: ChatError?,
     onRetryClick: () -> Unit,
     onErrorDismissClick: () -> Unit,
+    onImageClick: (ChatImage) -> Unit = {},
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
@@ -135,7 +137,7 @@ fun MessagesList(
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
     ) {
         items(items = messages, key = { it.id }) { message ->
-            MessageBubble(message = message)
+            MessageBubble(message = message, onImageClick = onImageClick)
         }
         if (typingIndicatorVisible) {
             item(key = TYPING_INDICATOR_KEY) {

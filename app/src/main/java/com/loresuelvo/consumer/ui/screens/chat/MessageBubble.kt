@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,17 +46,19 @@ import com.loresuelvo.consumer.domain.diagnosis.Sender
 @Composable
 fun MessageBubble(
     message: ChatMessage,
+    onImageClick: (ChatImage) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     when (message.sender) {
-        Sender.Consumer -> ConsumerBubble(message = message, modifier = modifier)
-        Sender.Assistant -> AssistantBubble(message = message, modifier = modifier)
+        Sender.Consumer -> ConsumerBubble(message, onImageClick, modifier)
+        Sender.Assistant -> AssistantBubble(message, onImageClick, modifier)
     }
 }
 
 @Composable
 private fun ConsumerBubble(
     message: ChatMessage,
+    onImageClick: (ChatImage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -77,7 +80,7 @@ private fun ConsumerBubble(
                 .padding(8.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ChatMessageImages(message.id, message.images)
+                ChatMessageImages(message.id, message.images, onImageClick)
                 Text(
                     text = message.content,
                     style = MaterialTheme.typography.bodyLarge,
@@ -93,6 +96,7 @@ private fun ConsumerBubble(
 private fun ChatMessageImages(
     messageId: String,
     images: List<ChatImage>,
+    onImageClick: (ChatImage) -> Unit,
 ) {
     images.forEachIndexed { index, image ->
         Box(
@@ -101,6 +105,7 @@ private fun ChatMessageImages(
                 .height(180.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { onImageClick(image) }
                 .testTag(chatMessageImageTag(messageId, index)),
             contentAlignment = Alignment.Center,
         ) {
@@ -130,6 +135,7 @@ private fun ChatMessageImages(
 @Composable
 private fun AssistantBubble(
     message: ChatMessage,
+    onImageClick: (ChatImage) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Avatar on the left, bubble on the right. The avatar is 32dp
@@ -156,7 +162,7 @@ private fun AssistantBubble(
                 .padding(8.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ChatMessageImages(message.id, message.images)
+                ChatMessageImages(message.id, message.images, onImageClick)
                 Text(
                     text = message.content,
                     style = MaterialTheme.typography.bodyLarge,

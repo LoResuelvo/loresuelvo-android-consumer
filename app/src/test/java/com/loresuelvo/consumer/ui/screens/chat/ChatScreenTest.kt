@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performClick
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.ChatImage
@@ -287,5 +288,33 @@ class ChatScreenTest {
         composeTestRule
             .onNodeWithTag(chatMessageImageTag(message.id, 0))
             .assertExists()
+    }
+
+    @Test
+    fun message_image_opens_and_dismisses_fullscreen_viewer() {
+        val message = ChatMessage(
+            id = "consumer-2",
+            sender = Sender.Consumer,
+            content = "",
+            sentAtEpochMillis = 0L,
+            images = listOf(
+                ChatImage("file-2", "https://cdn.example.test/file-2.jpg", "foto.jpg", "image/jpeg"),
+            ),
+        )
+        composeTestRule.setContent {
+            ChatScreen(
+                promptInput = "", canSend = false, sending = false,
+                messages = listOf(message), assessment = null,
+                recommendedProviders = null, transientError = null,
+                preliminaryWarningVisible = false,
+                onPromptChange = {}, onSendClick = {}, onRetryClick = {},
+                onErrorDismiss = {}, onContactClick = {}, onBackClick = {},
+            )
+        }
+
+        composeTestRule.onNodeWithTag(chatMessageImageTag(message.id, 0)).performClick()
+        composeTestRule.onNodeWithTag(CONVERSATION_FULLSCREEN_IMAGE_TAG).assertExists()
+        composeTestRule.onNodeWithTag(CONVERSATION_FULLSCREEN_IMAGE_TAG).performClick()
+        composeTestRule.onNodeWithTag(CONVERSATION_FULLSCREEN_IMAGE_TAG).assertDoesNotExist()
     }
 }

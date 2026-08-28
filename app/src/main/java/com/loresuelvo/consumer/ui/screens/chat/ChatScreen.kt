@@ -16,6 +16,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -24,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.provider.Provider
@@ -74,6 +78,7 @@ fun ChatScreen(
     onAttachSheetDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var fullscreenImage by remember { mutableStateOf<ChatImage?>(null) }
     val initialMessage = ChatMessage(
         id = INITIAL_MESSAGE_ID,
         sender = Sender.Assistant,
@@ -146,6 +151,7 @@ fun ChatScreen(
                     transientError = transientError,
                     onRetryClick = onRetryClick,
                     onErrorDismissClick = onErrorDismiss,
+                    onImageClick = { fullscreenImage = it },
                     modifier = Modifier.weight(1f),
                 )
                 if (assessment != null && assessment.isProfessionalRequired) {
@@ -168,6 +174,13 @@ fun ChatScreen(
         onGalleryClick = onAttachImageFromGallery,
         onCameraClick = onAttachImageFromCamera,
     )
+
+    fullscreenImage?.let { image ->
+        FullScreenImageViewer(
+            image = image,
+            onDismiss = { fullscreenImage = null },
+        )
+    }
 }
 
 /**
