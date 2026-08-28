@@ -66,6 +66,16 @@ class ChatViewModelAttachImageTest {
     private val imageName = "gotera-baño.jpg"
     private val imageMime = "image/jpeg"
 
+    private fun attachment(name: String) = com.loresuelvo.consumer.ui.screens.chat.PendingMedia(
+        localUri = null,
+        mimeType = "image/jpeg",
+        originalName = name,
+        sizeBytes = imageBytes.size.toLong(),
+        bytes = imageBytes,
+        kind = com.loresuelvo.consumer.ui.screens.chat.PendingMediaKind.IMAGE,
+        durationMillis = 0L,
+    )
+
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -325,6 +335,69 @@ class ChatViewModelAttachImageTest {
             state.pendingAttachments.single().originalName,
         )
     }
+
+    @Test
+    fun post_upload_send_failure_moves_attachments_to_sentAttachments() =
+        runTest {
+            // 10-AIP: when the orchestrator carries
+            // `partiallyUploadedAttachments` on the failure, the
+            // VM must move them off `pendingAttachments` (those
+            // bytes no longer need a re-upload) into a separate
+            // `sentAttachments` snapshot the UI renders below the
+            // optimistic bubble. Distinguishes from
+            // `upload_failure_preserves_pending_attachments` where
+            // the bytes never made it to the storage backend.
+            val first = attachment("first.jpg")
+            val second = attachment("second.jpg")
+            coEvery {
+                uploadAttachmentsAndSend(
+                    prompt = any(),
+                    conversationId = any(),
+                    attachments = any(),
+                )
+            } returns SendDiagnosisPromptOutcome.Failure.Server(
+                code = 500,
+                message = "ia service down",
+                partiallyUploadedAttachments = listOf(first, second),
+            )
+
+            viewModel.onAttachMedia(
+                com.loresuelvo.consumer.domain.conversation.MediaUpload.Image(
+                    bytes = first.bytes,
+                    mimeType = first.mimeType,
+                    originalName = first.originalName,
+                ),
+                sourceUri = null,
+            )
+            viewModel.onAttachMedia(
+                com.loresuelvo.consumer.domain.conversation.MediaUpload.Image(
+                    bytes = second.bytes,
+                    mimeType = second.mimeType,
+                    originalName = second.originalName,
+                ),
+                sourceUri = null,
+            )
+            viewModel.onPromptChange("Tengo una gotera en el baño")
+            viewModel.onSendClick()
+            advanceUntilIdle()
+
+            val state = viewModel.uiState.value
+            assertEquals(
+                "pendingAttachments must be empty after post-upload send failure",
+                0,
+                state.pendingAttachments.size,
+            )
+            assertEquals(
+                "uploaded attachments must be preserved in sentAttachments",
+                2,
+                state.sentAttachments.size,
+            )
+            assertEquals(listOf("first.jpg", "second.jpg"), state.sentAttachments.map { it.originalName })
+            assertTrue(
+                "transientError must surface the IA failure",
+                state.transientError is ChatError.ServiceUnavailable,
+            )
+        }
 
     @Test
     fun retry_with_pending_attachments_retries_upload_and_clears_pending() =

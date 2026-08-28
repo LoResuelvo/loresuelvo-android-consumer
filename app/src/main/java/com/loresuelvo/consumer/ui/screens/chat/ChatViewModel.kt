@@ -324,18 +324,21 @@ class ChatViewModel @Inject constructor(
                 applySendFailure(
                     error = ChatError.Network,
                     pendingAttachments = attachments,
+                    uploadedAttachments = outcome.partiallyUploadedAttachments,
                 )
 
             is SendDiagnosisPromptOutcome.Failure.Server ->
                 applySendFailure(
                     error = ChatError.ServiceUnavailable,
                     pendingAttachments = attachments,
+                    uploadedAttachments = outcome.partiallyUploadedAttachments,
                 )
 
             is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
                 applySendFailure(
                     error = ChatError.Unauthorized(outcome.message),
                     pendingAttachments = attachments,
+                    uploadedAttachments = outcome.partiallyUploadedAttachments,
                 )
         }
     }
@@ -343,12 +346,30 @@ class ChatViewModel @Inject constructor(
     private fun applySendFailure(
         error: ChatError,
         pendingAttachments: List<PendingMedia> = emptyList(),
+        uploadedAttachments: List<PendingMedia> = emptyList(),
     ) {
         _uiState.update {
+            // 08-AIP: an upload-pipeline failure leaves
+            // [pendingAttachments] intact so the user can
+            // retry without re-picking the images.
+            // 10-AIP: a prompt-send failure AFTER successful
+            // uploads moves the uploaded bytes to
+            // [sentAttachments] so the optimistic bubble stays
+            // visible (with its images) until the user retries
+            // the message endpoint. The orchestrator signals
+            // the distinction via the populated
+            // [SendDiagnosisPromptOutcome.Failure.partiallyUploadedAttachments].
+            val newPending = if (uploadedAttachments.isEmpty()) {
+                pendingAttachments
+            } else {
+                emptyList()
+            }
+            val newSent = it.sentAttachments + uploadedAttachments
             it.copy(
                 sending = false,
                 transientError = error,
-                pendingAttachments = pendingAttachments,
+                pendingAttachments = newPending,
+                sentAttachments = newSent,
             )
         }
     }
@@ -369,6 +390,7 @@ class ChatViewModel @Inject constructor(
                 transientError = null,
                 lastAttemptedPrompt = null,
                 pendingAttachments = emptyList(),
+                sentAttachments = emptyList(),
             )
         }
     }

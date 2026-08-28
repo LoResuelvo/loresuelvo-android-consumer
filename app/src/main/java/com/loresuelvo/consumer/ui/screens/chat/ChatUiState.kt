@@ -41,6 +41,16 @@ data class ChatUiState(
     val lastAttemptedPrompt: String? = null,
     val preliminaryWarningVisible: Boolean = true,
     val pendingAttachments: List<PendingMedia> = emptyList(),
+    /**
+     * Attachments the upload pipeline confirmed before the
+     * send endpoint rejected (10-AIP). Distinct from
+     * [pendingAttachments] which holds bytes that still need a
+     * fresh upload on retry (08-AIP). The UI renders this
+     * snapshot below the optimistic user bubble so the consumer
+     * keeps context of what they tried to send across a failed
+     * round-trip.
+     */
+    val sentAttachments: List<PendingMedia> = emptyList(),
 ) {
     val canSend: Boolean get() =
         (promptInput.trim().isNotEmpty() || pendingAttachments.isNotEmpty()) && !sending
