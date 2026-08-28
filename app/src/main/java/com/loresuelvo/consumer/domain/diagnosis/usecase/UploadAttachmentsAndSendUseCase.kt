@@ -46,17 +46,41 @@ class UploadAttachmentsAndSendUseCase @Inject constructor(
         conversationId: String,
         attachments: List<PendingMedia>,
     ): SendDiagnosisPromptOutcome {
-        val fileIds = mutableListOf<String>()
+        // Pair each uploaded result with its source attachment
+        // so a post-upload send failure (10-AIP) can surface
+        // the bytes that already live on the storage backend via
+        // [SendDiagnosisPromptOutcome.Failure.partiallyUploadedAttachments].
+        val uploaded = mutableListOf<Pair<String, PendingMedia>>()
         for (attachment in attachments) {
             val outcome = uploadOne(attachment)
             if (outcome is UploadFailure) return outcome.toSendFailure(attachment.originalName)
-            fileIds += (outcome as UploadSuccess).fileId
+            uploaded += (outcome as UploadSuccess).fileId to attachment
         }
-        return sendDiagnosisPrompt(
+        val fileIds = uploaded.map { it.first }
+        val uploadedAttachments = uploaded.map { it.second }
+        return when (val promptOutcome = sendDiagnosisPrompt(
             prompt = prompt,
             existingConversationId = conversationId,
             imageFileIds = fileIds,
-        )
+        )) {
+            is SendDiagnosisPromptOutcome.Success -> promptOutcome
+            is SendDiagnosisPromptOutcome.Failure.Network ->
+                promptOutcome.copy(
+                    cause = promptOutcome.cause,
+                    partiallyUploadedAttachments = uploadedAttachments,
+                )
+            is SendDiagnosisPromptOutcome.Failure.Server ->
+                promptOutcome.copy(
+                    code = promptOutcome.code,
+                    message = promptOutcome.message,
+                    partiallyUploadedAttachments = uploadedAttachments,
+                )
+            is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
+                promptOutcome.copy(
+                    message = promptOutcome.message,
+                    partiallyUploadedAttachments = uploadedAttachments,
+                )
+        }
     }
 
     private sealed interface UploadResult

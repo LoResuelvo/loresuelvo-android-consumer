@@ -244,4 +244,59 @@ class UploadAttachmentsAndSendUseCaseTest {
 
         assertTrue(outcome is SendDiagnosisPromptOutcome.Failure.Network)
     }
+
+    @Test
+    fun uploadAttachmentsAndSend_send_failure_partially_uploaded_attachments_carries_them() =
+        runTest {
+            // 10-AIP: when the upload pipeline succeeds but the
+            // backend rejects the message (IA service 5xx), the
+            // orchestrated use case must carry the uploaded bytes
+            // forward on the Failure so the VM can keep them
+            // attached to the optimistic bubble and the user can
+            // retry without re-uploading.
+            val a = attachment("first.jpg")
+            val b = attachment("second.jpg")
+            coEvery { fileRepository.presign(any()) } returnsMany listOf(
+                presignResult("upload-1", fileId = "file-1"),
+                presignResult("upload-2", fileId = "file-2"),
+            )
+            coEvery { fileRepository.confirm("file-1", any()) } returns
+                ConfirmUploadOutcome.Success(
+                    ConfirmedFile(
+                        id = "file-1",
+                        mimeType = "image/jpeg",
+                        originalName = "first.jpg",
+                        codec = "",
+                        durationSeconds = 0,
+                    ),
+                )
+            coEvery { fileRepository.confirm("file-2", any()) } returns
+                ConfirmUploadOutcome.Success(
+                    ConfirmedFile(
+                        id = "file-2",
+                        mimeType = "image/jpeg",
+                        originalName = "second.jpg",
+                        codec = "",
+                        durationSeconds = 0,
+                    ),
+                )
+            coEvery { sendDiagnosisPrompt(any(), any(), any()) } returns
+                SendDiagnosisPromptOutcome.Failure.Server(
+                    code = 500,
+                    message = "ia service down",
+                )
+
+            val outcome = useCase(
+                prompt = "p",
+                conversationId = "conv-1",
+                attachments = listOf(a, b),
+            )
+
+            val failure = outcome as SendDiagnosisPromptOutcome.Failure.Server
+            assertEquals(
+                "both uploaded attachments must be carried on the failure",
+                listOf(a, b),
+                failure.partiallyUploadedAttachments,
+            )
+        }
 }
