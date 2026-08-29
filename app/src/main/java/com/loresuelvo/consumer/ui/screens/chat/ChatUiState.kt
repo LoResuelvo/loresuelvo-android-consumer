@@ -51,6 +51,14 @@ data class ChatUiState(
      * round-trip.
      */
     val sentAttachments: List<PendingMedia> = emptyList(),
+    /**
+     * File IDs the orchestrator returned for the attachments
+     * in [sentAttachments], aligned by index. The VM uses this
+     * snapshot on retry (11-AIP) so the chat message endpoint
+     * is called again with the cached IDs instead of re-running
+     * the presign → upload → confirm pipeline.
+     */
+    val sentAttachmentFileIds: List<String> = emptyList(),
 ) {
     val canSend: Boolean get() =
         (promptInput.trim().isNotEmpty() || pendingAttachments.isNotEmpty()) && !sending

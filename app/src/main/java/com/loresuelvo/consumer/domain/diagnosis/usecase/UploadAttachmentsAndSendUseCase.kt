@@ -68,17 +68,20 @@ class UploadAttachmentsAndSendUseCase @Inject constructor(
                 promptOutcome.copy(
                     cause = promptOutcome.cause,
                     partiallyUploadedAttachments = uploadedAttachments,
+                    partiallyUploadedFileIds = fileIds,
                 )
             is SendDiagnosisPromptOutcome.Failure.Server ->
                 promptOutcome.copy(
                     code = promptOutcome.code,
                     message = promptOutcome.message,
                     partiallyUploadedAttachments = uploadedAttachments,
+                    partiallyUploadedFileIds = fileIds,
                 )
             is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
                 promptOutcome.copy(
                     message = promptOutcome.message,
                     partiallyUploadedAttachments = uploadedAttachments,
+                    partiallyUploadedFileIds = fileIds,
                 )
         }
     }

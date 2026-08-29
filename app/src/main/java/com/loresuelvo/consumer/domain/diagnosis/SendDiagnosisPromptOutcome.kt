@@ -25,6 +25,15 @@ sealed interface SendDiagnosisPromptOutcome {
              * prompt without re-uploading.
              */
             val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
+            /**
+             * File IDs returned by the `presign` step for the
+             * attachments in [partiallyUploadedAttachments],
+             * aligned by index. The VM mirrors these into
+             * `state.sentAttachmentFileIds` so 11-AIP's retry
+             * can replay the prompt endpoint call without
+             * re-running the upload pipeline.
+             */
+            val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
 
         /**
@@ -35,12 +44,14 @@ sealed interface SendDiagnosisPromptOutcome {
             val code: Int,
             val message: String,
             val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
+            val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
 
         /** 401: Auth0 session expired or invalid. */
         data class Unauthorized(
             val message: String,
             val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
+            val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
     }
 }

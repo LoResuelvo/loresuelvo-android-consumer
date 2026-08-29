@@ -119,17 +119,31 @@ class ChatViewModel @Inject constructor(
             )
         }
 
-        if (state.pendingAttachments.isNotEmpty()) {
-            fireSendWithAttachments(
-                prompt = prompt,
-                attachments = state.pendingAttachments,
-                conversationId = state.conversationId,
-            )
-        } else {
-            fireSend(
-                prompt = prompt,
-                conversationId = state.conversationId,
-            )
+        when {
+            // 08-AIP retry: the upload pipeline failed; the
+            // bytes are still in `pendingAttachments` and need
+            // a fresh presign → upload → confirm cycle.
+            state.pendingAttachments.isNotEmpty() ->
+                fireSendWithAttachments(
+                    prompt = prompt,
+                    attachments = state.pendingAttachments,
+                    conversationId = state.conversationId,
+                )
+            // 11-AIP retry: the upload pipeline succeeded but
+            // the prompt endpoint rejected. The cached file IDs
+            // bypass the upload orchestrator and replay the
+            // chat message call directly.
+            state.sentAttachmentFileIds.isNotEmpty() ->
+                fireSend(
+                    prompt = prompt,
+                    conversationId = state.conversationId,
+                    imageFileIds = state.sentAttachmentFileIds,
+                )
+            else ->
+                fireSend(
+                    prompt = prompt,
+                    conversationId = state.conversationId,
+                )
         }
     }
 
@@ -274,9 +288,13 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun fireSend(prompt: String, conversationId: String?) {
+    private fun fireSend(
+        prompt: String,
+        conversationId: String?,
+        imageFileIds: List<String> = emptyList(),
+    ) {
         viewModelScope.launch {
-            val outcome = sendDiagnosisPrompt(prompt, conversationId)
+            val outcome = sendDiagnosisPrompt(prompt, conversationId, imageFileIds)
             applyOutcome(outcome)
         }
     }
@@ -325,6 +343,7 @@ class ChatViewModel @Inject constructor(
                     error = ChatError.Network,
                     pendingAttachments = attachments,
                     uploadedAttachments = outcome.partiallyUploadedAttachments,
+                    uploadedFileIds = outcome.partiallyUploadedFileIds,
                 )
 
             is SendDiagnosisPromptOutcome.Failure.Server ->
@@ -332,6 +351,7 @@ class ChatViewModel @Inject constructor(
                     error = ChatError.ServiceUnavailable,
                     pendingAttachments = attachments,
                     uploadedAttachments = outcome.partiallyUploadedAttachments,
+                    uploadedFileIds = outcome.partiallyUploadedFileIds,
                 )
 
             is SendDiagnosisPromptOutcome.Failure.Unauthorized ->
@@ -339,6 +359,7 @@ class ChatViewModel @Inject constructor(
                     error = ChatError.Unauthorized(outcome.message),
                     pendingAttachments = attachments,
                     uploadedAttachments = outcome.partiallyUploadedAttachments,
+                    uploadedFileIds = outcome.partiallyUploadedFileIds,
                 )
         }
     }
@@ -347,6 +368,7 @@ class ChatViewModel @Inject constructor(
         error: ChatError,
         pendingAttachments: List<PendingMedia> = emptyList(),
         uploadedAttachments: List<PendingMedia> = emptyList(),
+        uploadedFileIds: List<String> = emptyList(),
     ) {
         _uiState.update {
             // 08-AIP: an upload-pipeline failure leaves
@@ -359,17 +381,23 @@ class ChatViewModel @Inject constructor(
             // the message endpoint. The orchestrator signals
             // the distinction via the populated
             // [SendDiagnosisPromptOutcome.Failure.partiallyUploadedAttachments].
+            // The matching `partiallyUploadedFileIds` rides
+            // alongside so 11-AIP's retry can replay the prompt
+            // endpoint call without re-running the upload
+            // pipeline.
             val newPending = if (uploadedAttachments.isEmpty()) {
                 pendingAttachments
             } else {
                 emptyList()
             }
-            val newSent = it.sentAttachments + uploadedAttachments
+            val newSentAttachments = it.sentAttachments + uploadedAttachments
+            val newSentFileIds = it.sentAttachmentFileIds + uploadedFileIds
             it.copy(
                 sending = false,
                 transientError = error,
                 pendingAttachments = newPending,
-                sentAttachments = newSent,
+                sentAttachments = newSentAttachments,
+                sentAttachmentFileIds = newSentFileIds,
             )
         }
     }
@@ -391,6 +419,7 @@ class ChatViewModel @Inject constructor(
                 lastAttemptedPrompt = null,
                 pendingAttachments = emptyList(),
                 sentAttachments = emptyList(),
+                sentAttachmentFileIds = emptyList(),
             )
         }
     }
