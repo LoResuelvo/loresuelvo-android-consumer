@@ -10,20 +10,45 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build y Verificar
+  # Path-sensor for the e2e job: the emulator boot costs ~5 min so
+  # we only pay that on PRs that actually touch UI/Composable code,
+  # the AndroidManifest, or the build configuration. Lint + unit
+  # tests and the APK build verification are cheap enough to run
+  # unconditionally.
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            e2e:
+              - 'app/src/main/**'
+              - 'app/src/androidTest/**'
+              - 'app/src/main/AndroidManifest.xml'
+              - 'app/build.gradle.kts'
+              - 'gradle/libs.versions.toml'
+              - '.github/workflows/ci.yml'
+
+  lint-and-unit:
+    name: Lint + Unit Tests
+    needs: changes
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar el código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Java 17
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: zulu
           java-version: 17
 
-      - name: Configurar Gradle
+      - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Ejecutar Lint y Unit Tests
@@ -32,10 +57,28 @@ jobs:
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging" 
+          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
         run: |
           make lint FLAVOR=Staging
           make test FLAVOR=Staging
+
+  e2e:
+    name: Acceptance Tests (Emulator)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Habilitar KVM (requerido por el emulador)
         run: |
@@ -50,18 +93,35 @@ jobs:
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging" 
+          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
         with:
           api-level: 34
           arch: x86_64
           profile: pixel_6
           script: make e2e FLAVOR=Staging
 
-      - name: Build APK Staging (verificación)
+  apk-build:
+    name: Build APK Staging (verificación)
+    needs: changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build APK
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging" 
+          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
         run: make build FLAVOR=Staging
