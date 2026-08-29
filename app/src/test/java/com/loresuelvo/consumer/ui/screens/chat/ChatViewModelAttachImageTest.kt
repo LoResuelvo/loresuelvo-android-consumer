@@ -359,6 +359,7 @@ class ChatViewModelAttachImageTest {
                 code = 500,
                 message = "ia service down",
                 partiallyUploadedAttachments = listOf(first, second),
+                partiallyUploadedFileIds = listOf("file-1", "file-2"),
             )
 
             viewModel.onAttachMedia(
@@ -393,6 +394,11 @@ class ChatViewModelAttachImageTest {
                 state.sentAttachments.size,
             )
             assertEquals(listOf("first.jpg", "second.jpg"), state.sentAttachments.map { it.originalName })
+            assertEquals(
+                "uploaded file IDs must be preserved in sentAttachmentFileIds",
+                listOf("file-1", "file-2"),
+                state.sentAttachmentFileIds,
+            )
             assertTrue(
                 "transientError must surface the IA failure",
                 state.transientError is ChatError.ServiceUnavailable,
@@ -455,6 +461,91 @@ class ChatViewModelAttachImageTest {
 
             assertFalse(state.sending)
             assertTrue(state.pendingAttachments.isEmpty())
+            assertNull(state.transientError)
+            assertEquals("conv-1", state.conversationId)
+        }
+
+    @Test
+    fun retry_after_post_upload_failure_replays_prompt_with_cached_file_ids_without_reuploading() =
+        runTest {
+            // 11-AIP: after the upload pipeline succeeds but the
+            // prompt endpoint rejects, the VM caches both the
+            // uploaded bytes (`sentAttachments`) and the file IDs
+            // (`sentAttachmentFileIds`). The retry must replay
+            // the prompt endpoint call with the cached IDs —
+            // NOT re-run the upload orchestrator — so the file
+            // repository receives no additional presign calls.
+            val pending = attachment("gotera-baño.jpg")
+            coEvery {
+                uploadAttachmentsAndSend(
+                    prompt = "Tengo una gotera en el baño",
+                    conversationId = any(),
+                    attachments = any(),
+                )
+            } returns SendDiagnosisPromptOutcome.Failure.Server(
+                code = 500,
+                message = "ia service down",
+                partiallyUploadedAttachments = listOf(pending),
+                partiallyUploadedFileIds = listOf("file-42"),
+            )
+            coEvery {
+                useCase(
+                    prompt = "Tengo una gotera en el baño",
+                    existingConversationId = any(),
+                    imageFileIds = listOf("file-42"),
+                )
+            } returns SendDiagnosisPromptOutcome.Success(
+                Diagnosis(
+                    conversationId = "conv-1",
+                    messages = emptyList(),
+                ),
+            )
+
+            viewModel.onAttachMedia(
+                MediaUpload.Image(pending.bytes, pending.mimeType, pending.originalName),
+                sourceUri = null,
+            )
+            viewModel.onPromptChange("Tengo una gotera en el baño")
+            viewModel.onSendClick()
+            advanceUntilIdle()
+
+            // First round-trip settled in the post-upload
+            // failure state — the cached IDs must already be in
+            // state for the next step.
+            assertEquals(
+                "cached file IDs must surface in state for the retry path",
+                listOf("file-42"),
+                viewModel.uiState.value.sentAttachmentFileIds,
+            )
+
+            viewModel.onRetryClick()
+            advanceUntilIdle()
+
+            // 11-AIP contract: the retry must NOT re-invoke the
+            // upload orchestrator. The orchestrator was already
+            // called once (the failed round-trip); the cached
+            // file IDs bypass it entirely.
+            coVerify(exactly = 1) {
+                uploadAttachmentsAndSend(
+                    prompt = "Tengo una gotera en el baño",
+                    conversationId = any(),
+                    attachments = any(),
+                )
+            }
+            // The retry path replayed the prompt endpoint with
+            // the cached file IDs.
+            coVerify(exactly = 1) {
+                useCase(
+                    prompt = "Tengo una gotera en el baño",
+                    existingConversationId = any(),
+                    imageFileIds = listOf("file-42"),
+                )
+            }
+
+            val state = viewModel.uiState.value
+            assertFalse(state.sending)
+            assertTrue(state.sentAttachments.isEmpty())
+            assertTrue(state.sentAttachmentFileIds.isEmpty())
             assertNull(state.transientError)
             assertEquals("conv-1", state.conversationId)
         }

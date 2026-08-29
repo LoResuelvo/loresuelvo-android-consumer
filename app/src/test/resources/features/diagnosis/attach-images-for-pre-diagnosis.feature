@@ -132,7 +132,6 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Y la imagen enviada permanece en la conversación
     Y puedo reintentar el procesamiento
 
-  @wip
   Escenario: 11-AIP Reintentar el procesamiento del pre diagnóstico
     Dado que el procesamiento del pre diagnóstico falló
     Y la imagen "gotera-baño.jpg" ya fue enviada
