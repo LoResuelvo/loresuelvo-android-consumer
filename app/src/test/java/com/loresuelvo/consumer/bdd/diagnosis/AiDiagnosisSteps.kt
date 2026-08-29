@@ -812,4 +812,181 @@ class AiDiagnosisSteps {
         world.assertPendingAttachmentCount(0)
     }
 
+    // ---- Scenario 10-AIP Error de procesamiento del pre diagnóstico ----
+
+    /**
+     * 10-AIP `Dado que envié la imagen "X"`. Collapses the
+     * full upload-succeeded-then-prompt-rejected round-trip
+     * into a single helper: stage the image, seed the file
+     * repository so the upload pipeline confirms the bytes,
+     * seed the next `sendDiagnosisPrompt` call to fail with
+     * `Server(500)`, type a prompt and tap send. After this
+     * step the VM is in the failure state (transientError
+     * visible, sentAttachments populated).
+     */
+    @Given("que envié la imagen {string}")
+    fun queEnvieLaImagen(filename: String) {
+        world.stageImages(listOf(filename))
+        world.seedFileRepositorySuccess()
+        world.seedSendDiagnosisPromptServerFailure()
+        world.typePrompt("Tengo una gotera en el baño")
+        world.tapSend()
+    }
+
+    /**
+     * 10-AIP `Y el servicio de IA falla al procesar el
+     * mensaje`. No-op: the failure is already seeded inside
+     * `queEnvieLaImagen` so the next `sendPrompt` returns the
+     * 500 outcome. The Gherkin sentence exists so the
+     * scenario reads naturally to the client.
+     */
+    @And("el servicio de IA falla al procesar el mensaje")
+    fun elServicioDeIaFallaAlProcesarElMensaje() {
+        // See [queEnvieLaImagen].
+    }
+
+    /**
+     * 10-AIP `Cuando visualizo el resultado del envío`. No-op:
+     * the failure has already settled in the `Given` step.
+     */
+    @When("visualizo el resultado del envío")
+    fun visualizoElResultadoDelEnvio() {
+        // See [queEnvieLaImagen].
+    }
+
+    /**
+     * 10-AIP `Entonces veo un error de procesamiento del pre
+     * diagnóstico`. Pins `state.transientError` to
+     * [ChatError.ServiceUnavailable] so the inline error card
+     * surfaces the i18n message rendered by `ChatErrorCard`.
+     */
+    @Then("veo un error de procesamiento del pre diagnóstico")
+    fun veoUnErrorDeProcesamientoDelPreDiagnostico() {
+        world.assertTransientErrorIsServiceUnavailable()
+    }
+
+    /**
+     * 10-AIP `Y la imagen enviada permanece en la
+     * conversación`. Asserts the uploaded image moved into
+     * `state.sentAttachments` (rather than being dropped or
+     * kept in `pendingAttachments`).
+     */
+    @And("la imagen enviada permanece en la conversación")
+    fun laImagenEnviadaPermaneceEnLaConversacion() {
+        world.assertAttachmentPersistsAfterFailure()
+    }
+
+    /**
+     * 10-AIP `Y puedo reintentar el procesamiento`. Pins
+     * `state.lastAttemptedPrompt` so the retry CTA can
+     * resubmit the same prompt without re-typing.
+     */
+    @And("puedo reintentar el procesamiento")
+    fun puedoReintentarElProcesamiento() {
+        val state = world.lastUiState()
+        if (state.lastAttemptedPrompt.isNullOrBlank()) {
+            error(
+                "expected lastAttemptedPrompt to be populated after the failed send " +
+                    "so the retry CTA can resubmit it; state=$state",
+            )
+        }
+    }
+
+    // ---- Scenario 11-AIP Reintentar el procesamiento ----
+
+    /**
+     * 11-AIP `Dado que el procesamiento del pre diagnóstico
+     * falló`. Mirrors 10-AIP's `Given` — the failure is the
+     * precondition for the retry step.
+     */
+    @Given("que el procesamiento del pre diagnóstico falló")
+    fun queElProcesamientoDelPreDiagnosticoFallo() {
+        world.stageImages(listOf("gotera-baño.jpg"))
+        world.seedFileRepositorySuccess()
+        world.seedSendDiagnosisPromptServerFailure()
+        world.typePrompt("Tengo una gotera en el baño")
+        world.tapSend()
+    }
+
+    /**
+     * 11-AIP `Y la imagen "X" ya fue enviada`. Pins the file
+     * is in `state.sentAttachments` after the failed prompt
+     * endpoint call.
+     */
+    @And("la imagen {string} ya fue enviada")
+    fun laImagenYaFueEnviada(filename: String) {
+        val state = world.lastUiState()
+        if (state.sentAttachments.none { it.originalName == filename }) {
+            error(
+                "expected '$filename' to be in sentAttachments after the failed send, " +
+                    "got ${state.sentAttachments.map { it.originalName }}",
+            )
+        }
+    }
+
+    /**
+     * 11-AIP `Cuando reintento el procesamiento`. Seeds the
+     * NEXT `sendPrompt` outcome as a successful diagnosis,
+     * snapshots the current presign call count, then triggers
+     * the retry. The snapshot is reused by the next step's
+     * assertion that no additional uploads fire.
+     */
+    @When("reintento el procesamiento")
+    fun reintentoElProcesamiento() {
+        world.seedSuccessDiagnosis(
+            assistantContent = "Detectamos una posible gotera en el baño.",
+        )
+        world.simulateRetry()
+    }
+
+    /**
+     * 11-AIP `Entonces se vuelve a procesar el mensaje
+     * enviado`. Pins `fakeRepo.lastImageFileIds` is non-empty:
+     * the chat message endpoint was called again (this time
+     * reusing the cached file IDs rather than the original
+     * upload orchestrator).
+     */
+    @Then("se vuelve a procesar el mensaje enviado")
+    fun seVuelveAProcesarElMensajeEnviado() {
+        world.assertDiagnosisPromptWasSent()
+    }
+
+    /**
+     * 11-AIP `Y no se vuelve a subir la imagen`. Pins the
+     * file repository's `presign` call count didn't grow
+     * across the retry — the cached file IDs bypass the
+     * upload pipeline.
+     */
+    @And("no se vuelve a subir la imagen")
+    fun noSeVuelveASubirLaImagen() {
+        // The retry only calls `sendDiagnosisPrompt` with the
+        // cached file IDs, so the file repository must NOT
+        // receive any new presign calls. The world exposed
+        // `presignCallsSnapshot()` already; the assertion is
+        // implemented inline so the Gherkin step stays
+        // self-contained (no parameter plumbing).
+        val calls = world.presignCallsSnapshot()
+        // Capture the size bound: the world has seeded file
+        // repository success for ONE upload round-trip. After
+        // the retry the call count must still equal that
+        // baseline.
+        if (calls.size != 1) {
+            error(
+                "expected exactly 1 presign call across the failed send + retry, " +
+                    "got ${calls.size}; the retry path must reuse the cached file IDs",
+            )
+        }
+    }
+
+    /**
+     * 11-AIP `Y veo una respuesta del asistente en la
+     * conversación`. Pins the assistant bubble landed in
+     * `state.messages` with non-blank content after the retry
+     * round-trip settled.
+     */
+    @And("veo una respuesta del asistente en la conversación")
+    fun veoUnaRespuestaDelAsistenteEnLaConversacion11Aip() {
+        world.assertAssistantReplyAfterRetry()
+    }
+
 }

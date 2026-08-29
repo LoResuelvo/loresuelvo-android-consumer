@@ -124,7 +124,6 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Y el mensaje se envía al completar la subida
     Y la imagen deja de estar pendiente de envío
 
-  @wip
   Escenario: 10-AIP Informar un error al procesar el pre diagnóstico
     Dado que envié la imagen "gotera-baño.jpg"
     Y el servicio de IA falla al procesar el mensaje

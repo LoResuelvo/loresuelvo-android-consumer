@@ -625,6 +625,100 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
+    /**
+     * 10-AIP: enqueue a `Failure.Server(500)` for the next
+     * `sendDiagnosisPrompt` call. The orchestrator populates
+     * `partiallyUploadedAttachments` + `partiallyUploadedFileIds`
+     * on the failure once it knows which uploads succeeded —
+     * the BDD step doesn't have to predict them. Pairs with
+     * [seedFileRepositorySuccess] so the upload pipeline
+     * confirms the bytes before the prompt endpoint rejects.
+     */
+    fun seedSendDiagnosisPromptServerFailure() {
+        fakeRepo.enqueueOutcome(
+            SendDiagnosisPromptOutcome.Failure.Server(
+                code = 500,
+                message = "ia service down",
+            ),
+        )
+    }
+
+    /**
+     * Snapshot of the `image_file_ids[]` the orchestrator
+     * delivered to the last `sendDiagnosisPrompt` call. Used by
+     * 11-AIP to assert "se vuelve a procesar el mensaje
+     * enviado" — the retry path must replay the same file IDs
+     * without re-running the presign pipeline.
+     */
+    fun lastImageFileIdsSnapshotAfterRetry(): List<String> =
+        fakeRepo.lastImageFileIdsSnapshot()
+
+    /**
+     * 11-AIP `Y no se vuelve a subir la imagen`: pin that the
+     * file repository received NO additional presign calls after
+     * the retry. We compare against the count snapshotted before
+     * the retry fired; the orchestrator must not re-run the
+     * upload pipeline when the cached file IDs are reused.
+     */
+    fun assertPresignCountUnchanged(initialCount: Int) {
+        val actual = presignCallsSnapshot().size
+        if (actual != initialCount) {
+            error(
+                "expected no additional presign calls after retry (was $initialCount, " +
+                    "now $actual); the cached file IDs must bypass the upload pipeline",
+            )
+        }
+    }
+
+    fun assertAttachmentPersistsAfterFailure() {
+        val state = lastUiState()
+        if (state.sentAttachments.isEmpty()) {
+            error(
+                "expected the uploaded attachment to persist in sentAttachments " +
+                    "after the prompt endpoint rejected, but sentAttachments was empty. " +
+                    "state=$state",
+            )
+        }
+    }
+
+    fun assertTransientErrorIsServiceUnavailable() {
+        val state = lastUiState()
+        if (state.transientError !is ChatError.ServiceUnavailable) {
+            error(
+                "expected ChatError.ServiceUnavailable after IA service failure, " +
+                    "got ${state.transientError}",
+            )
+        }
+    }
+
+    /**
+     * 11-AIP `Y veo una respuesta del asistente en la
+     * conversación`. Mirrors 02-DIA's assertion: after a
+     * successful round-trip the assistant bubble must be
+     * present in `state.messages` with non-blank content.
+     */
+    fun assertAssistantReplyAfterRetry() {
+        val state = lastUiState()
+        if (state.sending) {
+            error(
+                "expected the retry round-trip to settle, but state.sending was " +
+                    "still true. state=$state",
+            )
+        }
+        val assistant = state.messages.lastOrNull {
+            it.sender is com.loresuelvo.consumer.domain.diagnosis.Sender.Assistant
+        } ?: error(
+            "expected at least one assistant message after the retry round-trip, " +
+                "but messages=${state.messages}",
+        )
+        if (assistant.content.isBlank()) {
+            error(
+                "expected the assistant message to have non-blank content, " +
+                    "got '${assistant.content}'",
+            )
+        }
+    }
+
     fun assertAssessmentVisible() {
         val state = lastUiState()
         val assessment = state.assessment
