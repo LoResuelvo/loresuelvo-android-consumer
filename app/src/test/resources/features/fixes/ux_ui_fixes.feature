@@ -27,7 +27,6 @@ Característica: Correcciones de UX/UI
   Quiero visualizar y utilizar correctamente la aplicación
   Para poder realizar las acciones disponibles de forma clara e intuitiva
 
-  @wip
   Escenario: 01-UXUI No mostrar el ícono de audio cuando la funcionalidad de IA no está disponible
     Dado que la funcionalidad de audio para IA no está disponible
     Cuando visualizo la pantalla correspondiente
