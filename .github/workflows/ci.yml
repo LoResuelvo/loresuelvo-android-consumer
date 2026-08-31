@@ -84,6 +84,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Restore AVD cache
+        id: avd-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/test.avd
+            ~/.android/avd/test.ini
+          key: ${{ runner.os }}-avd-api34-x86_64-pixel6-v1
+
+      - name: Report AVD cache
+        env:
+          E2E_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
+        run: echo "E2E_CACHE_HIT=$E2E_CACHE_HIT"
+
       - name: Habilitar KVM (requerido por el emulador)
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -93,6 +107,7 @@ jobs:
       - name: Ejecutar E2E (Android Instrumented Tests)
         uses: ReactiveCircus/android-emulator-runner@v2
         env:
+          E2E_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
@@ -102,7 +117,18 @@ jobs:
           api-level: 34
           arch: x86_64
           profile: pixel_6
-          script: make e2e FLAVOR=Staging
+          avd-name: test
+          force-avd-creation: false
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -snapshot ci-clean -no-snapshot-save
+          script: |
+            echo "E2E_CACHE_HIT=$E2E_CACHE_HIT"
+            adb -s emulator-5554 emu avd snapshot list
+            if [ "$E2E_CACHE_HIT" != "true" ]; then adb -s emulator-5554 emu avd snapshot save ci-clean; fi
+            adb -s emulator-5554 emu avd snapshot list
+            if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then echo "E2E_SNAPSHOT_AVAILABLE=true"; else echo "E2E_SNAPSHOT_AVAILABLE=false"; echo "Expected snapshot ci-clean is unavailable"; exit 1; fi
+            make e2e FLAVOR=Staging
 
   apk-build:
     name: Build APK Staging (verificación)
