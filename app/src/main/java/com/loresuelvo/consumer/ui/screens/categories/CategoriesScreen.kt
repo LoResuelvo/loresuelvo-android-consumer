@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.screens.home.CategoriesState
 import com.loresuelvo.consumer.ui.screens.home.components.CategoryGrid
@@ -133,9 +134,14 @@ private fun CategoriesSearchBar(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .testTag(CATEGORIES_SEARCH_FIELD_TAG),
-        placeholder = { Text(text = stringResource(R.string.categories_search_hint)) },
+        placeholder = {
+            Text(text = stringResource(R.string.categories_search_hint))
+        },
         leadingIcon = {
-            Icon(imageVector = Icons.Outlined.Search, contentDescription = null)
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null
+            )
         },
         trailingIcon = {
             if (query.isNotEmpty()) {
@@ -153,6 +159,7 @@ private fun CategoriesSearchBar(
             }
         },
         singleLine = true,
+        shape = RoundedCornerShape(24.dp),
     )
 }
 
