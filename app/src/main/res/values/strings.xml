@@ -184,6 +184,4 @@
     <string name="categories_retry">Reintentar</string>
     <string name="categories_search_hint">Buscar rubro…</string>
     <string name="categories_search_clear_content_description">Borrar búsqueda</string>
-    <string name="categories_no_matches_title">Sin coincidencias</string>
-    <string name="categories_no_matches_body">Probá con otro término.</string>
 </resources>

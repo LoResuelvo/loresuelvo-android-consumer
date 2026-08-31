@@ -180,6 +180,4 @@
     <string name="categories_retry">Retry</string>
     <string name="categories_search_hint">Search category…</string>
     <string name="categories_search_clear_content_description">Clear search</string>
-    <string name="categories_no_matches_title">No matches</string>
-    <string name="categories_no_matches_body">Try a different term.</string>
 </resources>
