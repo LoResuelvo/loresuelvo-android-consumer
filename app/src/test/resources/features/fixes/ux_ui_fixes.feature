@@ -31,6 +31,7 @@ Característica: Correcciones de UX/UI
     Dado que la funcionalidad de audio para IA no está disponible
     Cuando visualizo la pantalla correspondiente
     Entonces el ícono de audio no debe mostrarse
+    Y el botón de enviar mensajes se muestra deshabilitado mientras el campo esté vacío
 
   @wip
   Escenario: 02-UXUI Visualizar todas las categorías disponibles

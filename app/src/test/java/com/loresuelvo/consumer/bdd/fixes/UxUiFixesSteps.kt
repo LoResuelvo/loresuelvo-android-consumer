@@ -44,11 +44,32 @@ class UxUiFixesSteps {
 
     @Then("el ícono de audio no debe mostrarse")
     fun elIconoDeAudioNoDebeMostrarse() {
+        // The BDD layer pins the VM contract; the visual "the Mic
+        // / Stop affordances never surface while audioEnabled is
+        // false" assertion lives in
+        // `ChatInputBarTest.shows_send_disabled_when_audio_disabled_and_prompt_empty`.
         val state = world.lastUiState()
         if (state.audioEnabled) {
             error(
-                "expected ChatUiState.audioEnabled=false so the Mic is hidden " +
-                    "(01-UXUI), but audioEnabled=${state.audioEnabled}",
+                "expected ChatUiState.audioEnabled=false so the Mic / Stop " +
+                    "affordances never render (01-UXUI), but " +
+                    "audioEnabled=${state.audioEnabled}",
+            )
+        }
+    }
+
+    @And("el botón de enviar mensajes se muestra deshabilitado mientras el campo esté vacío")
+    fun elBotonDeEnviarMensajesSeMuestraDeshabilitadoMientrasElCampoEsteVacio() {
+        // Driven by `ChatUiState.canSend`: false while the prompt
+        // is empty (and not sending). The visual "the Send slot
+        // is rendered disabled" assertion lives in the same
+        // Compose-test referenced above.
+        val state = world.lastUiState()
+        if (state.canSend) {
+            error(
+                "expected ChatUiState.canSend=false so the Send button renders " +
+                    "disabled while the prompt is empty (01-UXUI), but " +
+                    "canSend=${state.canSend}",
             )
         }
     }

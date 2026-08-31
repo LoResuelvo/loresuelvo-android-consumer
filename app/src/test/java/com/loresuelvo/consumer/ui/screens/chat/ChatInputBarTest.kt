@@ -328,10 +328,10 @@ class ChatInputBarTest {
             .assertIsNotEnabled()
     }
 
-    // ---- 01-UXUI: hide Mic / Stop when audio is disabled ----------
+    // ---- 01-UXUI: audio affordance is replaced by the Send slot ---
 
     @Test
-    fun hides_microphone_when_audio_disabled_and_prompt_empty() {
+    fun shows_send_disabled_when_audio_disabled_and_prompt_empty() {
         composeTestRule.setContent {
             ChatInputBar(
                 promptInput = "",
@@ -352,10 +352,49 @@ class ChatInputBarTest {
         composeTestRule
             .onNodeWithTag(RECORD_AUDIO_BUTTON_TAG)
             .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(STOP_AUDIO_RECORDING_BUTTON_TAG)
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(SEND_BUTTON_TAG)
+            .assertIsDisplayed()
+            .assertIsNotEnabled()
     }
 
     @Test
-    fun hides_stop_button_when_audio_disabled_even_while_recording() {
+    fun shows_send_enabled_when_audio_disabled_and_prompt_has_text() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "Hola",
+                canSend = true,
+                sending = false,
+                recordingAudio = false,
+                audioEnabled = false,
+                onPromptChange = {},
+                onSendClick = {},
+                onStartAudioRecording = {},
+                onStopAudioRecording = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(RECORD_AUDIO_BUTTON_TAG)
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(SEND_BUTTON_TAG)
+            .assertIsDisplayed()
+            .assertIsEnabled()
+    }
+
+    @Test
+    fun shows_send_when_audio_disabled_even_while_recording() {
+        // Defensive guard: even if a caller forwards a stale
+        // `recordingAudio = true` while `audioEnabled = false`,
+        // the Mic / Stop buttons must not surface. The Send slot
+        // wins because there is no recording to stop.
         composeTestRule.setContent {
             ChatInputBar(
                 promptInput = "",
@@ -376,6 +415,13 @@ class ChatInputBarTest {
         composeTestRule
             .onNodeWithTag(STOP_AUDIO_RECORDING_BUTTON_TAG)
             .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(RECORD_AUDIO_BUTTON_TAG)
+            .assertDoesNotExist()
+        composeTestRule
+            .onNodeWithTag(SEND_BUTTON_TAG)
+            .assertIsDisplayed()
+            .assertIsNotEnabled()
     }
 
     @Test

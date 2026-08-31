@@ -168,73 +168,33 @@ fun ChatInputBar(
         // ------------------------------------------------------------
 
         when {
-            // Audio disabled -> Mic / Stop are hidden (01-UXUI).
-            // Render the Send button when the prompt has content;
-            // otherwise leave the slot empty so the field takes the
-            // full width.
+            // Audio disabled -> the Mic / Stop affordances are
+            // removed entirely (01-UXUI). The trailing slot shows
+            // the Send button with its `canSend`-driven enabled
+            // state, so the consumer sees a disabled button while
+            // the prompt is empty and the live Send button as
+            // soon as they type.
             !audioEnabled -> {
-                if (promptInput.isNotBlank()) {
-                    SendButton(
-                        canSend = canSend,
-                        onSendClick = onSendClick,
-                    )
-                }
+                SendButton(
+                    canSend = canSend,
+                    onSendClick = onSendClick,
+                )
             }
 
             // Currently recording -> STOP
             recordingAudio -> {
-                Surface(
-                    onClick = onStopAudioRecording,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .testTag(STOP_AUDIO_RECORDING_BUTTON_TAG),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError,
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Stop,
-                            contentDescription = stringResource(
-                                R.string.conversation_stop_audio_recording_content_description,
-                            ),
-                            modifier = Modifier.testTag(
-                                STOP_AUDIO_RECORDING_ICON_TAG,
-                            ),
-                        )
-                    }
-                }
+                StopButton(
+                    onStopAudioRecording = onStopAudioRecording,
+                    enabled = true,
+                )
             }
 
             // Empty prompt -> START RECORDING
             promptInput.isBlank() && !sending -> {
-                Surface(
-                    onClick = onStartAudioRecording,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .testTag(RECORD_AUDIO_BUTTON_TAG),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Mic,
-                            contentDescription = stringResource(
-                                R.string.conversation_record_audio_content_description,
-                            ),
-                            modifier = Modifier.testTag(
-                                RECORD_AUDIO_ICON_TAG,
-                            ),
-                        )
-                    }
-                }
+                MicButton(
+                    onStartAudioRecording = onStartAudioRecording,
+                    enabled = true,
+                )
             }
 
             // Non-empty prompt -> SEND
@@ -297,6 +257,108 @@ private fun SendButton(
                 ),
                 modifier = Modifier.testTag(
                     SEND_ICON_TAG,
+                ),
+            )
+        }
+    }
+}
+
+/**
+ * Trailing microphone button. Rendered with reduced opacity and
+ * `enabled = false` when [audioEnabled] is `false` so the
+ * consumer sees the affordance is present but unavailable
+ * (scenario 01-UXUI). The button keeps its 48.dp footprint so
+ * the layout doesn't shift between enabled / disabled states.
+ */
+@Composable
+private fun MicButton(
+    onStartAudioRecording: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onStartAudioRecording,
+        enabled = enabled,
+        modifier = modifier
+            .size(48.dp)
+            .testTag(RECORD_AUDIO_BUTTON_TAG),
+        shape = CircleShape,
+        color = if (enabled) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.primary.copy(
+                alpha = 0.38f,
+            )
+        },
+        contentColor = if (enabled) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onPrimary.copy(
+                alpha = 0.38f,
+            )
+        },
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Mic,
+                contentDescription = stringResource(
+                    R.string.conversation_record_audio_content_description,
+                ),
+                modifier = Modifier.testTag(
+                    RECORD_AUDIO_ICON_TAG,
+                ),
+            )
+        }
+    }
+}
+
+/**
+ * Trailing stop-recording button. Same disabled-styling rules
+ * as [MicButton] so the slot keeps its footprint while the AI
+ * audio feature is unavailable (01-UXUI).
+ */
+@Composable
+private fun StopButton(
+    onStopAudioRecording: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onStopAudioRecording,
+        enabled = enabled,
+        modifier = modifier
+            .size(48.dp)
+            .testTag(STOP_AUDIO_RECORDING_BUTTON_TAG),
+        shape = CircleShape,
+        color = if (enabled) {
+            MaterialTheme.colorScheme.error
+        } else {
+            MaterialTheme.colorScheme.error.copy(
+                alpha = 0.38f,
+            )
+        },
+        contentColor = if (enabled) {
+            MaterialTheme.colorScheme.onError
+        } else {
+            MaterialTheme.colorScheme.onError.copy(
+                alpha = 0.38f,
+            )
+        },
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Stop,
+                contentDescription = stringResource(
+                    R.string.conversation_stop_audio_recording_content_description,
+                ),
+                modifier = Modifier.testTag(
+                    STOP_AUDIO_RECORDING_ICON_TAG,
                 ),
             )
         }
