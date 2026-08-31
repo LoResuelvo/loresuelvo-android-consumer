@@ -180,4 +180,9 @@
     <string name="categories_retry">Retry</string>
     <string name="categories_search_hint">Search category…</string>
     <string name="categories_search_clear_content_description">Clear search</string>
+    <!-- Job request image attachment selector (03-UXUI) -->
+    <string name="job_request_image_attach_button">Attach images</string>
+    <string name="job_request_image_max_hint">Up to %1$d images allowed</string>
+    <string name="job_request_image_limit_reached">You\'ve reached the limit of %1$d images</string>
+    <string name="job_request_image_remove_content_description">Remove image</string>
 </resources>

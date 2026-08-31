@@ -184,4 +184,9 @@
     <string name="categories_retry">Reintentar</string>
     <string name="categories_search_hint">Buscar rubro…</string>
     <string name="categories_search_clear_content_description">Borrar búsqueda</string>
+    <!-- Job request image attachment selector (03-UXUI) -->
+    <string name="job_request_image_attach_button">Adjuntar imágenes</string>
+    <string name="job_request_image_max_hint">Máximo %1$d imágenes permitidas</string>
+    <string name="job_request_image_limit_reached">Ya alcanzaste el límite de %1$d imágenes</string>
+    <string name="job_request_image_remove_content_description">Quitar imagen</string>
 </resources>
