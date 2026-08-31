@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   # Path-sensor for the e2e job: the emulator boot costs ~5 min so
   # we only pay that on PRs that actually touch UI/Composable code,
@@ -98,7 +102,84 @@ jobs:
           api-level: 34
           arch: x86_64
           profile: pixel_6
-          script: make e2e FLAVOR=Staging
+          pre-emulator-launch-script: |
+            set -Eeuo pipefail
+
+            prebuild_pid_file="$RUNNER_TEMP/e2e-prebuild.pid"
+            prebuild_log_file="$RUNNER_TEMP/e2e-prebuild.log"
+            prebuild_status_file="$RUNNER_TEMP/e2e-prebuild.status"
+
+            : > "$prebuild_log_file"
+            rm -f "$prebuild_status_file"
+
+            prebuild_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "E2E_PREBUILD_START timestamp=$prebuild_started_at"
+            echo "E2E_PREBUILD_START timestamp=$prebuild_started_at" >> "$prebuild_log_file"
+
+            (
+              set +e
+              ./gradlew \
+                :app:assembleStagingDebug \
+                :app:assembleStagingDebugAndroidTest \
+                >> "$prebuild_log_file" 2>&1
+              prebuild_status=$?
+              prebuild_finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+              echo "E2E_PREBUILD_FINISH timestamp=$prebuild_finished_at status=$prebuild_status" >> "$prebuild_log_file"
+              printf '%s\n' "$prebuild_status" > "$prebuild_status_file"
+              exit "$prebuild_status"
+            ) &
+
+            printf '%s\n' "$!" > "$prebuild_pid_file"
+            echo "E2E_PREBUILD_PID pid=$(cat "$prebuild_pid_file")"
+
+          script: |
+            set -Eeuo pipefail
+
+            prebuild_pid_file="$RUNNER_TEMP/e2e-prebuild.pid"
+            prebuild_log_file="$RUNNER_TEMP/e2e-prebuild.log"
+            prebuild_status_file="$RUNNER_TEMP/e2e-prebuild.status"
+            prebuild_pid="$(cat "$prebuild_pid_file")"
+
+            echo "Waiting for E2E prebuild pid=$prebuild_pid"
+
+            # The action runs pre-emulator-launch-script and script in separate
+            # shells, so bash wait cannot be used across the two shell processes.
+            # Polling the recorded PID preserves an explicit wait without racing
+            # the background Gradle process.
+            while kill -0 "$prebuild_pid" 2>/dev/null; do
+              sleep 1
+            done
+
+            for _ in $(seq 1 30); do
+              [[ -f "$prebuild_status_file" ]] && break
+              sleep 1
+            done
+
+            if [[ ! -f "$prebuild_status_file" ]]; then
+              echo "E2E_PREBUILD_FINISH status=unknown"
+              cat "$prebuild_log_file"
+              exit 1
+            fi
+
+            prebuild_status="$(cat "$prebuild_status_file")"
+            cat "$prebuild_log_file"
+
+            if [[ "$prebuild_status" != "0" ]]; then
+              echo "E2E prebuild failed with status=$prebuild_status"
+              exit "$prebuild_status"
+            fi
+
+            e2e_started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "E2E_TESTS_START timestamp=$e2e_started_at"
+
+            set +e
+            make e2e FLAVOR=Staging
+            e2e_status=$?
+            set -e
+
+            e2e_finished_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "E2E_TESTS_FINISH timestamp=$e2e_finished_at status=$e2e_status"
+            exit "$e2e_status"
 
   apk-build:
     name: Build APK Staging (verificación)
