@@ -86,12 +86,13 @@ jobs:
 
       - name: Restore AVD cache
         id: avd-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: |
             ~/.android/avd/test.avd
             ~/.android/avd/test.ini
-          key: ${{ runner.os }}-avd-api34-x86_64-pixel6-v1
+          key: ${{ runner.os }}-avd-api34-x86_64-pixel6-v2
+          fail-on-cache-miss: true
 
       - name: Report AVD cache
         env:
@@ -125,9 +126,7 @@ jobs:
           script: |
             echo "E2E_CACHE_HIT=$E2E_CACHE_HIT"
             adb -s emulator-5554 emu avd snapshot list
-            if [ "$E2E_CACHE_HIT" != "true" ]; then adb -s emulator-5554 emu avd snapshot save ci-clean; fi
-            adb -s emulator-5554 emu avd snapshot list
-            if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then echo "E2E_SNAPSHOT_AVAILABLE=true"; else echo "E2E_SNAPSHOT_AVAILABLE=false"; echo "Expected snapshot ci-clean is unavailable"; exit 1; fi
+            if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then echo "E2E_SNAPSHOT_AVAILABLE=true"; else echo "E2E_SNAPSHOT_AVAILABLE=false"; echo "Expected snapshot ci-clean is unavailable; regenerate the bootstrap cache"; exit 1; fi
             make e2e FLAVOR=Staging
 
   apk-build:
