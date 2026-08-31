@@ -74,21 +74,39 @@ class UxUiFixesSteps {
         }
     }
 
-    // ---- Scenario 02-UXUI (wip) -----------------------------------
+    // ---- Scenario 02-UXUI -----------------------------------------
 
     @Given("que estoy en la aplicación")
     fun queEstoyEnLaAplicacion() {
-        // No-op: covered when scenario 02 goes green.
+        // The user is already authenticated by the time the Home
+        // "Ver todas" link is reachable; mounting the categories
+        // VM is the responsibility of the `When` step.
     }
 
     @When("accedo a la sección de categorías")
     fun accedoALaSeccionDeCategorias() {
-        // No-op: covered when scenario 02 goes green.
+        world.startCategoriesScenario()
     }
 
     @Then("veo una pantalla con todas las categorías disponibles")
     fun veoUnaPantallaConTodasLasCategoriasDisponibles() {
-        // No-op: covered when scenario 02 goes green.
+        world.assertAllCategoriesVisible(FakeCategoryRepository.DEFAULT_CATEGORIES.map { it.name })
+    }
+
+    @And("una barra de búsqueda que me permite encontrar las distintas categorías")
+    fun unaBarraDeBusquedaQueMePermiteEncontrarLasDistintasCategorias() {
+        // Pin that the search affordance filters the Ready
+        // state. Typing "plom" must surface the single
+        // "Plomería" category from the default set; clearing
+        // the query restores the full list. The visual
+        // presence of the OutlinedTextField is verified by
+        // the Compose-test in `CategoriesScreenTest`
+        // (pinned via `CATEGORIES_SEARCH_FIELD_TAG`).
+        world.typeSearchQuery("plom")
+        world.assertAllCategoriesVisible(listOf("Plomería"))
+
+        world.typeSearchQuery("")
+        world.assertAllCategoriesVisible(FakeCategoryRepository.DEFAULT_CATEGORIES.map { it.name })
     }
 
     // ---- Scenario 03-UXUI (wip) -----------------------------------

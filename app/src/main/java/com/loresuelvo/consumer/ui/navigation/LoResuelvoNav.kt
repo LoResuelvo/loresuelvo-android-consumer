@@ -29,6 +29,8 @@ import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen
 import com.loresuelvo.consumer.ui.screens.assistant.AssistantViewModel
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
+import com.loresuelvo.consumer.ui.screens.categories.CategoriesScreen
+import com.loresuelvo.consumer.ui.screens.categories.CategoriesViewModel
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
@@ -147,6 +149,7 @@ fun LoResuelvoNav() {
             welcome = { WelcomeRoute() },
             completeProfile = { CompleteProfileRoute(navController = navController) },
             home = { HomeRoute(navController = navController) },
+            categories = { CategoriesRoute(navController = navController) },
             professionals = { categoryId, categoryName ->
                 ProfessionalsRoute(navController, categoryId, categoryName)
             },
@@ -302,10 +305,42 @@ private fun HomeRoute(
                 Route.Professionals.buildPath(categoryId, categoryName),
             )
         },
+        // 02-UXUI: the "Ver todas" link surfaces every category
+        // published by the platform (Home truncates to the first
+        // six tiles for the at-a-glance view).
+        onSeeAllCategoriesClick = {
+            navController.navigate(Route.Categories.path)
+        },
         onNotificationsClick = { /* TODO */ },
         onAiSendClick = { navController.navigate(Route.Chat.buildPath()) },
         onRetryClick = { homeViewModel.loadCategories() },
         onLogoutClick = { sessionViewModel.signOut(context) },
+    )
+}
+
+/**
+ * Dedicated screen that lists every service category available
+ * on the platform. Resolves the [CategoriesViewModel] through
+ * Hilt and forwards the UDF state to the screen. Tapping a tile
+ * reuses the existing [Route.Professionals] navigation.
+ */
+@Composable
+private fun CategoriesRoute(
+    navController: androidx.navigation.NavHostController,
+) {
+    val viewModel: CategoriesViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    CategoriesScreen(
+        state = state,
+        onCategoryClick = { categoryId, categoryName ->
+            navController.navigate(
+                Route.Professionals.buildPath(categoryId, categoryName),
+            )
+        },
+        onSearchQueryChange = viewModel::onSearchQueryChange,
+        onBackClick = { navController.popBackStack() },
+        onRetryClick = { viewModel.loadCategories() },
     )
 }
 

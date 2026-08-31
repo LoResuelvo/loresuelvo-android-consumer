@@ -54,6 +54,7 @@ fun HomeScreen(
     displayName: String?,
     activeRequests: List<ActiveRequest> = emptyList(),
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
+    onSeeAllCategoriesClick: () -> Unit,
     onNotificationsClick: () -> Unit,
     onAiSendClick: () -> Unit,
     onRetryClick: () -> Unit,
@@ -93,6 +94,7 @@ fun HomeScreen(
         SectionTitle(
             text = stringResource(R.string.home_section_categories),
             link = stringResource(R.string.home_section_categories_link),
+            onLinkClick = onSeeAllCategoriesClick,
         )
 
         CategorySection(
@@ -206,6 +208,7 @@ private fun HomeScreenReadyPreview() {
                 ),
             ),
             onCategoryClick = { _, _ -> },
+            onSeeAllCategoriesClick = {},
             onNotificationsClick = {},
             onAiSendClick = {},
             onRetryClick = {},
@@ -222,6 +225,7 @@ private fun HomeScreenLoadingPreview() {
             state = HomeUiState.Loading(),
             displayName = "Matias",
             onCategoryClick = { _, _ -> },
+            onSeeAllCategoriesClick = {},
             onNotificationsClick = {},
             onAiSendClick = {},
             onRetryClick = {},

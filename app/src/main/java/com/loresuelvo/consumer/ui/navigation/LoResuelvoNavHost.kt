@@ -33,6 +33,7 @@ fun LoResuelvoNavHost(
     welcome: @Composable () -> Unit,
     completeProfile: @Composable () -> Unit,
     home: @Composable () -> Unit,
+    categories: @Composable () -> Unit,
     professionals: @Composable (categoryId: Int, categoryName: String) -> Unit,
     chat: @Composable (conversationId: String?) -> Unit,
     conversation: @Composable (conversationId: String) -> Unit,
@@ -47,6 +48,10 @@ fun LoResuelvoNavHost(
             composable(Route.Welcome.path) { welcome() }
             composable(Route.CompleteProfile.path) { completeProfile() }
             composable(Route.Home.path) { home() }
+            // 02-UXUI: dedicated screen for every category published
+            // by the platform, reachable from the Home "Ver todas"
+            // link. Hidden from the bottom nav.
+            composable(Route.Categories.path) { categories() }
             composable(
                 route = Route.Professionals(
                     categoryId = -1,

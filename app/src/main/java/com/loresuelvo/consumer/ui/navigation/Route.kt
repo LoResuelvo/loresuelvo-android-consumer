@@ -8,6 +8,15 @@ sealed class Route(val path: String) {
     data object Home : Route("home")
 
     /**
+     * Dedicated screen that lists every service category
+     * available on the platform. Reached from the "Ver todas"
+     * link on the Home category section (scenario 02-UXUI).
+     * Each tile opens the existing
+     * [Professionals] route when tapped.
+     */
+    data object Categories : Route("categories")
+
+    /**
      * AI diagnostic chat screen. Reached from the `AiSearchBar` on
      * Home (the "Chat con IA" entry point, fresh conversation) and
      * from the bottom-bar "Asistente IA" tab → AssistantScreen →

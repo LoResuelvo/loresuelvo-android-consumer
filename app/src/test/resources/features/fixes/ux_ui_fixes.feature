@@ -33,11 +33,11 @@ Característica: Correcciones de UX/UI
     Entonces el ícono de audio no debe mostrarse
     Y el botón de enviar mensajes se muestra deshabilitado mientras el campo esté vacío
 
-  @wip
   Escenario: 02-UXUI Visualizar todas las categorías disponibles
     Dado que estoy en la aplicación
     Cuando accedo a la sección de categorías
     Entonces veo una pantalla con todas las categorías disponibles
+    Y una barra de búsqueda que me permite encontrar las distintas categorías
 
   @wip
   Escenario: 03-UXUI Adjuntar imágenes a una oferta de trabajo
