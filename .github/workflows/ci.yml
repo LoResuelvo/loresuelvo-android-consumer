@@ -122,7 +122,9 @@ jobs:
         uses: ReactiveCircus/android-emulator-runner@v2
         env:
           E2E_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
-          GRADLE_OPTS: -Dorg.gradle.logging.level=info
+          GRADLE_OPTS: >-
+            -Dorg.gradle.logging.level=info
+            -Dorg.gradle.configuration-cache=true
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
