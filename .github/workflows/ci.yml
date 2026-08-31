@@ -84,6 +84,9 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Timing cache start
+        run: echo "TIMING:CACHE_START=$(date -u +%s)"
+
       - name: Restore AVD cache
         id: avd-cache
         uses: actions/cache/restore@v4
@@ -93,6 +96,9 @@ jobs:
             ~/.android/avd/test.ini
           key: ${{ runner.os }}-avd-api34-x86_64-pixel6-v2
           fail-on-cache-miss: true
+
+      - name: Timing cache end
+        run: echo "TIMING:CACHE_END=$(date -u +%s)"
 
       - name: Report AVD cache
         env:
@@ -105,10 +111,14 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Timing runner start
+        run: echo "TIMING:RUNNER_START=$(date -u +%s)"
+
       - name: Ejecutar E2E (Android Instrumented Tests)
         uses: ReactiveCircus/android-emulator-runner@v2
         env:
           E2E_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
+          GRADLE_OPTS: -Dorg.gradle.logging.level=info
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
@@ -121,13 +131,22 @@ jobs:
           avd-name: test
           force-avd-creation: false
           emulator-options: >-
-            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -verbose
             -snapshot ci-clean -no-snapshot-save
           script: |
+            echo "TIMING:E2E_SCRIPT_START=$(date -u +%s)"
             echo "E2E_CACHE_HIT=$E2E_CACHE_HIT"
+            echo "SNAPSHOT_CHECK_START"
             adb -s emulator-5554 emu avd snapshot list
             if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then echo "E2E_SNAPSHOT_AVAILABLE=true"; else echo "E2E_SNAPSHOT_AVAILABLE=false"; echo "Expected snapshot ci-clean is unavailable; regenerate the bootstrap cache"; exit 1; fi
+            echo "SNAPSHOT_CHECK_END"
+            echo "TIMING:E2E_TESTS_START=$(date -u +%s)"
             make e2e FLAVOR=Staging
+            echo "TIMING:E2E_TESTS_END=$(date -u +%s)"
+
+      - name: Timing runner end
+        if: always()
+        run: echo "TIMING:RUNNER_END=$(date -u +%s)"
 
   apk-build:
     name: Build APK Staging (verificación)
