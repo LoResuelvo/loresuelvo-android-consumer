@@ -424,4 +424,26 @@ class ChatViewModelTest {
         assertEquals("primera", state.lastAttemptedPrompt)
         coVerify(exactly = 1) { useCase(any(), anyNullable()) }
     }
+
+    // ---- 01-UXUI: hide Mic when AI audio is unavailable ------------
+
+    /**
+     * The AI diagnostic chat surface must default to
+     * `audioEnabled = false` so the Mic / Stop buttons are
+     * hidden from the consumer while the AI audio feature is
+     * not available (scenario 01-UXUI). The chat-with-provider
+     * surface uses a separate [com.loresuelvo.consumer.ui.screens.chat.ConversationUiState]
+     * and keeps audio enabled regardless of this flag.
+     */
+    @Test
+    fun initial_state_audioEnabled_defaults_to_false_for_ai_diagnosis_chat() = runTest {
+        advanceUntilIdle()
+        val state = viewModel.uiState.value
+        assertFalse(
+            "audioEnabled should default to false so the AI chat hides the Mic " +
+                "until the AI audio feature is enabled (01-UXUI), " +
+                "was ${state.audioEnabled}",
+            state.audioEnabled,
+        )
+    }
 }

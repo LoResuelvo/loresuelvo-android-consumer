@@ -76,6 +76,15 @@ fun ChatScreen(
     onDiscardAttachment: (Int) -> Unit = {},
     showAttachSheet: Boolean = false,
     onAttachSheetDismiss: () -> Unit = {},
+    /**
+     * Whether the audio recording affordance should be rendered
+     * in the input bar. Wired to
+     * [com.loresuelvo.consumer.ui.screens.chat.ChatUiState.audioEnabled]
+     * by [com.loresuelvo.consumer.ui.screens.chat.ChatRoute]; the
+     * AI diagnostic chat passes `false` while the AI audio
+     * feature is not available (scenario 01-UXUI).
+     */
+    audioEnabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var fullscreenImage by remember { mutableStateOf<ChatImage?>(null) }
@@ -122,6 +131,7 @@ fun ChatScreen(
                     canSend = canSend,
                     sending = sending,
                     recordingAudio = false,
+                    audioEnabled = audioEnabled,
                     onPromptChange = onPromptChange,
                     onSendClick = onSendClick,
                     onStartAudioRecording = {},

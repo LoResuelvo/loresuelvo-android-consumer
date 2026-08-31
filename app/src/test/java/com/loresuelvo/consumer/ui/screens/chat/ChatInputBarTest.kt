@@ -327,4 +327,78 @@ class ChatInputBarTest {
             .assertIsDisplayed()
             .assertIsNotEnabled()
     }
+
+    // ---- 01-UXUI: hide Mic / Stop when audio is disabled ----------
+
+    @Test
+    fun hides_microphone_when_audio_disabled_and_prompt_empty() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "",
+                canSend = false,
+                sending = false,
+                recordingAudio = false,
+                audioEnabled = false,
+                onPromptChange = {},
+                onSendClick = {},
+                onStartAudioRecording = {},
+                onStopAudioRecording = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(RECORD_AUDIO_BUTTON_TAG)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun hides_stop_button_when_audio_disabled_even_while_recording() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "",
+                canSend = false,
+                sending = false,
+                recordingAudio = true,
+                audioEnabled = false,
+                onPromptChange = {},
+                onSendClick = {},
+                onStartAudioRecording = {},
+                onStopAudioRecording = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(STOP_AUDIO_RECORDING_BUTTON_TAG)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun shows_send_button_when_audio_disabled_and_prompt_has_text() {
+        composeTestRule.setContent {
+            ChatInputBar(
+                promptInput = "Hola",
+                canSend = true,
+                sending = false,
+                recordingAudio = false,
+                audioEnabled = false,
+                onPromptChange = {},
+                onSendClick = {},
+                onStartAudioRecording = {},
+                onStopAudioRecording = {},
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .height(400.dp),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(SEND_BUTTON_TAG)
+            .assertIsDisplayed()
+    }
 }

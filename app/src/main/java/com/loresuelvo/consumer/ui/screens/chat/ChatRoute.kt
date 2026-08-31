@@ -163,5 +163,9 @@ fun ChatRoute(
         },
         showAttachSheet = sheetVisible,
         onAttachSheetDismiss = { sheetVisible = false },
+        // 01-UXUI: the AI audio functionality is not available
+        // yet, so the Mic / Stop buttons are hidden in the
+        // diagnostic chat surface.
+        audioEnabled = state.audioEnabled,
     )
 }

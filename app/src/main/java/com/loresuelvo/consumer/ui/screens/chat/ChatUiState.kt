@@ -59,6 +59,16 @@ data class ChatUiState(
      * the presign → upload → confirm pipeline.
      */
     val sentAttachmentFileIds: List<String> = emptyList(),
+    /**
+     * Whether the AI diagnostic chat surface currently exposes
+     * the audio recording affordance. Defaults to `false` while
+     * the underlying AI audio functionality is not available
+     * (scenario 01-UXUI) so the Mic / Stop buttons are hidden
+     * from the user. The chat-with-provider surface uses a
+     * separate [com.loresuelvo.consumer.ui.screens.chat.ConversationUiState]
+     * and keeps audio enabled regardless of this flag.
+     */
+    val audioEnabled: Boolean = false,
 ) {
     val canSend: Boolean get() =
         (promptInput.trim().isNotEmpty() || pendingAttachments.isNotEmpty()) && !sending

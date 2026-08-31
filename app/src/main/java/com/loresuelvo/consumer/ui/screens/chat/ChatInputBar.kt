@@ -63,6 +63,17 @@ fun ChatInputBar(
     onStartAudioRecording: () -> Unit,
     onStopAudioRecording: () -> Unit,
     onAttachClick: (() -> Unit)? = null,
+    /**
+     * Whether the audio affordance (Mic / Stop buttons) should
+     * be rendered. Defaults to `true` so the chat-with-provider
+     * surface keeps the existing behaviour. The AI diagnostic
+     * chat surface passes `false` while the AI audio
+     * functionality is not available (scenario 01-UXUI) so the
+     * Mic / Stop buttons are omitted entirely and the field is
+     * followed by either the Send button (when the prompt has
+     * content) or empty space (when the prompt is blank).
+     */
+    audioEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -157,6 +168,19 @@ fun ChatInputBar(
         // ------------------------------------------------------------
 
         when {
+            // Audio disabled -> Mic / Stop are hidden (01-UXUI).
+            // Render the Send button when the prompt has content;
+            // otherwise leave the slot empty so the field takes the
+            // full width.
+            !audioEnabled -> {
+                if (promptInput.isNotBlank()) {
+                    SendButton(
+                        canSend = canSend,
+                        onSendClick = onSendClick,
+                    )
+                }
+            }
+
             // Currently recording -> STOP
             recordingAudio -> {
                 Surface(
@@ -215,43 +239,10 @@ fun ChatInputBar(
 
             // Non-empty prompt -> SEND
             else -> {
-                Surface(
-                    onClick = onSendClick,
-                    enabled = canSend,
-                    modifier = Modifier
-                        .size(48.dp)
-                        .testTag(SEND_BUTTON_TAG),
-                    shape = CircleShape,
-                    color = if (canSend) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.primary.copy(
-                            alpha = 0.38f,
-                        )
-                    },
-                    contentColor = if (canSend) {
-                        MaterialTheme.colorScheme.onPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onPrimary.copy(
-                            alpha = 0.38f,
-                        )
-                    },
-                ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.Send,
-                            contentDescription = stringResource(
-                                R.string.chat_send_content_description,
-                            ),
-                            modifier = Modifier.testTag(
-                                SEND_ICON_TAG,
-                            ),
-                        )
-                    }
-                }
+                SendButton(
+                    canSend = canSend,
+                    onSendClick = onSendClick,
+                )
             }
         }
     }
@@ -261,6 +252,56 @@ fun ChatInputBar(
  * Compose testTag for the prompt BasicTextField.
  */
 const val CHAT_INPUT_FIELD_TAG: String = "chat_input-field"
+
+/**
+ * Trailing send button. Shared between the audio-enabled and
+ * audio-disabled branches of [ChatInputBar] so the visual
+ * styling and `testTag` stay in one place (extracted in 01-UXUI).
+ */
+@Composable
+private fun SendButton(
+    canSend: Boolean,
+    onSendClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        onClick = onSendClick,
+        enabled = canSend,
+        modifier = modifier
+            .size(48.dp)
+            .testTag(SEND_BUTTON_TAG),
+        shape = CircleShape,
+        color = if (canSend) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.primary.copy(
+                alpha = 0.38f,
+            )
+        },
+        contentColor = if (canSend) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            MaterialTheme.colorScheme.onPrimary.copy(
+                alpha = 0.38f,
+            )
+        },
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Send,
+                contentDescription = stringResource(
+                    R.string.chat_send_content_description,
+                ),
+                modifier = Modifier.testTag(
+                    SEND_ICON_TAG,
+                ),
+            )
+        }
+    }
+}
 
 /**
  * Compose testTag for the trailing Send button.
