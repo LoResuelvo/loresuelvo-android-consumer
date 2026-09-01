@@ -83,7 +83,7 @@ class ContactProviderWorld : AutoCloseable {
 
         Dispatchers.setMain(dispatcher)
 
-        viewModel = ContactProviderViewModel(useCase)
+        viewModel = ContactProviderViewModel(useCase, io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true))
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }

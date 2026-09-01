@@ -1,9 +1,15 @@
 package com.loresuelvo.consumer.ui.screens.professional
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
+import com.loresuelvo.consumer.domain.jobrequest.ALLOWED_IMAGE_MIME_TYPES
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
+import com.loresuelvo.consumer.domain.jobrequest.MAX_IMAGE_BYTES
+import com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,6 +31,11 @@ import kotlinx.coroutines.launch
  *    `Open(provider, "", "", false, null)`.
  *  - `Open` → user types in the fields → state mutates with
  *    the new value AND clears any prior error.
+ *  - `Open` → user attaches one or more images from the
+ *    gallery / camera (scenario 03-UXUI) → staged into
+ *    [ContactProviderUiState.Open.attachedImages] after passing
+ *    the mime / size / cap validation; rejected batches
+ *    surface via `attachmentError`.
  *  - `Open` → user taps "Enviar solicitud" (gated by `canSubmit`)
  *    → `Open(... isSubmitting = true, error = null)` →
  *    `CreateJobRequestUseCase` → on success, `Closed` +
@@ -41,6 +52,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ContactProviderViewModel @Inject constructor(
     private val createJobRequest: CreateJobRequestUseCase,
+    private val mediaReader: MediaReader,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ContactProviderUiState>(
@@ -83,6 +95,98 @@ class ContactProviderViewModel @Inject constructor(
                 state
             }
         }
+    }
+
+    /**
+     * Stages the [images] the consumer just picked from the
+     * device. Mirrors the webapp's `ImageAttachmentSelector`:
+     *  - Drops files outside [ALLOWED_IMAGE_MIME_TYPES] (the
+     *    picker filters the chooser, but a programmatic attach
+     *    could bypass that — the VM is the last line of
+     *    defence).
+     *  - Drops files larger than [MAX_IMAGE_BYTES].
+     *  - Rejects the batch entirely (without mutating the
+     *    existing list) when it would push the total over
+     *    [MAX_JOB_REQUEST_IMAGES], and surfaces the rejection
+     *    via `attachmentError` so the UI can render the
+     *    "limit reached" copy.
+     *
+     * The caller supplies already-decoded [MediaUpload.Image]
+     * instances so the VM doesn't need to know about Android
+     * `Uri`s or `MediaReader` — that contract lives in the
+     * route's gallery / camera launchers.
+     */
+    fun onAttachImages(images: List<MediaUpload.Image>) {
+        _uiState.update { state ->
+            if (state !is ContactProviderUiState.Open) return@update state
+            val eligible = images.filter(::isEligibleImage)
+            val next = state.attachedImages + eligible
+            if (next.size > MAX_JOB_REQUEST_IMAGES) {
+                state.copy(
+                    attachmentError = LIMIT_REACHED_SENTINEL,
+                )
+            } else {
+                state.copy(
+                    attachedImages = next,
+                    attachmentError = null,
+                )
+            }
+        }
+    }
+
+    /**
+     * Removes the staged image at [index]. Out-of-range indexes
+     * are a no-op (the UI may race with recomposition). Also
+     * clears the limit-reached error so the consumer can retry
+     * the attach immediately after removing one image.
+     */
+    fun onRemoveImage(index: Int) {
+        _uiState.update { state ->
+            if (state !is ContactProviderUiState.Open) return@update state
+            if (index !in state.attachedImages.indices) return@update state
+            state.copy(
+                attachedImages = state.attachedImages.toMutableList().apply {
+                    removeAt(index)
+                },
+                attachmentError = null,
+            )
+        }
+    }
+
+    private fun isEligibleImage(image: MediaUpload.Image): Boolean =
+        image.mimeType in ALLOWED_IMAGE_MIME_TYPES &&
+            image.bytes.size <= MAX_IMAGE_BYTES
+
+    /**
+     * Decodes [uri] via [MediaReader] (the same port the chat
+     * surfaces use) and appends the resulting image to the
+     * staged list. Mirrors the `01-AIP` flow on the AI
+     * diagnostic chat. `null` and unreadable URIs are dropped
+     * silently — the picker contract already filters URIs at
+     * the OS level. Audio / video media are also dropped
+     * (only [MediaUpload.Image] is accepted); the picker
+     * surfaces only image files today.
+     */
+    fun onAttachImageFromUri(uri: Uri?) {
+        if (uri == null) return
+        viewModelScope.launch {
+            val decoded = try {
+                mediaReader.read(uri)
+            } catch (e: java.io.IOException) {
+                return@launch
+            } as? MediaUpload.Image ?: return@launch
+            onAttachImages(listOf(decoded))
+        }
+    }
+
+    private companion object {
+        /**
+         * Sentinel that flips the [ContactProviderUiState.Open.attachmentError]
+         * slot to a non-null value. The route translates it into a
+         * localised string via `stringResource` so the VM stays
+         * locale-agnostic.
+         */
+        const val LIMIT_REACHED_SENTINEL: String = "limit_reached"
     }
 
     fun onSubmit() {

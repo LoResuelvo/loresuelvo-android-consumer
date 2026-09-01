@@ -168,7 +168,10 @@ class SendMessagesWorld : AutoCloseable {
             getProviders = GetProvidersByCategoryUseCase(fakeProviderRepo),
             getCategories = GetCategoriesUseCase(fakeCategoryRepo),
         )
-        contactProviderViewModel = ContactProviderViewModel(createJobRequestUseCase)
+        contactProviderViewModel = ContactProviderViewModel(
+            createJobRequestUseCase,
+            io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+        )
         messagesListViewModel = MessagesListViewModel(getConversationsUseCase)
         conversationViewModel = ConversationViewModel(
             getConversationById = getConversationByIdUseCase,

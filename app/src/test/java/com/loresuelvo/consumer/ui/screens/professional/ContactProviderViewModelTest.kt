@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.professional
 
 import app.cash.turbine.test
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
 import com.loresuelvo.consumer.domain.jobrequest.JobRequest
@@ -33,12 +34,13 @@ class ContactProviderViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val createJobRequest: CreateJobRequestUseCase = mockk()
+    private val mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
     private lateinit var viewModel: ContactProviderViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ContactProviderViewModel(createJobRequest)
+        viewModel = ContactProviderViewModel(createJobRequest, mediaReader)
     }
 
     @After
@@ -241,6 +243,106 @@ class ContactProviderViewModelTest {
         assertEquals(provider.id, captured.captured.providerId)
         assertEquals("Fuga", captured.captured.title)
         assertEquals("Hay una fuga", captured.captured.description)
+    }
+
+    // ---- 03-UXUI: image attachment flow ---------------------------
+
+    private fun sampleImage(
+        name: String = "fuga.jpg",
+        mimeType: String = "image/jpeg",
+        size: Int = 1024,
+    ): MediaUpload.Image = MediaUpload.Image(
+        bytes = ByteArray(size),
+        mimeType = mimeType,
+        originalName = name,
+    )
+
+    @Test
+    fun onAttachImages_appends_images_when_under_the_limit() = runTest(testDispatcher) {
+        viewModel.onOpenContact(sampleProvider())
+
+        viewModel.onAttachImages(listOf(sampleImage("a.jpg"), sampleImage("b.jpg")))
+
+        val state = viewModel.uiState.value as ContactProviderUiState.Open
+        assertEquals(2, state.attachedImages.size)
+        assertEquals(listOf("a.jpg", "b.jpg"), state.attachedImages.map { it.originalName })
+        assertNull("limit error must not surface on success", state.attachmentError)
+    }
+
+    @Test
+    fun onAttachImages_rejects_batch_exceeding_the_limit_and_keeps_existing() = runTest(testDispatcher) {
+        viewModel.onOpenContact(sampleProvider())
+        viewModel.onAttachImages(listOf(sampleImage("a.jpg"), sampleImage("b.jpg")))
+        // Existing list has 2 items; trying to attach 2 more would take us to 4 (limit = 3).
+        viewModel.onAttachImages(listOf(sampleImage("c.jpg"), sampleImage("d.jpg")))
+
+        val state = viewModel.uiState.value as ContactProviderUiState.Open
+        assertEquals(
+            "the existing 2 items must be preserved when the batch is rejected",
+            listOf("a.jpg", "b.jpg"),
+            state.attachedImages.map { it.originalName },
+        )
+        assertTrue(
+            "limit-reached error must be surfaced, got ${state.attachmentError}",
+            state.attachmentError != null,
+        )
+    }
+
+    @Test
+    fun onAttachImages_drops_files_with_disallowed_mime_type() = runTest(testDispatcher) {
+        viewModel.onOpenContact(sampleProvider())
+
+        viewModel.onAttachImages(
+            listOf(
+                sampleImage("ok.jpg", mimeType = "image/jpeg"),
+                sampleImage("bad.gif", mimeType = "image/gif"),
+            ),
+        )
+
+        val state = viewModel.uiState.value as ContactProviderUiState.Open
+        assertEquals(1, state.attachedImages.size)
+        assertEquals("ok.jpg", state.attachedImages.single().originalName)
+    }
+
+    @Test
+    fun onAttachImages_drops_files_above_the_per_file_size_cap() = runTest(testDispatcher) {
+        viewModel.onOpenContact(sampleProvider())
+
+        viewModel.onAttachImages(
+            listOf(
+                sampleImage("ok.jpg", size = 1024),
+                sampleImage("big.jpg", size = 6 * 1024 * 1024),
+            ),
+        )
+
+        val state = viewModel.uiState.value as ContactProviderUiState.Open
+        assertEquals(1, state.attachedImages.size)
+        assertEquals("ok.jpg", state.attachedImages.single().originalName)
+    }
+
+    @Test
+    fun onRemoveImage_removes_the_image_at_the_index() = runTest(testDispatcher) {
+        viewModel.onOpenContact(sampleProvider())
+        viewModel.onAttachImages(
+            listOf(sampleImage("a.jpg"), sampleImage("b.jpg"), sampleImage("c.jpg")),
+        )
+
+        viewModel.onRemoveImage(1)
+
+        val state = viewModel.uiState.value as ContactProviderUiState.Open
+        assertEquals(listOf("a.jpg", "c.jpg"), state.attachedImages.map { it.originalName })
+        assertNull("removing an image clears the limit error", state.attachmentError)
+    }
+
+    @Test
+    fun onRemoveImage_with_out_of_range_index_is_a_no_op() = runTest(testDispatcher) {
+        viewModel.onOpenContact(sampleProvider())
+        viewModel.onAttachImages(listOf(sampleImage("a.jpg")))
+
+        viewModel.onRemoveImage(99)
+
+        val state = viewModel.uiState.value as ContactProviderUiState.Open
+        assertEquals(1, state.attachedImages.size)
     }
 
     private fun sampleProvider() = Provider(
