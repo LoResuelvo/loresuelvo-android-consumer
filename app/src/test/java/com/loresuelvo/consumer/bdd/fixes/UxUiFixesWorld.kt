@@ -10,6 +10,7 @@ import com.loresuelvo.consumer.ui.screens.categories.CategoriesViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatUiState
 import com.loresuelvo.consumer.ui.screens.chat.ChatViewModel
 import com.loresuelvo.consumer.ui.screens.home.CategoriesState
+import com.loresuelvo.consumer.ui.screens.professional.ContactProviderViewModel
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -51,6 +52,18 @@ class UxUiFixesWorld : AutoCloseable {
     private lateinit var viewModel: ChatViewModel
     private val observedUiStates = mutableListOf<ChatUiState>()
 
+    // 03-UXUI dependencies (contact-provider VM for job requests)
+    private val fakeJobRequestRepo =
+        com.loresuelvo.consumer.bdd.providers.contact.FakeJobRequestRepository()
+    private val createJobRequestUseCase =
+        com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase(
+            fakeJobRequestRepo,
+        )
+    private lateinit var contactViewModel: ContactProviderViewModel
+    private val observedContactStates =
+        mutableListOf<com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState>()
+    private var contactStarted = false
+
     // 02-UXUI dependencies (all-categories VM + fake repository)
     private val fakeCategoryRepository = FakeCategoryRepository()
     private lateinit var categoriesViewModel: CategoriesViewModel
@@ -86,6 +99,57 @@ class UxUiFixesWorld : AutoCloseable {
             categoriesViewModel.uiState.collect { observedCategoriesStates += it }
         }
         scheduler.advanceUntilIdle()
+    }
+
+    /** Boots the contact-provider VM (scenario 03-UXUI). */
+    fun startContactScenario() {
+        if (contactStarted) return
+        contactStarted = true
+        Dispatchers.setMain(dispatcher)
+        contactViewModel = ContactProviderViewModel(
+            createJobRequest = createJobRequestUseCase,
+            mediaReader = mediaReader,
+        )
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            contactViewModel.uiState.collect { observedContactStates += it }
+        }
+        scheduler.advanceUntilIdle()
+    }
+
+    /** Open the contact sheet against [provider] (03-UXUI precondition). */
+    fun openContactSheet(provider: com.loresuelvo.consumer.domain.provider.Provider) {
+        startContactScenario()
+        contactViewModel.onOpenContact(provider)
+        scheduler.advanceUntilIdle()
+    }
+
+    /** Stage [names] as if they came from the gallery picker. */
+    fun attachJobRequestImages(names: List<String>) {
+        val images = names.map { name ->
+            com.loresuelvo.consumer.domain.conversation.MediaUpload.Image(
+                bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()),
+                mimeType = "image/jpeg",
+                originalName = name,
+            )
+        }
+        contactViewModel.onAttachImages(images)
+        scheduler.advanceUntilIdle()
+    }
+
+    fun lastContactUiState(): com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState =
+        observedContactStates.last()
+
+    fun assertAttachedImageNames(expectedNames: List<String>) {
+        val lastState = lastContactUiState()
+        val state = lastState
+            as? com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState.Open
+            ?: error(
+                "expected Open state with attached images, got ${lastState::class.simpleName}",
+            )
+        val actual = state.attachedImages.map { it.originalName }
+        if (actual != expectedNames) {
+            error("expected attached images $expectedNames, got $actual")
+        }
     }
 
     fun lastUiState(): ChatUiState = observedUiStates.last()

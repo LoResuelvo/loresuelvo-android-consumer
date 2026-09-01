@@ -109,21 +109,68 @@ class UxUiFixesSteps {
         world.assertAllCategoriesVisible(FakeCategoryRepository.DEFAULT_CATEGORIES.map { it.name })
     }
 
-    // ---- Scenario 03-UXUI (wip) -----------------------------------
+    // ---- Scenario 03-UXUI -----------------------------------------
 
+    /**
+     * 03-UXUI `Given`: the consumer has tapped "Contactar" on a
+     * provider card and the contact bottom sheet is now open
+     * with the VM exposing an [ContactProviderUiState.Open]
+     * payload. The world mirrors that flow by mounting the
+     * [ContactProviderViewModel] against a relaxed fake
+     * [MediaReader] and opening the modal against a sample
+     * provider.
+     */
     @Given("que estoy creando una oferta de trabajo")
     fun queEstoyCreandoUnaOfertaDeTrabajo() {
-        // No-op: covered when scenario 03 goes green.
+        world.openContactSheet(
+            provider = com.loresuelvo.consumer.domain.provider.Provider(
+                id = 1,
+                name = "Juan",
+                surname = "Pérez",
+                categoryId = 1,
+                categoryName = "Plomería",
+                profilePhotoUrl = null,
+            ),
+        )
     }
 
+    /**
+     * 03-UXUI `When`: the user picks one or more images from the
+     * gallery / camera. The route translates that pick into
+     * decoded [MediaUpload.Image] instances and forwards them
+     * via [ContactProviderViewModel.onAttachImages]. The BDD
+     * world skips the picker contract (mirroring how the chat
+     * `01-AIP` steps stage images directly) and exercises the
+     * VM entry point with three canonical filenames.
+     */
     @When("selecciono una o más imágenes desde el dispositivo")
     fun seleccionoUnaOMasImagenesDesdeElDispositivo() {
-        // No-op: covered when scenario 03 goes green.
+        world.attachJobRequestImages(
+            listOf(
+                "perdida-bajo-mesada.jpg",
+                "detalle-sifon.webp",
+                "humedad-pared.png",
+            ),
+        )
     }
 
+    /**
+     * 03-UXUI `Then`: the consumer can see the staged images
+     * reflected in the contact form state. The visual rendering
+     * of the thumbnails is verified by the Compose-test in
+     * `JobRequestImageAttachmentSelectorTest`; here we pin the
+     * data contract (one entry per picked image, in the order
+     * they were staged).
+     */
     @Then("las imágenes quedan adjuntadas a la oferta")
     fun lasImagenesQuedanAdjuntadasALaOferta() {
-        // No-op: covered when scenario 03 goes green.
+        world.assertAttachedImageNames(
+            listOf(
+                "perdida-bajo-mesada.jpg",
+                "detalle-sifon.webp",
+                "humedad-pared.png",
+            ),
+        )
     }
 
     // ---- Scenario 04-UXUI (wip) -----------------------------------

@@ -39,7 +39,6 @@ Característica: Correcciones de UX/UI
     Entonces veo una pantalla con todas las categorías disponibles
     Y una barra de búsqueda que me permite encontrar las distintas categorías
 
-  @wip
   Escenario: 03-UXUI Adjuntar imágenes a una oferta de trabajo
     Dado que estoy creando una oferta de trabajo
     Cuando selecciono una o más imágenes desde el dispositivo
