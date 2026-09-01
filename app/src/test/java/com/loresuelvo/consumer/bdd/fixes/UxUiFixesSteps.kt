@@ -173,21 +173,58 @@ class UxUiFixesSteps {
         )
     }
 
-    // ---- Scenario 04-UXUI (wip) -----------------------------------
+    // ---- Scenario 04-UXUI -----------------------------------------
 
+    /**
+     * 04-UXUI `Given`: the consumer has already picked one or
+     * more images from the gallery / camera on the contact
+     * form. We open the contact sheet (mirroring 03-UXUI's
+     * precondition) and stage a single canonical image so the
+     * preview-then-publish flow has data to display.
+     */
     @Given("que seleccioné una o más imágenes para mi oferta de trabajo")
     fun queSeleccioneUnaOMasImagenesParaMiOfertaDeTrabajo() {
-        // No-op: covered when scenario 04 goes green.
+        world.openContactSheet(
+            provider = com.loresuelvo.consumer.domain.provider.Provider(
+                id = 1,
+                name = "Juan",
+                surname = "Pérez",
+                categoryId = 1,
+                categoryName = "Plomería",
+                profilePhotoUrl = null,
+            ),
+        )
+        world.attachJobRequestImages(
+            listOf("perdida-bajo-mesada.jpg"),
+        )
     }
 
+    /**
+     * 04-UXUI `When`: "continúo con la creación de la oferta".
+     * The contact form is single-step today (no multi-page
+     * wizard) so the consumer stays on the same surface while
+     * reviewing the staged attachments. The step is a no-op
+     * placeholder mirroring the Gherkin wording.
+     */
     @When("continúo con la creación de la oferta")
     fun continuoConLaCreacionDeLaOferta() {
-        // No-op: covered when scenario 04 goes green.
+        // No-op: the contact form is single-step, so the
+        // consumer stays on the same surface after attaching.
     }
 
+    /**
+     * 04-UXUI `Then`: the staged images are rendered as
+     * thumbnails by the
+     * [com.loresuelvo.consumer.ui.components.images.JobRequestImageAttachmentSelector].
+     * The visual presence is verified by the Compose-test in
+     * `JobRequestImageAttachmentSelectorTest`; here we pin
+     * the data contract — every staged image is reflected in
+     * `state.attachedImages` so the selector can render its
+     * preview.
+     */
     @Then("veo una vista previa de las imágenes seleccionadas")
     fun veoUnaVistaPreviaDeLasImagenesSeleccionadas() {
-        // No-op: covered when scenario 04 goes green.
+        world.assertAttachedImageNames(listOf("perdida-bajo-mesada.jpg"))
     }
 
     // ---- Scenario 05-UXUI (wip) -----------------------------------

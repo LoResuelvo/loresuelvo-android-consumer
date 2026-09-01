@@ -44,7 +44,6 @@ Característica: Correcciones de UX/UI
     Cuando selecciono una o más imágenes desde el dispositivo
     Entonces las imágenes quedan adjuntadas a la oferta
 
-  @wip
   Escenario: 04-UXUI Visualizar las imágenes adjuntadas antes de publicar
     Dado que seleccioné una o más imágenes para mi oferta de trabajo
     Cuando continúo con la creación de la oferta
