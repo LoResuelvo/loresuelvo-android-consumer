@@ -77,6 +77,8 @@ fun ProfessionalsScreen(
     onContactarClick: (Provider) -> Unit,
     onContactTitleChange: (String) -> Unit,
     onContactDescriptionChange: (String) -> Unit,
+    onContactAttachImagesClick: () -> Unit,
+    onContactRemoveImage: (Int) -> Unit,
     onContactSubmit: () -> Unit,
     onContactCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -133,8 +135,14 @@ fun ProfessionalsScreen(
                 canSubmit = openState.canSubmit,
                 isSubmitting = openState.isSubmitting,
                 error = openState.error,
+                attachedImages = openState.attachedImages,
+                attachmentError = openState.attachmentError
+                    ?.takeIf { it == ATTACHMENT_LIMIT_REACHED_SENTINEL }
+                    ?.let { stringResource(R.string.job_request_image_limit_reached, MAX_IMAGES_HINT) },
                 onTitleChange = onContactTitleChange,
                 onDescriptionChange = onContactDescriptionChange,
+                onAttachImagesClick = onContactAttachImagesClick,
+                onRemoveImage = onContactRemoveImage,
                 onSubmit = onContactSubmit,
                 onCancel = onContactCancel,
             )
@@ -399,11 +407,30 @@ private fun ProfessionalsReadyPreview() {
             onContactarClick = {},
             onContactTitleChange = {},
             onContactDescriptionChange = {},
+            onContactAttachImagesClick = {},
+            onContactRemoveImage = {},
             onContactSubmit = {},
             onContactCancel = {},
         )
     }
 }
+
+/**
+ * Sentinel the [ContactProviderViewModel] emits when the most
+ * recent `onAttachImages` call was rejected for exceeding the
+ * per-request cap. The route translates it into a localised
+ * string via `stringResource` so the VM stays locale-agnostic.
+ * Mirrors the webapp's `imageLimitReached` copy (52.3-AIJR).
+ */
+private const val ATTACHMENT_LIMIT_REACHED_SENTINEL: String = "limit_reached"
+
+/** Maximum images per job request. Mirrors
+ *  [com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES]
+ *  — duplicated here so the route can interpolate the value
+ *  into the localised error message without reaching into the
+ *  domain module from the UI.
+ */
+private const val MAX_IMAGES_HINT: Int = 3
 
 @Preview(showBackground = true, name = "ProviderAvatar · with photo URL")
 @Composable
@@ -442,12 +469,27 @@ private fun ProfessionalsEmptyPreview() {
             onContactarClick = {},
             onContactTitleChange = {},
             onContactDescriptionChange = {},
+            onContactAttachImagesClick = {},
+            onContactRemoveImage = {},
             onContactSubmit = {},
             onContactCancel = {},
         )
     }
 }
 
+/**
+ * Sentinel the [ContactProviderViewModel] emits when the most
+ * recent `onAttachImages` call was rejected for exceeding the
+ * per-request cap. The route translates it into a localised
+ * string via `stringResource` so the VM stays locale-agnostic.
+ * Mirrors the webapp's `imageLimitReached` copy (52.3-AIJR).
+ */
+/** Maximum images per job request. Mirrors
+ *  [com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES]
+ *  — duplicated here so the route can interpolate the value
+ *  into the localised error message without reaching into the
+ *  domain module from the UI.
+ */
 @Preview(showBackground = true, name = "Professionals · Error")
 @Composable
 private fun ProfessionalsErrorPreview() {
@@ -459,12 +501,27 @@ private fun ProfessionalsErrorPreview() {
             onContactarClick = {},
             onContactTitleChange = {},
             onContactDescriptionChange = {},
+            onContactAttachImagesClick = {},
+            onContactRemoveImage = {},
             onContactSubmit = {},
             onContactCancel = {},
         )
     }
 }
 
+/**
+ * Sentinel the [ContactProviderViewModel] emits when the most
+ * recent `onAttachImages` call was rejected for exceeding the
+ * per-request cap. The route translates it into a localised
+ * string via `stringResource` so the VM stays locale-agnostic.
+ * Mirrors the webapp's `imageLimitReached` copy (52.3-AIJR).
+ */
+/** Maximum images per job request. Mirrors
+ *  [com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES]
+ *  — duplicated here so the route can interpolate the value
+ *  into the localised error message without reaching into the
+ *  domain module from the UI.
+ */
 @Preview(showBackground = true, name = "Professionals · Loading")
 @Composable
 private fun ProfessionalsLoadingPreview() {
@@ -476,8 +533,24 @@ private fun ProfessionalsLoadingPreview() {
             onContactarClick = {},
             onContactTitleChange = {},
             onContactDescriptionChange = {},
+            onContactAttachImagesClick = {},
+            onContactRemoveImage = {},
             onContactSubmit = {},
             onContactCancel = {},
         )
     }
 }
+
+/**
+ * Sentinel the [ContactProviderViewModel] emits when the most
+ * recent `onAttachImages` call was rejected for exceeding the
+ * per-request cap. The route translates it into a localised
+ * string via `stringResource` so the VM stays locale-agnostic.
+ * Mirrors the webapp's `imageLimitReached` copy (52.3-AIJR).
+ */
+/** Maximum images per job request. Mirrors
+ *  [com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES]
+ *  — duplicated here so the route can interpolate the value
+ *  into the localised error message without reaching into the
+ *  domain module from the UI.
+ */

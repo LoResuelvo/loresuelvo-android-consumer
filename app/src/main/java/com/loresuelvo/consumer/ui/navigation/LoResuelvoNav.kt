@@ -265,6 +265,18 @@ private fun ProfessionalsRoute(
         }
     }
 
+    // 03-UXUI: gallery picker launcher for the job-request
+    // image attachment flow. The launcher is remembered at the
+    // route level so the result callback survives
+    // recompositions. The returned `Uri` is forwarded to the
+    // VM, which decodes it via `MediaReader` and stages the
+    // `MediaUpload.Image` (the same pattern the chat flows use).
+    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        contactViewModel.onAttachImageFromUri(uri)
+    }
+
     com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreen(
         state = state,
         contactFormState = contactState,
@@ -272,6 +284,16 @@ private fun ProfessionalsRoute(
         onContactarClick = contactViewModel::onOpenContact,
         onContactTitleChange = contactViewModel::onTitleChange,
         onContactDescriptionChange = contactViewModel::onDescriptionChange,
+        // 03-UXUI: the picker is local to the route so the
+        // Composable stays stateless.
+        onContactAttachImagesClick = {
+            galleryLauncher.launch(
+                androidx.activity.result.PickVisualMediaRequest(
+                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
+                ),
+            )
+        },
+        onContactRemoveImage = contactViewModel::onRemoveImage,
         onContactSubmit = contactViewModel::onSubmit,
         onContactCancel = contactViewModel::onCancel,
     )

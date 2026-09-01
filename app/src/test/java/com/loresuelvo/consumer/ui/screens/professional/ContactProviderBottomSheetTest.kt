@@ -56,8 +56,14 @@ class ContactProviderBottomSheetTest {
                         canSubmit = false,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -81,8 +87,14 @@ class ContactProviderBottomSheetTest {
                         canSubmit = false,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -110,8 +122,14 @@ class ContactProviderBottomSheetTest {
                         canSubmit = false,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -135,8 +153,16 @@ class ContactProviderBottomSheetTest {
                         canSubmit = true,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+
+                        onRemoveImage = {},
+
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -161,8 +187,16 @@ class ContactProviderBottomSheetTest {
                         canSubmit = false,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = { captured = it },
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+
+                        onRemoveImage = {},
+
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -189,8 +223,16 @@ class ContactProviderBottomSheetTest {
                         canSubmit = false,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = { captured = it },
+                        onAttachImagesClick = {},
+
+                        onRemoveImage = {},
+
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -217,8 +259,13 @@ class ContactProviderBottomSheetTest {
                         canSubmit = true,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = { submitted = true },
                         onCancel = {},
                     )
@@ -246,8 +293,14 @@ class ContactProviderBottomSheetTest {
                         canSubmit = true,
                         isSubmitting = false,
                         error = null,
+
+                        attachedImages = emptyList(),
+
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = {},
                         onCancel = { cancelled = true },
                     )
@@ -277,8 +330,12 @@ class ContactProviderBottomSheetTest {
                             code = 500,
                             message = "internal boom",
                         ),
+                        attachedImages = emptyList(),
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = {},
                         onCancel = {},
                     )
@@ -306,8 +363,12 @@ class ContactProviderBottomSheetTest {
                         canSubmit = true,
                         isSubmitting = false,
                         error = ContactProviderError.Network,
+                        attachedImages = emptyList(),
+                        attachmentError = null,
                         onTitleChange = {},
                         onDescriptionChange = {},
+                        onAttachImagesClick = {},
+                        onRemoveImage = {},
                         onSubmit = {},
                         onCancel = {},
                     )

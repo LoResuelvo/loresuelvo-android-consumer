@@ -29,15 +29,17 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.ui.components.images.JobRequestImageAttachmentSelector
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
  * Stateless content for the contact-provider bottom sheet. Renders
  * the provider's avatar, name and category up top, the modal
- * title + subtitle, the two required fields, an inline error
- * message (when the previous submit failed), and the Cancel /
- * Submit action row.
+ * title + subtitle, the two required fields, the image attachment
+ * surface (scenario 03-UXUI), an inline error message (when the
+ * previous submit failed), and the Cancel / Submit action row.
  *
  * The host ([ProfessionalsScreen]) is responsible for wrapping
  * this content in a `ModalBottomSheet` and toggling visibility
@@ -67,8 +69,12 @@ fun ContactProviderBottomSheet(
     canSubmit: Boolean,
     isSubmitting: Boolean,
     error: ContactProviderError?,
+    attachedImages: List<MediaUpload.Image>,
+    attachmentError: String?,
     onTitleChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
+    onAttachImagesClick: () -> Unit,
+    onRemoveImage: (Int) -> Unit,
     onSubmit: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -167,6 +173,21 @@ fun ContactProviderBottomSheet(
                 capitalization = KeyboardCapitalization.Sentences,
                 keyboardType = KeyboardType.Text,
             ),
+        )
+
+        // Image attachment surface (scenario 03-UXUI). The
+        // selector is stateless: the parent owns the image
+        // list and reacts to `onAttachImagesClick` (a
+        // gallery / camera picker launcher held by the host
+        // route) and `onRemoveImage` (delegates to the VM).
+        // `attachmentError` is the already-localised string the
+        // host route built from the VM's sentinel — null when
+        // the form is idle.
+        JobRequestImageAttachmentSelector(
+            images = attachedImages,
+            onAttachClick = onAttachImagesClick,
+            onRemove = onRemoveImage,
+            error = attachmentError,
         )
 
         // Inline error message. Renders nothing when `error` is
