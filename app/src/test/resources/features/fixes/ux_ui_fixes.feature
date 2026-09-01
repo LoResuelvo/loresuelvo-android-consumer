@@ -49,7 +49,6 @@ Característica: Correcciones de UX/UI
     Cuando continúo con la creación de la oferta
     Entonces veo una vista previa de las imágenes seleccionadas
 
-  @wip
   Escenario: 05-UXUI Eliminar una imagen antes de publicar la oferta
     Dado que tengo una o más imágenes seleccionadas para mi oferta de trabajo
     Cuando elimino una de las imágenes

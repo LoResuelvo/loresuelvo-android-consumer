@@ -136,6 +136,12 @@ class UxUiFixesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    /** Drop the staged image at [index] via [ContactProviderViewModel.onRemoveImage]. */
+    fun removeJobRequestImage(index: Int) {
+        contactViewModel.onRemoveImage(index)
+        scheduler.advanceUntilIdle()
+    }
+
     fun lastContactUiState(): com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState =
         observedContactStates.last()
 

@@ -227,21 +227,57 @@ class UxUiFixesSteps {
         world.assertAttachedImageNames(listOf("perdida-bajo-mesada.jpg"))
     }
 
-    // ---- Scenario 05-UXUI (wip) -----------------------------------
+    // ---- Scenario 05-UXUI -----------------------------------------
 
+    /**
+     * 05-UXUI `Given`: open the contact sheet and stage three
+     * canonical images so the removal step has a deterministic
+     * index to remove (`"detalle-sifon.webp"` at index 1).
+     */
     @Given("que tengo una o más imágenes seleccionadas para mi oferta de trabajo")
     fun queTengoUnaOMasImagenesSeleccionadasParaMiOfertaDeTrabajo() {
-        // No-op: covered when scenario 05 goes green.
+        world.openContactSheet(
+            provider = com.loresuelvo.consumer.domain.provider.Provider(
+                id = 1,
+                name = "Juan",
+                surname = "Pérez",
+                categoryId = 1,
+                categoryName = "Plomería",
+                profilePhotoUrl = null,
+            ),
+        )
+        world.attachJobRequestImages(
+            listOf(
+                "perdida-bajo-mesada.jpg",
+                "detalle-sifon.webp",
+                "humedad-pared.png",
+            ),
+        )
     }
 
+    /**
+     * 05-UXUI `When`: the user taps the `×` chip on the
+     * second thumbnail. The route forwards the tap to the VM
+     * via [ContactProviderViewModel.onRemoveImage] with the
+     * index of the staged image.
+     */
     @When("elimino una de las imágenes")
     fun eliminoUnaDeLasImagenes() {
-        // No-op: covered when scenario 05 goes green.
+        world.removeJobRequestImage(index = 1)
     }
 
+    /**
+     * 05-UXUI `Then`: the removed image is no longer in the
+     * staged list. The visual removal is verified by the
+     * Compose-test in
+     * `JobRequestImageAttachmentSelectorTest`
+     * (`remove_button_click_invokes_onRemove_with_correct_index`).
+     */
     @Then("la imagen deja de estar adjuntada a la oferta")
     fun laImagenDejaDeEstarAdjuntadaALaOferta() {
-        // No-op: covered when scenario 05 goes green.
+        world.assertAttachedImageNames(
+            listOf("perdida-bajo-mesada.jpg", "humedad-pared.png"),
+        )
     }
 
     // ---- Scenario 06-UXUI (wip) -----------------------------------
