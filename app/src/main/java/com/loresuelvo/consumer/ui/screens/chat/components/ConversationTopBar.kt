@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -48,7 +51,17 @@ fun ConversationTopBar(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.testTag(CONVERSATION_TOP_BAR_TAG),
+        modifier = modifier
+            .testTag(CONVERSATION_TOP_BAR_TAG)
+            // 08-UXUI: `ConversationTopBar` is a custom composable
+            // (not a Material 3 `TopAppBar`), so it does not inset
+            // the status bar automatically. The outer `Scaffold`
+            // already consumes the status bar inset for the
+            // `topBar` slot, but because this composable does not
+            // apply it, the back arrow and avatar ended up under
+            // the status bar. Applying the inset here keeps the
+            // back arrow and avatar below the system bar.
+            .windowInsetsPadding(WindowInsets.statusBars),
         color = MaterialTheme.colorScheme.surface,
     ) {
         Row(

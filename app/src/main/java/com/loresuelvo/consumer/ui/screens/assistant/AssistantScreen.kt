@@ -70,6 +70,10 @@ fun AssistantScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            // 08-UXUI: see HomeScreen — the outer `Scaffold`
+            // no longer consumes the top inset, so each
+            // bottom-nav screen must apply
+            // `statusBarsPadding()` itself.
             .statusBarsPadding()
             .testTag(ASSISTANT_SCREEN_TAG),
         contentAlignment = Alignment.Center,

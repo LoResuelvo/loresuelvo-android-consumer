@@ -4,12 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -17,6 +23,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -115,35 +122,112 @@ fun ConversationScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .statusBarsPadding()
             .testTag(CONVERSATION_SCREEN_TAG),
         contentAlignment = Alignment.Center,
     ) {
+        // 08-UXUI: the original `Box + Column.windowInsetsPadding`
+        // design produced a permanent bottom gap and doubled the
+        // padding when the IME opened. Switching to `Scaffold` with
+        // a dedicated `topBar` and `bottomBar` mirrors the
+        // `ChatScreen` pattern, which the consumer already
+        // approved visually: the `Scaffold` consumes the status
+        // bar inset for the `topBar` and the nav bar / IME inset
+        // for the `bottomBar`, and the `bottomBar` only needs
+        // `imePadding()` to lift above the keyboard.
         when (state) {
             is ConversationUiState.Loading -> LoadingState()
-            is ConversationUiState.Ready -> ReadyState(
-                state = state,
-                onPromptChange = onPromptChange,
-                onSendClick = onSendClick,
-                onBackClick = onBackClick,
-                onErrorDismiss = onErrorDismiss,
-                onPlayAudio = onPlayAudio,
-                onPauseAudio = onPauseAudio,
-                onImageClick = onImageClick,
-                onAttachClick = onAttachClick,
-                onGalleryClick = onGalleryClick,
-                onStartAudioRecording = onStartAudioRecording,
-                onStopAudioRecording = onStopAudioRecording,
-                onConfirmMediaSend = onConfirmMediaSend,
-                onDiscardMedia = onDiscardMedia,
-                onMediaErrorDismiss = onMediaErrorDismiss,
-                onScrollPositionChanged = onScrollPositionChanged,
-                onUnreadBannerTapped = onUnreadBannerTapped,
-            )
             is ConversationUiState.Error -> ErrorState(
                 failure = state.failure,
                 onRetryClick = onRetryClick,
             )
+            is ConversationUiState.Ready -> {
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.background,
+                    topBar = {
+                        ConversationTopBar(
+                            counterpart = state.detail.counterpart,
+                            status = state.detail.status,
+                            onBackClick = onBackClick,
+                        )
+                    },
+                    bottomBar = {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(MaterialTheme.colorScheme.background)
+                                // 08-UXUI: the `Scaffold` already
+                                // consumes the IME inset for the
+                                // `bottomBar` (the bar lifts above
+                                // the keyboard automatically). The
+                                // bottom padding adds breathing room
+                                // above the keyboard for a less
+                                // cramped feel — the check on
+                                // `WindowInsets.ime` keeps the bar
+                                // flush against the navigation bar
+                                // when the keyboard is closed.
+                                .padding(
+                                    bottom = if (WindowInsets.ime.asPaddingValues()
+                                            .calculateBottomPadding() > 0.dp) 20.dp else 0.dp,
+                                ),
+                        ) {
+                            if (state.transientError != null) {
+                                TransientErrorCard(
+                                    failure = state.transientError,
+                                    onRetryClick = onSendClick,
+                                    onDismiss = onErrorDismiss,
+                                )
+                            }
+                            if (state.pendingMedia.isNotEmpty()) {
+                                state.pendingMedia.forEachIndexed { index, attachment ->
+                                    MediaPreviewCard(
+                                        pendingMedia = attachment,
+                                        sending = state.sendingMedia,
+                                        onSendClick = onConfirmMediaSend,
+                                        onDiscardClick = onDiscardMedia,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag(
+                                                "$CONVERSATION_ATTACHMENT_CARD_TAG_PREFIX-$index",
+                                            ),
+                                    )
+                                }
+                                if (state.transientMediaError != null) {
+                                    MediaTransientErrorCard(
+                                        failure = state.transientMediaError,
+                                        onRetryClick = onConfirmMediaSend,
+                                        onDismiss = onMediaErrorDismiss,
+                                    )
+                                }
+                            }
+                            ChatInputBar(
+                                promptInput = state.promptInput,
+                                canSend = state.promptInput.isNotBlank() && !state.sending,
+                                sending = state.sending,
+                                recordingAudio = state.recordingAudio,
+                                onPromptChange = onPromptChange,
+                                onSendClick = onSendClick,
+                                onStartAudioRecording = onStartAudioRecording,
+                                onStopAudioRecording = onStopAudioRecording,
+                                onAttachClick = onAttachClick,
+                            )
+                        }
+                    },
+                ) { padding ->
+                    ReadyContent(
+                        state = state,
+                        paddingValues = padding,
+                        onPromptChange = onPromptChange,
+                        onSendClick = onSendClick,
+                        onErrorDismiss = onErrorDismiss,
+                        onPlayAudio = onPlayAudio,
+                        onPauseAudio = onPauseAudio,
+                        onImageClick = onImageClick,
+                        onScrollPositionChanged = onScrollPositionChanged,
+                        onUnreadBannerTapped = onUnreadBannerTapped,
+                    )
+                }
+            }
         }
         MediaAttachSheet(
             show = showAttachSheet,
@@ -218,22 +302,15 @@ private fun ErrorState(
 }
 
 @Composable
-private fun ReadyState(
+private fun ReadyContent(
     state: ConversationUiState.Ready,
+    paddingValues: PaddingValues,
     onPromptChange: (String) -> Unit,
     onSendClick: () -> Unit,
-    onBackClick: () -> Unit,
     onErrorDismiss: () -> Unit,
     onPlayAudio: (String) -> Unit,
     onPauseAudio: (String) -> Unit,
     onImageClick: (String) -> Unit,
-    onAttachClick: () -> Unit,
-    onGalleryClick: () -> Unit,
-    onStartAudioRecording: () -> Unit,
-    onStopAudioRecording: () -> Unit,
-    onConfirmMediaSend: () -> Unit,
-    onDiscardMedia: () -> Unit,
-    onMediaErrorDismiss: () -> Unit,
     onScrollPositionChanged: (Boolean) -> Unit,
     onUnreadBannerTapped: () -> Unit,
 ) {
@@ -257,9 +334,7 @@ private fun ReadyState(
     }
 
     // Auto-scroll on every new message so the consumer's just-sent
-    // bubble is always visible. Keyed on the message count so the
-    // effect re-fires when a new bubble lands (success path or
-    // real-time provider push). Same `derivedStateOf`-style gate
+    // bubble is always visible. Same `derivedStateOf`-style gate
     // as `shouldAutoScroll` in `MessagesList` (AI chat): if the
     // user is scrolled up reading older messages, we skip the
     // forced scroll so they keep their place — the new bubble
@@ -272,80 +347,36 @@ private fun ReadyState(
     }
 
     val coroutineScope = rememberCoroutineScope()
-    Column(modifier = Modifier.fillMaxSize()) {
-        ConversationTopBar(
-            counterpart = state.detail.counterpart,
-            status = state.detail.status,
-            onBackClick = onBackClick,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues),
+    ) {
+        MessagesList(
+            messages = state.detail.messages,
+            listState = listState,
+            audioPlayback = state.audioPlayback,
+            onPlayAudio = onPlayAudio,
+            onPauseAudio = onPauseAudio,
+            onImageClick = onImageClick,
         )
-        Box(modifier = Modifier.weight(1f)) {
-            MessagesList(
-                messages = state.detail.messages,
-                listState = listState,
-                audioPlayback = state.audioPlayback,
-                onPlayAudio = onPlayAudio,
-                onPauseAudio = onPauseAudio,
-                onImageClick = onImageClick,
-            )
-            // The unread banner overlays the list at the
-            // bottom-edge of the scroll area (anchored to
-            // `Alignment.BottomCenter`). Tapping it scrolls the
-            // list back to the bottom and clears the unread flag
-            // via `onUnreadBannerTapped`.
-            if (state.hasUnreadIncoming) {
-                NewMessageBanner(
-                    onTap = {
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(
-                                state.detail.messages.size - 1,
-                            )
-                        }
-                        onUnreadBannerTapped()
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp),
-                )
-            }
-        }
-        if (state.transientError != null) {
-            TransientErrorCard(
-                failure = state.transientError,
-                onRetryClick = onSendClick,
-                onDismiss = onErrorDismiss,
+        // The unread banner overlays the list at the bottom-edge
+        // of the scroll area (anchored to `Alignment.BottomCenter`).
+        if (state.hasUnreadIncoming) {
+            NewMessageBanner(
+                onTap = {
+                    coroutineScope.launch {
+                        listState.animateScrollToItem(
+                            state.detail.messages.size - 1,
+                        )
+                    }
+                    onUnreadBannerTapped()
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 8.dp),
             )
         }
-        if (state.pendingMedia.isNotEmpty()) {
-            state.pendingMedia.forEachIndexed { index, attachment ->
-                MediaPreviewCard(
-                    pendingMedia = attachment,
-                    sending = state.sendingMedia,
-                    onSendClick = onConfirmMediaSend,
-                    onDiscardClick = onDiscardMedia,
-                    modifier = Modifier.testTag(
-                        "$CONVERSATION_ATTACHMENT_CARD_TAG_PREFIX-$index",
-                    ),
-                )
-            }
-            if (state.transientMediaError != null) {
-                MediaTransientErrorCard(
-                    failure = state.transientMediaError,
-                    onRetryClick = onConfirmMediaSend,
-                    onDismiss = onMediaErrorDismiss,
-                )
-            }
-        }
-        ChatInputBar(
-            promptInput = state.promptInput,
-            canSend = state.promptInput.isNotBlank() && !state.sending,
-            sending = state.sending,
-            recordingAudio = state.recordingAudio,
-            onPromptChange = onPromptChange,
-            onSendClick = onSendClick,
-            onStartAudioRecording = onStartAudioRecording,
-            onStopAudioRecording = onStopAudioRecording,
-            onAttachClick = onAttachClick,
-        )
     }
 }
 

@@ -75,10 +75,13 @@ fun HomeScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // Edge-to-edge: respect the status-bar inset so the
-            // greeting ("Hola, Carlos") isn't clipped under the
-            // system bar. With `MainActivity.setDecorFitsSystemWindows(false)`
-            // the OS no longer pre-reserves the inset.
+            // 08-UXUI: the outer `LoResuelvoNav.Scaffold` is
+            // configured to consume only the nav bar inset so
+            // screens with their own `topBar` (Chat,
+            // Conversation) can take the status bar inset
+            // themselves. Bottom-nav screens must apply
+            // `statusBarsPadding()` explicitly to keep the
+            // greeting below the status bar.
             .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 16.dp),

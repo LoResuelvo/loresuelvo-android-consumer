@@ -87,9 +87,10 @@ fun ProfessionalsScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // Edge-to-edge: respect the status-bar inset (the OS no
-            // longer pre-reserves it since
-            // `MainActivity.setDecorFitsSystemWindows(false)`).
+            // 08-UXUI: see HomeScreen for the rationale — the
+            // outer `Scaffold` no longer consumes the top
+            // inset, so each bottom-nav screen must apply
+            // `statusBarsPadding()` itself.
             .statusBarsPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {

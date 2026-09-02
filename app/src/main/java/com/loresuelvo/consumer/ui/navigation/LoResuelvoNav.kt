@@ -2,7 +2,9 @@ package com.loresuelvo.consumer.ui.navigation
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -118,6 +120,18 @@ fun LoResuelvoNav() {
     }
 
     Scaffold(
+        // 08-UXUI: only consume the nav bar inset for the bottom
+        // nav. The top status-bar inset is left for each screen
+        // to consume individually — the screens with a `topBar`
+        // (Chat, Conversation) need it for their `TopAppBar`,
+        // and the bottom-nav screens (Home, Messages, Assistant,
+        // Professionals, Categories) apply their own
+        // `statusBarsPadding()`. Without this carve-out, screens
+        // with a `topBar` would get a double top inset (the outer
+        // Scaffold consumes the status bar for `contentPadding`,
+        // and the inner Scaffold consumes it again for its own
+        // `topBar`).
+        contentWindowInsets = WindowInsets.navigationBars,
         bottomBar = {
             if (BottomDestination.shouldShow(navCurrentRoute)) {
                 LoResuelvoBottomBar(

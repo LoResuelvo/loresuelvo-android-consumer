@@ -4,12 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,8 +32,6 @@ import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.Sender
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.safeDrawing
 
 /**
  * Stateless Composable for the AI diagnostic chat screen.
@@ -97,7 +95,15 @@ fun ChatScreen(
     val conversation = remember(messages) { listOf(initialMessage) + messages }
 
     Scaffold(
-        contentWindowInsets = WindowInsets.safeDrawing,
+        // Default `contentWindowInsets = WindowInsets.systemBars` is
+        // correct: the `Scaffold` consumes the status bar inset
+        // for the `topBar` and the navigation bar inset for the
+        // `bottomBar`. Setting it to `safeDrawing` previously
+        // double-applied the nav bar inset (the `bottomBar`
+        // already adds its own `navigationBarsPadding()`), which
+        // left a gap between the input bar and the screen edge
+        // that grew when the IME came up because the inset
+        // collapsed under the keyboard.
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = { ChatTopBar(onBackClick = onBackClick) },
@@ -106,7 +112,19 @@ fun ChatScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .navigationBarsPadding(),
+                    // 08-UXUI: the `Scaffold` already consumes the
+                    // IME inset for the `bottomBar` (the bar lifts
+                    // above the keyboard automatically). The bottom
+                    // padding adds breathing room above the keyboard
+                    // for a less cramped feel — the check on
+                    // `WindowInsets.ime` keeps the bar flush against
+                    // the navigation bar when the keyboard is closed
+                    // (otherwise the padding would be visible at the
+                    // bottom of the screen all the time).
+                    .padding(
+                                bottom = if (WindowInsets.ime.asPaddingValues()
+                                        .calculateBottomPadding() > 0.dp) 20.dp else 0.dp,
+                    ),
             ) {
                 HorizontalDivider(
                     color = MaterialTheme.colorScheme.outlineVariant,
