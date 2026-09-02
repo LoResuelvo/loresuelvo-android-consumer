@@ -1,208 +1,99 @@
 # android-api-client-governance
 
-Cómo agregar, modificar y testear integraciones HTTP en el proyecto. Cargar cuando se vaya a crear o tocar el `ApiClient`, agregar/modificar un endpoint, crear un DTO, un mapper, un interceptor o un `Authenticator`.
+Load this skill when adding or changing an HTTP endpoint, Retrofit API,
+DTO, mapper, interceptor, authenticator, or network test.
 
-## Cuándo NO cargar
+## Boundary
 
-- Cambios en UI que no llaman a la API.
-- Cambios en Auth0 (cargar `android-hilt-governance` + revisar `data/auth/Auth0AuthProvider.kt`).
+The domain must not know HTTP, Retrofit, OkHttp, or serialization. Define a
+domain port and implement it in `data/`. Keep Retrofit interfaces, DTOs, and
+wire-format details inside `data/api/`.
 
-## Regla de oro
+Examples: `domain/auth/UserRepository.kt:1-8`,
+`data/api/ApiUserRepository.kt:31-45`.
 
-> **El dominio nunca sabe que existe HTTP. Toda la complejidad de red vive en `data/api/`.**
+## DTOs and mappers
 
-El dominio define un **puerto** (interfaz). La infraestructura lo implementa con HTTP. La UI consume el dominio vía Hilt. Ver `domain/auth/AuthProvider.kt:3-6` (puerto) y `data/auth/Auth0AuthProvider.kt:16-37` (impl).
-
-## Estructura esperada (cuando se implemente en Fase 1+)
-
-```
-data/api/
-  ApiConfig.kt                    # BuildConfig.API_URL + timeouts + constantes
-  ApiClient.kt                    # @Singleton wrapper sobre Retrofit
-  AuthInterceptor.kt              # Inyecta Authorization: Bearer <token>
-  RetryOn401Authenticator.kt      # OkHttp Authenticator para refresh
-  dto/
-    RegisterConsumerRequestDto.kt
-    RegisterConsumerResponseDto.kt
-    ApiErrorDto.kt
-  mapper/
-    UserDtoMapper.kt
-
-domain/api/
-  ApiError.kt                     # sealed class PURO, no imports de red
-```
-
-`domain/api/ApiError.kt` vive en `domain/` (no en `data/`) **solo** si es una jerarquía de tipos puros. Si necesita `HttpException` u `OkHttp`, va en `data/api/`.
-
-## Reglas de DTOs
-
-- DTOs **solo** en `data/api/dto/`. Anotados con `@Serializable` y `@SerialName` cuando difiere de camelCase.
-- Campos snake_case en el JSON, camelCase en la clase Kotlin:
-  ```kotlin
-  @Serializable
-  data class RegisterConsumerRequestDto(
-      @SerialName("email") val email: String,
-      @SerialName("name") val name: String,
-      @SerialName("surname") val surname: String,
-  )
-  ```
-- Si la API devuelve 10 campos, el DTO tiene los 10. El mapper descarta los que el dominio no usa.
-- `null` explícito o no, según contrato. Si la API no garantiza el campo, marcarlo nullable.
-
-## Reglas de mappers
-
-- En `data/api/mapper/<Entity>Mapper.kt` con funciones de extensión `toDomain()` y `toDto()`.
-- **No** inflar mappers con lógica de negocio. Solo traducción de tipos.
-- Si la conversión requiere defaults o validaciones (ej: fecha a epoch), delegar al dominio, no al mapper.
-- Tests del mapper: cubren el round-trip (DTO → domain → DTO) y al menos 3 casos de campos opcionales/null.
-
-## Reglas de errores (`ApiError`)
-
-`ApiError` es una `sealed class` en `domain/api/`. Subclases mínimas:
+- DTOs live only in `data/api/dto/`.
+- Use `@Serializable` and `@SerialName` for backend field names.
+- Keep backend snake_case out of domain and UI types.
+- Mappers live in `data/api/mapper/` and only translate data; they do not contain business rules.
+- Preserve all fields required by the wire contract in DTOs, even if the domain uses fewer fields.
+- Test nullable fields, defaults, and field-name mapping.
 
 ```kotlin
-sealed class ApiError(message: String, cause: Throwable? = null) : Exception(message, cause) {
-    data class Network(val cause: Throwable) : ApiError("Network error", cause)
-    data class Server(val code: Int, val message: String) : ApiError(message)
-    data class Unauthorized(val message: String = "Unauthorized") : ApiError(message)
-    data class Unknown(val cause: Throwable? = null) : ApiError("Unknown error", cause)
-}
+@Serializable
+data class ExampleDto(
+    @SerialName("profile_photo_url") val profilePhotoUrl: String?,
+)
 ```
 
-`ApiClient` mapea las respuestas a `ApiError`:
+Examples: `data/api/dto/`, `data/api/mapper/UserDtoMapper.kt`,
+`data/api/mapper/CategoryDtoMapper.kt`.
 
-| HTTP | Cuerpo | Mapea a |
-|---|---|---|
-| 2xx | DTO válido | DTO parseado |
-| 400/422 | `ApiErrorDto` con `code` y `message` | `ApiError.Server(code, message)` |
-| 401 | cualquiera | `ApiError.Unauthorized` |
-| 5xx | cualquiera | `ApiError.Server(code, messageGenérico)` |
-| Sin red / timeout | excepción | `ApiError.Network(cause)` |
-| Otro | excepción | `ApiError.Unknown(cause)` |
+## Errors
 
-Los **use cases** traducen `ApiError` a subclases de su `XxxOutcome.Failure` (más específicas, ej: `UserRegistrationOutcome.Failure.Server(code, message)`).
+Keep the shared `ApiError` hierarchy pure in `domain/api/`. Repositories map
+transport and response failures to it; use cases translate it into their own
+typed outcomes.
 
-## AuthInterceptor
+At minimum distinguish network/timeouts, unauthorized responses, server
+responses with status and safe message, and unknown failures.
 
-- Lee el token de `AuthSessionStore` (no de `SessionStateHolder` directamente, para mantener la abstracción).
-- Si no hay sesión, no agrega `Authorization`.
-- **No** refresca el token. El refresh vive en `Authenticator` (ver abajo).
-- Si la ruta es de Auth0 (`/authorize`, `/oauth/token`, etc.), permitir lista explícita sin header.
+Never return generic error strings from a use case and never leak transport
+exceptions into UI state.
 
-## RetryOn401Authenticator
+Examples: `domain/api/ApiError.kt`,
+`data/api/ApiErrorMapping.kt`, `domain/usecase/auth/RegisterConsumerUseCase.kt`.
 
-- Solo se invoca cuando el server responde 401.
-- Llama a `AuthProvider.refreshToken()` (o equivalente). Si OK, devuelve el `Request` reintentado con el nuevo token. Si no, devuelve `null` (no retry).
-- **No** debe loopear: si el retry también da 401, propaga el 401 al caller.
-- Política de refresh debe estar documentada con el equipo de API. Si no hay refresh, dejar el `Authenticator` retornando `null` y abrir issue.
+## Authentication and retry
 
-## Timeouts
+- `AuthInterceptor` reads the token through `AuthSessionStore`.
+- If no non-blank token exists, forward the request unchanged.
+- Never log tokens, payloads, or response bodies.
+- Keep refresh/retry policy in `RetryOn401Authenticator`.
+- Do not retry ordinary 4xx responses.
+- A second 401 must terminate the retry path.
 
-Centralizados en `ApiConfig.kt`:
+Examples: `data/api/AuthInterceptor.kt`,
+`data/api/RetryOn401Authenticator.kt`.
 
-```kotlin
-object ApiConfig {
-    const val CONNECT_TIMEOUT_SECONDS = 10L
-    const val READ_TIMEOUT_SECONDS = 30L
-    const val WRITE_TIMEOUT_SECONDS = 30L
-    const val CALL_TIMEOUT_SECONDS = 60L
-}
-```
+## Network configuration
 
-Configurar el `OkHttpClient` con esos valores. No hardcodear en `NetworkModule`.
+- Use `BuildConfig.API_URL` for the Retrofit base URL.
+- Keep timeouts centralized in `data/api/ApiConfig.kt`.
+- Provide REST and upload clients as Hilt singletons.
+- The upload client must not attach the API bearer token to pre-signed storage URLs.
 
-## Módulo Hilt (`di/NetworkModule.kt`)
-
-```kotlin
-@Module
-@InstallIn(SingletonComponent::class)
-object NetworkModule {
-    @Provides
-    @Singleton
-    fun provideJson(): Json = Json {
-        ignoreUnknownKeys = true
-        explicitNulls = false
-        coerceInputValues = true
-    }
-
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(
-        authInterceptor: AuthInterceptor,
-        retryAuthenticator: RetryOn401Authenticator,
-    ): OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(ApiConfig.CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .readTimeout(ApiConfig.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .writeTimeout(ApiConfig.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .addInterceptor(authInterceptor)
-        .authenticator(retryAuthenticator)
-        .build()
-
-    @Provides
-    @Singleton
-    fun provideRetrofit(client: OkHttpClient, json: Json): Retrofit = Retrofit.Builder()
-        .baseUrl(ApiConfig.BASE_URL)
-        .client(client)
-        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
-        .build()
-
-    @Provides
-    @Singleton
-    fun provideApiClient(retrofit: Retrofit): ApiClient = ApiClient(retrofit)
-}
-```
+Example: `di/NetworkModule.kt:35-145`.
 
 ## Tests
 
-### Unit JVM (`src/test/.../data/api/`)
+Use JVM tests for repositories, mappers, interceptors, and HTTP behavior.
+Use `MockWebServer` for request/response contracts. Assert method, path,
+headers, body, status mapping, and failure behavior.
 
-- `AuthInterceptorTest.kt`: con `MockK` para `AuthSessionStore` y `OkHttp` real + `MockResponse` para verificar el header.
-- `RetryOn401AuthenticatorTest.kt`: cubre los 3 escenarios (refresh OK, refresh fail, segundo 401).
-- `UserDtoMapperTest.kt`: round-trip + nulls.
-- `ApiErrorMappingTest.kt`: tabla de verdad de `ApiClient` mapeando responses.
+Examples:
 
-### Integration con `MockWebServer`
+- `data/api/AuthInterceptorTest.kt`
+- `data/api/RetryOn401AuthenticatorTest.kt`
+- `data/api/ApiUserRepositoryIntegrationTest.kt`
+- `data/api/mapper/UserDtoMapperTest.kt`
 
-- `ApiClientIntegrationTest.kt`: con `@HiltAndroidTest` + `@UninstallModules(NetworkModule::class)` + `@TestInstallIn(..., replaces = [NetworkModule::class])` que provee un `OkHttpClient` apuntando a `MockWebServer.url("/")`.
-- Cubre: 2xx, 4xx con body, 5xx, red caída.
-- En cada test: `server.takeRequest()` para inspeccionar el `Authorization` header y el payload enviado.
-
-### Verificación de que el dominio sigue puro
+Validate domain purity with:
 
 ```bash
-grep -RInE "import (okhttp3|retrofit2|kotlinx\.serialization|com\.loresuelvo\.consumer\.data)" \
+rg -n "import (okhttp3|retrofit2|kotlinx\.serialization|com\.loresuelvo\.consumer\.data)" \
   app/src/main/java/com/loresuelvo/consumer/domain/
-# Debe devolver 0 líneas.
 ```
 
-## Anti-patrones
+Expected result: no matches.
 
-- ❌ DTOs con campos `@SerializedName` (usar `@SerialName` de `kotlinx-serialization`).
-- ❌ Mappers con `!!` para forzar null-safety. Tipar correctamente el dominio.
-- ❌ `try { api.call() } catch (e: Exception) { ... }` en `ApiClient` o repositorios. Mapear a `ApiError` y propagar.
-- ❌ `Log.d` con el body del request o response. Ni siquiera en debug.
-- ❌ Tokens en logs, en `SharedPreferences` plano, en `Intent` extras, ni en URLs.
-- ❌ Reintentar 4xx automáticamente. Solo 5xx y `IOException`.
-- ❌ `baseUrl` cambiado por feature flag en runtime. Solo `BuildConfig.API_URL` (por flavor).
+## Anti-patterns
 
-## Ejemplo concreto del proyecto (futuro, Fase 4)
-
-- **Puerto**: `domain/auth/UserRepository.kt` (puro).
-- **Adapter**: `data/api/ApiUserRepository.kt` (con `@Inject` + `@Singleton`).
-- **Binding**: `di/RepositoryModule.kt`:
-  ```kotlin
-  @Module
-  @InstallIn(SingletonComponent::class)
-  abstract class RepositoryModule {
-      @Binds
-      @Singleton
-      abstract fun bindUserRepository(impl: ApiUserRepository): UserRepository
-  }
-  ```
-
-## Referencia rápida
-
-- `AGENTS.md` → "Regla de DTOs" y "Regla de pureza del dominio".
-- `skills/android-clean-architecture` para las reglas de capas.
-- Webapp `infrastructure/api/base-client.ts` para el patrón equivalente en el backend TypeScript.
-- `infrastructure/repositories/api-user-repository.ts` (webapp) para el contrato `POST /consumers`.
+- DTOs in `domain/` or `ui/`.
+- `@SerializedName` instead of `@SerialName`.
+- Business rules inside mappers.
+- Generic `catch (Exception)` that hides the failure type.
+- Runtime flags that replace the configured base URL.
+- Logging request/response bodies or credentials.

@@ -1,127 +1,77 @@
 # android-bdd-tdd-process
 
-Ciclo BDD (Gherkin primero) y TDD (RED → GREEN → REFACTOR) aplicado a este proyecto. Cargar cuando se vaya a crear una nueva feature, refactorizar comportamiento, o agregar/modificar un flujo de usuario.
+Load this skill when adding behavior, changing a user journey, or adding a
+BDD scenario and its tests.
 
-## Cuándo NO cargar
+## Terminology
 
-- Cambios puramente cosméticos (colores, strings sin cambio semántico).
-- Cambios de tooling (Gradle, CI, scripts).
-- Refactors que no alteran comportamiento (mover archivos, renombrar) sin tests existentes.
+- Acceptance scenarios are Gherkin files under `app/src/test/resources/features/`.
+- Cucumber steps and worlds live under `app/src/test/java/.../bdd/` and run on the JVM.
+- Instrumented UI tests live under `app/src/androidTest/` and run on a device or emulator.
+- Do not call instrumented tests “acceptance tests”.
 
-## Principio
+## Required loop
 
-> **Test primero, código después. Comportamiento primero, impl después.**
+1. Write or update the Gherkin scenario.
+2. Add the smallest step definitions needed to make it fail correctly.
+3. Add or update JVM unit tests for the behavior and error branches.
+4. Implement the smallest production change.
+5. Refactor while tests remain green.
+6. Add an instrumented UI test when the behavior crosses Activity, navigation, or real Android boundaries.
 
-Cada cambio de comportamiento sigue este orden estricto:
+## Scenario rules
 
-1. **BDD spec**: write or update the `.feature` under `app/src/test/resources/features/<domain>/<case>.feature`. Scenarios are acceptance specifications and run on the JVM.
-2. **Step definitions**: implementar los `@Given/@When/@Then` mínimos para que el scenario falle por la razón correcta (RED).
-3. **Unit test del comportamiento**: escribir el test JVM (`src/test/`) que cubre la rama feliz + al menos 2 ramas de error. RED local.
-4. **Implementación mínima**: solo lo necesario para pasar el test. GREEN.
-5. **Refactor**: extraer, renombrar, mejorar nombres. GREEN se mantiene.
-6. **Instrumented UI test** (when applicable): test the `composable` with `compose.ui.test` (`createComposeRule()` or `createAndroidComposeRule<MainActivity>()`).
-7. **Validation**: `make test` + `make instrumented` (when the flow has instrumented coverage) + `make build` green.
+- Use Spanish for Gherkin steps; use English for code and test method names.
+- Give scenarios stable IDs: `<NN>-<PREFIX> description`.
+- Keep one action per step.
+- Store scenario state in the world/context, not in shared mutable globals.
+- Use fakes for use cases and ViewModels; use mocks only for interaction assertions.
+- Do not use `Thread.sleep`; advance coroutine schedulers or wait on Compose idling.
 
-## Estructura de un `.feature`
+Example: `features/auth/register-consumer.feature` with glue in
+`bdd/onboarding/registerconsumer/`.
 
-```gherkin
-# language: es
-Característica: Registrar cuenta nueva de consumidor
-  Como consumidor
-  Quiero registrarme en LoResuelvo
-  Para contratar servicios residenciales
+## Test boundaries
 
-  Escenario: 01-RCN Registro exitoso
-    Dado que el usuario no está autenticado
-    Y que Auth0 devuelve credenciales válidas
-    Y que el backend acepta POST /consumers con 201
-    Cuando completo el formulario con nombre "Andres" y apellido "Colina"
-    Y presiono "Continuar"
-    Entonces la UI navega al Home
-    Y el backend recibió un POST /consumers con email y nombres correctos
+| Behavior | Test location | Main tools |
+|---|---|---|
+| Domain/use case | `src/test/.../domain/` | JUnit4, fakes, MockK when needed |
+| Repository/HTTP | `src/test/.../data/api/` | MockWebServer, OkHttp |
+| ViewModel | `src/test/.../ui/` | `runTest`, Turbine |
+| Composable without Activity | `src/test/.../ui/` | Robolectric or Compose rule |
+| Activity/navigation/device behavior | `src/androidTest/.../instrumented/` | Compose test, Espresso, Hilt |
 
-  Escenario: 02-RCN Falla de red
-    Dado que el backend no responde
-    Cuando completo el formulario y presiono "Continuar"
-    Entonces veo el mensaje de error de red
-    Y NO navego al Home
-```
+Acceptance scenarios should assert typed outcomes and observable effects,
+not localized UI strings. Assert localized strings in instrumented Compose
+tests through the Activity resources.
 
-Convención de IDs: `<NN>-<PREFIJO> <descripción>`. El prefijo identifica el feature (RCN = register consumer, CPC = complete profile consumer, etc.).
+## Commands
 
-## Steps (reglas)
-
-- Cada step es una función con **un solo** `@Given/@When/@Then`. Nada de helpers multi-acción.
-- Steps agrupados por archivo por área: `WelcomeSteps.kt`, `CompleteProfileSteps.kt`, `BackendSteps.kt` (assertions sobre `MockWebServer.takeRequest()`), `SessionSteps.kt`, `NavigationSteps.kt`.
-- Idioma del step en español. Idioma del nombre de clase y métodos en inglés.
-- Steps **no** comparten estado mutable. Toda la data va por el `ScenarioContext` (un objeto inyectado vía PicoContainer o equivalente de Cucumber) o por parámetros del step.
-- `Hooks.kt` configura Hilt (`@HiltAndroidTest`), reinicia `MockWebServer`, reemplaza `RepositoryModule` con fakes.
-
-## TDD loop para código de producto
+Focused JVM test:
 
 ```bash
-# 1. Escribir el test (RED)
-# 2. Correr el test solo y confirmar que falla por la razón correcta
-./gradlew :app:testDevDebugUnitTest --tests "*CompleteProfileViewModelTest.register_consumer_successfully*"
-
-# 3. Escribir la implementación mínima
-# 4. Correr el test, confirmar que pasa (GREEN)
 ./gradlew :app:testDevDebugUnitTest --tests "*CompleteProfileViewModelTest*"
-
-# 5. Refactor con test en verde
-# 6. Correr toda la suite
-./gradlew :app:testDevDebugUnitTest
 ```
 
-## Tests por capa
+Focused instrumented test:
 
-| Capa | Test type | Carpeta | Herramientas |
-|---|---|---|---|
-| Dominio (puertos, use cases, entidades) | Unit JVM | `src/test/.../domain/` | JUnit4 + MockK (solo para verificar que **no** se llama a un puerto; los use cases reales usan fakes) |
-| Adapters (ApiUserRepository, Auth0) | Unit JVM | `src/test/.../data/` | JUnit4 + MockK para clientes, Robolectric para Context |
-| Integración HTTP | Unit JVM con Robolectric | `src/test/.../data/api/` | MockWebServer + OkHttp real |
-| ViewModels | Unit JVM | `src/test/.../ui/auth/`, `ui/session/` | JUnit4 + MockK + Turbine + `runTest` + `Dispatchers.setMain` |
-| Composables (UI) | Unit JVM con Robolectric o `androidTest/` | `src/test/.../ui/auth/` o `src/androidTest/.../instrumented/auth/` | `compose.ui.test.junit4` + `createComposeRule()` |
-| Acceptance scenarios | JVM | `src/test/.../bdd/` + `src/test/resources/features/` | Cucumber JVM + fakes |
-| Instrumented UI flow | On-device | `src/androidTest/.../instrumented/` | `createAndroidComposeRule<MainActivity>()` or Espresso |
+```bash
+./gradlew :app:connectedDevDebugAndroidTest \
+  --tests "*CompleteProfileScreenInstrumentedTest*"
+```
 
-## Fakes vs Mocks
+Full local validation:
 
-- **Fakes** (`FakeUserRepository`, `FakeAuthProvider`): clases con respuestas programables. Preferidos para tests de use cases y ViewModels.
-- **Mocks** (MockK `mockk<UserRepository>()`): solo cuando verificás interacciones (`verify { ... }`) o cuando necesitás simular excepciones específicas.
-- **No usar `mockkStatic`** ni `mockkObject(SessionStateHolder)` en tests JVM. Refactor: extraer a interfaz testeable.
+```bash
+make test
+make instrumented
+make build
+```
 
-## Naming de tests
+## Anti-patterns
 
-- Tests unitarios: `<ClassName>Test.kt`.
-- Tests de integración: `<ClassName>IntegrationTest.kt`.
-- Acceptance scenarios: `<feature>.feature` under `src/test/resources/features/`.
-- Métodos: `should_<comportamiento>_when_<condición>` en inglés. Ej: `should_navigate_to_home_when_registration_succeeds`, `should_show_error_when_backend_returns_400`.
-- Un test por comportamiento, no por método. Si un método tiene 3 ramas, son 3 tests mínimo.
-
-## Cobertura mínima
-
-- Use cases: 100% de ramas.
-- Repositorios y ViewModels: ≥ 90% líneas, 100% ramas en métodos públicos.
-- Composables: cubrir estados `loading`, `empty`, `error`, `success` cuando apliquen.
-- BDD: cubrir el happy path + al menos 2 caminos de error por feature.
-
-## Anti-patrones
-
-- ❌ Tests que dependen del orden de ejecución. Cada test debe poder correr en cualquier orden.
-- ❌ Tests que duermen (`Thread.sleep`). Usar `runTest`, `advanceUntilIdle`, o `Turbine` para esperar.
-- ❌ Tests con `runBlocking` dentro de callbacks de UI. Usar `runTest` o mover la lógica al ViewModel testeable.
-- ❌ Tests de "render" que no validan comportamiento (ej: `setContent { WelcomeScreen() }` y assertar que un texto está). Cubrir al menos el callback que dispara el VM.
-- ❌ Cobertura como meta sin calidad. 100% con tests basura es peor que 80% con tests que encuentren bugs.
-
-## Ejemplo concreto del proyecto
-
-- `src/test/.../ExampleUnitTest.kt` (placeholder) → reemplazar con tests reales.
-- `app/src/androidTest/.../instrumented/auth/CompleteProfileScreenInstrumentedTest.kt` — instrumented UI example using `createAndroidComposeRule<MainActivity>()`.
-- `app/src/androidTest/.../integration/auth/Auth0AuthProviderTest.kt:30-72` — ejemplo de integration test con fake launcher y `async/yield`. **Frágil**: en código nuevo, reemplazar con `runTest` + Turbine o un `CountDownLatch` no es la solución.
-
-## Referencia rápida
-
-- `AGENTS.md` → "Comandos de validación" para los comandos de Gradle.
-- `AGENTS.md` → "Regla de errores en use cases" para outcomes tipados.
-- Webapp `loresuelvo-webapp/AGENTS.md` sección "Modo BDD con Gherkin/Cucumber" para inspiración del estilo Gherkin.
+- Writing instrumented tests for behavior already covered by fast JVM tests.
+- Coupling JVM tests to Hilt, Auth0, a real backend, or an emulator.
+- Asserting Spanish text in JVM BDD tests.
+- Sharing mutable state between scenarios.
+- Adding a scenario without a deterministic fake or test backend.
