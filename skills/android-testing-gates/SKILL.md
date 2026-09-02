@@ -1,97 +1,80 @@
 # android-testing-gates
 
-Validaciones que se corren antes de PR y antes de merge. Cargar cuando se está por cerrar un PR, hacer release, o merge a `main`.
+Load this skill before a PR, release, merge to `main`, or when diagnosing test
+execution time. Do not load it for a small local iteration; use the BDD/TDD
+skill instead.
 
-## Cuándo NO cargar
+## Test layers
 
-- Iteración local (usar `android-bdd-tdd-process`).
-- Cambios puramente de documentación.
+- `make test`: JVM unit tests and Cucumber acceptance scenarios; no device required.
+- `make instrumented`: on-device Compose/Espresso tests under `androidTest`.
+- `make build`: debug APK compilation and generated code validation.
+- `make lint`: Android Lint.
+- `make test-all-once`: JVM tests plus instrumented tests in one Gradle invocation.
+- `make ci`: build, lint, and the complete test gate.
 
-## Comandos
+## Required gates
+
+Before a PR:
 
 ```bash
-# Mínimo antes de PR
 make lint
 make test
-
-# Antes de merge a main
-make ci
-# = make build + make lint + make test-all-once
-#   = make build + make lint + make acceptance scenarios + make instrumented
-
-# Focalizado durante TDD
-./gradlew :app:testDevDebugUnitTest --tests "*CompleteProfileViewModelTest*"
-./gradlew :app:connectedDevDebugAndroidTest --tests "*CompleteProfileScreenInstrumentedTest*"
+make build
 ```
 
-`make help` lista todos los targets.
+Run `make instrumented` when a user flow, navigation graph, Activity, or
+instrumented test changed.
 
-## Política fail-fast
+Before merging to `main`:
 
-1. Si `make lint` falla, **no** correr `make test`. Corregir lint primero.
-2. Si `make test` falla, corregir y re-ejecutar solo `make test`. No re-correr `make build`.
-3. Si `make build` falla, **no** mergear.
-4. If `make instrumented` fails, do not merge. Instrumented tests are the on-device product contract.
+```bash
+make ci
+```
 
-## Qué valida cada comando
+Stop at the first failure, fix it, and rerun only the affected gate first.
+Do not merge with a failing instrumented test.
 
-| Comando | Qué cubre | Velocidad |
-|---|---|---|
-| `make lint` | Android Lint (composables, recursos, manifest, etc.) | ~30s |
-| `make test` | JVM unit tests and acceptance scenarios (no device required) | <30s objetivo |
-| `make instrumented` | On-device instrumented tests with Compose-test / Espresso | 2-10 min |
-| `make build` | `assemble<Flavor>Debug` (compilación + recursos + R8 si release) | ~1-3 min |
+## Focused commands
 
-## Antes de PR (checklist)
+```bash
+./gradlew :app:testDevDebugUnitTest \
+  --tests "*CompleteProfileViewModelTest*"
 
-- [ ] `make lint` verde.
-- [ ] `make test` verde. Todos los tests nuevos pasan localmente antes de pushear.
-- [ ] `make build` verde.
-- [ ] If a `.feature` or step definition changed, `make test` is green; run `make instrumented` when the flow has on-device coverage.
-- [ ] Sin `Log.*` directo en código nuevo (`grep -RIn "Log\.[dwe]" app/src/main/java/`).
-- [ ] Sin literales en español en código nuevo (`grep -RIn '"[A-ZÁÉÍÓÚÑ][a-záéíóúñ ]\+[a-záéíóúñ]"' app/src/main/java/`).
-- [ ] Sin `viewModelFactory { initializer { ... } }` nuevo en producción.
-- [ ] Sin `object` global mutable nuevo.
-- [ ] DTOs nuevos solo en `data/api/dto/`. Dominio sin snake_case.
-- [ ] `AGENTS.md` y skills actualizados si cambió arquitectura, convención o comandos.
+./gradlew :app:connectedDevDebugAndroidTest \
+  --tests "*CompleteProfileScreenInstrumentedTest*"
+```
 
-## Antes de merge a main (checklist adicional)
+Use `adb devices` before an instrumented run. For local API testing with a
+physical device, prefer `adb reverse tcp:8080 tcp:8080` and rebuild `devDebug`
+after changing `API_URL`.
 
-- [ ] `make ci` green (build + lint + test + instrumented).
-- [ ] Al menos un revisor aprobó (Joseph si toca contrato API, par del equipo Android si es solo refactor).
-- [ ] PR con descripción en inglés: archivos tocados, comandos de validación ejecutados, riesgos residuales.
+## Performance diagnosis
 
-## Errores comunes y qué hacer
+Measure layers separately:
 
-### `Lint` reporta `HardcodedText` en composables
+```bash
+time make test
+time make instrumented
+time make test-all-once
+```
 
-Eso es el linter detectando un literal en español en código. Mover a `strings.xml` (es + en) y reemplazar por `stringResource(R.string.<key>)`.
+Do not add arbitrary sleeps or increase timeouts to hide slow tests. Prefer
+Compose idling, coroutine test schedulers, deterministic fakes, and targeted
+test filters.
 
-### `Lint` reporta `UnusedResources`
+## Common failures
 
-Recursos `strings.xml` definidos pero no usados. Borrarlos (los huérfanos se acumulan y agrandan el APK).
+- `device not found`: inspect `adb devices` and the selected flavor.
+- Hilt startup failure: verify `HiltTestRunner`, `@HiltAndroidTest`, and the
+  `HiltAndroidRule` order.
+- `MockWebServer` port conflict: shut down the server in teardown.
+- Local HTTP blocked: use the `dev` network-security overlay only.
 
-### `make test` falla con `Hilt ... must be set`
+## Review checklist
 
-Falta `@HiltAndroidTest` + `HiltTestApplication`. Configurar `testInstrumentationRunner` en `app/build.gradle.kts` y un `HiltTestRunner` custom.
-
-### `make instrumented` fails with "device not found"
-
-`adb devices` debe devolver al menos un device. Conectar vía ADB inalámbrico (ver `README.md` sección "ADB inalámbrico") o arrancar un emulador con `emulator -avd <name>`.
-
-### `MockWebServer` falla con `port already in use`
-
-`Hooks.kt` debe cerrar el `MockWebServer` en `@After` con `server.shutdown()`. Si no, el puerto queda tomado entre tests.
-
-## Cobertura (cuando se agregue CI)
-
-- Mínimo: jacoco + reporte HTML en `build/reports/jacoco/`.
-- Gate: ≥ 90% líneas en `data/` + `domain/usecase/`, ≥ 80% en `ui/`.
-- Hoy (sin jacoco configurado todavía) la métrica informal es: cada use case tiene tests por cada subclase de `Failure`, cada ViewModel tiene tests por cada estado de `UiState`.
-
-## Anti-patrones
-
-- ❌ "Pasa local, pusheo y arreglo en CI". Los tests deben pasar local antes de pushear.
-- ❌ Merge with `make instrumented` red even if the other gates are green.
-- ❌ Saltar `make build` porque "ya sé que compila". `make build` valida recursos, R8 (si release), KSP/KAPT, plugins nuevos.
-- ❌ Confundir "tests pasan" con "calidad". Revisar coverage y nombres de tests, no solo el verde.
+- No production secrets or token/payload logging.
+- JVM tests do not depend on a device or real backend.
+- Instrumented tests use deterministic fakes when testing UI wiring.
+- Generated files and debug artifacts are absent from the diff.
+- `git diff --check` is clean.

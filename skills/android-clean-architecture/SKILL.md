@@ -1,115 +1,73 @@
 # android-clean-architecture
 
-Aplicar y validar las reglas de capas y pureza del dominio en el proyecto Android. Cargar cuando se vaya a crear, mover o modificar código en `domain/`, `data/`, `ui/` o `domain/usecase/`, o cuando se dude de si un import viola la arquitectura.
+Load this skill when changing `domain/`, `data/`, `ui/`, or
+`domain/usecase/`, or when reviewing a dependency boundary.
 
-## Cuándo NO cargar
+## Do not load
 
-- Cambios puramente de UI (colores, textos, layouts) que no toquen capas.
-- Cambios en scripts de build, Gradle, CI.
-- Cambios en `AGENTS.md` o skills (usar `android-doc-governance`).
+- Documentation, Gradle, CI, or script-only changes.
+- UI-only changes that do not cross a layer boundary.
 
-## Capas (resumen)
+## Dependency direction
 
-```mermaid
-graph TD
-  UI[ui/] --> UC[domain/usecase/]
-  UI --> D[domain/]
-  UC --> D
-  Data[data/] -.->|Implementa| D
-  Data --> D
+```text
+ui → domain/usecase → domain
+data ───────────────→ domain
 ```
 
-- **`domain/`**: PURO. Entidades, value objects, **puertos** (interfaces), `ApiError` (sealed).
-- **`domain/usecase/`**: casos de uso. Un `operator fun invoke` por clase. Nombre: `VerbSubjectUseCase`.
-- **`data/`**: adapters (Auth0, ApiUserRepository, etc.), DTOs snake_case, mappers, `ApiClient`, `EncryptedAuthSessionStore`.
-- **`ui/`**: composables, ViewModels, navegación, theme, componentes.
+- `domain/` contains pure entities, ports, outcomes, and errors.
+- `domain/usecase/` orchestrates domain ports and has no infrastructure imports.
+- `data/` implements ports and owns HTTP, Auth0, Android storage, DTOs, and mappers.
+- `ui/` observes state and emits events; it does not construct repositories or call `data/` directly.
 
-## Reglas de dependencia
+## Hard rules
 
-- `domain/` NO importa: `data/`, `ui/`, `android.*`, `dagger`, `hilt`, `okhttp3`, `retrofit2`, `kotlinx.serialization`.
-- `domain/usecase/` NO importa: `data/`, `ui/`. Sí puede importar `domain/`.
-- `data/` puede importar `domain/` (para implementar puertos).
-- `ui/` puede importar `domain/usecase/` y `domain/`. NO importa `data/` directamente (las dependencias se inyectan vía Hilt).
+- Domain code must not import `data`, `ui`, `android.*`, Dagger/Hilt, OkHttp, Retrofit, or serialization.
+- DTOs live only in `data/api/dto/`; backend snake_case must not enter domain or UI.
+- Mappers live in `data/api/mapper/` and contain no business rules.
+- Each use case is a class with one `operator fun invoke(...)`.
+- Use case names follow `VerbSubjectUseCase`.
+- Outcomes and failures are typed `sealed interface`s, never generic error strings.
+- Add new mutable global `object`s only with an explicit architectural exception; normally use Hilt injection.
 
-## Validación con grep
+Examples: `domain/auth/AuthProvider.kt:3-6`,
+`domain/api/ApiError.kt`, `data/api/mapper/UserDtoMapper.kt`,
+`domain/usecase/auth/RegisterConsumerUseCase.kt`.
 
-Antes de PR, correr:
+## Naming
+
+- Ports: `UserRepository`, `AuthProvider`, `AuthSessionStore`.
+- Adapters: `ApiUserRepository`, `Auth0AuthProvider`.
+- Mappers: `<Entity>DtoMapper` or the existing mapper convention in `data/api/mapper/`.
+- Outcomes: `<Action>Outcome` with typed `Success` and `Failure` variants.
+
+## Validation
+
+Run before review:
 
 ```bash
-# 1. ¿domain importa data/ui/android/libs externas?
-grep -RInE "import (com\.loresuelvo\.consumer\.(data|application|ui)|android\.|dagger|hilt|okhttp3|retrofit2|kotlinx\.serialization)" \
+rg -n "import (com\.loresuelvo\.consumer\.(data|application|ui)|android\.|dagger|hilt|okhttp3|retrofit2|kotlinx\.serialization)" \
   app/src/main/java/com/loresuelvo/consumer/domain/
-# Debe devolver 0 líneas.
-
-# 2. ¿ui importa data directamente? (debería pasar solo por Hilt)
-grep -RInE "import com\.loresuelvo\.consumer\.data\." app/src/main/java/com/loresuelvo/consumer/ui/
-# Permitido solo en data classes o wrappers de UI que son DTOs por accidente. Mejor: 0.
 ```
 
-Si cualquier grep devuelve hits, el code review falla.
+Expected result: no matches.
 
-## Reglas de naming
+Then check UI does not import data directly:
 
-- **Puertos** (interfaces en `domain/`): nombre del concepto en singular, sin sufijo `I`. Ej: `UserRepository`, `AuthProvider`, `AuthSessionStore`.
-- **Adapters** (en `data/`): prefijo del backend o tecnología + `Repository`/`Provider`/`Client`. Ej: `ApiUserRepository`, `Auth0AuthProvider`, `Auth0CredentialsMapper`.
-- **Mappers**: `<Entity>Mapper.kt` con `toDomain()` y `toDto()`.
-- **Use cases**: `VerbSubjectUseCase`. Ej: `RegisterConsumerUseCase`, `CompleteOnboardingUseCase`. **No** `UserRegistration` (eso es un outcome, no un use case).
-- **Outcomes**: `sealed interface <Verb>Outcome` con `Success(...)` y subclases de `Failure` tipadas. Ej: `UserRegistrationOutcome.Failure.Server(code, message)`.
+```bash
+rg -n "import com\.loresuelvo\.consumer\.data\." \
+  app/src/main/java/com/loresuelvo/consumer/ui/
+```
 
-## Reglas de outcomes y errores
+Expected result: no matches.
 
-- Outcomes siempre `sealed interface`. Nunca `String` para errores.
-- Subclases de `Failure`:
-  - `Network(cause: Throwable)` para fallos de transporte.
-  - `Server(code: Int, message: String)` para 4xx/5xx con body.
-  - `Unauthorized(message: String)` para 401 (código separado para forzar `clearSession`).
-  - `Unknown(cause: Throwable?)` para fallback.
-- **NO** `Failure.Generic(val message: String)`. Si no encaja en las anteriores, agregá una subclase nueva, no uses string genérico.
+## Review checklist
 
-## DTOs y mappers
+- Is the dependency pointing inward toward the domain?
+- Is the infrastructure detail hidden behind a domain port?
+- Are DTO conversion and error translation at the data/use-case boundary?
+- Is state immutable and exposed through `StateFlow` in UI?
+- Are strings, logging, and Android context kept in their proper outer layer?
 
-- DTOs solo en `data/api/dto/`. Anotados con `@Serializable` y `@SerialName("snake_case_field")` cuando difiere del nombre Kotlin.
-- El dominio nunca ve DTOs. Mappers en `data/api/mapper/`.
-- Si la API devuelve 10 campos y el dominio solo usa 4, el DTO tiene los 10 y el mapper descarta los 6. No filtrar campos no usados al dominio.
-
-## Anti-patrones explícitos
-
-- ❌ `object` global mutable nuevo. El `SessionStateHolder` actual es una **excepción documentada** que se migra a `@Singleton @Inject` (Fase 8 del plan maestro).
-- ❌ Repositorios instanciados con `new` o `=`. Siempre `@Inject` o `@Provides`.
-- ❌ `viewModelFactory { initializer { ... } }` en producción. Usar `hiltViewModel<T>()`.
-- ❌ `Log.d`/`Log.e` directo. Usar `Logger`.
-- ❌ Strings en español hardcoded en código. Usar `strings.xml`.
-- ❌ `try { } catch (e: Exception) { Log.e(...); "Algo salió mal" }` en use cases. Tipar la failure.
-- ❌ Pasar `Context` a ViewModels o use cases. Si hace falta, usar `ApplicationContext` y mantenerlo como dependencia explícita.
-
-## Ejemplo concreto del proyecto
-
-- **Puerto bien hecho**: `domain/auth/AuthProvider.kt:3-6`:
-  ```kotlin
-  interface AuthProvider {
-      suspend fun signup(): SignupOutcome
-  }
-  ```
-  Puro, sin imports externos. Implementado por `data/auth/Auth0AuthProvider.kt:16-37`.
-
-- **Use case que orquesta un puerto** (estructura esperada, no existe aún):
-  ```kotlin
-  class RegisterConsumerUseCase @Inject constructor(
-      private val userRepository: UserRepository,
-      private val authSessionStore: AuthSessionStore,
-  ) {
-      suspend operator fun invoke(command: RegisterConsumerCommand): UserRegistrationOutcome {
-          val session = authSessionStore.getSession()
-              ?: return UserRegistrationOutcome.Failure.Unauthorized("Sin sesión activa")
-          return userRepository.registerConsumer(/* ... */)
-      }
-  }
-  ```
-
-## Referencia rápida
-
-- `AGENTS.md` → secciones "Arquitectura y capas", "Regla de dependencia estricta", "Regla de pureza del dominio".
-- `AGENTS.md` → "Regla de DTOs" para el binding snake_case ↔ camelCase.
-- `domain/auth/AuthProvider.kt:3` ejemplo de puerto.
-- `data/auth/Auth0AuthProvider.kt:16` ejemplo de adapter.
-- `domain/auth/SignupOutcome.kt:3-7` ejemplo de sealed interface.
+Source of truth: `AGENTS.md` sections “Architecture”, “Dependency rule”,
+“Domain purity”, and “DTO rule”.

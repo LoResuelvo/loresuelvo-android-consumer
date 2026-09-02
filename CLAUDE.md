@@ -24,7 +24,7 @@ Fuente canónica de contexto para Claude y otros agentes: **`AGENTS.md`** (este 
 
 - **Código y tests**: inglés.
 - **UI y steps de BDD**: español.
-- **Commits**: Conventional Commits en inglés (`feat:`, `fix:`, `refactor:`, `test:`, `chore:`, `docs:`, `build:`, `ci:`).
+- **Commits**: inglés, formato `<type>[<us_number>]: <message>` (`feat[US-8]: ...`).
 - **PRs**: atómicos por fase. Título en inglés, descripción con bullet list de archivos tocados y comandos de validación.
 - **DTOs**: snake_case, solo en `data/api/dto/`. Dominio siempre camelCase.
 - **Outcomes de use cases**: `sealed interface XxxOutcome` con `Success`/`Failure` tipados.

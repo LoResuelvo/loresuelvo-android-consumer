@@ -18,7 +18,7 @@ Fuente canónica para agentes. Leer este archivo primero y cargar skills locales
 - **Estado**: StateFlow + UDF. Los `UiState` son `data class` inmutables; los `ViewModel` exponen `StateFlow<UiState>`.
 - **DI**: Hilt + `hilt-navigation-compose` para `hiltViewModel()` en composables. `LoresuelvoApp` con `@HiltAndroidApp`. `MainActivity` con `@AndroidEntryPoint`.
 - **Auth**: Auth0 SDK 2.11.0.
-- **Networking** (en roadmap): Retrofit + OkHttp + `kotlinx-serialization` (a partir de Fase 1).
+- **Networking**: Retrofit + OkHttp + `kotlinx-serialization`.
 - **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD.
 
 ## Arquitectura y capas (Clean Architecture liviana + Ports & Adapters)
@@ -60,7 +60,7 @@ graph TD
 - **Observer**: `StateFlow` + `collectAsState()` en composables; `viewModelScope.launch` en ViewModels. Ver `ui/session/SessionViewModel.kt:18-23` (collect del `state`) y `MainActivity.kt:50` (`collectAsState`).
 - **Adapter**: `ApiUserRepository` adapta el cliente HTTP al puerto `UserRepository`; `ApiCategoryRepository` adapta `GET /categories` al puerto `CategoryRepository`; `Auth0AuthProvider` adapta el SDK de Auth0 al puerto `AuthProvider`. Ver `data/auth/Auth0AuthProvider.kt:16-26` y `data/api/ApiCategoryRepository.kt:16-32`.
 - **Factory**: Hilt actúa como factory de dependencias. Complementariamente, los ViewModels se obtienen con `hiltViewModel()` en composables. No usar `viewModelFactory { initializer { ... } }` en producción.
-- **Dependency Injection**: Hilt. **Cero** `object` global mutable nuevo. Excepción documentada: `SessionStateHolder` (migración planificada a `@Singleton @Inject`, ver Fase 8).
+- **Dependency Injection**: Hilt. **Cero** `object` global mutable nuevo. Shared state uses injected `@Singleton` classes.
 
 ### Regla de dependencia estricta
 
@@ -132,7 +132,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - `skills/android-api-client-governance` — DTOs, mappers, `ApiClient`, `AuthInterceptor`, `ApiError`.
 - `skills/android-hilt-governance` — Módulos, scopes, `@HiltViewModel`, `hiltViewModel()`, tests con Hilt.
 - `skills/android-doc-governance` — Mantenimiento de `AGENTS.md`, `CLAUDE.md`, `README.md`, skills.
-- `skills/android-commit-governance` — Conventional Commits en inglés, PRs atómicos.
+- `skills/android-commit-governance` — Commit format `<type>[<us_number>]: <message>`, in English, with atomic PRs.
 
 ---
 
@@ -261,7 +261,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - Texto visible para usuarios: español, centralizado en `strings.xml`.
 - Código, tests, nombres de variables, comentarios técnicos: inglés.
 - Steps de BDD: español (alineado con el webapp).
-- Commits y mensajes de PR: inglés, Conventional Commits.
+- Commits y mensajes de PR: inglés, formato `<type>[<us_number>]: <message>`.
 - Comentarios explicativos (que agreguen info, no describan lo obvio) en español.
 
 ---
