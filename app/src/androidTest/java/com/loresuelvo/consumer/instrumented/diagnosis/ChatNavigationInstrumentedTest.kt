@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.acceptance.diagnosis
+package com.loresuelvo.consumer.instrumented.diagnosis
 
 import android.app.Application
 import android.content.Context
@@ -71,7 +71,7 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 @UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
-class ChatNavigationAcceptanceTest {
+class ChatNavigationInstrumentedTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -111,16 +111,12 @@ class ChatNavigationAcceptanceTest {
     fun tapping_ai_entry_navigates_to_chat_screen() {
         val sendButtonDescription = localizedString(R.string.home_search_send_content_description)
 
-        composeTestRule.onRoot().printToLog("ChatHomeTreeStart")
-
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule
                 .onAllNodesWithContentDescription(sendButtonDescription)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
-
-        composeTestRule.onRoot().printToLog("ChatHomeTree")
 
         composeTestRule
             .onNodeWithContentDescription(sendButtonDescription)

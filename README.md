@@ -62,8 +62,8 @@ Todos los targets aceptan `FLAVOR=Dev|Staging|Prod` (default: `Dev`).
 | `make build` | `./gradlew assemble<Flavor>Debug` |
 | `make lint` | `./gradlew lint<Flavor>Debug` |
 | `make test` | `./gradlew test<Flavor>DebugUnitTest` (JVM, rápido) |
-| `make e2e` | Acceptance tests con Compose-test / Espresso (requiere emulador o device). |
-| `make test-all-once` | `make test` + `make e2e`. |
+| `make instrumented` | Tests instrumentados con Compose-test / Espresso (requiere emulador o device). |
+| `make test-all-once` | Escenarios de aceptación JVM (`make test`) + tests instrumentados. |
 | `make ci` | `make build` + `make lint` + `make test-all-once`. Usar antes de merge. |
 | `make clean` | `./gradlew clean`. |
 | `make devices` | `adb devices`. |
@@ -177,7 +177,7 @@ Verificar que el plugin está declarado en el `plugins` block con la misma versi
 
 ## GitHub Actions
 
-> Pendiente (WIP). El pipeline correrá `make ci` (build + lint + unit + acceptance) en cada push y PR.
+> Pendiente (WIP). El pipeline correrá `make ci` (build + lint + unit + instrumented tests) en cada push y PR.
 
 ---
 

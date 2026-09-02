@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Path-sensor for the e2e job: the emulator boot costs ~5 min so
+  # Path-sensor for the instrumented-tests job: the emulator boot costs ~5 min so
   # we only pay that on PRs that actually touch UI/Composable code,
   # the AndroidManifest, or the build configuration. Lint + unit
   # tests and the APK build verification are cheap enough to run
@@ -23,14 +23,14 @@ jobs:
     name: Detect changes
     runs-on: ubuntu-latest
     outputs:
-      e2e: ${{ steps.filter.outputs.e2e }}
+      instrumented: ${{ steps.filter.outputs.instrumented }}
     steps:
       - uses: actions/checkout@v4
       - id: filter
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            e2e:
+            instrumented:
               - 'app/src/main/**'
               - 'app/src/androidTest/**'
               - 'app/src/main/AndroidManifest.xml'
@@ -68,10 +68,10 @@ jobs:
           make lint FLAVOR=Staging
           make test FLAVOR=Staging
 
-  e2e:
-    name: Acceptance Tests (Emulator)
+  instrumented-tests:
+    name: Instrumented Tests (Emulator)
     needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    if: needs.changes.outputs.instrumented == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -106,8 +106,8 @@ jobs:
 
       - name: Report AVD cache
         env:
-          E2E_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
-        run: echo "E2E_CACHE_HIT=$E2E_CACHE_HIT"
+          INSTRUMENTED_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
+        run: echo "INSTRUMENTED_CACHE_HIT=$INSTRUMENTED_CACHE_HIT"
 
       - name: Habilitar KVM (requerido por el emulador)
         run: |
@@ -118,10 +118,10 @@ jobs:
       - name: Timing runner start
         run: echo "TIMING:RUNNER_START=$(date -u +%s)"
 
-      - name: Ejecutar E2E (Android Instrumented Tests)
+      - name: Ejecutar tests instrumentados de Android
         uses: ReactiveCircus/android-emulator-runner@v2
         env:
-          E2E_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
+          INSTRUMENTED_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit == 'true' }}
           GRADLE_OPTS: -Dorg.gradle.logging.level=info
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
@@ -138,15 +138,15 @@ jobs:
             -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -verbose
             -snapshot ci-clean -no-snapshot-save
           script: |
-            echo "TIMING:E2E_SCRIPT_START=$(date -u +%s)"
-            echo "E2E_CACHE_HIT=$E2E_CACHE_HIT"
+            echo "TIMING:INSTRUMENTED_SCRIPT_START=$(date -u +%s)"
+            echo "INSTRUMENTED_CACHE_HIT=$INSTRUMENTED_CACHE_HIT"
             echo "SNAPSHOT_CHECK_START"
             adb -s emulator-5554 emu avd snapshot list
-            if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then echo "E2E_SNAPSHOT_AVAILABLE=true"; else echo "E2E_SNAPSHOT_AVAILABLE=false"; echo "Expected snapshot ci-clean is unavailable; regenerate the bootstrap cache"; exit 1; fi
+            if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then echo "INSTRUMENTED_SNAPSHOT_AVAILABLE=true"; else echo "INSTRUMENTED_SNAPSHOT_AVAILABLE=false"; echo "Expected snapshot ci-clean is unavailable; regenerate the bootstrap cache"; exit 1; fi
             echo "SNAPSHOT_CHECK_END"
-            echo "TIMING:E2E_TESTS_START=$(date -u +%s)"
-            make e2e FLAVOR=Staging
-            echo "TIMING:E2E_TESTS_END=$(date -u +%s)"
+            echo "TIMING:INSTRUMENTED_TESTS_START=$(date -u +%s)"
+            make instrumented FLAVOR=Staging
+            echo "TIMING:INSTRUMENTED_TESTS_END=$(date -u +%s)"
 
       - name: Timing runner end
         if: always()

@@ -1,4 +1,4 @@
-.PHONY: help up build lint test e2e test-all-once ci clean devices
+.PHONY: help up build lint test instrumented test-all-once ci clean devices
 
 FLAVOR ?= Dev
 
@@ -8,7 +8,7 @@ help:
 	@echo "  make build"
 	@echo "  make lint"
 	@echo "  make test"
-	@echo "  make e2e"
+	@echo "  make instrumented"
 	@echo "  make test-all-once"
 	@echo "  make ci"
 	@echo "  make clean"
@@ -27,10 +27,12 @@ lint:
 test:
 	./gradlew test$(FLAVOR)DebugUnitTest
 
-e2e:
-	bash scripts/run_acceptance_tests.sh $(FLAVOR)
+instrumented:
+	bash scripts/run_instrumented_tests.sh $(FLAVOR)
 
-test-all-once: test e2e
+test-all-once:
+	./gradlew test$(FLAVOR)DebugUnitTest connected$(FLAVOR)DebugAndroidTest \
+		-Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.instrumented
 
 ci: build lint test-all-once
 

@@ -102,7 +102,7 @@ class AiDiagnosisWorld : AutoCloseable {
      * issued. The matching `Then` step then asserts the route
      * exists with the expected path. Real "the screen is visible"
      * verification is handled by
-     * `src/androidTest/.../acceptance/diagnosis/ChatNavigationAcceptanceTest`.
+     * `src/androidTest/.../instrumented/diagnosis/ChatNavigationInstrumentedTest`.
      */
     private var chatWithAiIntentIssued: Boolean = false
 
@@ -477,7 +477,7 @@ class AiDiagnosisWorld : AutoCloseable {
      * Asserts the chat route is registered with the expected path and
      * that the selection step ran first. Compose-level rendering is
      * verified by the acceptance test in
-     * `src/androidTest/.../acceptance/diagnosis/`.
+     * `src/androidTest/.../instrumented/diagnosis/`.
      */
     fun assertChatScreenRouteAvailable() {
         require(chatWithAiIntentIssued) {

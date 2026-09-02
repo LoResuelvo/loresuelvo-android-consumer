@@ -115,7 +115,7 @@ app/
       resources/features/                    # .feature BDD de Cucumber (JVM, no androidTest)
       java/.../bdd/                          # Step definitions + CucumberWorld + fakes
     androidTest/
-      java/.../acceptance/                   # Acceptance con Compose-test o Espresso
+      java/.../instrumented/                 # Tests instrumentados con Compose-test o Espresso
 skills/                                      # Skills locales para agentes
 AGENTS.md                                    # Este archivo (canónico)
 CLAUDE.md                                    # Apunta a AGENTS.md
@@ -128,7 +128,7 @@ README.md                                    # Setup + comandos + troubleshootin
 
 - `skills/android-clean-architecture` — Aplicar reglas de capas y pureza del dominio.
 - `skills/android-bdd-tdd-process` — Ciclo BDD (Gherkin primero) y TDD (RED/GREEN/REFACTOR).
-- `skills/android-testing-gates` — Validaciones de cierre: unit, integration, e2e, build.
+- `skills/android-testing-gates` — Validaciones de cierre: unit, acceptance scenarios, instrumented tests, build.
 - `skills/android-api-client-governance` — DTOs, mappers, `ApiClient`, `AuthInterceptor`, `ApiError`.
 - `skills/android-hilt-governance` — Módulos, scopes, `@HiltViewModel`, `hiltViewModel()`, tests con Hilt.
 - `skills/android-doc-governance` — Mantenimiento de `AGENTS.md`, `CLAUDE.md`, `README.md`, skills.
@@ -207,14 +207,16 @@ README.md                                    # Setup + comandos + troubleshootin
 
 ### Tests instrumentados (`androidTest/`)
 
+- En este repositorio, `androidTest/` contiene tests instrumentados que corren en un device o emulator. Los escenarios de aceptación Gherkin viven en `src/test/` y corren en JVM; no deben llamarse “acceptance tests” cuando se refiera a la capa `androidTest/`.
+
 - `HiltTestRunner` (configurado en `build.gradle.kts` como `testInstrumentationRunner`) hace `AndroidJUnitRunner.newApplication()` retorne `HiltTestApplication` en lugar de `LoresuelvoApp`. `HiltTestApplication.generatedComponent()` **no inicializa el component graph** — eso solo ocurre cuando un test class declara `@HiltAndroidTest` + `@get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)` (y la regla está pensada para correr antes que la regla de Compose).
-- Toda acceptance test que levante `MainActivity` (vía `createAndroidComposeRule<MainActivity>()`) **debe** declarar ambas cosas, o el proceso crashea con `IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.` apenas se carga la Activity.
-- Si el test necesita overrides de Hilt modules, usar `@UninstallModules(...)` con un módulo `@InstallIn` anidado cuando el fake deba afectar una sola clase, o `@TestInstallIn(...) replaces = [...]` cuando deba aplicar a toda la suite. `CompleteProfileScreenAcceptanceTest` reemplaza `RepositoryModule` sólo en esa clase: conserva el `EncryptedAuthSessionStore` real y sustituye `UserRepository` para que el flujo feliz no dependa del backend ni de un token real.
+- Todo test instrumentado que levante `MainActivity` (vía `createAndroidComposeRule<MainActivity>()`) **debe** declarar ambas cosas, o el proceso crashea con `IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.` apenas se carga la Activity.
+- Si el test necesita overrides de Hilt modules, usar `@UninstallModules(...)` con un módulo `@InstallIn` anidado cuando el fake deba afectar una sola clase, o `@TestInstallIn(...) replaces = [...]` cuando deba aplicar a toda la suite. `CompleteProfileScreenInstrumentedTest` reemplaza `RepositoryModule` sólo en esa clase: conserva el `EncryptedAuthSessionStore` real y sustituye `UserRepository` para que el flujo feliz no dependa del backend ni de un token real.
 
 ### Aceptación: mutar el session store desde tests
 
 - Pre-Fase 8 el contrato era "construir un `EncryptedAuthSessionStore` local y `clearSession()` / `saveSession(...)` con él": el `object SessionStateHolder` propagaba el cambio al `MainActivity` que también leía del mismo StateFlow global.
-- Post-Fase 8 ese `object` ya no existe. Las acceptance tests deben pedirle al MISMO `SingletonComponent` que la `SessionViewModel` del activity observa el `AuthSessionStore` real, y mutarlo. **NO** `@Inject lateinit var sessionStore: AuthSessionStore` — el `MembersInjector` puede entregar una instancia distinta a la que la activity ve a través de `createAndroidComposeRule<MainActivity>()` cuando el binding es a una **interfaz**. En su lugar, usá `@EntryPoint`-basado:
+- Post-Fase 8 ese `object` ya no existe. Los tests instrumentados deben pedirle al MISMO `SingletonComponent` que la `SessionViewModel` del activity observa el `AuthSessionStore` real, y mutarlo. **NO** `@Inject lateinit var sessionStore: AuthSessionStore` — el `MembersInjector` puede entregar una instancia distinta a la que la activity ve a través de `createAndroidComposeRule<MainActivity>()` cuando el binding es a una **interfaz**. En su lugar, usá `@EntryPoint`-basado:
   ```kotlin
   private val sessionStore: AuthSessionStore by lazy {
       EntryPointAccessors.fromApplication(
@@ -234,7 +236,7 @@ README.md                                    # Setup + comandos + troubleshootin
 ### Aceptación: Locale del CI
 
 - El emulator del CI bootea con `en-US` por default. `CompleteProfileScreen` (y todos los Composables que usen `stringResource(R.string.*)`) renderizan la versión `values-en/strings.xml` → "Continue", "First name", etc.
-- Los acceptance tests no deben asumir el locale del dispositivo ni forzarlo con `Resources.updateConfiguration(...)`: Android 14 puede ignorar ese override durante la creación de la Activity.
+- Los tests instrumentados no deben asumir el locale del dispositivo ni forzarlo con `Resources.updateConfiguration(...)`: Android 14 puede ignorar ese override durante la creación de la Activity.
 - Para encontrar texto producido por `stringResource`, resolver el mismo recurso desde la Activity de la regla Compose. Así la prueba valida el contrato UI tanto en `en-US` como en `es-AR`:
   ```kotlin
   private fun localizedString(resourceId: Int): String =
@@ -244,7 +246,7 @@ README.md                                    # Setup + comandos + troubleshootin
       localizedString(R.string.complete_profile_button_continue),
   )
   ```
-- Ver `app/src/androidTest/java/com/loresuelvo/consumer/acceptance/auth/CompleteProfileScreenAcceptanceTest.kt`. Los strings visibles siguen definidos en `values/strings.xml` y `values-en/strings.xml`.
+- Ver `app/src/androidTest/java/com/loresuelvo/consumer/instrumented/auth/CompleteProfileScreenInstrumentedTest.kt`. Los strings visibles siguen definidos en `values/strings.xml` y `values-en/strings.xml`.
 
 ### DI (Hilt)
 
@@ -299,8 +301,8 @@ make help
 make build         # assembleDevDebug
 make lint          # lintDevDebug
 make test          # testDevDebugUnitTest
-make e2e           # connectedDevDebugAndroidTest con package=...acceptance
-make test-all-once # test + e2e
+make instrumented  # connectedDevDebugAndroidTest con package=...instrumented
+make test-all-once # acceptance scenarios JVM + instrumented tests
 make ci            # build + lint + test-all-once
 make clean
 make devices
@@ -312,7 +314,7 @@ Variables: `FLAVOR=Dev|Staging|Prod` (default: `Dev`).
 
 1. **TDD/BDD primero**: el test se escribe antes del impl. RED local, GREEN local, REFACTOR. Sin acoplar a red real en tests unitarios.
 2. **Durante iteración**: ejecutar pruebas focalizadas (`./gradlew :app:testDevDebugUnitTest --tests *CompleteProfileViewModelTest*`).
-3. **Antes de PR**: `make lint && make test && make build` verde. Si cambió un flujo BDD, también `make e2e`.
+3. **Antes de PR**: `make lint && make test && make build` verde. Si cambió un flujo BDD, también `make instrumented` cuando exista cobertura instrumentada.
 4. **Antes de merge a `main`**: `make ci` verde completo.
 5. **Fail-fast**: detenerse en la primera falla, corregir y re-ejecutar.
 
@@ -327,6 +329,6 @@ Variables: `FLAVOR=Dev|Staging|Prod` (default: `Dev`).
 5. Cero `Log.d/e/w` directo en código de producción.
 6. Strings de UI en `strings.xml` (es + en).
 7. `make lint && make test && make build` verde.
-8. Si cambió un flujo con `.feature`, `make e2e` verde.
+8. Si cambió un flujo con `.feature`, `make test` verde y `make instrumented` cuando el flujo tenga cobertura instrumentada.
 9. `AGENTS.md` actualizado si cambió arquitectura, convención, o comandos.
 10. Resumen final conciso con archivos tocados, validación y riesgos residuales.

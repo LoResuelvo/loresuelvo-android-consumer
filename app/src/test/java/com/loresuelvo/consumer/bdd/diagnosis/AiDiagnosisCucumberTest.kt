@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
  * The BDD layer drives [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel]
  * directly through [AiDiagnosisWorld] — no Hilt, no Compose, no
  * network. Compose / acceptance coverage lives in
- * `src/androidTest/.../acceptance/diagnosis/`.
+ * `src/androidTest/.../instrumented/diagnosis/`.
  */
 @RunWith(Cucumber::class)
 @CucumberOptions(

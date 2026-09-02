@@ -19,7 +19,7 @@ import javax.inject.Singleton
  * `ContentResolver` call.
  *
  * Mirrors the discipline of [FakeConversationRepository] /
- * [com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository]:
+ * [com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository]:
  * self-contained, `@Singleton`, `@Inject`-constructable so the
  * `@TestInstallIn` modules can bind it with a one-line
  * `@Binds` declaration.

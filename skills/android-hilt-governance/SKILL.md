@@ -285,4 +285,4 @@ class HiltTestRunner : AndroidJUnitRunner() {
 
 - `AGENTS.md` → "DI (Hilt)".
 - `skills/android-clean-architecture` para reglas de capas.
-- `skills/android-testing-gates` para la política de `make test` + `make e2e`.
+- `skills/android-testing-gates` for the `make test` + `make instrumented` testing gates.

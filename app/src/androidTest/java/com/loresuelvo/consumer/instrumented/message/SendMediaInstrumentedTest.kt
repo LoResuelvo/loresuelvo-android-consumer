@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.acceptance.message
+package com.loresuelvo.consumer.instrumented.message
 
 import android.app.Application
 import android.content.Context
@@ -14,7 +14,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository
+import com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository
 import com.loresuelvo.consumer.data.api.ApiCategoryRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
@@ -65,7 +65,7 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 @UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
-class SendMediaAcceptanceTest {
+class SendMediaInstrumentedTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)

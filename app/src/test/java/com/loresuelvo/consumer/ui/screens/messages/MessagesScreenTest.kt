@@ -51,7 +51,7 @@ import org.robolectric.annotation.Config
  * `app/build.gradle.kts` test JVM args `-Duser.country=AR
  * -Duser.language=es`), so the localized copy resolves from
  * `values/strings.xml`. The English matrix is covered by the
- * `make e2e` acceptance tests.
+ * `make instrumented` tests.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])

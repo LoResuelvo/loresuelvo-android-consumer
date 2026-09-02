@@ -22,7 +22,7 @@ import org.robolectric.annotation.Config
  * Robolectric so the suite stays in `src/test/` and executes in
  * the standard `make test` flow (no emulator). The old suite that
  * lived in `androidTest/unit/auth/` was renamed to
- * `androidTest/.../acceptance/auth/` territory by mistake; this
+ * `androidTest/.../instrumented/auth/` territory by mistake; this
  * is the canonical location per AGENTS.md.
  *
  * The test resource set (default = `values/strings.xml`, es-AR)

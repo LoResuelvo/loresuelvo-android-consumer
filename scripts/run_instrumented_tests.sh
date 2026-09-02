@@ -4,11 +4,11 @@ set -e
 FLAVOR="${1:-Dev}"
 
 echo "======================================="
-echo "Running Acceptance Tests (flavor: $FLAVOR)"
+echo "Running Instrumented Tests (flavor: $FLAVOR)"
 echo "======================================="
 
 ./gradlew "connected${FLAVOR}DebugAndroidTest" \
-  -Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.acceptance
+  -Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.instrumented
 
 echo ""
-echo "Acceptance Tests Completed"
+echo "Instrumented Tests Completed"

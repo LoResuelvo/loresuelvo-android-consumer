@@ -16,7 +16,7 @@ import retrofit2.Retrofit
  * the point of this smoke test.
  *
  * No behavioral assertions here. For application bootstrap, see
- * `LoresuelvoAppAcceptanceTest`.
+ * `LoresuelvoAppInstrumentedTest`.
  */
 class SmokeTest {
 

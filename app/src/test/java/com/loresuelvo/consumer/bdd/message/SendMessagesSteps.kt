@@ -49,7 +49,7 @@ class SendMessagesSteps {
         // The "message icon" in this US is the per-provider
         // `Contactar` button (US-39). The BDD asserts the data layer
         // that backs the affordance; the visual rendering per row
-        // is covered by `ProfessionalsAcceptanceTest`.
+        // is covered by `ProfessionalsInstrumentedTest`.
         val state = world.lastUiState()
         assertTrue(
             "expected the providers list to be populated, was $state",
@@ -102,7 +102,7 @@ class SendMessagesSteps {
         // (the contact VM carries the provider through the form
         // state); the actual destination route is wired in
         // `LoResuelvoNav.kt` and is verified by the Compose
-        // integration test in `ProfessionalsAcceptanceTest`.
+        // integration test in `ProfessionalsInstrumentedTest`.
     }
 
     // ---- Scenario 03-IC --------------------------------------

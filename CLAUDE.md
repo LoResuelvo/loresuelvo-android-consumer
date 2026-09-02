@@ -18,7 +18,7 @@ Fuente canónica de contexto para Claude y otros agentes: **`AGENTS.md`** (este 
 3. **Seguir el plan maestro por fases** documentado en el chat de la sesión raíz (Fase 0 → Fase 10). No saltar fases; cada fase tiene pre-requisitos.
 4. **TDD/BDD siempre**: test antes del impl. `.feature` antes de los steps. RED → GREEN → REFACTOR.
 5. **Cero `Log.*` directo, cero literales en español, cero `viewModelFactory` en producción, cero `object` global nuevo.** Todo eso se valida con grep en code review.
-6. **Validar antes de PR**: `make lint && make test && make build`. Si cambia BDD, también `make e2e`.
+6. **Validar antes de PR**: `make lint && make test && make build`. Si cambia BDD, también `make instrumented` cuando exista cobertura instrumentada.
 
 ## Convenciones rápidas
 

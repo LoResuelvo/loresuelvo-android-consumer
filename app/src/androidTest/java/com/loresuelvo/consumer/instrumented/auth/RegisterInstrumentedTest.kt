@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.acceptance.auth
+package com.loresuelvo.consumer.instrumented.auth
 
 import android.app.Activity
 import android.app.Application
@@ -52,7 +52,7 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 @dagger.hilt.android.testing.UninstallModules(SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
-class RegisterWithAuth0AcceptanceTest {
+class RegisterWithAuth0InstrumentedTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)

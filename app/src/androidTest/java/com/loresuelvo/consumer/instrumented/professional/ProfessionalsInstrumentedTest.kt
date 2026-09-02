@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.acceptance.professional
+package com.loresuelvo.consumer.instrumented.professional
 
 import android.app.Application
 import android.content.Context
@@ -76,7 +76,7 @@ import org.junit.runner.RunWith
     SessionStoreModule::class,
 )
 @RunWith(AndroidJUnit4::class)
-class ProfessionalsAcceptanceTest {
+class ProfessionalsInstrumentedTest {
 
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
@@ -329,7 +329,7 @@ class ProfessionalsAcceptanceTest {
         @Binds
         @Singleton
         abstract fun bindDiagnosisRepository(
-            impl: com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository,
+            impl: com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository,
         ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 
         @Binds

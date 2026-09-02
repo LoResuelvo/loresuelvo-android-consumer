@@ -283,7 +283,7 @@ private fun ProviderCard(
  * Compose testTag for the "Contactar" button on each provider
  * card. Pinning the locator (rather than the literal Spanish
  * label) keeps the existing acceptance tests in
- * `src/androidTest/.../acceptance/professional/` localisation-
+ * `src/androidTest/.../instrumented/professional/` localisation-
  * independent.
  */
 const val CONTACT_PROVIDER_CARD_BUTTON_TAG: String = "provider-card-contactar"

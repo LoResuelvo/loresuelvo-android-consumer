@@ -17,7 +17,7 @@ import org.junit.runner.RunWith
  * The BDD layer drives [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel]
  * directly against a relaxed `MediaReader` mock — no Hilt, no
  * Compose, no network. The visible picker is verified by the
- * Compose acceptance test in `src/androidTest/.../acceptance/diagnosis/`.
+ * Instrumented UI test in `src/androidTest/.../instrumented/diagnosis/`.
  */
 @RunWith(Cucumber::class)
 @CucumberOptions(

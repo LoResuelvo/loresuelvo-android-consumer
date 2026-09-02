@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.acceptance.chat
+package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
@@ -49,7 +49,7 @@ import org.robolectric.annotation.Config
  * → bottom nav → messages → conversation flow is wired but the
  * smart router + `SessionViewModel` re-hydration timing is too
  * flaky for a focused assertion (the existing
- * `ChatNavigationAcceptanceTest` survives only because the AI
+ * `ChatNavigationInstrumentedTest` survives only because the AI
  * send button is unique to Home). The unit-tested path covers
  * the same code in the screen + sheet + preview composables in
  * a deterministic way.

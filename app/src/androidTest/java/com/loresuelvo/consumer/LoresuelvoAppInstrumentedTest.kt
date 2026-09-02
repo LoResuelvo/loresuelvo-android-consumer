@@ -18,7 +18,7 @@ import org.junit.runner.RunWith
  * If `LoresuelvoApp` is missing or not annotated, this test fails.
  */
 @RunWith(AndroidJUnit4::class)
-class LoresuelvoAppAcceptanceTest {
+class LoresuelvoAppInstrumentedTest {
 
     @Test
     fun loresuelvo_app_is_annotated_with_hilt_android_app() {

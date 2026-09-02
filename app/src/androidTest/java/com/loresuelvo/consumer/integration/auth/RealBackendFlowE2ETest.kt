@@ -138,7 +138,7 @@ class RealBackendFlowE2ETest {
         @Binds
         @Singleton
         abstract fun bindDiagnosisRepository(
-            impl: com.loresuelvo.consumer.acceptance.diagnosis.FakeDiagnosisRepository,
+            impl: com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository,
         ): com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 
         @Binds
@@ -154,4 +154,3 @@ class RealBackendFlowE2ETest {
         ): ConversationRepository
     }
 }
-

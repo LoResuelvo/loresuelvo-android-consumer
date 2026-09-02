@@ -17,11 +17,11 @@ make test
 # Antes de merge a main
 make ci
 # = make build + make lint + make test-all-once
-#   = make build + make lint + make test + make e2e
+#   = make build + make lint + make acceptance scenarios + make instrumented
 
 # Focalizado durante TDD
 ./gradlew :app:testDevDebugUnitTest --tests "*CompleteProfileViewModelTest*"
-./gradlew :app:connectedDevDebugAndroidTest --tests "*CompleteProfileAcceptanceTest*"
+./gradlew :app:connectedDevDebugAndroidTest --tests "*CompleteProfileScreenInstrumentedTest*"
 ```
 
 `make help` lista todos los targets.
@@ -31,15 +31,15 @@ make ci
 1. Si `make lint` falla, **no** correr `make test`. Corregir lint primero.
 2. Si `make test` falla, corregir y re-ejecutar solo `make test`. No re-correr `make build`.
 3. Si `make build` falla, **no** mergear.
-4. Si `make e2e` falla, **no** mergear. Los E2E son contrato de producto.
+4. If `make instrumented` fails, do not merge. Instrumented tests are the on-device product contract.
 
 ## Qué valida cada comando
 
 | Comando | Qué cubre | Velocidad |
 |---|---|---|
 | `make lint` | Android Lint (composables, recursos, manifest, etc.) | ~30s |
-| `make test` | Unit tests JVM (JUnit4 + MockK + Turbine + Robolectric) | <30s objetivo |
-| `make e2e` | Acceptance con Compose-test + BDD Cucumber (requiere emulador o device) | 2-10 min |
+| `make test` | JVM unit tests and acceptance scenarios (no device required) | <30s objetivo |
+| `make instrumented` | On-device instrumented tests with Compose-test / Espresso | 2-10 min |
 | `make build` | `assemble<Flavor>Debug` (compilación + recursos + R8 si release) | ~1-3 min |
 
 ## Antes de PR (checklist)
@@ -47,7 +47,7 @@ make ci
 - [ ] `make lint` verde.
 - [ ] `make test` verde. Todos los tests nuevos pasan localmente antes de pushear.
 - [ ] `make build` verde.
-- [ ] Si agregaste un `.feature` o modificaste steps, `make e2e` verde.
+- [ ] If a `.feature` or step definition changed, `make test` is green; run `make instrumented` when the flow has on-device coverage.
 - [ ] Sin `Log.*` directo en código nuevo (`grep -RIn "Log\.[dwe]" app/src/main/java/`).
 - [ ] Sin literales en español en código nuevo (`grep -RIn '"[A-ZÁÉÍÓÚÑ][a-záéíóúñ ]\+[a-záéíóúñ]"' app/src/main/java/`).
 - [ ] Sin `viewModelFactory { initializer { ... } }` nuevo en producción.
@@ -57,7 +57,7 @@ make ci
 
 ## Antes de merge a main (checklist adicional)
 
-- [ ] `make ci` verde (build + lint + test + e2e).
+- [ ] `make ci` green (build + lint + test + instrumented).
 - [ ] Al menos un revisor aprobó (Joseph si toca contrato API, par del equipo Android si es solo refactor).
 - [ ] PR con descripción en inglés: archivos tocados, comandos de validación ejecutados, riesgos residuales.
 
@@ -75,7 +75,7 @@ Recursos `strings.xml` definidos pero no usados. Borrarlos (los huérfanos se ac
 
 Falta `@HiltAndroidTest` + `HiltTestApplication`. Configurar `testInstrumentationRunner` en `app/build.gradle.kts` y un `HiltTestRunner` custom.
 
-### `make e2e` falla con "device not found"
+### `make instrumented` fails with "device not found"
 
 `adb devices` debe devolver al menos un device. Conectar vía ADB inalámbrico (ver `README.md` sección "ADB inalámbrico") o arrancar un emulador con `emulator -avd <name>`.
 
@@ -92,6 +92,6 @@ Falta `@HiltAndroidTest` + `HiltTestApplication`. Configurar `testInstrumentatio
 ## Anti-patrones
 
 - ❌ "Pasa local, pusheo y arreglo en CI". Los tests deben pasar local antes de pushear.
-- ❌ Mergear con `make e2e` rojo aunque los demás estén verdes.
+- ❌ Merge with `make instrumented` red even if the other gates are green.
 - ❌ Saltar `make build` porque "ya sé que compila". `make build` valida recursos, R8 (si release), KSP/KAPT, plugins nuevos.
 - ❌ Confundir "tests pasan" con "calidad". Revisar coverage y nombres de tests, no solo el verde.

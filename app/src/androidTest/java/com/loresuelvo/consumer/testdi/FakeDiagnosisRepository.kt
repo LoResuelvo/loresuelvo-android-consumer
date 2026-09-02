@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.acceptance.diagnosis
+package com.loresuelvo.consumer.instrumented.diagnosis
 
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
@@ -15,9 +15,9 @@ import javax.inject.Singleton
  * the production Retrofit-typed [com.loresuelvo.consumer.data.api.ApiDiagnosisRepository].
  *
  * The fake never returns a successful response: the test classes
- * that wire it (e.g. `CompleteProfileScreenAcceptanceTest`,
- * `WelcomeCategoriesAcceptanceTest`, `ProfessionalsAcceptanceTest`,
- * `RealBackendFlowE2ETest`, `ChatNavigationAcceptanceTest`) never
+ * that wire it (e.g. `CompleteProfileScreenInstrumentedTest`,
+ * `WelcomeCategoriesInstrumentedTest`, `ProfessionalsInstrumentedTest`,
+ * `RealBackendFlowE2ETest`, `ChatNavigationInstrumentedTest`) never
  * navigate to the chat screen, so the `sendPrompt(...)` call
  * never runs. The failure-shaped default is the defensive
  * equivalent of [com.loresuelvo.consumer.bdd.diagnosis.FakeDiagnosisRepository]:

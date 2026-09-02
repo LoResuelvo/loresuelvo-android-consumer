@@ -5,7 +5,7 @@
 # `ProfessionalsViewModel` directly through `CucumberWorld` with a
 # `FakeProviderRepository` (no Hilt, no Compose, no backend). The
 # user-visible strings are tested in the Compose acceptance tests in
-# `src/androidTest/.../acceptance/`, not here.
+# `src/androidTest/.../instrumented/`, not here.
 #
 # Update this file together with `strings.xml` and the screen
 # whenever copy or behavior changes.

@@ -14,13 +14,13 @@ Ciclo BDD (Gherkin primero) y TDD (RED → GREEN → REFACTOR) aplicado a este p
 
 Cada cambio de comportamiento sigue este orden estricto:
 
-1. **Spec BDD**: escribir o actualizar el `.feature` en `app/src/androidTest/assets/features/<dominio>/<caso>.feature` con el escenario nuevo. Idioma: español.
+1. **BDD spec**: write or update the `.feature` under `app/src/test/resources/features/<domain>/<case>.feature`. Scenarios are acceptance specifications and run on the JVM.
 2. **Step definitions**: implementar los `@Given/@When/@Then` mínimos para que el scenario falle por la razón correcta (RED).
 3. **Unit test del comportamiento**: escribir el test JVM (`src/test/`) que cubre la rama feliz + al menos 2 ramas de error. RED local.
 4. **Implementación mínima**: solo lo necesario para pasar el test. GREEN.
 5. **Refactor**: extraer, renombrar, mejorar nombres. GREEN se mantiene.
-6. **Acceptance test** (cuando aplique): el `composable` se prueba con `compose.ui.test` (`createComposeRule()` o `createAndroidComposeRule<MainActivity>()`).
-7. **Validación**: `make test` + `make e2e` + `make build` verde.
+6. **Instrumented UI test** (when applicable): test the `composable` with `compose.ui.test` (`createComposeRule()` or `createAndroidComposeRule<MainActivity>()`).
+7. **Validation**: `make test` + `make instrumented` (when the flow has instrumented coverage) + `make build` green.
 
 ## Estructura de un `.feature`
 
@@ -81,9 +81,9 @@ Convención de IDs: `<NN>-<PREFIJO> <descripción>`. El prefijo identifica el fe
 | Adapters (ApiUserRepository, Auth0) | Unit JVM | `src/test/.../data/` | JUnit4 + MockK para clientes, Robolectric para Context |
 | Integración HTTP | Unit JVM con Robolectric | `src/test/.../data/api/` | MockWebServer + OkHttp real |
 | ViewModels | Unit JVM | `src/test/.../ui/auth/`, `ui/session/` | JUnit4 + MockK + Turbine + `runTest` + `Dispatchers.setMain` |
-| Composables (UI) | Unit JVM con Robolectric o `androidTest/` | `src/test/.../ui/auth/` o `src/androidTest/.../acceptance/auth/` | `compose.ui.test.junit4` + `createComposeRule()` |
-| BDD E2E | Instrumented | `src/androidTest/.../bdd/` + `app/src/androidTest/assets/features/` | Cucumber JVM + `@HiltAndroidTest` + MockWebServer opcional |
-| Acceptance flujo | Instrumented | `src/androidTest/.../acceptance/` | `createAndroidComposeRule<MainActivity>()` o Espresso |
+| Composables (UI) | Unit JVM con Robolectric o `androidTest/` | `src/test/.../ui/auth/` o `src/androidTest/.../instrumented/auth/` | `compose.ui.test.junit4` + `createComposeRule()` |
+| Acceptance scenarios | JVM | `src/test/.../bdd/` + `src/test/resources/features/` | Cucumber JVM + fakes |
+| Instrumented UI flow | On-device | `src/androidTest/.../instrumented/` | `createAndroidComposeRule<MainActivity>()` or Espresso |
 
 ## Fakes vs Mocks
 
@@ -95,7 +95,7 @@ Convención de IDs: `<NN>-<PREFIJO> <descripción>`. El prefijo identifica el fe
 
 - Tests unitarios: `<ClassName>Test.kt`.
 - Tests de integración: `<ClassName>IntegrationTest.kt`.
-- Tests de aceptación: `<ClassName>AcceptanceTest.kt`.
+- Acceptance scenarios: `<feature>.feature` under `src/test/resources/features/`.
 - Métodos: `should_<comportamiento>_when_<condición>` en inglés. Ej: `should_navigate_to_home_when_registration_succeeds`, `should_show_error_when_backend_returns_400`.
 - Un test por comportamiento, no por método. Si un método tiene 3 ramas, son 3 tests mínimo.
 
@@ -117,7 +117,7 @@ Convención de IDs: `<NN>-<PREFIJO> <descripción>`. El prefijo identifica el fe
 ## Ejemplo concreto del proyecto
 
 - `src/test/.../ExampleUnitTest.kt` (placeholder) → reemplazar con tests reales.
-- `app/src/androidTest/.../acceptance/auth/CompleteProfileScreenAcceptanceTest.kt` — ejemplo de acceptance con `createAndroidComposeRule<MainActivity>()`.
+- `app/src/androidTest/.../instrumented/auth/CompleteProfileScreenInstrumentedTest.kt` — instrumented UI example using `createAndroidComposeRule<MainActivity>()`.
 - `app/src/androidTest/.../integration/auth/Auth0AuthProviderTest.kt:30-72` — ejemplo de integration test con fake launcher y `async/yield`. **Frágil**: en código nuevo, reemplazar con `runTest` + Turbine o un `CountDownLatch` no es la solución.
 
 ## Referencia rápida

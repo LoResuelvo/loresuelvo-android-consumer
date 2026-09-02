@@ -32,7 +32,7 @@
 #  - IDs `NN-AIP` correlativos. AIP = Adjuntar Imágenes
 #    Pre-diagnóstico.
 #  - Los textos visibles en español se asertan en los acceptance
-#    tests de Compose (`src/androidTest/.../acceptance/diagnosis/`),
+#    tests de Compose (`src/androidTest/.../instrumented/diagnosis/`),
 #    no aquí. La capa BDD pinea el contrato del state machine.
 #  - BDD+TDD outside-in: este `.feature` precede al
 #    `*ChatViewModelTest` unitario, que precede a la impl. Cada commit

@@ -96,12 +96,12 @@ Descripción en inglés, con secciones:
 - [ ] `make lint` verde
 - [ ] `make test` verde
 - [ ] `make build` verde
-- [ ] `make e2e` verde (si cambió BDD o flujo crítico)
+- [ ] `make instrumented` green (when instrumented UI coverage changed)
 
 ## Files touched
 - app/src/main/java/.../RegisterConsumerUseCase.kt (new)
 - app/src/main/java/.../CompleteProfileViewModel.kt (modified)
-- app/src/androidTest/assets/features/onboarding/register_consumer.feature (new)
+- app/src/test/resources/features/auth/register-consumer.feature (new acceptance scenario)
 - app/src/test/.../RegisterConsumerUseCaseTest.kt (new)
 
 ## Risks
