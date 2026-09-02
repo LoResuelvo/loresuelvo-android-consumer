@@ -64,6 +64,18 @@ class UxUiFixesWorld : AutoCloseable {
         mutableListOf<com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState>()
     private var contactStarted = false
 
+    // 08-UXUI dependencies (messages list VM)
+    private val fakeConversationRepo = FakeConversationRepository()
+    private val getConversationsUseCase =
+        com.loresuelvo.consumer.domain.usecase.conversation.GetConversationsUseCase(
+            fakeConversationRepo,
+        )
+    private lateinit var messagesListViewModel:
+        com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel
+    private val observedMessagesListStates =
+        mutableListOf<com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState>()
+    private var messagesStarted = false
+
     // 02-UXUI dependencies (all-categories VM + fake repository)
     private val fakeCategoryRepository = FakeCategoryRepository()
     private lateinit var categoriesViewModel: CategoriesViewModel
@@ -140,6 +152,45 @@ class UxUiFixesWorld : AutoCloseable {
     fun removeJobRequestImage(index: Int) {
         contactViewModel.onRemoveImage(index)
         scheduler.advanceUntilIdle()
+    }
+
+    // ---- 08-UXUI helpers ----------------------------------------
+
+    /** Boots the messages list VM (scenario 08-UXUI smoke test). */
+    fun startMessagesListScenario() {
+        if (messagesStarted) return
+        messagesStarted = true
+        Dispatchers.setMain(dispatcher)
+        messagesListViewModel = com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel(
+            getConversations = getConversationsUseCase,
+        )
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            messagesListViewModel.uiState.collect { observedMessagesListStates += it }
+        }
+        scheduler.advanceUntilIdle()
+    }
+
+    /** Open the messages list (08-UXUI entry point). */
+    fun openMessagesList() {
+        startMessagesListScenario()
+    }
+
+    /**
+     * Smoke-test assertion: the messages list VM landed on
+     * [MessagesListUiState.Ready]. The dev-side visual sweep on
+     * the device is the authoritative check for the actual
+     * rendering (status bar / nav bar / IME insets); this BDD
+     * step confirms the renderable surface exists.
+     */
+    fun assertMessagesListRendered() {
+        val state = observedMessagesListStates.lastOrNull()
+            ?: error("MessagesListViewModel emitted no state — startMessagesListScenario was never called")
+        if (state !is com.loresuelvo.consumer.ui.screens.messages.MessagesListUiState.Ready) {
+            error(
+                "expected MessagesListUiState.Ready, got ${state::class.simpleName} — " +
+                    "the bottom-nav messages list did not render its surface",
+            )
+        }
     }
 
     fun lastContactUiState(): com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState =

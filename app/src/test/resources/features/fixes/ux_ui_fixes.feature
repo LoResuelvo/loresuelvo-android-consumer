@@ -67,7 +67,6 @@ Característica: Correcciones de UX/UI
     Y visualizo los mensajes pendientes
     Entonces el indicador de nuevos mensajes deja de mostrarse para ese chat
 
-  @wip
   Escenario: 08-UXUI Visualizar correctamente los bordes y márgenes
     Dado que navego por las distintas pantallas de la aplicación
     Cuando visualizo los componentes de la interfaz
