@@ -3,7 +3,11 @@ package com.loresuelvo.consumer.bdd.home
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
 import com.loresuelvo.consumer.ui.screens.home.CategoriesState
 import com.loresuelvo.consumer.ui.screens.home.HomeUiState
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
@@ -35,6 +39,7 @@ class HomeWorld : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
     private lateinit var categoryRepo: FakeCategoryRepository
+    private lateinit var serviceProposalRepo: FakeServiceProposalRepository
     private lateinit var viewModel: HomeViewModel
 
     private val observedUiStates: MutableList<HomeUiState> = mutableListOf()
@@ -54,9 +59,14 @@ class HomeWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         categoryRepo = FakeCategoryRepository(categoriesById.values.toList())
+        // Defaults to `Success(emptyList())` so the pre-existing
+        // "home shows the first 6 categories" scenario keeps
+        // passing; the US-54 dedicated world overrides this seed.
+        serviceProposalRepo = FakeServiceProposalRepository(emptyList())
 
         viewModel = HomeViewModel(
             getCategories = GetCategoriesUseCase(categoryRepo),
+            getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -109,6 +119,17 @@ class HomeWorld : AutoCloseable {
             CategoriesOutcome.Success(current)
         fun set(categories: List<Category>) {
             current = categories
+        }
+    }
+
+    private class FakeServiceProposalRepository(
+        initial: List<ServiceProposal>,
+    ) : ServiceProposalRepository {
+        private var current = initial
+        override suspend fun getServiceProposals(): ServiceProposalsOutcome =
+            ServiceProposalsOutcome.Success(current)
+        fun set(proposals: List<ServiceProposal>) {
+            current = proposals
         }
     }
 }
