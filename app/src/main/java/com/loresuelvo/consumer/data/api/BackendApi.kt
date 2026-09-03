@@ -20,6 +20,7 @@ import com.loresuelvo.consumer.data.api.dto.ProviderDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
 import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
+import com.loresuelvo.consumer.data.api.dto.ServiceProposalDto
 import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -315,4 +316,31 @@ interface BackendApi {
      */
     @POST("ws-tickets")
     suspend fun getWsTicket(): WsTicketResponseDto
+
+    // ---- Service proposals (US-54, scenario 01-VSP) -------------
+
+    /**
+     * `GET /service-proposals` — the consumer's full list of
+     * provider-issued service proposals, regardless of status.
+     * The Home dashboard filters down to `pending` ones via
+     * [com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase];
+     * Mis Servicios and the future work-order surfaces consume
+     * the full list and apply their own filters.
+     *
+     * The wire shape carries the counterpart snapshot (name,
+     * surname, category, profile photo URL) inline so the row
+     * cells render without a second round-trip. See
+     * `data/api/dto/ServiceProposalDto.kt` for the field mapping
+     * and `data/api/mapper/ServiceProposalDtoMapper.kt` for the
+     * domain translation.
+     *
+     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
+     * the bearer token from
+     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
+     * automatically when a session is present). Non-2xx throws
+     * [retrofit2.HttpException], mapped by the data layer to
+     * [com.loresuelvo.consumer.domain.api.ApiError].
+     */
+    @GET("service-proposals")
+    suspend fun getServiceProposals(): List<ServiceProposalDto>
 }
