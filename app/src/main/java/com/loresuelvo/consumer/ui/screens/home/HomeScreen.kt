@@ -197,6 +197,7 @@ private fun HomeScreenReadyPreview() {
                         com.loresuelvo.consumer.domain.category.Category(6, "Albañilería"),
                     ),
                 ),
+                pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
             ),
             displayName = "Matias",
             activeRequests = listOf(
