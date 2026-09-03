@@ -29,6 +29,7 @@ import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -292,6 +293,12 @@ class CompleteProfileScreenInstrumentedTest {
         abstract fun bindConversationRepository(
             repository: com.loresuelvo.consumer.testdi.FakeConversationRepository,
         ): com.loresuelvo.consumer.domain.conversation.ConversationRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindServiceProposalRepository(
+            repository: com.loresuelvo.consumer.testdi.FakeServiceProposalRepository,
+        ): ServiceProposalRepository
     }
 
     @Singleton

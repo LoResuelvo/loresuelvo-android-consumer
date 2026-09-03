@@ -38,8 +38,10 @@ import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
+import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_IMAGE_TAG
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_TAG
@@ -277,6 +279,12 @@ class SendMediaInstrumentedTest {
         abstract fun bindConversationRepository(
             repository: FakeConversationRepository,
         ): ConversationRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindServiceProposalRepository(
+            repository: FakeServiceProposalRepository,
+        ): ServiceProposalRepository
     }
 
     @Singleton

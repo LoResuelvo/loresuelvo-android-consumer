@@ -20,6 +20,7 @@ import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import dagger.Binds
@@ -152,5 +153,11 @@ class RealBackendFlowE2ETest {
         abstract fun bindConversationRepository(
             impl: FakeConversationRepository,
         ): ConversationRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindServiceProposalRepository(
+            impl: com.loresuelvo.consumer.testdi.FakeServiceProposalRepository,
+        ): ServiceProposalRepository
     }
 }

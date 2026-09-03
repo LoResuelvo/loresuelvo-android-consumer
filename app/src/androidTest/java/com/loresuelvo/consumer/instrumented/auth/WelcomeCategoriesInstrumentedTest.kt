@@ -21,6 +21,7 @@ import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -158,6 +159,12 @@ class WelcomeCategoriesInstrumentedTest {
         abstract fun bindConversationRepository(
             repository: com.loresuelvo.consumer.testdi.FakeConversationRepository,
         ): com.loresuelvo.consumer.domain.conversation.ConversationRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindServiceProposalRepository(
+            repository: com.loresuelvo.consumer.testdi.FakeServiceProposalRepository,
+        ): ServiceProposalRepository
     }
 
     @Singleton
