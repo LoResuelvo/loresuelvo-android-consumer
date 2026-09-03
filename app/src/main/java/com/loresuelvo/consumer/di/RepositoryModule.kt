@@ -6,6 +6,7 @@ import com.loresuelvo.consumer.data.api.ApiDiagnosisRepository
 import com.loresuelvo.consumer.data.api.ApiFileRepository
 import com.loresuelvo.consumer.data.api.ApiJobRequestRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
+import com.loresuelvo.consumer.data.api.ApiServiceProposalRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
@@ -16,6 +17,7 @@ import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.file.FileRepository
 import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -72,5 +74,11 @@ abstract class RepositoryModule {
     abstract fun bindConversationRepository(
         impl: ApiConversationRepository,
     ): ConversationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindServiceProposalRepository(
+        impl: ApiServiceProposalRepository,
+    ): ServiceProposalRepository
 
 }
