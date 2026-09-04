@@ -89,4 +89,13 @@ sealed class Route(val path: String) {
      * `Route.Chat` (existing) once a session is opened.
      */
     data object Assistant : Route("assistant")
+
+    /**
+     * "Mis Servicios" surface — the consumer-facing list of
+     * every service proposal regardless of status (US-54 scenario
+     * 03-VSP). Reached from the Home "Ver todas" link in the
+     * dedicated Mis Servicios section. Hidden from the bottom
+     * nav (it's a sub-section of Home, not a top-level tab).
+     */
+    data object MisServicios : Route("mis-servicios")
 }

@@ -55,6 +55,7 @@ fun HomeScreen(
     activeRequests: List<ActiveRequest> = emptyList(),
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
     onSeeAllCategoriesClick: () -> Unit,
+    onSeeAllMisServiciosClick: () -> Unit = {},
     onNotificationsClick: () -> Unit,
     onAiSendClick: () -> Unit,
     onRetryClick: () -> Unit,
@@ -113,6 +114,17 @@ fun HomeScreen(
         ActiveRequestsSection(
             requests = activeRequests,
             onEmptyCtaClick = scrollToCategories,
+        )
+
+        // US-54 scenario 03-VSP: dedicated entry into the "Mis
+        // Servicios" surface. The "Ver todas" link lands on a
+        // full list of every service proposal regardless of
+        // status; the section itself stays cardless here because
+        // the rich preview list lands in scenario 08-VSP.
+        SectionTitle(
+            text = stringResource(R.string.home_section_mis_servicios),
+            link = stringResource(R.string.home_section_mis_servicios_link),
+            onLinkClick = onSeeAllMisServiciosClick,
         )
 
         Text(

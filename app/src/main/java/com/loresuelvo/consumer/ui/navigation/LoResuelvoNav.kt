@@ -37,6 +37,8 @@ import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
 import com.loresuelvo.consumer.ui.screens.messages.MessagesScreen
+import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreen
+import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosViewModel
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
@@ -176,6 +178,7 @@ fun LoResuelvoNav() {
             },
             messages = { MessagesRoute(navController) },
             assistant = { AssistantRoute(navController) },
+            misServicios = { MisServiciosRoute(navController = navController) },
         )
     }
 }
@@ -347,6 +350,11 @@ private fun HomeRoute(
         onSeeAllCategoriesClick = {
             navController.navigate(Route.Categories.path)
         },
+        // US-54 scenario 03-VSP: the "Mis Servicios" link surfaces
+        // every service proposal regardless of status.
+        onSeeAllMisServiciosClick = {
+            navController.navigate(Route.MisServicios.path)
+        },
         onNotificationsClick = { /* TODO */ },
         onAiSendClick = { navController.navigate(Route.Chat.buildPath()) },
         onRetryClick = { homeViewModel.loadCategories() },
@@ -420,6 +428,27 @@ private fun MessagesRoute(
                 Route.Conversation.buildPath(conversationId),
             )
         },
+    )
+}
+
+/**
+ * "Mis Servicios" route (US-54 scenario 03-VSP). Resolves the
+ * [MisServiciosViewModel] through Hilt and forwards the UDF state
+ * to [MisServiciosScreen]. The VM's `init { load() }` fires the
+ * fetch on first composition so the screen never has to call it
+ * explicitly; `onRetryClick` re-fires the round trip on user
+ * demand.
+ */
+@Composable
+private fun MisServiciosRoute(
+    navController: androidx.navigation.NavHostController,
+) {
+    val viewModel: MisServiciosViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    MisServiciosScreen(
+        state = state,
+        onRetryClick = viewModel::load,
     )
 }
 

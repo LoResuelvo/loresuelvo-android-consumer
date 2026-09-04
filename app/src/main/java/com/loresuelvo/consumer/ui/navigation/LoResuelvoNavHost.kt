@@ -39,6 +39,7 @@ fun LoResuelvoNavHost(
     conversation: @Composable (conversationId: String) -> Unit,
     messages: @Composable () -> Unit,
     assistant: @Composable () -> Unit,
+    misServicios: @Composable () -> Unit,
 ) {
     Box(modifier = Modifier.padding(contentPadding)) {
         NavHost(
@@ -91,6 +92,9 @@ fun LoResuelvoNavHost(
             // Bottom-bar destinations (US-18).
             composable(Route.Messages.path) { messages() }
             composable(Route.Assistant.path) { assistant() }
+            // US-54 scenario 03-VSP: every proposal regardless of
+            // status, reached from the Home "Ver todas" link.
+            composable(Route.MisServicios.path) { misServicios() }
         }
     }
 }
