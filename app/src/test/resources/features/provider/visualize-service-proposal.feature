@@ -48,7 +48,6 @@ Característica: Visualizar propuesta de servicio
 
   # Mis Servicios
 
-  @wip
   Escenario: 03-VSP Visualizar todas las propuestas de servicio
     When accede a "Mis Servicios"
     Then debe visualizar todas sus propuestas de servicio
