@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
 import com.loresuelvo.consumer.ui.screens.home.HomeUiState
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
@@ -72,6 +73,7 @@ class VisualizeServiceProposalWorld : AutoCloseable {
         viewModel = HomeViewModel(
             getCategories = GetCategoriesUseCase(categoryRepo),
             getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
+            getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
