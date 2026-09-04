@@ -305,6 +305,7 @@ make lint          # lintDevDebug
 make test          # testDevDebugUnitTest
 make instrumented  # pixel2Api35DevDebugAndroidTest con package=...instrumented
 make test-all-once # escenarios JVM + instrumented tests en Managed Device
+make test-all-once-force # misma suite, forzando --rerun-tasks
 make ci            # build + lint + test-all-once
 make clean
 make devices

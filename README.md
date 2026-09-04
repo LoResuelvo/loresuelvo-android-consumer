@@ -64,6 +64,7 @@ Todos los targets aceptan `FLAVOR=Dev|Staging|Prod` (default: `Dev`).
 | `make test` | `./gradlew test<Flavor>DebugUnitTest` (JVM, rápido) |
 | `make instrumented` | Tests instrumentados con Compose-test / Espresso usando el Gradle Managed Device `pixel2Api35`. No requiere celular físico. |
 | `make test-all-once` | Escenarios JVM (`make test`) + tests instrumentados en el Managed Device. |
+| `make test-all-once-force` | Igual que `make test-all-once`, pero fuerza la ejecución aunque Gradle los marque `UP-TO-DATE`. |
 | `make ci` | `make build` + `make lint` + `make test-all-once`. Usar antes de merge. |
 | `make clean` | `./gradlew clean`. |
 | `make devices` | `adb devices`. |
@@ -195,8 +196,8 @@ Verificar que el plugin está declarado en el `plugins` block con la misma versi
 
 El job de instrumentación ejecuta el mismo Gradle Managed Device
 `pixel2Api35` que el flujo local mediante `make instrumented`. GitHub Actions
-habilita KVM y Gradle instala la imagen Android requerida si todavía no está
-disponible en el runner.
+habilita KVM y cachea el Android Emulator junto con la system image API 35
+requerida. Gradle crea y administra el AVD en cada runner.
 
 ---
 

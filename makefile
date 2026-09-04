@@ -1,4 +1,4 @@
-.PHONY: help up build lint test instrumented test-all-once ci clean devices
+.PHONY: help up build lint test instrumented test-all-once test-all-once-force ci clean devices
 
 FLAVOR ?= Dev
 
@@ -10,6 +10,7 @@ help:
 	@echo "  make test"
 	@echo "  make instrumented"
 	@echo "  make test-all-once"
+	@echo "  make test-all-once-force"
 	@echo "  make ci"
 	@echo "  make clean"
 	@echo "  make devices"
@@ -32,6 +33,11 @@ instrumented:
 
 test-all-once:
 	./gradlew test$(FLAVOR)DebugUnitTest pixel2Api35$(FLAVOR)DebugAndroidTest \
+		-Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.instrumented
+
+test-all-once-force:
+	./gradlew test$(FLAVOR)DebugUnitTest pixel2Api35$(FLAVOR)DebugAndroidTest \
+		--rerun-tasks \
 		-Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.instrumented
 
 ci: build lint test-all-once
