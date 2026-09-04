@@ -132,6 +132,21 @@ jobs:
       - name: Timing Managed Device setup end
         run: echo "TIMING:MANAGED_DEVICE_SETUP_END=$(date -u +%s)"
 
+      - name: Timing instrumented build start
+        run: echo "TIMING:INSTRUMENTED_BUILD_START=$(date -u +%s)"
+
+      - name: Build instrumented artifacts
+        env:
+          AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
+          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
+          API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
+          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
+        run: ./gradlew assembleStagingDebug assembleStagingDebugAndroidTest
+
+      - name: Timing instrumented build end
+        run: echo "TIMING:INSTRUMENTED_BUILD_END=$(date -u +%s)"
+
       - name: Ejecutar tests instrumentados de Android
         env:
           GRADLE_OPTS: -Dorg.gradle.logging.level=info
