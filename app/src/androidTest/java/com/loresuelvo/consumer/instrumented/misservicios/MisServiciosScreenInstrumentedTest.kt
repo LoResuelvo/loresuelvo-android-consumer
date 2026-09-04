@@ -34,6 +34,7 @@ import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
 import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
 import com.loresuelvo.consumer.ui.screens.misservicios.MIS_SERVICIOS_LIST_TAG
 import com.loresuelvo.consumer.ui.screens.misservicios.MIS_SERVICIOS_SCREEN_TAG
+import com.loresuelvo.consumer.ui.screens.home.components.HOME_MIS_SERVICIOS_LINK_TAG
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -123,7 +124,7 @@ class MisServiciosScreenInstrumentedTest {
         // "Ver todas" link with the resource string; clicking it
         // navigates to `Route.MisServicios`.
         composeTestRule
-            .onNodeWithText(localizedString(R.string.home_section_mis_servicios_link))
+            .onNodeWithTag(HOME_MIS_SERVICIOS_LINK_TAG)
             .assertIsDisplayed()
             .performClick()
 

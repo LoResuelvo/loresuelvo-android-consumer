@@ -124,6 +124,7 @@ fun HomeScreen(
         SectionTitle(
             text = stringResource(R.string.home_section_mis_servicios),
             link = stringResource(R.string.home_section_mis_servicios_link),
+            linkTestTag = com.loresuelvo.consumer.ui.screens.home.components.HOME_MIS_SERVICIOS_LINK_TAG,
             onLinkClick = onSeeAllMisServiciosClick,
         )
 
