@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import java.io.IOException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test

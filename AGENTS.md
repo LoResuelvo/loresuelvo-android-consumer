@@ -209,7 +209,7 @@ README.md                                    # Setup + comandos + troubleshootin
 
 ### Tests instrumentados (`androidTest/`)
 
-- En este repositorio, `androidTest/` contiene tests instrumentados que corren en un device o emulator. Los escenarios de aceptación Gherkin viven en `src/test/` y corren en JVM; no deben llamarse “acceptance tests” cuando se refiera a la capa `androidTest/`.
+- En este repositorio, `androidTest/` contiene tests instrumentados que corren en un emulator administrado por Gradle o en un device/emulator conectado. Los escenarios de aceptación Gherkin viven en `src/test/` y corren en JVM; no deben llamarse “acceptance tests” cuando se refiera a la capa `androidTest/`.
 
 - `HiltTestRunner` (configurado en `build.gradle.kts` como `testInstrumentationRunner`) hace `AndroidJUnitRunner.newApplication()` retorne `HiltTestApplication` en lugar de `LoresuelvoApp`. `HiltTestApplication.generatedComponent()` **no inicializa el component graph** — eso solo ocurre cuando un test class declara `@HiltAndroidTest` + `@get:Rule(order = 0) val hiltRule = HiltAndroidRule(this)` (y la regla está pensada para correr antes que la regla de Compose).
 - Todo test instrumentado que levante `MainActivity` (vía `createAndroidComposeRule<MainActivity>()`) **debe** declarar ambas cosas, o el proceso crashea con `IllegalStateException: The component was not created. Check that you have added the HiltAndroidRule.` apenas se carga la Activity.
@@ -303,8 +303,8 @@ make help
 make build         # assembleDevDebug
 make lint          # lintDevDebug
 make test          # testDevDebugUnitTest
-make instrumented  # connectedDevDebugAndroidTest con package=...instrumented
-make test-all-once # acceptance scenarios JVM + instrumented tests
+make instrumented  # pixel2Api35DevDebugAndroidTest con package=...instrumented
+make test-all-once # escenarios JVM + instrumented tests en Managed Device
 make ci            # build + lint + test-all-once
 make clean
 make devices

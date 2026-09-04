@@ -62,11 +62,22 @@ Todos los targets aceptan `FLAVOR=Dev|Staging|Prod` (default: `Dev`).
 | `make build` | `./gradlew assemble<Flavor>Debug` |
 | `make lint` | `./gradlew lint<Flavor>Debug` |
 | `make test` | `./gradlew test<Flavor>DebugUnitTest` (JVM, rápido) |
-| `make instrumented` | Tests instrumentados con Compose-test / Espresso (requiere emulador o device). |
-| `make test-all-once` | Escenarios de aceptación JVM (`make test`) + tests instrumentados. |
+| `make instrumented` | Tests instrumentados con Compose-test / Espresso usando el Gradle Managed Device `pixel2Api35`. No requiere celular físico. |
+| `make test-all-once` | Escenarios JVM (`make test`) + tests instrumentados en el Managed Device. |
 | `make ci` | `make build` + `make lint` + `make test-all-once`. Usar antes de merge. |
 | `make clean` | `./gradlew clean`. |
 | `make devices` | `adb devices`. |
+
+`make instrumented` crea y administra automáticamente un emulador Pixel 2 con
+API 35 mediante Gradle. La primera ejecución puede requerir que el SDK Manager
+descargue la imagen `system-images;android-35;default;x86_64`.
+
+Para usar temporalmente un dispositivo físico o un emulador iniciado
+manualmente:
+
+```bash
+INSTRUMENTED_DEVICE=connected make instrumented
+```
 
 Para invocar `./gradlew` directamente con un test focalizado:
 

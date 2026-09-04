@@ -31,7 +31,7 @@ instrumented:
 	bash scripts/run_instrumented_tests.sh $(FLAVOR)
 
 test-all-once:
-	./gradlew test$(FLAVOR)DebugUnitTest connected$(FLAVOR)DebugAndroidTest \
+	./gradlew test$(FLAVOR)DebugUnitTest pixel2Api35$(FLAVOR)DebugAndroidTest \
 		-Pandroid.testInstrumentationRunnerArguments.package=com.loresuelvo.consumer.instrumented
 
 ci: build lint test-all-once

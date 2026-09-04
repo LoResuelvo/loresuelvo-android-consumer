@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
 import java.util.Properties
 
 plugins {
@@ -91,6 +92,16 @@ android {
             // `UndefinedStepException`s.
             all {
                 it.systemProperty("cucumber.filter.tags", "not @wip")
+            }
+        }
+
+        managedDevices {
+            devices {
+                create<ManagedVirtualDevice>("pixel2Api35") {
+                    device = "Pixel 2"
+                    apiLevel = 35
+                    systemImageSource = "aosp"
+                }
             }
         }
     }

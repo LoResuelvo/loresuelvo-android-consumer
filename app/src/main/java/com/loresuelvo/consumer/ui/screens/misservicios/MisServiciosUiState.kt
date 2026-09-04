@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.ui.screens.misservicios
 
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import java.io.IOException
 
 /**

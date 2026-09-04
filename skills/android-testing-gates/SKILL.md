@@ -7,7 +7,8 @@ skill instead.
 ## Test layers
 
 - `make test`: JVM unit tests and Cucumber acceptance scenarios; no device required.
-- `make instrumented`: on-device Compose/Espresso tests under `androidTest`.
+- `make instrumented`: Compose/Espresso tests under `androidTest` using the
+  `pixel2Api35` Gradle Managed Device by default.
 - `make build`: debug APK compilation and generated code validation.
 - `make lint`: Android Lint.
 - `make test-all-once`: JVM tests plus instrumented tests in one Gradle invocation.
@@ -41,12 +42,13 @@ Do not merge with a failing instrumented test.
 ./gradlew :app:testDevDebugUnitTest \
   --tests "*CompleteProfileViewModelTest*"
 
-./gradlew :app:connectedDevDebugAndroidTest \
+./gradlew :app:pixel2Api35DevDebugAndroidTest \
   --tests "*CompleteProfileScreenInstrumentedTest*"
 ```
 
-Use `adb devices` before an instrumented run. For local API testing with a
-physical device, prefer `adb reverse tcp:8080 tcp:8080` and rebuild `devDebug`
+For a physical device or manually started emulator, use
+`INSTRUMENTED_DEVICE=connected make instrumented`. For local API testing with
+a physical device, prefer `adb reverse tcp:8080 tcp:8080` and rebuild `devDebug`
 after changing `API_URL`.
 
 ## Performance diagnosis
@@ -65,7 +67,9 @@ test filters.
 
 ## Common failures
 
-- `device not found`: inspect `adb devices` and the selected flavor.
+- Managed Device startup failure: verify that the Android 35 `aosp`
+  `x86_64` system image is installed and that hardware virtualization is
+  available.
 - Hilt startup failure: verify `HiltTestRunner`, `@HiltAndroidTest`, and the
   `HiltAndroidRule` order.
 - `MockWebServer` port conflict: shut down the server in teardown.

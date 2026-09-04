@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -147,6 +148,7 @@ class CompleteProfileScreenInstrumentedTest {
 
         composeTestRule
             .onNodeWithText(localizedString(R.string.complete_profile_error_missing_first_name))
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
@@ -166,6 +168,7 @@ class CompleteProfileScreenInstrumentedTest {
 
         composeTestRule
             .onNodeWithText(localizedString(R.string.complete_profile_error_missing_last_name))
+            .performScrollTo()
             .assertIsDisplayed()
     }
 
