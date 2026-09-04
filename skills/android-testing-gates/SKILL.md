@@ -51,6 +51,10 @@ For a physical device or manually started emulator, use
 a physical device, prefer `adb reverse tcp:8080 tcp:8080` and rebuild `devDebug`
 after changing `API_URL`.
 
+GitHub Actions uses `INSTRUMENTED_DEVICE=connected` against a prewarmed Pixel 2
+API 35 AVD with the `ci-clean` snapshot. Regenerate it from the manual
+`Bootstrap CI AVD` workflow when the emulator configuration changes.
+
 ## Performance diagnosis
 
 Measure layers separately:

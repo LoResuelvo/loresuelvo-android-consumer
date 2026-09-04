@@ -194,10 +194,11 @@ Verificar que el plugin está declarado en el `plugins` block con la misma versi
 
 ## GitHub Actions
 
-El job de instrumentación ejecuta el mismo Gradle Managed Device
-`pixel2Api35` que el flujo local mediante `make instrumented`. GitHub Actions
-habilita KVM y cachea el Android Emulator junto con la system image API 35
-requerida. Gradle crea y administra el AVD en cada runner.
+El flujo local usa el Gradle Managed Device `pixel2Api35` mediante
+`make instrumented`. En GitHub Actions, el job de instrumentación usa un AVD
+Pixel 2 API 35 prewarming con el snapshot `ci-clean`, restaurado desde cache,
+para reducir el tiempo de arranque. Si se cambia la configuración del AVD, hay
+que ejecutar manualmente `Bootstrap CI AVD` e incrementar `cache_version`.
 
 ---
 
