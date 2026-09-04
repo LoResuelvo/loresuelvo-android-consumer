@@ -8,9 +8,11 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
@@ -142,9 +144,14 @@ class MisServiciosScreenInstrumentedTest {
         // The "Mis Servicios" link on Home carries a dedicated
         // testTag so this assertion stays locale-independent and
         // unambiguous (the Home screen has multiple "Ver todas"
-        // links for different sections).
+        // links for different sections). The link sits below the
+        // initial viewport once the Home grid is fully populated,
+        // so we scroll to it first to make sure hit-testing targets
+        // the live (visible) bounds.
         composeTestRule
-            .onNodeWithTag(HOME_MIS_SERVICIOS_LINK_TAG)
+            .onAllNodesWithTag(HOME_MIS_SERVICIOS_LINK_TAG, useUnmergedTree = true)
+            .onFirst()
+            .performScrollTo()
             .assertHasClickAction()
             .performClick()
 
