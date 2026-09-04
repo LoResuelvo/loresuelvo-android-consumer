@@ -34,19 +34,9 @@ jobs:
           force-avd-creation: true
           emulator-options: >-
             -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-            -no-snapshot-save
           script: |
             adb -s emulator-5554 emu avd snapshot save ci-clean
-            i=0
-            while [ "$i" -lt 60 ]; do
-              if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then
-                exit 0
-              fi
-              i=$((i + 1))
-              sleep 1
-            done
-            echo "Snapshot ci-clean was not created within 60 seconds"
-            exit 1
+            i=0; while [ "$i" -lt 60 ]; do if adb -s emulator-5554 emu avd snapshot list | grep -q 'ci-clean'; then exit 0; fi; i=$((i + 1)); sleep 1; done; echo "Snapshot ci-clean was not created within 60 seconds"; exit 1
 
       - name: Wait for emulator shutdown before caching
         run: |
