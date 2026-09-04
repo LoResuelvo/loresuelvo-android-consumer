@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.bdd.provider
 
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosUiState
+import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.junit.Assert.assertEquals
@@ -72,6 +73,39 @@ class MisServiciosSteps {
                 ServiceProposalStatus.Rejected,
             ),
             statuses,
+        )
+    }
+
+    // ---- Scenario 04-VSP --------------------------------------
+
+    @Given("que el usuario tiene varias propuestas de servicio con fechas distintas")
+    fun queElUsuarioTieneVariasPropuestasDeServicioConFechasDistintas() {
+        // Seed three proposals whose `createdOnEpochMillis` is
+        // intentionally NOT in insertion order so the use case
+        // sort is observable in the resulting `Ready.items`.
+        // The "When" step that follows reuses the same
+        // `accedeAMisServicios` as 03-VSP, which re-mounts the
+        // VM against the latest seed.
+        world.startScenario()
+        world.seedProposalsWithDistinctDates()
+        world.openMisServicios()
+    }
+
+    @Then("debe visualizar primero la propuesta más reciente")
+    fun debeVisualizarPrimeroLaPropuestaMasReciente() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected MisServiciosUiState.Ready, was $state",
+            state is MisServiciosUiState.Ready,
+        )
+        val items = (state as MisServiciosUiState.Ready).proposals
+        assertEquals(
+            "expected the GetAll use case to surface the newest " +
+                "proposal first (sorted by createdOnEpochMillis " +
+                "descending); the seed inserted id=\"30\" first but " +
+                "it carries the largest createdOnEpochMillis",
+            listOf("30", "31", "32"),
+            items.map { it.id },
         )
     }
 }

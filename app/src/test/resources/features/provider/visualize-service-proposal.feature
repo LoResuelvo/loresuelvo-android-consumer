@@ -52,7 +52,6 @@ Característica: Visualizar propuesta de servicio
     When accede a "Mis Servicios"
     Then debe visualizar todas sus propuestas de servicio
 
-  @wip
   Escenario: 04-VSP Visualizar las propuestas más recientes primero
     Given que el usuario tiene varias propuestas de servicio con fechas distintas
     When accede a "Mis Servicios"

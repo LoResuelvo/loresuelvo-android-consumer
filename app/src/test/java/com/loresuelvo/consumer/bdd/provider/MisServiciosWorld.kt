@@ -147,6 +147,74 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "que el usuario tiene varias propuestas de servicio con
+     * fechas distintas" — scenario 04-VSP. Seeds three
+     * proposals whose `createdOnEpochMillis` is intentionally NOT
+     * in insertion order so the `sortedByDescending` sort inside
+     * the use case is observable end-to-end.
+     *
+     * The most recently created proposal (id "30") was inserted
+     * first in this list — without the use case sort the BDD
+     * would see "30" first and the assertion would fail.
+     */
+    fun seedProposalsWithDistinctDates() {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "30",
+            conversationId = "3000",
+            status = ServiceProposalStatus.Accepted,
+            counterpart = ServiceProposalCounterpart(
+                id = "300",
+                name = "Lucía",
+                surname = "Fernández",
+                categoryName = "Pintura",
+                profilePhotoUrl = null,
+            ),
+            description = "Pintura de living",
+            amountCents = 3000000L,
+            scheduledOnEpochMillis = 1_792_074_600_000L,
+            createdOnEpochMillis = 1_800_000_500_000L,
+        )
+        seedProposals += ServiceProposal(
+            id = "31",
+            conversationId = "3100",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "301",
+                name = "Marcos",
+                surname = "Pérez",
+                categoryName = "Pintura",
+                profilePhotoUrl = null,
+            ),
+            description = "Pintura de habitación",
+            amountCents = 1500000L,
+            scheduledOnEpochMillis = 1_793_500_800_000L,
+            createdOnEpochMillis = 1_800_000_000_000L,
+        )
+        seedProposals += ServiceProposal(
+            id = "32",
+            conversationId = "3200",
+            status = ServiceProposalStatus.Rejected,
+            counterpart = ServiceProposalCounterpart(
+                id = "302",
+                name = "Sofía",
+                surname = "Ruiz",
+                categoryName = "Pintura",
+                profilePhotoUrl = null,
+            ),
+            description = "Pintura de cocina",
+            amountCents = 1800000L,
+            scheduledOnEpochMillis = 1_795_000_000_000L,
+            createdOnEpochMillis = 1_799_999_500_000L,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
      * "accede a Mis Servicios" — the consumer opens the MisServicios
      * screen. At the VM level this is a no-op (the VM's `init`
      * already fired against the seeded repo during [startScenario]).
