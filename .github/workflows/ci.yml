@@ -117,6 +117,20 @@ jobs:
           ANDROID_SDK_CACHE_HIT: ${{ steps.android-sdk-cache.outputs.cache-hit || 'false' }}
         run: echo "ANDROID_SDK_CACHE_HIT=$ANDROID_SDK_CACHE_HIT"
 
+      - name: Restore Gradle Managed Device AVD cache
+        id: managed-device-cache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.android/avd
+          key: ${{ runner.os }}-gradle-managed-pixel2-api35-x86_64-v1
+          restore-keys: |
+            ${{ runner.os }}-gradle-managed-pixel2-api35-x86_64-
+
+      - name: Report Gradle Managed Device cache
+        env:
+          MANAGED_DEVICE_CACHE_HIT: ${{ steps.managed-device-cache.outputs.cache-hit || 'false' }}
+        run: echo "MANAGED_DEVICE_CACHE_HIT=$MANAGED_DEVICE_CACHE_HIT"
+
       - name: Habilitar KVM (requerido por el emulador)
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
