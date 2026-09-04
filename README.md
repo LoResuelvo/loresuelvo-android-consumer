@@ -100,6 +100,11 @@ Con el teléfono conectado por ADB, la opción más simple evita configurar fire
 adb reverse tcp:8080 tcp:8080
 ```
 
+Nota: podemos encontrar nuestra ip local con:
+```bash
+hostname -I | awk '{print $1}'
+```
+
 Luego usar en `local.properties`:
 
 ```properties
