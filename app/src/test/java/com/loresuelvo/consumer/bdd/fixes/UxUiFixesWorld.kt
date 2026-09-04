@@ -121,6 +121,10 @@ class UxUiFixesWorld : AutoCloseable {
         contactViewModel = ContactProviderViewModel(
             createJobRequest = createJobRequestUseCase,
             mediaReader = mediaReader,
+            uploadJobRequestImages = io.mockk.mockk<com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase>(relaxed = true).also {
+                io.mockk.coEvery { it.invoke(any()) } returns
+                    com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome.Success(emptyList())
+            },
         )
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             contactViewModel.uiState.collect { observedContactStates += it }

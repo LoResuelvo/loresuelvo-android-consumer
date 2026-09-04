@@ -83,7 +83,14 @@ class ContactProviderWorld : AutoCloseable {
 
         Dispatchers.setMain(dispatcher)
 
-        viewModel = ContactProviderViewModel(useCase, io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true))
+        viewModel = ContactProviderViewModel(
+            createJobRequest = useCase,
+            mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+            uploadJobRequestImages = io.mockk.mockk<com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase>(relaxed = true).also {
+                io.mockk.coEvery { it.invoke(any()) } returns
+                    com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome.Success(emptyList())
+            },
+        )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }

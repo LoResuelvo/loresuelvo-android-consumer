@@ -10,8 +10,10 @@ import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
 import com.loresuelvo.consumer.domain.jobrequest.MAX_IMAGE_BYTES
 import com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES
+import com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
+import com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
@@ -53,6 +55,7 @@ import kotlinx.coroutines.launch
 class ContactProviderViewModel @Inject constructor(
     private val createJobRequest: CreateJobRequestUseCase,
     private val mediaReader: MediaReader,
+    private val uploadJobRequestImages: UploadJobRequestImagesUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ContactProviderUiState>(
@@ -200,11 +203,29 @@ class ContactProviderViewModel @Inject constructor(
         // ChatViewModel.onSendClick's pattern).
         _uiState.update { state.copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
+            // Upload every staged image first so the create call
+            // carries the backend-issued file UUIDs in
+            // `image_file_ids[]`. Without this step the backend
+            // would persist the JobRequest without any images and
+            // the provider would see no attachments. The empty
+            // case short-circuits inside the use case.
+            val uploadOutcome = uploadJobRequestImages(state.attachedImages)
+            if (uploadOutcome is UploadJobRequestImagesOutcome.Failure) {
+                _uiState.update {
+                    state.copy(
+                        isSubmitting = false,
+                        error = uploadOutcome.toContactProviderError(),
+                    )
+                }
+                return@launch
+            }
+            val fileIds = (uploadOutcome as UploadJobRequestImagesOutcome.Success).fileIds
             when (val outcome = createJobRequest(
                 CreateJobRequestData(
                     providerId = state.provider.id,
                     title = state.title,
                     description = state.description,
+                    imageFileIds = fileIds,
                 ),
             )) {
                 is CreateJobRequestOutcome.Success -> {
@@ -248,6 +269,16 @@ class ContactProviderViewModel @Inject constructor(
         is CreateJobRequestOutcome.Failure.Unauthorized ->
             ContactProviderError.Unauthorized
         is CreateJobRequestOutcome.Failure.Server ->
+            ContactProviderError.Server(code, message)
+    }
+
+    private fun UploadJobRequestImagesOutcome.Failure.toContactProviderError():
+        ContactProviderError = when (this) {
+        is UploadJobRequestImagesOutcome.Failure.Network ->
+            ContactProviderError.Network
+        is UploadJobRequestImagesOutcome.Failure.Unauthorized ->
+            ContactProviderError.Unauthorized
+        is UploadJobRequestImagesOutcome.Failure.Server ->
             ContactProviderError.Server(code, message)
     }
 }

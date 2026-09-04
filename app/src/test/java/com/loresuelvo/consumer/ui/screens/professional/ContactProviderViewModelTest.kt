@@ -5,11 +5,15 @@ import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestOutcome
 import com.loresuelvo.consumer.domain.jobrequest.JobRequest
+import com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.domain.usecase.jobrequest.CreateJobRequestUseCase
+import com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -34,13 +38,23 @@ class ContactProviderViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val createJobRequest: CreateJobRequestUseCase = mockk()
+    private val uploadJobRequestImages: UploadJobRequestImagesUseCase = mockk()
     private val mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
     private lateinit var viewModel: ContactProviderViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ContactProviderViewModel(createJobRequest, mediaReader)
+        // Default the upload use case to an empty success so the
+        // pre-existing submit tests (which do not stage any
+        // images) keep passing without each test wiring it up.
+        coEvery { uploadJobRequestImages(any()) } returns
+            UploadJobRequestImagesOutcome.Success(emptyList())
+        viewModel = ContactProviderViewModel(
+            createJobRequest = createJobRequest,
+            mediaReader = mediaReader,
+            uploadJobRequestImages = uploadJobRequestImages,
+        )
     }
 
     @After
@@ -353,4 +367,125 @@ class ContactProviderViewModelTest {
         categoryName = "Plomería",
         profilePhotoUrl = null,
     )
+
+    // ---- Bug fix: attached images must reach the backend -----------
+
+    @Test
+    fun onSubmit_with_attached_images_uploads_them_first_then_forwards_their_ids() =
+        runTest(testDispatcher) {
+            val provider = sampleProvider()
+            val captured = slot<CreateJobRequestData>()
+            coEvery { uploadJobRequestImages(any()) } returns
+                UploadJobRequestImagesOutcome.Success(listOf("file-1", "file-2"))
+            coEvery { createJobRequest(capture(captured)) } returns
+                CreateJobRequestOutcome.Success(
+                    JobRequest(
+                        id = "1",
+                        conversationId = "10",
+                        title = "Fuga",
+                        description = "Hay una fuga",
+                        status = "pending",
+                        images = emptyList(),
+                    ),
+                )
+
+            viewModel.onOpenContact(provider)
+            viewModel.onTitleChange("Fuga")
+            viewModel.onDescriptionChange("Hay una fuga")
+            viewModel.onAttachImages(
+                listOf(sampleImage("a.jpg"), sampleImage("b.jpg")),
+            )
+            viewModel.onSubmit()
+            advanceUntilIdle()
+
+            // Upload must happen BEFORE the create round-trip.
+            coVerifyOrder {
+                uploadJobRequestImages(any())
+                createJobRequest(any())
+            }
+            assertEquals(
+                "imageFileIds must carry the uploaded ids, not the raw bytes",
+                listOf("file-1", "file-2"),
+                captured.captured.imageFileIds,
+            )
+        }
+
+    @Test
+    fun onSubmit_without_attached_images_skips_the_upload_use_case() =
+        runTest(testDispatcher) {
+            coEvery { createJobRequest(any()) } returns CreateJobRequestOutcome.Success(
+                JobRequest("1", "10", "Fuga", "Hay una fuga", "pending", emptyList()),
+            )
+
+            viewModel.onOpenContact(sampleProvider())
+            viewModel.onTitleChange("Fuga")
+            viewModel.onDescriptionChange("Hay una fuga")
+            viewModel.onSubmit()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { uploadJobRequestImages(any()) }
+            // The list forwarded to the use case must be empty so
+            // the empty-input short-circuit returns Success(emptyList()).
+            coVerify(exactly = 1) { uploadJobRequestImages(match { it.isEmpty() }) }
+            coVerify(exactly = 1) { createJobRequest(any()) }
+        }
+
+    @Test
+    fun onSubmit_with_upload_Network_failure_sets_Network_error_and_skips_create() =
+        runTest(testDispatcher) {
+            coEvery { uploadJobRequestImages(any()) } returns
+                UploadJobRequestImagesOutcome.Failure.Network(
+                    java.io.IOException("socket closed"),
+                )
+
+            viewModel.onOpenContact(sampleProvider())
+            viewModel.onTitleChange("Fuga")
+            viewModel.onDescriptionChange("Hay una fuga")
+            viewModel.onAttachImages(listOf(sampleImage("a.jpg")))
+            viewModel.onSubmit()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createJobRequest(any()) }
+            val state = viewModel.uiState.value as ContactProviderUiState.Open
+            assertEquals(ContactProviderError.Network, state.error)
+            assertEquals(false, state.isSubmitting)
+        }
+
+    @Test
+    fun onSubmit_with_upload_Server_failure_sets_Server_error_and_skips_create() =
+        runTest(testDispatcher) {
+            coEvery { uploadJobRequestImages(any()) } returns
+                UploadJobRequestImagesOutcome.Failure.Server(code = 502, message = "storage down")
+
+            viewModel.onOpenContact(sampleProvider())
+            viewModel.onTitleChange("Fuga")
+            viewModel.onDescriptionChange("Hay una fuga")
+            viewModel.onAttachImages(listOf(sampleImage("a.jpg")))
+            viewModel.onSubmit()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createJobRequest(any()) }
+            val state = viewModel.uiState.value as ContactProviderUiState.Open
+            assertTrue(state.error is ContactProviderError.Server)
+            state.error as ContactProviderError.Server
+            assertEquals(502, state.error.code)
+        }
+
+    @Test
+    fun onSubmit_with_upload_Unauthorized_failure_sets_Unauthorized_error() =
+        runTest(testDispatcher) {
+            coEvery { uploadJobRequestImages(any()) } returns
+                UploadJobRequestImagesOutcome.Failure.Unauthorized("expired")
+
+            viewModel.onOpenContact(sampleProvider())
+            viewModel.onTitleChange("Fuga")
+            viewModel.onDescriptionChange("Hay una fuga")
+            viewModel.onAttachImages(listOf(sampleImage("a.jpg")))
+            viewModel.onSubmit()
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { createJobRequest(any()) }
+            val state = viewModel.uiState.value as ContactProviderUiState.Open
+            assertEquals(ContactProviderError.Unauthorized, state.error)
+        }
 }

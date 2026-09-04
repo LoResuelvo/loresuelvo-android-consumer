@@ -25,15 +25,21 @@ package com.loresuelvo.consumer.domain.file
  *    policy caps it at 5 MiB per file and 5 files per
  *    message; the consumer app currently sends one image per
  *    message (single-valued `MediaReference.Image`).
+ *  - `job_request_image` — private JPEG/PNG/WebP image
+ *    attached to a `JobRequest` (the consumer's "Contactar
+ *    proveedor" form). Backend policy mirrors the chat image
+ *    caps and the consumer app caps the per-request total at
+ *    [com.loresuelvo.consumer.domain.jobrequest.MAX_JOB_REQUEST_IMAGES].
  *
- * The job-request and work-order completion image purposes are
- * out of scope for the consumer app today; if a future flow
- * needs them, add the constants here without touching the
- * existing cases (callers dispatch on exhaustive `when`).
+ * The work-order completion image purpose is out of scope for
+ * the consumer app today; if a future flow needs it, add the
+ * constant here without touching the existing cases (callers
+ * dispatch on exhaustive `when`).
  */
 enum class FilePurpose {
     PROFILE_PHOTO,
     CONVERSATION_MESSAGE_AUDIO,
     CONVERSATION_MESSAGE_VIDEO,
     CONVERSATION_MESSAGE_IMAGE,
+    JOB_REQUEST_IMAGE,
 }

@@ -169,8 +169,12 @@ class SendMessagesWorld : AutoCloseable {
             getCategories = GetCategoriesUseCase(fakeCategoryRepo),
         )
         contactProviderViewModel = ContactProviderViewModel(
-            createJobRequestUseCase,
-            io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+            createJobRequest = createJobRequestUseCase,
+            mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+            uploadJobRequestImages = io.mockk.mockk<com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase>(relaxed = true).also {
+                io.mockk.coEvery { it.invoke(any()) } returns
+                    com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome.Success(emptyList())
+            },
         )
         messagesListViewModel = MessagesListViewModel(getConversationsUseCase)
         conversationViewModel = ConversationViewModel(
