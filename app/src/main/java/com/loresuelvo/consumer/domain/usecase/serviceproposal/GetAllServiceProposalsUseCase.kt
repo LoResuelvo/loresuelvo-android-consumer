@@ -7,22 +7,35 @@ import javax.inject.Singleton
 
 /**
  * Fetches the consumer's service proposals through the
- * [ServiceProposalRepository] port without applying any status
- * filter. Powers the "Mis Servicios" surface (US-54 scenario
- * 03-VSP) which lists every proposal regardless of status so the
- * consumer can see the full history; the per-status filter
- * chips on top of that list (scenarios 05-VSP / 06-VSP / 07-VSP)
- * are a presentation concern.
+ * [ServiceProposalRepository] port and surfaces the result
+ * **sorted by recency, newest first** (US-54 scenario 04-VSP).
  *
- * Stateless; failures are propagated verbatim. The use case never
- * swallows a [ServiceProposalsOutcome.Failure] into an empty
- * `Success` — the VM needs the typed failure to decide whether
- * to render an error or stay on a cached list.
+ * The "no filter + chronological order" bundle is the
+ * MisServicios contract: scenarios 05-VSP / 06-VSP / 07-VSP
+ * layer the per-status filter on top of this list, scenarios
+ * 04-VSP and 03-VSP rely on the recency sort. Both decisions
+ * live in the use case (not in the VM nor in the repository)
+ * so the wire contract stays narrow and the future work-order
+ * surface can reuse the raw repository list without inheriting
+ * this view-side ordering.
+ *
+ * Failures are propagated verbatim. `sortedByDescending` is a
+ * stable sort, so two proposals sharing the same
+ * `createdOnEpochMillis` keep their insertion order — pinned by
+ * the dedicated "stable" test in the use case suite.
  */
 @Singleton
 class GetAllServiceProposalsUseCase @Inject constructor(
     private val repository: ServiceProposalRepository,
 ) {
     suspend operator fun invoke(): ServiceProposalsOutcome =
-        repository.getServiceProposals()
+        when (val outcome = repository.getServiceProposals()) {
+            is ServiceProposalsOutcome.Success ->
+                ServiceProposalsOutcome.Success(
+                    proposals = outcome.proposals.sortedByDescending {
+                        it.createdOnEpochMillis
+                    },
+                )
+            is ServiceProposalsOutcome.Failure -> outcome
+        }
 }
