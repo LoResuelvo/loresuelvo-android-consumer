@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.waitUntil
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
@@ -133,7 +134,17 @@ class MisServiciosScreenInstrumentedTest {
             .assertExists()
             .performClick()
 
-        composeTestRule.waitForIdle()
+        // Wait for the navigation transition + Hilt VM construction
+        // to land. The new screen's `init { load() }` fires a
+        // coroutine that must drain before the `MIS_SERVICIOS_SCREEN_TAG`
+        // appears in the composition; without this `waitUntil`
+        // the assertion races against the recomposition.
+        composeTestRule.waitUntil(5_000) {
+            composeTestRule
+                .onAllNodesWithTag(MIS_SERVICIOS_SCREEN_TAG)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
 
         composeTestRule
             .onNodeWithTag(MIS_SERVICIOS_SCREEN_TAG)
