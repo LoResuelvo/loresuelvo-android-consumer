@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Path-sensor for the instrumented-tests job: the emulator boot costs ~5 min so
-  # we only pay that on PRs that actually touch UI/Composable code,
+  # Path-sensor for the instrumented-tests job: the emulator still has a startup
+  # cost, so we only pay it on PRs that actually touch UI/Composable code,
   # the AndroidManifest, or the build configuration. Lint + unit
   # tests and the APK build verification are cheap enough to run
   # unconditionally.
@@ -117,34 +117,27 @@ jobs:
           ANDROID_SDK_CACHE_HIT: ${{ steps.android-sdk-cache.outputs.cache-hit || 'false' }}
         run: echo "ANDROID_SDK_CACHE_HIT=$ANDROID_SDK_CACHE_HIT"
 
-      - name: Restore Gradle Managed Device AVD cache
-        id: managed-device-cache
-        uses: actions/cache@v4
+      - name: Restore prewarmed AVD cache
+        id: avd-cache
+        uses: actions/cache/restore@v4
         with:
-          path: /home/runner/.android/avd
-          key: ${{ runner.os }}-gradle-managed-pixel2-api35-x86_64-v1
+          path: |
+            /home/runner/.android/avd/test.avd
+            /home/runner/.android/avd/test.ini
+          key: ${{ runner.os }}-avd-api35-x86_64-pixel2-v1
           restore-keys: |
-            ${{ runner.os }}-gradle-managed-pixel2-api35-x86_64-
+            ${{ runner.os }}-avd-api35-x86_64-pixel2-
 
-      - name: Report Gradle Managed Device cache
+      - name: Report prewarmed AVD cache
         env:
-          MANAGED_DEVICE_CACHE_HIT: ${{ steps.managed-device-cache.outputs.cache-hit || 'false' }}
-        run: echo "MANAGED_DEVICE_CACHE_HIT=$MANAGED_DEVICE_CACHE_HIT"
+          AVD_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit || 'false' }}
+        run: echo "AVD_CACHE_HIT=$AVD_CACHE_HIT"
 
       - name: Habilitar KVM (requerido por el emulador)
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
-      - name: Timing Managed Device setup start
-        run: echo "TIMING:MANAGED_DEVICE_SETUP_START=$(date -u +%s)"
-
-      - name: Prepare Gradle Managed Device
-        run: ./gradlew :app:pixel2Api35Setup
-
-      - name: Timing Managed Device setup end
-        run: echo "TIMING:MANAGED_DEVICE_SETUP_END=$(date -u +%s)"
 
       - name: Timing instrumented build start
         run: echo "TIMING:INSTRUMENTED_BUILD_START=$(date -u +%s)"
@@ -163,16 +156,28 @@ jobs:
 
       - name: Ejecutar tests instrumentados de Android
         env:
+          AVD_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit || 'false' }}
           GRADLE_OPTS: -Dorg.gradle.logging.level=info
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
           AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
           AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
-        run: |
-          echo "TIMING:INSTRUMENTED_TESTS_START=$(date -u +%s)"
-          make instrumented FLAVOR=Staging
-          echo "TIMING:INSTRUMENTED_TESTS_END=$(date -u +%s)"
+        uses: ReactiveCircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_2
+          avd-name: test
+          force-avd-creation: false
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -snapshot ci-clean -no-snapshot-save
+          script: |
+            echo "AVD_CACHE_HIT=$AVD_CACHE_HIT"
+            echo "TIMING:INSTRUMENTED_TESTS_START=$(date -u +%s)"
+            INSTRUMENTED_DEVICE=connected make instrumented FLAVOR=Staging
+            echo "TIMING:INSTRUMENTED_TESTS_END=$(date -u +%s)"
 
       - name: Timing runner end
         if: always()
