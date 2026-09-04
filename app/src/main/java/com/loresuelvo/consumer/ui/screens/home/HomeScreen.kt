@@ -198,6 +198,7 @@ private fun HomeScreenReadyPreview() {
                     ),
                 ),
                 pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+                upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
             ),
             displayName = "Matias",
             activeRequests = listOf(
