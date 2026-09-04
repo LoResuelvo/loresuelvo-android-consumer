@@ -88,4 +88,40 @@ class VisualizeServiceProposalSteps {
             items.all { it.status == ServiceProposalStatus.Pending },
         )
     }
+
+    // ---- Scenario 02-VSP --------------------------------------
+
+    @And("que entre las propuestas recibidas hay aceptadas")
+    fun queEntreLasPropuestasRecibidasHayAceptadas() {
+        // The seed in [VisualizeServiceProposalWorld.seedProposalsReceived]
+        // already includes an `Accepted` entry; this step exists
+        // so the Gherkin flow reads naturally.
+    }
+
+    @Then("debe visualizar los trabajos próximos destacados")
+    fun debeVisualizarLosTrabajosProximosDestacados() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected HomeUiState.Ready, was $state",
+            state is HomeUiState.Ready,
+        )
+        val upcoming = (state as HomeUiState.Ready).upcomingServiceProposals
+        assertTrue(
+            "expected ServiceProposalsState.Ready for upcoming, was $upcoming",
+            upcoming is ServiceProposalsState.Ready,
+        )
+        val items = (upcoming as ServiceProposalsState.Ready).items
+        assertEquals(
+            "expected the accepted filter to keep exactly the Accepted proposals",
+            listOf("2"),
+            items.map { it.id },
+        )
+        // Pin the filter actually ran: every surviving item is
+        // `Accepted`, and the `Pending` / `Rejected` entries were
+        // dropped at the use-case boundary.
+        assertTrue(
+            "every visible upcoming proposal must be Accepted, was ${items.map { it.status }}",
+            items.all { it.status == ServiceProposalStatus.Accepted },
+        )
+    }
 }
