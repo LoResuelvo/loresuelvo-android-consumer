@@ -148,6 +148,20 @@ class MisServiciosScreenInstrumentedTest {
             .assertHasClickAction()
             .performClick()
 
+        // The Compose navigation transition + Hilt VM construction
+        // + the VM's `init { load() }` round trip need more than a
+        // single `waitForIdle()` to settle. Poll the semantics tree
+        // with a deadline so the assertion races against the
+        // recomposition instead of failing immediately.
+        val deadline = System.currentTimeMillis() + 5_000L
+        while (System.currentTimeMillis() < deadline &&
+            composeTestRule
+                .onAllNodesWithTag(MIS_SERVICIOS_SCREEN_TAG)
+                .fetchSemanticsNodes()
+                .isEmpty()
+        ) {
+            Thread.sleep(50)
+        }
         composeTestRule.waitForIdle()
 
         // The MisServicios screen renders its loading text or
