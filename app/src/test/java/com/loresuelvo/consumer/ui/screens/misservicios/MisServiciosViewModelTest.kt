@@ -65,6 +65,7 @@ class MisServiciosViewModelTest {
         id: String,
         status: ServiceProposalStatus = ServiceProposalStatus.Pending,
         amountCents: Long = 1500000L,
+        createdOnEpochMillis: Long = 1_788_434_364_640L,
     ): ServiceProposal = ServiceProposal(
         id = id,
         conversationId = "100",
@@ -79,15 +80,19 @@ class MisServiciosViewModelTest {
         description = "Fuga en el lavamanos",
         amountCents = amountCents,
         scheduledOnEpochMillis = 1_792_074_600_000L,
-        createdOnEpochMillis = 1_788_434_364_640L,
+        createdOnEpochMillis = createdOnEpochMillis,
     )
 
     @Test
-    fun success_with_items_transitions_to_Ready_with_the_list() = runTest {
+    fun success_with_items_transitions_to_Ready_with_the_list_ordered_by_recency() = runTest {
+        // The seed is NOT in chronological order on purpose, so
+        // the assertion pins that the VM observes the list after
+        // the use case's `sortedByDescending { createdOnEpochMillis }`.
+        // If a future change drops the sort, this test fails.
         val proposals = listOf(
-            proposal(id = "1"),
-            proposal(id = "2", status = ServiceProposalStatus.Accepted),
-            proposal(id = "3", status = ServiceProposalStatus.Rejected),
+            proposal(id = "middle", createdOnEpochMillis = 1_700_000_000_000L),
+            proposal(id = "newest", createdOnEpochMillis = 1_700_000_500_000L),
+            proposal(id = "oldest", createdOnEpochMillis = 1_699_999_500_000L),
         )
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Success(proposals)
@@ -101,7 +106,7 @@ class MisServiciosViewModelTest {
         )
         val ready = state as MisServiciosUiState.Ready
         assertEquals(
-            listOf("1", "2", "3"),
+            listOf("newest", "middle", "oldest"),
             ready.proposals.map { it.id },
         )
     }
