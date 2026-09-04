@@ -193,7 +193,10 @@ Verificar que el plugin está declarado en el `plugins` block con la misma versi
 
 ## GitHub Actions
 
-> Pendiente (WIP). El pipeline correrá `make ci` (build + lint + unit + instrumented tests) en cada push y PR.
+El job de instrumentación ejecuta el mismo Gradle Managed Device
+`pixel2Api35` que el flujo local mediante `make instrumented`. GitHub Actions
+habilita KVM y Gradle instala la imagen Android requerida si todavía no está
+disponible en el runner.
 
 ---
 
