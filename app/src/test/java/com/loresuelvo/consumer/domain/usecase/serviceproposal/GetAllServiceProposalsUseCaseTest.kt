@@ -38,7 +38,8 @@ class GetAllServiceProposalsUseCaseTest {
 
     private fun proposal(
         id: String,
-        status: ServiceProposalStatus,
+        status: ServiceProposalStatus = ServiceProposalStatus.Pending,
+        createdOnEpochMillis: Long = 1_699_999_000_000L,
     ): ServiceProposal = ServiceProposal(
         id = id,
         conversationId = null,
@@ -53,7 +54,7 @@ class GetAllServiceProposalsUseCaseTest {
         description = "irrelevant",
         amountCents = 15000L,
         scheduledOnEpochMillis = 1_700_000_000_000L,
-        createdOnEpochMillis = 1_699_999_000_000L,
+        createdOnEpochMillis = createdOnEpochMillis,
     )
 
     @Test
@@ -107,5 +108,49 @@ class GetAllServiceProposalsUseCaseTest {
         val outcome = useCase()
 
         assertSame(failure, outcome)
+    }
+
+    @Test
+    fun orders_proposals_by_recency_descending_by_created_on() = runTest {
+        // Seed is intentionally NOT in chronological order so the
+        // sort is observable; if the use case returned the list as-is
+        // the assertion would fail.
+        val middle = proposal(id = "mid", createdOnEpochMillis = 1_700_000_000_000L)
+        val newest = proposal(id = "new", createdOnEpochMillis = 1_700_000_500_000L)
+        val oldest = proposal(id = "old", createdOnEpochMillis = 1_699_999_500_000L)
+        coEvery { repository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(listOf(middle, newest, oldest))
+
+        val outcome = useCase()
+
+        assertTrue(outcome is ServiceProposalsOutcome.Success)
+        val ids = (outcome as ServiceProposalsOutcome.Success).proposals.map { it.id }
+        assertEquals(
+            "expected newest first, then middle, then oldest",
+            listOf("new", "mid", "old"),
+            ids,
+        )
+    }
+
+    @Test
+    fun order_is_stable_for_equal_created_on_timestamps() = runTest {
+        // `sortedByDescending` is stable: two proposals with the same
+        // timestamp keep the insertion order. Pin that here so a
+        // future switch to an unstable sort would break the test.
+        val shared = 1_700_000_000_000L
+        val first = proposal(id = "first", createdOnEpochMillis = shared)
+        val second = proposal(id = "second", createdOnEpochMillis = shared)
+        val third = proposal(id = "third", createdOnEpochMillis = shared)
+        coEvery { repository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(listOf(third, first, second))
+
+        val outcome = useCase()
+
+        val ids = (outcome as ServiceProposalsOutcome.Success).proposals.map { it.id }
+        assertEquals(
+            "expected insertion order to survive the sort for equal timestamps",
+            listOf("third", "first", "second"),
+            ids,
+        )
     }
 }
