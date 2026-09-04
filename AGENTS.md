@@ -133,6 +133,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - `skills/android-hilt-governance` — Módulos, scopes, `@HiltViewModel`, `hiltViewModel()`, tests con Hilt.
 - `skills/android-doc-governance` — Mantenimiento de `AGENTS.md`, `CLAUDE.md`, `README.md`, skills.
 - `skills/android-commit-governance` — Commit format `<type>[<us_number>]: <message>`, in English, with atomic PRs.
+- `skills/android-image-upload-flow` — Patrón de upload (FilePurpose → presign/upload/confirm → use case → ViewModel).
 
 ---
 
@@ -145,6 +146,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - "Voy a agregar un módulo Hilt, un `@HiltViewModel`, o un test con Hilt": `android-hilt-governance`.
 - "Voy a tocar `AGENTS.md`, `CLAUDE.md`, skills o `README.md`": `android-doc-governance`.
 - "Voy a hacer commit o PR": `android-commit-governance`.
+- "Voy a agregar o modificar un flujo que sube archivos (imagen/audio/video)": `android-image-upload-flow`.
 
 ---
 
