@@ -3,10 +3,12 @@ package com.loresuelvo.consumer.instrumented.misservicios
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.compose.ui.test.assertExists
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
@@ -28,11 +30,17 @@ import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository
 import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
 import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
+import com.loresuelvo.consumer.ui.screens.home.components.HOME_MIS_SERVICIOS_LINK_TAG
+import com.loresuelvo.consumer.ui.screens.misservicios.MIS_SERVICIOS_LIST_TAG
+import com.loresuelvo.consumer.ui.screens.misservicios.MIS_SERVICIOS_SCREEN_TAG
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -52,12 +60,36 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Smoke instrumented test for the "Mis Servicios" navigation. Just
- * confirms the Home dashboard reaches RESUMED state when the
- * test persists a completed authenticated session. Once this
- * baseline is green, the rest of the navigation assertions
- * (clicking the link, landing on `MIS_SERVICIOS_SCREEN_TAG`, etc.)
- * can be added on top.
+ * Instrumented coverage for US-54 scenario 03-VSP ("Visualizar
+ * todas las propuestas de servicio"). Drives the consumer through
+ * the navigation graph — Home → "Mis Servicios" link → MisServicios
+ * list — and pins that the seeded proposals land in the rendered
+ * `LazyColumn`.
+ *
+ * Mirrors [com.loresuelvo.consumer.instrumented.auth.CompleteProfileScreenInstrumentedTest]:
+ *
+ *  - `@HiltAndroidTest` + `@UninstallModules(RepositoryModule::class,
+ *    SessionStoreModule::class)` to install a deterministic test
+ *    graph: every port the production ViewModels transitively
+ *    need (Categories / Provider / AuthSessionStore /
+ *    Diagnosis / JobRequest / Conversation /
+ *    ServiceProposal) is bound to a fake / production stub that
+ *    returns a fast, in-memory result.
+ *  - `@EntryPoint` to resolve the **same** `@Singleton` instance of
+ *    `AuthSessionStore` that `SessionViewModel` observes, so the
+ *    `saveSession(...)` mutation propagates through the production
+ *    StateFlow and the smart router in `LoResuelvoNav` redirects
+ *    the consumer to the Home (not Welcome / CompleteProfile).
+ *  - `FakeServiceProposalRepository.set(...)` to seed the
+ *    proposal list the MisServicios screen renders.
+ *  - `composeTestRule.runOnUiThread { ... }` for the Hilt mutation
+ *    + `activityRule.scenario.recreate()` to force the activity
+ *    to rebuild against the new state.
+ *
+ * Locale note: the CI emulator boots as `en-US`, so the screen
+ * resolves the strings from `values-en/`. The Compose assertions
+ * resolve `R.string.*` from the activity's resources rather than
+ * hard-coded Spanish literals.
  */
 @HiltAndroidTest
 @UninstallModules(RepositoryModule::class, SessionStoreModule::class)
@@ -77,19 +109,65 @@ class MisServiciosScreenInstrumentedTest {
         ).authSessionStore()
     }
 
+    private val serviceProposalRepository: FakeServiceProposalRepository by lazy {
+        EntryPointAccessors.fromApplication(
+            ApplicationProvider.getApplicationContext<Application>(),
+            ServiceProposalRepositoryEntryPoint::class.java,
+        ).serviceProposalRepository()
+    }
+
     @Before
     fun setUp() {
         hiltRule.inject()
         sessionStore.clearSession()
+        serviceProposalRepository.set(SEED_PROPOSALS)
         persistCompletedAuthenticatedUser()
     }
 
     @Test
-    fun smoke_home_loads_after_authenticated_session() {
-        composeTestRule.waitForIdle()
+    fun home_entry_link_navigates_to_mis_servicios_listing_all_proposals() {
+        // Sanity: the Home dashboard is rendered (greeting + name
+        // visible). This pins that the `persistCompletedAuthenticatedUser`
+        // step landed the smart router on `Route.Home`, which is a
+        // precondition for the MisServicios navigation below.
         composeTestRule
-            .onNodeWithTag("home-section-categories")
-            .assertExists()
+            .onNodeWithText(localizedString(R.string.home_greeting_inline).substringBefore(','))
+            .assertIsDisplayed()
+
+        // The "Mis Servicios" link on Home carries a dedicated
+        // testTag so this assertion stays locale-independent and
+        // unambiguous (the Home screen has multiple "Ver todas"
+        // links for different sections).
+        composeTestRule
+            .onNodeWithTag(HOME_MIS_SERVICIOS_LINK_TAG)
+            .assertHasClickAction()
+            .performClick()
+
+        composeTestRule.waitForIdle()
+
+        // The MisServicios screen renders its loading text or
+        // the empty-state copy while the round trip is in flight
+        // / has returned empty — either is a positive "we are on
+        // MisServicios" assertion.
+        composeTestRule
+            .onNodeWithTag(MIS_SERVICIOS_SCREEN_TAG)
+            .assertIsDisplayed()
+
+        // Each seeded proposal lands on its own row. The row
+        // testTag is keyed by the proposal id; assertion is via
+        // `assertIsDisplayed` because the rows fit on the viewport
+        // (the seeded list is short).
+        SEED_PROPOSALS.forEach { proposal ->
+            composeTestRule
+                .onNodeWithTag("mis-servicios-row-${proposal.id}")
+                .assertIsDisplayed()
+        }
+
+        // The seeded list (3 entries) is non-empty, so the
+        // LazyColumn must be visible.
+        composeTestRule
+            .onNodeWithTag(MIS_SERVICIOS_LIST_TAG)
+            .assertIsDisplayed()
     }
 
     private fun persistCompletedAuthenticatedUser() {
@@ -117,6 +195,12 @@ class MisServiciosScreenInstrumentedTest {
     @InstallIn(SingletonComponent::class)
     interface AuthSessionStoreEntryPoint {
         fun authSessionStore(): AuthSessionStore
+    }
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface ServiceProposalRepositoryEntryPoint {
+        fun serviceProposalRepository(): FakeServiceProposalRepository
     }
 
     @Module
@@ -205,5 +289,31 @@ class MisServiciosScreenInstrumentedTest {
                 email = data.email,
             ),
         )
+    }
+
+    private companion object {
+        val SEED_PROPOSALS: List<ServiceProposal> = listOf(
+            proposal(id = "1", status = ServiceProposalStatus.Pending),
+            proposal(id = "2", status = ServiceProposalStatus.Accepted),
+            proposal(id = "3", status = ServiceProposalStatus.Rejected),
+        )
+
+        private fun proposal(id: String, status: ServiceProposalStatus): ServiceProposal =
+            ServiceProposal(
+                id = id,
+                conversationId = "100",
+                status = status,
+                counterpart = ServiceProposalCounterpart(
+                    id = "1",
+                    name = "Juan",
+                    surname = "Pérez",
+                    categoryName = "Plomería",
+                    profilePhotoUrl = null,
+                ),
+                description = "Fuga en el lavamanos",
+                amountCents = 1500000L,
+                scheduledOnEpochMillis = 1_792_074_600_000L,
+                createdOnEpochMillis = 1_788_434_364_640L,
+            )
     }
 }
