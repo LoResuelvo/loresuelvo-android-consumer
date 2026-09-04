@@ -126,13 +126,16 @@ class MisServiciosScreenInstrumentedTest {
 
     @Test
     fun home_entry_link_navigates_to_mis_servicios_listing_all_proposals() {
-        // Sanity: the Home dashboard is rendered (greeting + name
-        // visible). This pins that the `persistCompletedAuthenticatedUser`
-        // step landed the smart router on `Route.Home`, which is a
-        // precondition for the MisServicios navigation below.
+        // Sanity: the Home dashboard renders its "Ver todas"
+        // section for the Mis Servicios entry. The link is keyed
+        // by a dedicated testTag so we can target it without
+        // relying on the localized text. This also pins that
+        // `persistCompletedAuthenticatedUser` landed the smart
+        // router on `Route.Home`, which is a precondition for
+        // the MisServicios navigation below.
         composeTestRule
-            .onNodeWithText(localizedString(R.string.home_greeting_inline).substringBefore(','))
-            .assertIsDisplayed()
+            .onNodeWithTag(HOME_MIS_SERVICIOS_LINK_TAG)
+            .assertHasClickAction()
 
         // The "Mis Servicios" link on Home carries a dedicated
         // testTag so this assertion stays locale-independent and
