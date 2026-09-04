@@ -1,17 +1,22 @@
 package com.loresuelvo.consumer.ui.screens.misservicios
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -55,6 +60,13 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
  *    copy (network / server / unauthorized) and a "Reintentar"
  *    button that triggers [onRetryClick].
  *
+ * The status filter chip row sits above the list / loading /
+ * error surface (US-54 scenario 05-VSP onwards). The active chip
+ * is rendered with [FilterChip] default selected colors; the
+ * screen keeps the chip highlighted across Loading and Error
+ * transitions because [selectedStatusFilter] lives in every
+ * state variant.
+ *
  * The status badge colours follow the semantic palette already
  * documented on `home_section_*` — Pending = warning, Accepted =
  * success, Rejected = error. These three `Color` values are
@@ -64,10 +76,11 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 @Composable
 fun MisServiciosScreen(
     state: MisServiciosUiState,
+    onFilterSelected: (ServiceProposalStatus?) -> Unit = {},
     onRetryClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
             // 08-UXUI: see HomeScreen — the outer `Scaffold` no
@@ -75,22 +88,69 @@ fun MisServiciosScreen(
             // screen must apply `statusBarsPadding()` itself.
             .statusBarsPadding()
             .testTag(MIS_SERVICIOS_SCREEN_TAG),
-        contentAlignment = Alignment.Center,
     ) {
-        when (state) {
-            is MisServiciosUiState.Loading -> LoadingState()
-            is MisServiciosUiState.Ready -> {
-                if (state.proposals.isEmpty()) {
-                    EmptyState()
-                } else {
-                    ProposalsList(proposals = state.proposals)
+        FilterChipsRow(
+            selected = state.selectedStatusFilter,
+            onFilterSelected = onFilterSelected,
+        )
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            when (state) {
+                is MisServiciosUiState.Loading -> LoadingState()
+                is MisServiciosUiState.Ready -> {
+                    if (state.proposals.isEmpty()) {
+                        EmptyState()
+                    } else {
+                        ProposalsList(proposals = state.proposals)
+                    }
                 }
+                is MisServiciosUiState.Error -> ErrorState(
+                    failure = state.failure,
+                    onRetryClick = onRetryClick,
+                )
             }
-            is MisServiciosUiState.Error -> ErrorState(
-                failure = state.failure,
-                onRetryClick = onRetryClick,
-            )
         }
+    }
+}
+
+@Composable
+private fun FilterChipsRow(
+    selected: ServiceProposalStatus?,
+    onFilterSelected: (ServiceProposalStatus?) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        FilterChip(
+            selected = selected == null,
+            onClick = { onFilterSelected(null) },
+            label = { Text(text = stringResource(R.string.mis_servicios_filter_all)) },
+            modifier = Modifier.testTag(MIS_SERVICIOS_FILTER_CHIP_TAG_PREFIX + "all"),
+        )
+        FilterChip(
+            selected = selected == ServiceProposalStatus.Pending,
+            onClick = { onFilterSelected(ServiceProposalStatus.Pending) },
+            label = { Text(text = stringResource(R.string.mis_servicios_filter_pending)) },
+            modifier = Modifier.testTag(MIS_SERVICIOS_FILTER_CHIP_TAG_PREFIX + "pending"),
+        )
+        FilterChip(
+            selected = selected == ServiceProposalStatus.Accepted,
+            onClick = { onFilterSelected(ServiceProposalStatus.Accepted) },
+            label = { Text(text = stringResource(R.string.mis_servicios_filter_accepted)) },
+            modifier = Modifier.testTag(MIS_SERVICIOS_FILTER_CHIP_TAG_PREFIX + "accepted"),
+        )
+        FilterChip(
+            selected = selected == ServiceProposalStatus.Rejected,
+            onClick = { onFilterSelected(ServiceProposalStatus.Rejected) },
+            label = { Text(text = stringResource(R.string.mis_servicios_filter_rejected)) },
+            modifier = Modifier.testTag(MIS_SERVICIOS_FILTER_CHIP_TAG_PREFIX + "rejected"),
+        )
     }
 }
 
@@ -262,3 +322,4 @@ const val MIS_SERVICIOS_ERROR_TAG: String = "mis-servicios-error"
 const val MIS_SERVICIOS_ERROR_RETRY_TAG: String = "mis-servicios-error-retry"
 const val MIS_SERVICIOS_BADGE_TAG: String = "mis-servicios-status-badge"
 const val MIS_SERVICIOS_ROW_TAG_PREFIX: String = "mis-servicios-row-"
+const val MIS_SERVICIOS_FILTER_CHIP_TAG_PREFIX: String = "mis-servicios-filter-chip-"

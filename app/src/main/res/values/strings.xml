@@ -199,6 +199,11 @@
     <string name="mis_servicios_status_pending">Pendiente</string>
     <string name="mis_servicios_status_accepted">Aceptada</string>
     <string name="mis_servicios_status_rejected">Rechazada</string>
+    <!-- Mis Servicios status filter chips (US-54, scenarios 05-VSP / 06-VSP / 07-VSP) -->
+    <string name="mis_servicios_filter_all">Todos</string>
+    <string name="mis_servicios_filter_pending">Pendientes</string>
+    <string name="mis_servicios_filter_accepted">Aceptadas</string>
+    <string name="mis_servicios_filter_rejected">Rechazadas</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">Mis Servicios</string>
     <string name="home_section_mis_servicios_link">Ver todas</string>

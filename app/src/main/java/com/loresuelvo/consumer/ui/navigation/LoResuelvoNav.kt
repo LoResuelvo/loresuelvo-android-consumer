@@ -448,6 +448,7 @@ private fun MisServiciosRoute(
 
     MisServiciosScreen(
         state = state,
+        onFilterSelected = viewModel::onFilterSelected,
         onRetryClick = viewModel::load,
     )
 }
