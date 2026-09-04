@@ -5,7 +5,10 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAllServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetRejectedServiceProposalsUseCase
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosUiState
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -67,6 +70,9 @@ class MisServiciosWorld : AutoCloseable {
 
         viewModel = MisServiciosViewModel(
             getAllServiceProposals = GetAllServiceProposalsUseCase(serviceProposalRepo),
+            getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
+            getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
+            getRejectedServiceProposals = GetRejectedServiceProposalsUseCase(serviceProposalRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
