@@ -189,4 +189,17 @@
     <string name="job_request_image_max_hint">Máximo %1$d imágenes permitidas</string>
     <string name="job_request_image_limit_reached">Ya alcanzaste el límite de %1$d imágenes</string>
     <string name="job_request_image_remove_content_description">Quitar imagen</string>
+    <!-- Mis Servicios screen (US-54, scenario 03-VSP) -->
+    <string name="mis_servicios_loading">Cargando propuestas…</string>
+    <string name="mis_servicios_empty_title">Aún no tienes propuestas</string>
+    <string name="mis_servicios_empty_body">Cuando recibas propuestas de prestadores aparecerán acá.</string>
+    <string name="mis_servicios_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="mis_servicios_error_server">No pudimos cargar tus propuestas. Reintentá.</string>
+    <string name="mis_servicios_error_retry">Reintentar</string>
+    <string name="mis_servicios_status_pending">Pendiente</string>
+    <string name="mis_servicios_status_accepted">Aceptada</string>
+    <string name="mis_servicios_status_rejected">Rechazada</string>
+    <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
+    <string name="home_section_mis_servicios">Mis Servicios</string>
+    <string name="home_section_mis_servicios_link">Ver todas</string>
 </resources>
