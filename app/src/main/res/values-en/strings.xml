@@ -187,8 +187,8 @@
     <string name="job_request_image_remove_content_description">Remove image</string>
     <!-- Mis Servicios screen (US-54, scenario 03-VSP) -->
     <string name="mis_servicios_loading">Loading proposals…</string>
-    <string name="mis_servicios_empty_title">You have no proposals yet</string>
-    <string name="mis_servicios_empty_body">When you receive proposals from providers, they\'ll show up here.</string>
+    <string name="mis_servicios_empty_title">No provider has sent you a proposal yet.</string>
+    <string name="mis_servicios_empty_body">When you contact one, they\'ll send their proposal and you\'ll see it here.</string>
     <string name="mis_servicios_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="mis_servicios_error_server">We couldn\'t load your proposals. Try again.</string>
     <string name="mis_servicios_error_retry">Retry</string>

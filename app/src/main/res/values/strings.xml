@@ -191,8 +191,8 @@
     <string name="job_request_image_remove_content_description">Quitar imagen</string>
     <!-- Mis Servicios screen (US-54, scenario 03-VSP) -->
     <string name="mis_servicios_loading">Cargando propuestas…</string>
-    <string name="mis_servicios_empty_title">Aún no tienes propuestas</string>
-    <string name="mis_servicios_empty_body">Cuando recibas propuestas de prestadores aparecerán acá.</string>
+    <string name="mis_servicios_empty_title">Ningún prestador te ha enviado una propuesta.</string>
+    <string name="mis_servicios_empty_body">Cuando contactes a uno, te enviará su propuesta y la verás acá.</string>
     <string name="mis_servicios_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="mis_servicios_error_server">No pudimos cargar tus propuestas. Reintentá.</string>
     <string name="mis_servicios_error_retry">Reintentar</string>
