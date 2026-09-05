@@ -204,6 +204,18 @@
     <string name="mis_servicios_filter_pending">Pendientes</string>
     <string name="mis_servicios_filter_accepted">Aceptadas</string>
     <string name="mis_servicios_filter_rejected">Rechazadas</string>
+    <!-- Proposal detail + card (US-54, scenario 08-VSP) -->
+    <string name="proposal_card_view_cta">Ver Solicitud</string>
+    <string name="proposal_detail_title">Detalle de la propuesta</string>
+    <string name="proposal_detail_amount">Monto acordado</string>
+    <string name="proposal_detail_date">Fecha y hora</string>
+    <string name="proposal_detail_reason">Motivo de la visita</string>
+    <string name="proposal_detail_status">Estado</string>
+    <string name="proposal_detail_view_conversation">Ver conversación</string>
+    <string name="proposal_detail_loading">Cargando propuesta…</string>
+    <string name="proposal_detail_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="proposal_detail_error_server">No pudimos cargar la propuesta. Reintentá.</string>
+    <string name="proposal_detail_error_retry">Reintentar</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">Mis Servicios</string>
     <string name="home_section_mis_servicios_link">Ver todas</string>

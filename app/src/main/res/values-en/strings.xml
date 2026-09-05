@@ -200,6 +200,18 @@
     <string name="mis_servicios_filter_pending">Pending</string>
     <string name="mis_servicios_filter_accepted">Accepted</string>
     <string name="mis_servicios_filter_rejected">Rejected</string>
+    <!-- Proposal detail + card (US-54, scenario 08-VSP) -->
+    <string name="proposal_card_view_cta">View proposal</string>
+    <string name="proposal_detail_title">Proposal detail</string>
+    <string name="proposal_detail_amount">Agreed amount</string>
+    <string name="proposal_detail_date">Date and time</string>
+    <string name="proposal_detail_reason">Reason for the visit</string>
+    <string name="proposal_detail_status">Status</string>
+    <string name="proposal_detail_view_conversation">View conversation</string>
+    <string name="proposal_detail_loading">Loading proposal…</string>
+    <string name="proposal_detail_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="proposal_detail_error_server">We couldn\'t load the proposal. Try again.</string>
+    <string name="proposal_detail_error_retry">Retry</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">My Services</string>
     <string name="home_section_mis_servicios_link">See all</string>
