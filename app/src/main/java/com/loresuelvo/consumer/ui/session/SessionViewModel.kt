@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.ui.session
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
@@ -40,31 +41,46 @@ class SessionViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             sessionStore.sessionFlow.collect { session ->
-                _uiState.update { current ->
-                    computeState(session).copy(
-                        signingOut = current.signingOut,
-                        error = current.error,
-                    )
-                }
+                _uiState.update { current -> computeState(session) }
             }
         }
     }
 
     /**
-     * Closes the Auth0 SSO session and only then clears the cached
-     * session. The smart-router in `LoResuelvoNav` reacts to the
-     * resulting null session and pops back to `Welcome`.
+     * **Local-first sign-out.** Clears the cached session synchronously
+     * so the smart-router in `LoResuelvoNav` observes the change and
+     * pops back to `Welcome` before this function returns to the click
+     * handler. The Auth0 SSO logout is dispatched in the background:
+     * its result (Success / Cancelled / Failure) does not gate the
+     * local sign-out — by the time the user could react to an Auth0
+     * failure they are already at the login screen.
+     *
+     * The previous policy ("Auth0 first, then local") caused the
+     * consumer to stay on the Home screen when the Auth0 browser
+     * stayed open (browser not closed → callback not invoked →
+     * session not cleared → smart-router never re-routes). The new
+     * policy eliminates that edge case at the cost of leaving the
+     * Auth0 SDK token alive until the next successful login. The
+     * SDK token alone does not grant local access because the
+     * smart-router checks the local `EncryptedSharedPreferences`
+     * session, not the SDK state.
      */
     fun signOut(activityContext: Context) {
+        // 1. Clear the local session BEFORE returning so the
+        // smart-router re-routes to Welcome synchronously.
+        sessionStore.clearSession()
+        // 2. Dispatch the Auth0 SSO logout in the background.
+        // Its result is fire-and-forget; we log it for diagnostics
+        // but the consumer has already left Home for Welcome.
         viewModelScope.launch {
-            _uiState.update { it.copy(signingOut = true, error = null) }
-            when (authProvider.logout(activityContext)) {
-                LogoutOutcome.Success -> sessionStore.clearSession()
-                LogoutOutcome.Cancelled -> Unit
-                is LogoutOutcome.Failure ->
-                    _uiState.update { it.copy(error = SessionError.Logout) }
+            val outcome = authProvider.logout(activityContext)
+            if (BuildConfig.DEBUG && outcome is LogoutOutcome.Failure) {
+                android.util.Log.w(
+                    "SessionViewModel",
+                    "Auth0 logout failed after local sign-out; " +
+                        "user will re-authenticate fresh next login",
+                )
             }
-            _uiState.update { it.copy(signingOut = false) }
         }
     }
 
