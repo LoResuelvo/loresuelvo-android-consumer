@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.bdd.provider
 
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosUiState
+import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
@@ -106,6 +107,53 @@ class MisServiciosSteps {
                 "it carries the largest createdOnEpochMillis",
             listOf("30", "31", "32"),
             items.map { it.id },
+        )
+    }
+
+    // ---- Scenario 05-VSP --------------------------------------
+
+    @Given("que el usuario tiene propuestas en diferentes estados")
+    fun queElUsuarioTienePropuestasEnDiferentesEstados() {
+        // The Background step (`seedProposalsReceived`) already
+        // wires a mixed-status seed (1 Pending, 1 Accepted, 1
+        // Rejected) into the Home world. Re-mount the MisServicios
+        // VM against that seed so this Given reads as "the
+        // consumer has proposals of every status available".
+        world.startScenario()
+        world.seedProposalsReceived()
+        world.openMisServicios()
+    }
+
+    @When("selecciona el filtro de propuestas que requieren su atención")
+    fun seleccionaElFiltroDePropuestasQueRequierenSuAtencion() {
+        // The "requieren atención" wording maps to the Pending
+        // status filter (US-54 scenario 05-VSP). The VM routes
+        // through `GetPendingServiceProposalsUseCase`.
+        world.selectFilter(ServiceProposalStatus.Pending)
+    }
+
+    @Then("debe visualizar únicamente las propuestas pendientes")
+    fun debeVisualizarUnicamenteLasPropuestasPendientes() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected MisServiciosUiState.Ready, was $state",
+            state is MisServiciosUiState.Ready,
+        )
+        val ready = state as MisServiciosUiState.Ready
+        assertEquals(
+            "expected the filter chip to land on Pending after the user tapped it",
+            ServiceProposalStatus.Pending,
+            ready.selectedStatusFilter,
+        )
+        assertEquals(
+            "expected the GetPending use case to keep only the Pending entries " +
+                "from the mixed seed (id=\"10\")",
+            listOf("10"),
+            ready.proposals.map { it.id },
+        )
+        assertTrue(
+            "every visible proposal must be Pending, was ${ready.proposals.map { it.status }}",
+            ready.proposals.all { it.status == ServiceProposalStatus.Pending },
         )
     }
 }

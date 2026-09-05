@@ -57,7 +57,6 @@ Característica: Visualizar propuesta de servicio
     When accede a "Mis Servicios"
     Then debe visualizar primero la propuesta más reciente
 
-  @wip
   Escenario: 05-VSP Consultar propuestas que requieren atención
     Given que el usuario tiene propuestas en diferentes estados
     When selecciona el filtro de propuestas que requieren su atención

@@ -231,6 +231,21 @@ class MisServiciosWorld : AutoCloseable {
         // already captured the resolved state.
     }
 
+    /**
+     * "selecciona el filtro de ..." — the consumer taps a filter
+     * chip on the MisServicios screen. Drives the VM through
+     * [MisServiciosViewModel.onFilterSelected]; the VM picks the
+     * matching per-status use case, which calls
+     * `repository.getServiceProposals()` and applies the status
+     * filter locally, so the fake repo's full mixed-status seed
+     * (set up by [seedProposalsReceived]) is enough to observe the
+     * narrower result.
+     */
+    fun selectFilter(filter: ServiceProposalStatus?) {
+        viewModel.onFilterSelected(filter)
+        scheduler.advanceUntilIdle()
+    }
+
     fun lastUiState(): MisServiciosUiState = observedUiStates.last()
 
     override fun close() {
