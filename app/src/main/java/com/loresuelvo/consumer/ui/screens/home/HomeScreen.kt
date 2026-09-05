@@ -21,8 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
@@ -34,6 +36,7 @@ import com.loresuelvo.consumer.ui.screens.home.components.HomeHeader
 import com.loresuelvo.consumer.ui.screens.home.components.RecentDiagnosesEmpty
 import com.loresuelvo.consumer.ui.screens.home.components.SectionTitle
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
+import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import kotlinx.coroutines.launch
 
 /**
@@ -119,13 +122,22 @@ fun HomeScreen(
         // US-54 scenario 03-VSP: dedicated entry into the "Mis
         // Servicios" surface. The "Ver todas" link lands on a
         // full list of every service proposal regardless of
-        // status; the section itself stays cardless here because
-        // the rich preview list lands in scenario 08-VSP.
+        // status. When the dashboard has neither pending nor
+        // upcoming proposals (the two sub-states the Home renders
+        // prominently), we surface the same empty-state copy that
+        // the dedicated MisServicios screen shows — same wording,
+        // same "we'll show it here once it lands" reassurance, but
+        // pinned under the section header instead of below the
+        // category grid so the dashboard never feels empty.
         SectionTitle(
             text = stringResource(R.string.home_section_mis_servicios),
             link = stringResource(R.string.home_section_mis_servicios_link),
             linkTestTag = com.loresuelvo.consumer.ui.screens.home.components.HOME_MIS_SERVICIOS_LINK_TAG,
             onLinkClick = onSeeAllMisServiciosClick,
+        )
+        MisServiciosEmptyCard(
+            pending = state.pendingServiceProposals,
+            upcoming = state.upcomingServiceProposals,
         )
 
         Text(
@@ -251,3 +263,51 @@ private fun HomeScreenLoadingPreview() {
         )
     }
 }
+
+/**
+ * Card shown beneath the "Mis Servicios" section on Home when the
+ * dashboard has neither pending nor upcoming proposals to show.
+ * Renders the same copy the dedicated MisServicios screen uses,
+ * so the dashboard never leaves the user wondering "what is this
+ * empty box?". Hidden during Loading and Error so a transient
+ * empty list (still loading, or just failed) doesn't paint an
+ * empty card over a soon-to-be-populated section.
+ */
+@Composable
+private fun MisServiciosEmptyCard(
+    pending: ServiceProposalsState,
+    upcoming: ServiceProposalsState,
+) {
+    val hasPendingItems = pending is ServiceProposalsState.Ready && pending.items.isNotEmpty()
+    val hasUpcomingItems = upcoming is ServiceProposalsState.Ready && upcoming.items.isNotEmpty()
+    if (!hasPendingItems && !hasUpcomingItems) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .testTag(HOME_MIS_SERVICIOS_EMPTY_CARD_TAG),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.mis_servicios_empty_title),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.mis_servicios_empty_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = SubtitleGray,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+/**
+ * Compose testTag for the empty-state card under the Home "Mis
+ * Servicios" section. Used by the instrumented test that drives
+ * the dashboard end-to-end (scenario 03-VSP).
+ */
+const val HOME_MIS_SERVICIOS_EMPTY_CARD_TAG: String = "home-mis-servicios-empty-card"
