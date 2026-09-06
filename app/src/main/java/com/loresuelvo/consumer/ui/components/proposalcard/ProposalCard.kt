@@ -60,13 +60,13 @@ fun ProposalCard(
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onViewClicked)
-            .padding(16.dp)
+            .padding(8.dp)
             .testTag(PROPOSAL_CARD_TAG_PREFIX + proposal.id),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             ProviderAvatar(
                 photoUrl = proposal.counterpart.profilePhotoUrl,
@@ -189,7 +189,7 @@ private fun StatusBadge(status: ServiceProposalStatus) {
 private fun ViewRequestCta(onClick: () -> Unit, proposalId: String) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
             .clickable(onClick = onClick)
             .padding(vertical = 4.dp)

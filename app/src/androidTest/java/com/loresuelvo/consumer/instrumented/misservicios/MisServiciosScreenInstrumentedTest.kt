@@ -192,7 +192,7 @@ class MisServiciosScreenInstrumentedTest {
         // the viewport once the LazyColumn grows.
         SEED_PROPOSALS.forEach { proposal ->
             composeTestRule
-                .onAllNodesWithTag("mis-servicios-row-${proposal.id}")
+                .onAllNodesWithTag(PROPOSAL_CARD_TAG_PREFIX + proposal.id)
                 .assertCountEquals(1)
         }
 
@@ -350,3 +350,5 @@ class MisServiciosScreenInstrumentedTest {
             )
     }
 }
+
+const val PROPOSAL_CARD_TAG_PREFIX: String = "proposal-card-"

@@ -39,6 +39,7 @@ import com.loresuelvo.consumer.ui.screens.home.components.CategoryGrid
 import com.loresuelvo.consumer.ui.screens.home.components.HomeHeader
 import com.loresuelvo.consumer.ui.screens.home.components.RecentDiagnosesEmpty
 import com.loresuelvo.consumer.ui.screens.home.components.SectionTitle
+import com.loresuelvo.consumer.ui.components.proposalcard.ProposalCard
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import kotlinx.coroutines.launch
@@ -284,9 +285,15 @@ private fun MisServiciosEmptyCard(
     pending: ServiceProposalsState,
     upcoming: ServiceProposalsState,
 ) {
-    val hasPendingItems = pending is ServiceProposalsState.Ready && pending.items.isNotEmpty()
-    val hasUpcomingItems = upcoming is ServiceProposalsState.Ready && upcoming.items.isNotEmpty()
-    if (!hasPendingItems && !hasUpcomingItems) {
+    val bothReady =
+        pending is ServiceProposalsState.Ready &&
+        upcoming is ServiceProposalsState.Ready
+
+    val hasItems =
+        (pending as? ServiceProposalsState.Ready)?.items?.isNotEmpty() == true ||
+        (upcoming as? ServiceProposalsState.Ready)?.items?.isNotEmpty() == true
+
+    if (bothReady && !hasItems) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -332,25 +339,33 @@ private fun MisServiciosRow(
     val pendingItems = (pending as? ServiceProposalsState.Ready)?.items.orEmpty()
     val upcomingItems = (upcoming as? ServiceProposalsState.Ready)?.items.orEmpty()
     val items = pendingItems + upcomingItems
+
     if (items.isEmpty()) {
-        MisServiciosEmptyCard(pending = pending, upcoming = upcoming)
+        MisServiciosEmptyCard(
+            pending = pending,
+            upcoming = upcoming,
+        )
         return
     }
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(HOME_MIS_SERVICIOS_ROW_TAG),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(
+            horizontal = 0.dp,
+            vertical = 8.dp,
+        ),
     ) {
         items(
             items = items,
             key = { it.id },
         ) { proposal ->
-            com.loresuelvo.consumer.ui.components.proposalcard.ProposalCard(
+            ProposalCard(
                 proposal = proposal,
                 onViewClicked = { onProposalClicked(proposal.id) },
-                modifier = Modifier.width(280.dp),
+                modifier = Modifier.width(370.dp),
             )
         }
     }
