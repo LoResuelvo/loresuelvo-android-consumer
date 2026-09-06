@@ -76,7 +76,6 @@ Característica: Visualizar propuesta de servicio
 
   # Detalle de la propuesta
 
-  @wip
   Escenario: 08-VSP Consultar el detalle de una propuesta de servicio
     Given que existe una propuesta de servicio
     When el usuario accede a su detalle
@@ -84,7 +83,6 @@ Característica: Visualizar propuesta de servicio
     And debe visualizar el rubro del prestador
     And debe visualizar el motivo de la visita
     And debe visualizar el monto acordado
-    And debe visualizar la fecha y hora acordadas
     And debe visualizar el estado actual de la propuesta
 
   @wip

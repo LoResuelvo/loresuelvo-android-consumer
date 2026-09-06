@@ -156,4 +156,68 @@ class MisServiciosSteps {
             ready.proposals.all { it.status == ServiceProposalStatus.Pending },
         )
     }
+
+    // ---- Scenario 08-VSP --------------------------------------
+
+    @Given("que existe una propuesta de servicio")
+    fun queExisteUnaPropuestaDeServicio() {
+        // The Background step already wired a mixed seed (10/11/12).
+        // Re-mount the MisServicios VM against that seed so this
+        // Given reads as "the proposal exists".
+        world.startScenario()
+        world.seedProposalsReceived()
+        world.openMisServicios()
+    }
+
+    @When("el usuario accede a su detalle")
+    fun elUsuarioAccedeASuDetalle() {
+        // US-54 scenario 08-VSP: at the JVM BDD layer "accessing
+        // the detail" maps to "the host dispatches the chosen
+        // proposalId into the detail VM" — the modal bottom sheet
+        // is exercised by the Compose instrumented test.
+        world.openProposalDetail("10")
+    }
+
+    @Then("debe visualizar el nombre completo del prestador")
+    fun debeVisualizarElNombreCompletoDelPrestador() {
+        val detail = world.lastDetailState()
+        assertTrue(
+            "expected ProposalDetailUiState.Ready, was $detail",
+            detail is com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready,
+        )
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(
+            "expected the seeded counterpart name (id=\"10\" uses Carlos López)",
+            "Carlos López",
+            "${proposal.counterpart.name} ${proposal.counterpart.surname}",
+        )
+    }
+
+    @Then("debe visualizar el rubro del prestador")
+    fun debeVisualizarElRubroDelPrestador() {
+        val detail = world.lastDetailState()
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals("Plomería", proposal.counterpart.categoryName)
+    }
+
+    @Then("debe visualizar el motivo de la visita")
+    fun debeVisualizarElMotivoDeLaVisita() {
+        val detail = world.lastDetailState()
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals("Fuga en el lavamanos", proposal.description)
+    }
+
+    @Then("debe visualizar el monto acordado")
+    fun debeVisualizarElMontoAcordado() {
+        val detail = world.lastDetailState()
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(1500000L, proposal.amountCents)
+    }
+
+    @Then("debe visualizar el estado actual de la propuesta")
+    fun debeVisualizarElEstadoActualDeLaPropuesta() {
+        val detail = world.lastDetailState()
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(ServiceProposalStatus.Pending, proposal.status)
+    }
 }

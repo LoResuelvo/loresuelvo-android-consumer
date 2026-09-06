@@ -11,6 +11,8 @@ import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceP
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetRejectedServiceProposalsUseCase
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosUiState
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosViewModel
+import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
+import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -49,8 +51,10 @@ class MisServiciosWorld : AutoCloseable {
 
     private val serviceProposalRepo = FakeServiceProposalRepository()
     private lateinit var viewModel: MisServiciosViewModel
+    private lateinit var detailViewModel: ProposalDetailViewModel
 
     private val observedUiStates: MutableList<MisServiciosUiState> = mutableListOf()
+    private val observedDetailStates: MutableList<ProposalDetailUiState> = mutableListOf()
     private var started: Boolean = false
 
     /**
@@ -74,9 +78,13 @@ class MisServiciosWorld : AutoCloseable {
             getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
             getRejectedServiceProposals = GetRejectedServiceProposalsUseCase(serviceProposalRepo),
         )
+        detailViewModel = ProposalDetailViewModel(serviceProposalRepo)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }
+        }
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            detailViewModel.uiState.collect { observedDetailStates += it }
         }
 
         // Push the BDD seeds into the fake repo BEFORE pumping,
@@ -246,7 +254,25 @@ class MisServiciosWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    /**
+     * "el usuario accede a su detalle" — the consumer taps a
+     * card on the MisServicios list, which in production opens
+     * the modal proposal-detail bottom sheet driven by the
+     * dedicated [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel].
+     *
+     * At the JVM BDD layer the modal sheet itself is exercised by
+     * a Compose instrumented test; here we just need to pin that
+     * the detail VM is correctly fed with the chosen proposalId.
+     */
+    fun openProposalDetail(proposalId: String) {
+        detailViewModel.load(proposalId)
+        scheduler.advanceUntilIdle()
+    }
+
     fun lastUiState(): MisServiciosUiState = observedUiStates.last()
+
+    fun lastDetailState(): com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState =
+        observedDetailStates.last()
 
     override fun close() {
         supervisorJob.cancel()
