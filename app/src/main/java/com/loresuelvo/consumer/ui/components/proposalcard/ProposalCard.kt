@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,10 +23,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
+import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
@@ -69,8 +68,10 @@ fun ProposalCard(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             ProviderAvatar(
-                photoUrl = proposal.counterpart.profilePhotoUrl,
-                initials = proposal.counterpart.name.firstOrNull()?.toString() ?: "?",
+                name = proposal.counterpart.name,
+                profilePhotoUrl = proposal.counterpart.profilePhotoUrl,
+                size = 56.dp,
+                testTag = PROPOSAL_CARD_AVATAR_TAG_PREFIX + proposal.counterpart.name,
             )
             Column(
                 modifier = Modifier.weight(1f),
@@ -102,37 +103,6 @@ fun ProposalCard(
                 fontWeight = FontWeight.SemiBold,
             )
             ViewRequestCta(onClick = onViewClicked, proposalId = proposal.id)
-        }
-    }
-}
-
-@Composable
-private fun ProviderAvatar(photoUrl: String?, initials: String) {
-    val size = 56.dp
-    if (photoUrl != null) {
-        AsyncImage(
-            model = photoUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .testTag(PROPOSAL_CARD_AVATAR_TAG_PREFIX + initials),
-        )
-    } else {
-        Box(
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary)
-                .testTag(PROPOSAL_CARD_AVATAR_FALLBACK_TAG_PREFIX + initials),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold,
-            )
         }
     }
 }
@@ -232,5 +202,4 @@ private fun formatAmount(amountCents: Long): String {
 const val PROPOSAL_CARD_TAG_PREFIX: String = "proposal-card-"
 const val PROPOSAL_CARD_VIEW_TAG_PREFIX: String = "proposal-card-view-"
 const val PROPOSAL_CARD_AVATAR_TAG_PREFIX: String = "proposal-card-avatar-"
-const val PROPOSAL_CARD_AVATAR_FALLBACK_TAG_PREFIX: String = "proposal-card-avatar-fallback-"
 const val PROPOSAL_CARD_BADGE_TAG_PREFIX: String = "proposal-card-badge-"

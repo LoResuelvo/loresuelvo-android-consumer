@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,17 +21,16 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
@@ -118,7 +116,12 @@ private fun ReadyState(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ProviderAvatar(photoUrl = proposal.counterpart.profilePhotoUrl, initials = proposal.counterpart.name.firstOrNull()?.toString() ?: "?")
+            ProviderAvatar(
+                name = proposal.counterpart.name,
+                profilePhotoUrl = proposal.counterpart.profilePhotoUrl,
+                size = 56.dp,
+                testTag = PROPOSAL_DETAIL_AVATAR_TAG,
+            )
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -199,35 +202,6 @@ private fun ErrorState(
 }
 
 @Composable
-private fun ProviderAvatar(photoUrl: String?, initials: String) {
-    val size = 56.dp
-    if (photoUrl != null) {
-        AsyncImage(
-            model = photoUrl,
-            contentDescription = null,
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .testTag(PROPOSAL_DETAIL_AVATAR_TAG),
-        )
-    } else {
-        Box(
-            modifier = Modifier
-                .size(size)
-                .clip(CircleShape)
-                .testTag(PROPOSAL_DETAIL_AVATAR_FALLBACK_TAG),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text = initials,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
-            )
-        }
-    }
-}
-
-@Composable
 private fun DetailRow(label: String, value: String) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -260,4 +234,3 @@ const val PROPOSAL_DETAIL_ERROR_TAG: String = "proposal-detail-error"
 const val PROPOSAL_DETAIL_ERROR_RETRY_TAG: String = "proposal-detail-error-retry"
 const val PROPOSAL_DETAIL_VIEW_CONVERSATION_TAG: String = "proposal-detail-view-conversation"
 const val PROPOSAL_DETAIL_AVATAR_TAG: String = "proposal-detail-avatar"
-const val PROPOSAL_DETAIL_AVATAR_FALLBACK_TAG: String = "proposal-detail-avatar-fallback"

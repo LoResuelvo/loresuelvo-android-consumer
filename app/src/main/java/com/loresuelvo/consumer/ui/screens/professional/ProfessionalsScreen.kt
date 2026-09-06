@@ -293,21 +293,18 @@ const val CONTACT_PROVIDER_CARD_BUTTON_TAG: String = "provider-card-contactar"
  *
  * Renders in one of two modes:
  *
- *  - **Photo**: when [profilePhotoUrl] is non-blank, [coil3]'s
- *    [coil3.compose.AsyncImage] loads the photo. While the request
- *    is in flight (or on error: 404, DNS, timeout, …) the photo
- *    paints nothing and the initial-letter fallback underneath
- *    stays visible. When the photo resolves, it paints over the
- *    fallback and fills the circle (with [ContentScale.Crop]).
+ *  - **Photo**: when [profilePhotoUrl] is non-blank, Coil loads the
+ *    photo. While the request is in flight (or on error: 404, DNS,
+ *    timeout, …), the initial-letter fallback is shown. When the
+ *    photo resolves, it replaces the fallback and fills the circle
+ *    (with [ContentScale.Crop]).
  *  - **Fallback only**: when [profilePhotoUrl] is null/blank the
  *    composable skips Coil entirely and renders the initial on the
  *    brand-coloured circle — no doomed network round-trip is fired.
  *
- * The initial is the LAST child in the [Box], so the Box's own
- * [Alignment.Center] guarantees it is always centred on the circle
- * regardless of the photo state. The photo paints **above** the
- * fallback (later children win the draw order in a Compose [Box]),
- * so a successful load cleanly covers the initial.
+ * The initial is painted first and [AsyncImage] second, so a successful
+ * load covers the fallback while a failed request leaves the fallback
+ * visible.
  *
  * Decoupled from the [Provider] domain type: the screen passes the
  * two primitives it needs (`name`, `profilePhotoUrl`) so this stays
@@ -337,11 +334,9 @@ fun ProviderAvatar(
             .testTag(testTag),
         contentAlignment = Alignment.Center,
     ) {
+        InitialAvatar(initial)
         if (!profilePhotoUrl.isNullOrBlank()) {
-            // Painted FIRST so the initial painted LAST covers it
-            // when Coil returns nothing (loading / error). When the
-            // photo resolves, it covers the initial underneath.
-            coil3.compose.AsyncImage(
+            AsyncImage(
                 model = profilePhotoUrl,
                 contentDescription = description,
                 contentScale = ContentScale.Crop,
@@ -351,13 +346,17 @@ fun ProviderAvatar(
                     .testTag("provider-profile-photo-$name"),
             )
         }
-        Text(
-            text = initial,
-            color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
     }
+}
+
+@Composable
+private fun InitialAvatar(initial: String) {
+    Text(
+        text = initial,
+        color = MaterialTheme.colorScheme.onPrimary,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+    )
 }
 
 /**
