@@ -445,11 +445,37 @@ private fun MisServiciosRoute(
 ) {
     val viewModel: MisServiciosViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    // US-54 scenario 08-VSP: the proposal-detail bottom sheet is
+    // driven by its own Hilt-managed VM; the consumer taps a card
+    // on the list and the route forwards the id into the VM so
+    // the sheet can render the full proposal (photo, name,
+    // category, amount, status, "Ver conversación" CTA).
+    val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel = hiltViewModel()
+    val detailState by detailViewModel.uiState.collectAsState()
 
     MisServiciosScreen(
         state = state,
+        detailState = detailState,
         onFilterSelected = viewModel::onFilterSelected,
         onRetryClick = viewModel::load,
+        onProposalSelected = { proposalId -> detailViewModel.load(proposalId) },
+        onDetailRetry = {
+            // Re-load using the proposal id currently in Ready
+            // state (the last successfully loaded one). If the
+            // consumer dismissed the sheet, we reset to Loading so
+            // the next tap is a fresh round trip.
+            val cachedId = (detailState as? com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready)
+                ?.proposal?.id.orEmpty()
+            detailViewModel.load(cachedId)
+        },
+        onViewConversation = { conversationId ->
+            if (conversationId.isNotBlank()) {
+                navController.navigate(
+                    Route.Conversation.buildPath(conversationId),
+                )
+            }
+        },
+        onDetailDismiss = { detailViewModel.load("") },
     )
 }
 
