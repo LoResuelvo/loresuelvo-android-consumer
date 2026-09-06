@@ -4,12 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -59,6 +63,7 @@ fun HomeScreen(
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
     onSeeAllCategoriesClick: () -> Unit,
     onSeeAllMisServiciosClick: () -> Unit = {},
+    onProposalClicked: (proposalId: String) -> Unit = {},
     onNotificationsClick: () -> Unit,
     onAiSendClick: () -> Unit,
     onRetryClick: () -> Unit,
@@ -122,22 +127,23 @@ fun HomeScreen(
         // US-54 scenario 03-VSP: dedicated entry into the "Mis
         // Servicios" surface. The "Ver todas" link lands on a
         // full list of every service proposal regardless of
-        // status. When the dashboard has neither pending nor
-        // upcoming proposals (the two sub-states the Home renders
-        // prominently), we surface the same empty-state copy that
-        // the dedicated MisServicios screen shows — same wording,
-        // same "we'll show it here once it lands" reassurance, but
-        // pinned under the section header instead of below the
-        // category grid so the dashboard never feels empty.
+        // status. When the dashboard has proposals (Pending or
+        // Accepted) we render a horizontally-scrollable row of
+        // compact cards using the shared `ProposalCard` component;
+        // when neither sub-state has items we fall back to the
+        // same empty-state copy the dedicated MisServicios screen
+        // shows, so the dashboard never leaves the user wondering
+        // "what is this empty box?".
         SectionTitle(
             text = stringResource(R.string.home_section_mis_servicios),
             link = stringResource(R.string.home_section_mis_servicios_link),
             linkTestTag = com.loresuelvo.consumer.ui.screens.home.components.HOME_MIS_SERVICIOS_LINK_TAG,
             onLinkClick = onSeeAllMisServiciosClick,
         )
-        MisServiciosEmptyCard(
+        MisServiciosRow(
             pending = state.pendingServiceProposals,
             upcoming = state.upcomingServiceProposals,
+            onProposalClicked = onProposalClicked,
         )
 
         Text(
@@ -306,8 +312,52 @@ private fun MisServiciosEmptyCard(
 }
 
 /**
- * Compose testTag for the empty-state card under the Home "Mis
- * Servicios" section. Used by the instrumented test that drives
- * the dashboard end-to-end (scenario 03-VSP).
+ * Horizontal row of `ProposalCard`s under the Home "Mis Servicios"
+ * section (US-54 scenario 03-VSP with proposals present). The
+ * row concatenates the pending proposals (which need consumer
+ * action) and the upcoming proposals (work scheduled) into one
+ * preview; the "Ver todas" link on the section header remains
+ * the path to the full MisServicios list.
+ *
+ * Hidden entirely when both sub-states are non-Ready (Loading /
+ * Error) so we don't paint cards against a soon-to-be-populated
+ * section.
  */
+@Composable
+private fun MisServiciosRow(
+    pending: ServiceProposalsState,
+    upcoming: ServiceProposalsState,
+    onProposalClicked: (proposalId: String) -> Unit,
+) {
+    val pendingItems = (pending as? ServiceProposalsState.Ready)?.items.orEmpty()
+    val upcomingItems = (upcoming as? ServiceProposalsState.Ready)?.items.orEmpty()
+    val items = pendingItems + upcomingItems
+    if (items.isEmpty()) {
+        MisServiciosEmptyCard(pending = pending, upcoming = upcoming)
+        return
+    }
+    LazyRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(HOME_MIS_SERVICIOS_ROW_TAG),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+    ) {
+        items(
+            items = items,
+            key = { it.id },
+        ) { proposal ->
+            com.loresuelvo.consumer.ui.components.proposalcard.ProposalCard(
+                proposal = proposal,
+                onViewClicked = { onProposalClicked(proposal.id) },
+                modifier = Modifier.width(280.dp),
+            )
+        }
+    }
+}
+
+/**
+ * Compose testTags for the MisServicios block on Home.
+ */
+const val HOME_MIS_SERVICIOS_ROW_TAG: String = "home-mis-servicios-row"
 const val HOME_MIS_SERVICIOS_EMPTY_CARD_TAG: String = "home-mis-servicios-empty-card"
