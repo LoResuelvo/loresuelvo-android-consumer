@@ -106,7 +106,6 @@ Característica: Visualizar propuesta de servicio
 
   # Conversación
 
-  @wip
   Escenario: 13-VSP Acceder a la conversación desde una propuesta
     Given que el usuario está consultando una propuesta de servicio
     When selecciona "Ver conversación"

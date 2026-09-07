@@ -55,6 +55,7 @@ class MisServiciosWorld : AutoCloseable {
 
     private val observedUiStates: MutableList<MisServiciosUiState> = mutableListOf()
     private val observedDetailStates: MutableList<ProposalDetailUiState> = mutableListOf()
+    private val observedViewConversationCalls: MutableList<String> = mutableListOf()
     private var started: Boolean = false
 
     /**
@@ -412,6 +413,27 @@ class MisServiciosWorld : AutoCloseable {
         detailViewModel.load(proposalId)
         scheduler.advanceUntilIdle()
     }
+
+    /**
+     * Simulates the consumer tapping the "Ver conversación" CTA
+     * on the proposal-detail bottom sheet. The production
+     * [ProposalDetailScreen] fires `onViewConversation(conversationId)`
+     * where `conversationId` comes from the `Ready` proposal —
+     * here the world reads the same field and appends it to the
+     * observed list so the `Then` step can assert the navigation
+     * intent end-to-end.
+     *
+     * No-op if the detail VM hasn't resolved to `Ready` yet, or
+     * if the proposal's `conversationId` is `null` (the production
+     * screen hides the CTA in that case).
+     */
+    fun tapViewConversation() {
+        val detail = observedDetailStates.lastOrNull() as? ProposalDetailUiState.Ready ?: return
+        val conversationId = detail.proposal.conversationId ?: return
+        observedViewConversationCalls += conversationId
+    }
+
+    fun lastViewConversationCall(): String? = observedViewConversationCalls.lastOrNull()
 
     fun lastUiState(): MisServiciosUiState = observedUiStates.last()
 

@@ -400,6 +400,46 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 13-VSP --------------------------------------
+
+    /**
+     * "que el usuario está consultando una propuesta de servicio" —
+     * scenario 13-VSP. The consumer has tapped the proposal card
+     * and the detail VM is in `Ready`. Reuses the standard seed
+     * (id="10", conversationId="1000") so the conversation id
+     * surfaced by the CTA is deterministic.
+     */
+    @Given("que el usuario está consultando una propuesta de servicio")
+    fun queElUsuarioEstaConsultandoUnaPropuestaDeServicio() {
+        world.startScenario()
+        world.seedProposalsReceived()
+        world.openProposalDetail("10")
+    }
+
+    /**
+     * "selecciona 'Ver conversación'" — scenario 13-VSP. Mirrors
+     * the production [ProposalDetailScreen] behaviour: when the
+     * consumer taps the CTA, the screen fires `onViewConversation`
+     * with the proposal's `conversationId`. The world captures
+     * the invocation so the `Then` step can pin the navigation
+     * intent.
+     */
+    @When("^selecciona \"Ver conversación\"$")
+    fun seleccionaVerConversacion() {
+        world.tapViewConversation()
+    }
+
+    @Then("debe acceder a la conversación relacionada con la propuesta")
+    fun debeAccederALaConversacionRelacionadaConLaPropuesta() {
+        val call = world.lastViewConversationCall()
+        assertEquals(
+            "expected the 'Ver conversación' CTA to fire with the proposal's " +
+                "conversationId (\"1000\"), was $call",
+            "1000",
+            call,
+        )
+    }
+
     // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")
