@@ -97,7 +97,6 @@ Característica: Visualizar propuesta de servicio
     When el usuario consulta el detalle de la propuesta
     Then debe visualizar el monto como "$ 15.000"
 
-  @wip
   Escenario: 12-VSP Visualizar la fecha y hora acordadas
     Given que existe una propuesta de servicio para el 15 de octubre de 2026 a las 14:30
     When el usuario consulta el detalle de la propuesta

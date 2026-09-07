@@ -400,6 +400,36 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 12-VSP --------------------------------------
+
+    /**
+     * "que existe una propuesta de servicio para el 15 de octubre
+     * de 2026 a las 14:30" — scenario 12-VSP. The seed carries
+     * `scheduledOnEpochMillis = 1_792_074_600_000L` which the
+     * [ScheduledDateFormatter] renders as `"15/10/2026 - 14:30 hs"`.
+     */
+    @Given("que existe una propuesta de servicio para el 15 de octubre de 2026 a las 14:30")
+    fun queExisteUnaPropuestaDeServicioParaEl15DeOctubreDe2026ALas1430() {
+        world.startScenario()
+        world.seedProposalScheduledForOctober15At1430()
+    }
+
+    @Then("debe visualizar la fecha y hora como {string}")
+    fun debeVisualizarLaFechaYHoraComo(expectedFormatted: String) {
+        val detail = world.lastDetailState()
+        assertTrue(
+            "expected ProposalDetailUiState.Ready, was $detail",
+            detail is com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready,
+        )
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(
+            "expected the ScheduledDateFormatter to render the scheduled date " +
+                "as the scenario pins, was ${com.loresuelvo.consumer.ui.util.ScheduledDateFormatter.formatScheduled(proposal.scheduledOnEpochMillis)}",
+            expectedFormatted,
+            com.loresuelvo.consumer.ui.util.ScheduledDateFormatter.formatScheduled(proposal.scheduledOnEpochMillis),
+        )
+    }
+
     // ---- Scenario 11-VSP --------------------------------------
 
     /**

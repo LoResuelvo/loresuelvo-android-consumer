@@ -230,6 +230,38 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "que existe una propuesta de servicio para el 15 de octubre
+     * de 2026 a las 14:30" — scenario 12-VSP. The timestamp is
+     * `1_792_074_600_000L`, which is exactly `2026-10-15T14:30:00Z`
+     * in UTC. The [ScheduledDateFormatter] renders that as the
+     * `"15/10/2026 - 14:30 hs"` string the scenario pins.
+     */
+    fun seedProposalScheduledForOctober15At1430() {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "70",
+            conversationId = "7000",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "700",
+                name = "Fernando",
+                surname = "Ortiz",
+                categoryName = "Limpieza",
+                profilePhotoUrl = null,
+            ),
+            description = "Limpieza profunda de cocina",
+            amountCents = 8_000_000L,
+            scheduledOnEpochMillis = 1_792_074_600_000L,
+            createdOnEpochMillis = 1_788_434_400_000L,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
      * "que existe una propuesta de servicio por un monto de 15000
      * pesos" — scenario 11-VSP. Seeds a single proposal whose
      * `amountCents` is `1_500_000L` (= 15000 pesos at 100 cents/peso)
