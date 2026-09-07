@@ -98,4 +98,17 @@ sealed class Route(val path: String) {
      * nav (it's a sub-section of Home, not a top-level tab).
      */
     data object MisServicios : Route("mis-servicios")
+
+    /**
+     * Work-order detail screen (US-54 scenario 16-VSP). Reached
+     * from the "Ver orden de trabajo" CTA on
+     * [ProposalDetailScreen]. The proposal id is the join key
+     * because the work-order surface is a flat view over the
+     * same data set until the backend exposes a dedicated
+     * work-order endpoint.
+     */
+    data object WorkOrder : Route("work-order/{proposalId}") {
+        const val ARG_PROPOSAL_ID: String = "proposalId"
+        fun buildPath(proposalId: String): String = "work-order/$proposalId"
+    }
 }

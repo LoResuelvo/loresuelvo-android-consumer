@@ -71,6 +71,7 @@ fun MisServiciosScreen(
     onProposalSelected: (proposalId: String) -> Unit = {},
     onDetailRetry: () -> Unit = {},
     onViewConversation: (conversationId: String) -> Unit = {},
+    onViewWorkOrder: (proposalId: String) -> Unit = {},
     onDetailDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -116,6 +117,7 @@ fun MisServiciosScreen(
         detailState = detailState,
         onRetry = onDetailRetry,
         onViewConversation = onViewConversation,
+        onViewWorkOrder = onViewWorkOrder,
         onDismiss = onDetailDismiss,
     )
 }
@@ -126,6 +128,7 @@ private fun DetailSheet(
     detailState: ProposalDetailUiState,
     onRetry: () -> Unit,
     onViewConversation: (conversationId: String) -> Unit,
+    onViewWorkOrder: (proposalId: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -145,6 +148,7 @@ private fun DetailSheet(
             state = detailState,
             onRetry = onRetry,
             onViewConversation = onViewConversation,
+            onViewWorkOrder = onViewWorkOrder,
             onDismiss = {
                 visible = false
                 onDismiss()

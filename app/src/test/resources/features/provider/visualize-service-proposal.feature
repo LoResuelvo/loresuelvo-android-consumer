@@ -134,7 +134,6 @@ Característica: Visualizar propuesta de servicio
 
   # Orden de trabajo
 
-  @wip
   Escenario: 16-VSP Consultar el tiempo estimado de trabajo en la orden
     Given que existe una orden de trabajo con un tiempo estimado para realizar el servicio
     When el usuario consulta el detalle de la orden de trabajo

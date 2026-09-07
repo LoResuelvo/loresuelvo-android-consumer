@@ -179,6 +179,12 @@ fun LoResuelvoNav() {
             messages = { MessagesRoute(navController) },
             assistant = { AssistantRoute(navController) },
             misServicios = { MisServiciosRoute(navController = navController) },
+            workOrder = { proposalId ->
+                WorkOrderRoute(
+                    navController = navController,
+                    proposalId = proposalId,
+                )
+            },
         )
     }
 }
@@ -475,6 +481,12 @@ private fun MisServiciosRoute(
                 )
             }
         },
+        onViewWorkOrder = { proposalId ->
+            // US-54 scenario 16-VSP: the "Ver orden de trabajo"
+            // CTA on the proposal detail bottom sheet navigates
+            // to the dedicated work-order route.
+            navController.navigate(Route.WorkOrder.buildPath(proposalId))
+        },
         onDetailDismiss = { detailViewModel.load("") },
     )
 }
@@ -648,6 +660,33 @@ private fun ConversationRoute(
         showAttachSheet = showAttachSheet,
         onScrollPositionChanged = viewModel::onScrollPositionChanged,
         onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
+    )
+}
+
+/**
+ * Work-order detail route (US-54 scenario 16-VSP). Resolves the
+ * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel]
+ * through Hilt and forwards the UDF state to
+ * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderScreen].
+ * The proposal id from the back-stack entry is fed to the VM's
+ * `load(proposalId)` once on first composition (and again on
+ * the screen-level retry from the `Error` state).
+ */
+@Composable
+private fun WorkOrderRoute(
+    navController: androidx.navigation.NavHostController,
+    proposalId: String,
+) {
+    val viewModel: com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel =
+        hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+    androidx.compose.runtime.LaunchedEffect(proposalId) {
+        viewModel.load(proposalId)
+    }
+    com.loresuelvo.consumer.ui.screens.workorder.WorkOrderScreen(
+        state = state,
+        onRetry = { viewModel.load(proposalId) },
+        onBackClick = { navController.popBackStack() },
     )
 }
 

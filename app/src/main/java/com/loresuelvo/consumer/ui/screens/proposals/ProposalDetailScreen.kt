@@ -60,6 +60,7 @@ fun ProposalDetailScreen(
     onRetry: () -> Unit,
     onViewConversation: (conversationId: String) -> Unit,
     onDismiss: () -> Unit,
+    onViewWorkOrder: (proposalId: String) -> Unit = {},
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
@@ -73,6 +74,7 @@ fun ProposalDetailScreen(
                 is ProposalDetailUiState.Ready -> ReadyState(
                     proposal = state.proposal,
                     onViewConversation = { onViewConversation(state.proposal.conversationId ?: "") },
+                    onViewWorkOrder = { onViewWorkOrder(state.proposal.id) },
                 )
                 is ProposalDetailUiState.Error -> ErrorState(
                     failure = state.failure,
@@ -107,6 +109,7 @@ private fun LoadingState() {
 private fun ReadyState(
     proposal: ServiceProposal,
     onViewConversation: () -> Unit,
+    onViewWorkOrder: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -177,6 +180,18 @@ private fun ReadyState(
                 )
             }
         }
+        Spacer(modifier = Modifier.height(8.dp))
+        Button(
+            onClick = onViewWorkOrder,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(PROPOSAL_DETAIL_VIEW_WORK_ORDER_TAG),
+        ) {
+            Text(
+                text = stringResource(R.string.proposal_detail_view_work_order),
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
     }
 }
 
@@ -246,4 +261,5 @@ const val PROPOSAL_DETAIL_READY_TAG: String = "proposal-detail-ready"
 const val PROPOSAL_DETAIL_ERROR_TAG: String = "proposal-detail-error"
 const val PROPOSAL_DETAIL_ERROR_RETRY_TAG: String = "proposal-detail-error-retry"
 const val PROPOSAL_DETAIL_VIEW_CONVERSATION_TAG: String = "proposal-detail-view-conversation"
+const val PROPOSAL_DETAIL_VIEW_WORK_ORDER_TAG: String = "proposal-detail-view-work-order"
 const val PROPOSAL_DETAIL_AVATAR_TAG: String = "proposal-detail-avatar"

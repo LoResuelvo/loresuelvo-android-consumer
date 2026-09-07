@@ -40,6 +40,7 @@ fun LoResuelvoNavHost(
     messages: @Composable () -> Unit,
     assistant: @Composable () -> Unit,
     misServicios: @Composable () -> Unit,
+    workOrder: @Composable (proposalId: String) -> Unit,
 ) {
     Box(modifier = Modifier.padding(contentPadding)) {
         NavHost(
@@ -95,6 +96,22 @@ fun LoResuelvoNavHost(
             // US-54 scenario 03-VSP: every proposal regardless of
             // status, reached from the Home "Ver todas" link.
             composable(Route.MisServicios.path) { misServicios() }
+            // US-54 scenario 16-VSP: work-order detail. Reached
+            // from the "Ver orden de trabajo" CTA on
+            // [ProposalDetailScreen]; the proposal id is the
+            // join key for the lookup.
+            composable(
+                route = Route.WorkOrder.path,
+                arguments = listOf(
+                    androidx.navigation.navArgument(Route.WorkOrder.ARG_PROPOSAL_ID) {
+                        type = androidx.navigation.NavType.StringType
+                    },
+                ),
+            ) { entry ->
+                val proposalId = entry.arguments
+                    ?.getString(Route.WorkOrder.ARG_PROPOSAL_ID).orEmpty()
+                workOrder(proposalId)
+            }
         }
     }
 }
