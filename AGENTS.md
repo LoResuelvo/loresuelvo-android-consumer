@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-07-12 (Welcome consumer-first + recurso `Categories` desde API)
+Última actualización: 2026-09-07 (US-54 `visualize-service-proposal` completa + helpers de `ui/util/`)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -19,7 +19,7 @@ Fuente canónica para agentes. Leer este archivo primero y cargar skills locales
 - **DI**: Hilt + `hilt-navigation-compose` para `hiltViewModel()` en composables. `LoresuelvoApp` con `@HiltAndroidApp`. `MainActivity` con `@AndroidEntryPoint`.
 - **Auth**: Auth0 SDK 2.11.0.
 - **Networking**: Retrofit + OkHttp + `kotlinx-serialization`.
-- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD.
+- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD. Compose UI tests para componentes simples (`WorkOrderScreenTest`) corren en JVM con Robolectric; escenarios BDD + tests unitarios siguen siendo la fuente primaria de cobertura.
 
 ## Arquitectura y capas (Clean Architecture liviana + Ports & Adapters)
 
@@ -95,25 +95,38 @@ app/
         domain/                               # PURO: entidades, puertos, casos de uso
           auth/                               # User, AuthProvider, AuthSessionStore, etc.
           category/                           # Category, CategoriesOutcome, CategoryRepository
+          serviceproposal/                    # ServiceProposal + Repository + Outcomes
+          workorder/                          # WorkOrder + Repository + Outcomes (US-54 16-VSP)
           usecase/auth/                       # RegisterConsumerUseCase, etc.
           usecase/category/                   # GetCategoriesUseCase
+          usecase/serviceproposal/            # GetAll/Pending/Accepted/Rejected + GetServiceProposalByConversationId (US-54 14-VSP)
+          usecase/workorder/                  # GetWorkOrderByProposalId (US-54 16-VSP)
           api/                                # ApiError (sealed)
         ui/                                  # Composables, ViewModels, Navigation
           auth/                              # WelcomeVM/State, CompleteProfileVM/State
           components/                        # Botones, inputs, cards, branding
+            proposalcard/                    # ProposalCard reusable (US-54)
           navigation/                        # LoResuelvoNav, LoResuelvoNavHost, Route
-          screens/                           # auth/Welcome, auth/CompleteProfile, home/Home
+          screens/                           # auth/, home/, chat/, misservicios/, proposals/, workorder/, …
             auth/components/                 # WelcomeScaffold, TopBar, HeroSection, etc.
+            chat/components/                 # ConversationTopBar, ConversationMessageBubble, NewMessageBanner, ProposalSummaryCard (US-54 14-VSP)
+            home/components/                 # home tiles + Ver-todas links
           session/                           # SessionViewModel, SessionUiState
           theme/                             # Color.kt, Theme.kt
+          util/                              # Formatters + helpers de presentación JVM-testables
+                                              # CurrencyFormatter, ScheduledDateFormatter, EstimatedDurationFormatter (US-54)
       res/
         values/strings.xml                    # Strings de UI en español (default)
         values-en/strings.xml                 # Strings en inglés
         xml/                                 # Network security config, etc.
       dev/                                   # Overlays del flavor dev (manifest, res)
-    test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine + Cucumber JVM)
+    test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine + Cucumber JVM + Robolectric)
       resources/features/                    # .feature BDD de Cucumber (JVM, no androidTest)
       java/.../bdd/                          # Step definitions + CucumberWorld + fakes
+        provider/                            # VisualizeServiceProposal*, MisServicios*, ConversationProposalSummary*, WorkOrder*
+      java/.../domain/usecase/                # Tests JVM de use cases (sin Robolectric)
+      java/.../ui/util/                       # Tests JVM de formatters
+      java/.../ui/screens/                    # Tests Compose JVM con @RunWith(RobolectricTestRunner::class)
     androidTest/
       java/.../instrumented/                 # Tests instrumentados con Compose-test o Espresso
 skills/                                      # Skills locales para agentes
@@ -121,6 +134,10 @@ AGENTS.md                                    # Este archivo (canónico)
 CLAUDE.md                                    # Apunta a AGENTS.md
 README.md                                    # Setup + comandos + troubleshooting
 ```
+
+### Reglas de presentación (`ui/util/`)
+
+`ui/util/` aloja **helpers de presentación JVM-testables** que el patrón UDF consume desde composables sin acoplarse a Compose. Cada formatter es un `object` con funciones puras y su test JVM dedicado en `app/src/test/java/com/loresuelvo/consumer/ui/util/`. Cuando un formatter nuevo necesite testearse con `Robolectric` (p. ej. para leer `R.string.*`), el test va en `app/src/test/java/com/loresuelvo/consumer/ui/screens/...` con `@RunWith(RobolectricTestRunner::class)`. No mezclar logica de dominio (reglas de formato con副作用) ni acceso a `Composable` dentro de estos helpers — son funciones puras que reciben tipos del dominio y devuelven `String`.
 
 ---
 
