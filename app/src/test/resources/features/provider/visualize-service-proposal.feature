@@ -40,7 +40,6 @@ Característica: Visualizar propuesta de servicio
     When accede al inicio
     Then debe visualizar dichas propuestas destacadas
 
-  @wip
   Escenario: 02-VSP Visualizar próximos trabajos en el inicio
     Given que entre las propuestas recibidas hay aceptadas
     When accede al inicio
