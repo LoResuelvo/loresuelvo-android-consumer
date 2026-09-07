@@ -88,6 +88,7 @@ class ApiServiceProposalRepositoryIntegrationTest {
                         "description": "Fuga en el lavamanos",
                         "status": "pending",
                         "created_on": "2026-09-03T11:19:24.640Z",
+                        "estimated_duration_minutes": 45,
                         "counterpart": {
                           "id": 92,
                           "role": "provider",
@@ -140,11 +141,15 @@ class ApiServiceProposalRepositoryIntegrationTest {
         assertEquals("López", first.counterpart.surname)
         assertEquals("Plomería", first.counterpart.categoryName)
         assertEquals("http://x/c.webp", first.counterpart.profilePhotoUrl)
+        assertEquals(45, first.estimatedDurationMinutes)
         // Second proposal: accepted, no profile photo (null
-        // collapses through the mapper, not to a default avatar).
+        // collapses through the mapper, not to a default avatar),
+        // and no estimated duration (the field is optional on the
+        // wire and the mapper must NOT default it to 0).
         val second = success.proposals[1]
         assertEquals(ServiceProposalStatus.Accepted, second.status)
         assertEquals(null, second.counterpart.profilePhotoUrl)
+        assertEquals(null, second.estimatedDurationMinutes)
     }
 
     @Test

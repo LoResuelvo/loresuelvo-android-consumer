@@ -49,6 +49,7 @@ internal fun ServiceProposalDto.toDomain(): ServiceProposal? {
         amountCents = amountCents,
         scheduledOnEpochMillis = parseIsoTimestampMillisOrZero(scheduledOn) ?: 0L,
         createdOnEpochMillis = parseIsoTimestampMillisOrZero(createdOn) ?: 0L,
+        estimatedDurationMinutes = estimatedDurationMinutes,
     )
 }
 

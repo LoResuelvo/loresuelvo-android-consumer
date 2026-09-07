@@ -55,6 +55,7 @@ data class ServiceProposalDto(
     @SerialName("status") val status: String,
     @SerialName("created_on") val createdOn: String,
     @SerialName("counterpart") val counterpart: ServiceProposalCounterpartDto,
+    @SerialName("estimated_duration_minutes") val estimatedDurationMinutes: Int? = null,
 )
 
 /**

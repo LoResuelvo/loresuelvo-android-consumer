@@ -28,6 +28,11 @@ package com.loresuelvo.consumer.domain.serviceproposal
  *   `java.time.Instant` for the domain type; millis is enough
  *   for ordering and for the "15/10/2026 - 14:30 hs" formatter
  *   introduced in scenario 12-VSP.
+ * - `estimatedDurationMinutes` is the provider's estimate of how
+ *   long the visit will take, surfaced on the proposal-detail
+ *   screen by the "Duración estimada" row (US-54 scenario 15-VSP).
+ *   Nullable because the backend may not have it for proposals
+ *   that were just created and never estimated.
  * - `booking_terms` from the wire is intentionally NOT modelled
  *   here: it carries eleven platform-fee and deposit fields that
  *   are irrelevant for the Home / Mis Servicios surfaces and will
@@ -43,4 +48,5 @@ data class ServiceProposal(
     val amountCents: Long,
     val scheduledOnEpochMillis: Long,
     val createdOnEpochMillis: Long,
+    val estimatedDurationMinutes: Int? = null,
 )
