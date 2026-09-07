@@ -527,9 +527,20 @@ private fun ConversationRoute(
 ) {
     val viewModel: com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel =
         hiltViewModel()
+    // US-54 scenario 14-VSP: a separate Hilt-scoped VM drives the
+    // proposal-summary card. Mounting it next to the conversation
+    // VM keeps the two round trips independent: a slow proposal
+    // fetch never blocks the chat composer, and a chat retry
+    // never re-fires the proposal lookup.
+    val proposalSummaryViewModel: com.loresuelvo.consumer.ui.screens.chat.ConversationProposalSummaryViewModel =
+        hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    val proposalSummaryState by proposalSummaryViewModel.uiState.collectAsState()
     androidx.compose.runtime.LaunchedEffect(conversationId) {
         viewModel.load(conversationId)
+    }
+    androidx.compose.runtime.LaunchedEffect(conversationId) {
+        proposalSummaryViewModel.load(conversationId)
     }
 
     // The picker is remembered at the route level so the
@@ -592,6 +603,7 @@ private fun ConversationRoute(
 
     com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
         state = state,
+        proposalSummaryState = proposalSummaryState,
         onPromptChange = viewModel::onPromptChange,
         onSendClick = viewModel::onSendClick,
         onBackClick = { navController.popBackStack() },

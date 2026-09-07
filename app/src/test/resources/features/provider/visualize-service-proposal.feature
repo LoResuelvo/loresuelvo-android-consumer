@@ -109,15 +109,14 @@ Característica: Visualizar propuesta de servicio
     When selecciona "Ver conversación"
     Then debe acceder a la conversación relacionada con la propuesta
 
-  @wip
   Escenario: 14-VSP Consultar el resumen de la propuesta desde la conversación
     Given que existe una conversación relacionada con una propuesta de servicio
     When el usuario accede a la conversación
     Then debe visualizar un resumen de la propuesta
-    And debe visualizar el monto acordado
-    And debe visualizar la fecha acordada
-    And debe visualizar la descripción del servicio
-    And debe visualizar el estado actual de la propuesta
+    And debe visualizar el monto acordado en el resumen de la conversación
+    And debe visualizar la fecha acordada en el resumen de la conversación
+    And debe visualizar la descripción del servicio en el resumen de la conversación
+    And debe visualizar el estado actual de la propuesta en el resumen de la conversación
 
   # Duración estimada
 

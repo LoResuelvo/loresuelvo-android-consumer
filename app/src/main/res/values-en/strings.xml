@@ -92,6 +92,14 @@
     <string name="conversation_top_bar_back_content_description">Back</string>
     <string name="conversation_input_placeholder">Write a message…</string>
     <string name="conversation_loading">Loading conversation…</string>
+    <string name="conversation_proposal_summary_title">Linked proposal</string>
+    <string name="conversation_proposal_summary_amount">Agreed amount</string>
+    <string name="conversation_proposal_summary_date">Scheduled date</string>
+    <string name="conversation_proposal_summary_description">Description</string>
+    <string name="conversation_proposal_summary_status">Status</string>
+    <string name="conversation_proposal_summary_status_pending">Pending</string>
+    <string name="conversation_proposal_summary_status_accepted">Accepted</string>
+    <string name="conversation_proposal_summary_status_rejected">Rejected</string>
     <string name="conversation_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="conversation_error_server">We couldn\'t load the conversation. Try again.</string>
     <string name="conversation_error_unauthorized">Your session expired. Please sign in again.</string>

@@ -94,6 +94,14 @@
     <string name="conversation_top_bar_back_content_description">Volver</string>
     <string name="conversation_input_placeholder">Escribí un mensaje…</string>
     <string name="conversation_loading">Cargando conversación…</string>
+    <string name="conversation_proposal_summary_title">Propuesta vinculada</string>
+    <string name="conversation_proposal_summary_amount">Monto acordado</string>
+    <string name="conversation_proposal_summary_date">Fecha acordada</string>
+    <string name="conversation_proposal_summary_description">Descripción</string>
+    <string name="conversation_proposal_summary_status">Estado</string>
+    <string name="conversation_proposal_summary_status_pending">Pendiente</string>
+    <string name="conversation_proposal_summary_status_accepted">Aceptada</string>
+    <string name="conversation_proposal_summary_status_rejected">Rechazada</string>
     <string name="conversation_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="conversation_error_server">No pudimos cargar la conversación. Reintentá.</string>
     <string name="conversation_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>

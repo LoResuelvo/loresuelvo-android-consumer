@@ -47,6 +47,7 @@ import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_B
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationMessageBubble
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationTopBar
 import com.loresuelvo.consumer.ui.screens.chat.components.NewMessageBanner
+import com.loresuelvo.consumer.ui.screens.chat.components.ProposalSummaryCard
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
@@ -117,6 +118,8 @@ fun ConversationScreen(
     showAttachSheet: Boolean = false,
     onScrollPositionChanged: (Boolean) -> Unit = {},
     onUnreadBannerTapped: () -> Unit = {},
+    proposalSummaryState: ConversationProposalSummaryUiState =
+        ConversationProposalSummaryUiState.Empty,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -225,6 +228,7 @@ fun ConversationScreen(
                         onImageClick = onImageClick,
                         onScrollPositionChanged = onScrollPositionChanged,
                         onUnreadBannerTapped = onUnreadBannerTapped,
+                        proposalSummaryState = proposalSummaryState,
                     )
                 }
             }
@@ -313,6 +317,7 @@ private fun ReadyContent(
     onImageClick: (String) -> Unit,
     onScrollPositionChanged: (Boolean) -> Unit,
     onUnreadBannerTapped: () -> Unit,
+    proposalSummaryState: ConversationProposalSummaryUiState,
 ) {
     val listState = rememberLazyListState()
 
@@ -347,35 +352,46 @@ private fun ReadyContent(
     }
 
     val coroutineScope = rememberCoroutineScope()
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues),
     ) {
-        MessagesList(
-            messages = state.detail.messages,
-            listState = listState,
-            audioPlayback = state.audioPlayback,
-            onPlayAudio = onPlayAudio,
-            onPauseAudio = onPauseAudio,
-            onImageClick = onImageClick,
-        )
-        // The unread banner overlays the list at the bottom-edge
-        // of the scroll area (anchored to `Alignment.BottomCenter`).
-        if (state.hasUnreadIncoming) {
-            NewMessageBanner(
-                onTap = {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(
-                            state.detail.messages.size - 1,
-                        )
-                    }
-                    onUnreadBannerTapped()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 8.dp),
+        // US-54 scenario 14-VSP: when the conversation is linked
+        // to a service proposal, render the compact summary card
+        // on top of the message list. The card stays hidden for
+        // `Loading` and `Empty` so the chat composer and messages
+        // render normally even when the proposal round trip is
+        // in flight or has failed.
+        (proposalSummaryState as? ConversationProposalSummaryUiState.Ready)?.let { ready ->
+            ProposalSummaryCard(proposal = ready.proposal)
+        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            MessagesList(
+                messages = state.detail.messages,
+                listState = listState,
+                audioPlayback = state.audioPlayback,
+                onPlayAudio = onPlayAudio,
+                onPauseAudio = onPauseAudio,
+                onImageClick = onImageClick,
             )
+            // The unread banner overlays the list at the bottom-edge
+            // of the scroll area (anchored to `Alignment.BottomCenter`).
+            if (state.hasUnreadIncoming) {
+                NewMessageBanner(
+                    onTap = {
+                        coroutineScope.launch {
+                            listState.animateScrollToItem(
+                                state.detail.messages.size - 1,
+                            )
+                        }
+                        onUnreadBannerTapped()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
+                )
+            }
         }
     }
 }
