@@ -28,6 +28,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
+import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 
 /**
  * Compact horizontal summary card for a single [ServiceProposal].
@@ -97,7 +98,7 @@ fun ProposalCard(
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             Text(
-                text = formatAmount(proposal.amountCents),
+                text = CurrencyFormatter.formatAmount(proposal.amountCents),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.SemiBold,
@@ -178,25 +179,6 @@ private fun ViewRequestCta(onClick: () -> Unit, proposalId: String) {
             fontWeight = FontWeight.SemiBold,
         )
     }
-}
-
-/**
- * Formats `amountCents` as a peso string with thousands
- * separator (`$100.000`, `$1.500.000`). Inline helper to avoid a
- * dependency on `java.text.NumberFormat` (whose default locale
- * uses comma separators).
- */
-private fun formatAmount(amountCents: Long): String {
-    val whole = amountCents / 100
-    val digits = whole.toString()
-    val reversed = digits.reversed()
-    val withDots = buildString(reversed.length + reversed.length / 3) {
-        reversed.forEachIndexed { index, c ->
-            if (index > 0 && index % 3 == 0) append('.')
-            append(c)
-        }
-    }.reversed()
-    return "$$withDots"
 }
 
 const val PROPOSAL_CARD_TAG_PREFIX: String = "proposal-card-"
