@@ -229,6 +229,21 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "que el usuario no tiene propuestas de servicio" — scenario 17-VSP.
+     * Seeds an empty list so the MisServiciosViewModel's `load()`
+     * resolves to `Ready(proposals = emptyList())` and the screen
+     * renders its empty-state copy rather than the proposal list.
+     */
+    fun seedProposalsEmpty() {
+        seedProposals.clear()
+        if (started) {
+            serviceProposalRepo.set(emptyList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
      * "accede a Mis Servicios" — the consumer opens the MisServicios
      * screen. At the VM level this is a no-op (the VM's `init`
      * already fired against the seeded repo during [startScenario]).

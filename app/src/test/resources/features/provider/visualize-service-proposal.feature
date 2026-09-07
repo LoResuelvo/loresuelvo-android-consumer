@@ -149,7 +149,6 @@ Característica: Visualizar propuesta de servicio
 
   # Estados vacíos
 
-  @wip
   Escenario: 17-VSP No existen propuestas para mostrar
     Given que el usuario no tiene propuestas de servicio
     When accede a la sección correspondiente

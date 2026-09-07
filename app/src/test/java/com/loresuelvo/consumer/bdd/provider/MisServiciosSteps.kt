@@ -235,6 +235,49 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 17-VSP --------------------------------------
+
+    /**
+     * "que el usuario no tiene propuestas de servicio" — scenario 17-VSP.
+     * Seeds an empty list into the fake repo so the screen renders
+     * its empty-state copy. The VM is started (and `load()` fired)
+     * lazily from the `When` step so the `init` block doesn't run
+     * against the default empty seed before the explicit empty
+     * seed is in place.
+     */
+    @Given("que el usuario no tiene propuestas de servicio")
+    fun queElUsuarioNoTienePropuestasDeServicio() {
+        world.startScenario()
+        world.seedProposalsEmpty()
+    }
+
+    /**
+     * "accede a la sección correspondiente" — scenario 17-VSP. The
+     * MisServiciosViewModel is already mounted by [startScenario];
+     * this step is a no-op at the VM level and exists so the
+     * Gherkin flow reads naturally.
+     */
+    @When("accede a la sección correspondiente")
+    fun accedeALaSeccionCorrespondiente() {
+        world.openMisServicios()
+    }
+
+    @Then("debe visualizar un mensaje indicando que no tiene propuestas para mostrar")
+    fun debeVisualizarUnMensajeIndicandoQueNoTienePropuestasParaMostrar() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected MisServiciosUiState.Ready, was $state",
+            state is MisServiciosUiState.Ready,
+        )
+        val ready = state as MisServiciosUiState.Ready
+        assertEquals(
+            "expected the empty seed to produce an empty proposals list, " +
+                "was ${ready.proposals.map { it.id }}",
+            emptyList<String>(),
+            ready.proposals.map { it.id },
+        )
+    }
+
     // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")
