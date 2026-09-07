@@ -154,7 +154,6 @@ Característica: Visualizar propuesta de servicio
     When accede a la sección correspondiente
     Then debe visualizar un mensaje indicando que no tiene propuestas para mostrar
 
-  @wip
   Escenario: 18-VSP No existen propuestas para el estado seleccionado
     Given que el usuario tiene propuestas de servicio
     And no tiene propuestas correspondientes al estado seleccionado

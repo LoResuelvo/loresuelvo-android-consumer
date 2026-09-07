@@ -229,6 +229,70 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "no tiene propuestas correspondientes al estado seleccionado" —
+     * scenario 18-VSP. Seeds two Pending + one Accepted and zero
+     * Rejected, so the next filter tap on `Rejected` lands on an
+     * empty `Ready(proposals = [])` and the screen renders the
+     * empty-state copy for that specific filter.
+     */
+    fun seedProposalsPendingAndAcceptedOnly() {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "20",
+            conversationId = "2000",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "200",
+                name = "Pedro",
+                surname = "Suárez",
+                categoryName = "Gas",
+                profilePhotoUrl = null,
+            ),
+            description = "Cambio de termotanque",
+            amountCents = 5000000L,
+            scheduledOnEpochMillis = 1_792_074_600_000L,
+            createdOnEpochMillis = 1_788_434_400_000L,
+        )
+        seedProposals += ServiceProposal(
+            id = "21",
+            conversationId = "2100",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "201",
+                name = "María",
+                surname = "Acosta",
+                categoryName = "Gas",
+                profilePhotoUrl = null,
+            ),
+            description = "Revisión de cocina",
+            amountCents = 3500000L,
+            scheduledOnEpochMillis = 1_793_500_800_000L,
+            createdOnEpochMillis = 1_789_200_000_000L,
+        )
+        seedProposals += ServiceProposal(
+            id = "22",
+            conversationId = "2200",
+            status = ServiceProposalStatus.Accepted,
+            counterpart = ServiceProposalCounterpart(
+                id = "202",
+                name = "Joaquín",
+                surname = "Maldonado",
+                categoryName = "Gas",
+                profilePhotoUrl = null,
+            ),
+            description = "Instalación de termotanque nuevo",
+            amountCents = 8500000L,
+            scheduledOnEpochMillis = 1_795_000_000_000L,
+            createdOnEpochMillis = 1_790_000_000_000L,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
      * "que el usuario no tiene propuestas de servicio" — scenario 17-VSP.
      * Seeds an empty list so the MisServiciosViewModel's `load()`
      * resolves to `Ready(proposals = emptyList())` and the screen

@@ -278,6 +278,54 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 18-VSP --------------------------------------
+
+    /**
+     * "no tiene propuestas correspondientes al estado seleccionado" —
+     * scenario 18-VSP. Seeds two Pending + one Accepted with zero
+     * Rejected so the next filter tap on `Rejected` lands on an
+     * empty result.
+     */
+    @And("no tiene propuestas correspondientes al estado seleccionado")
+    fun noTienePropuestasCorrespondientesAlEstadoSeleccionado() {
+        world.startScenario()
+        world.seedProposalsPendingAndAcceptedOnly()
+    }
+
+    /**
+     * "selecciona dicho estado" — scenario 18-VSP. The Gherkin
+     * text is intentionally generic because the `And` step does
+     * not pin a status. The seed has zero `Rejected` proposals, so
+     * the chip tap below drives the only filter for which the
+     * narrowed result is empty. If a future scenario needs a
+     * different status here, the seed and the chip should match.
+     */
+    @When("selecciona dicho estado")
+    fun seleccionaDichoEstado() {
+        world.selectFilter(ServiceProposalStatus.Rejected)
+    }
+
+    @Then("debe visualizar un mensaje indicando que no hay propuestas para mostrar")
+    fun debeVisualizarUnMensajeIndicandoQueNoHayPropuestasParaMostrar() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected MisServiciosUiState.Ready, was $state",
+            state is MisServiciosUiState.Ready,
+        )
+        val ready = state as MisServiciosUiState.Ready
+        assertEquals(
+            "expected the empty filter to produce an empty proposals list, " +
+                "was ${ready.proposals.map { it.id }}",
+            emptyList<String>(),
+            ready.proposals.map { it.id },
+        )
+        assertEquals(
+            "expected the filter chip to land on Rejected after the user tapped it",
+            ServiceProposalStatus.Rejected,
+            ready.selectedStatusFilter,
+        )
+    }
+
     // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")
