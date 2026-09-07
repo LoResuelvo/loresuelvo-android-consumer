@@ -66,7 +66,6 @@ Característica: Visualizar propuesta de servicio
     When selecciona el filtro de propuestas aceptadas
     Then debe visualizar únicamente las propuestas aceptadas
 
-  @wip
   Escenario: 07-VSP Consultar propuestas rechazadas
     Given que el usuario tiene propuestas en diferentes estados
     When selecciona el filtro de propuestas rechazadas
