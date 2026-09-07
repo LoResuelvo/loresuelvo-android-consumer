@@ -82,7 +82,6 @@ Característica: Visualizar propuesta de servicio
     And debe visualizar el monto acordado
     And debe visualizar el estado actual de la propuesta
 
-  @wip
   Escenario: 09-VSP Visualizar la foto del prestador
     Given que el prestador tiene una foto de perfil
     When el usuario consulta el detalle de su propuesta

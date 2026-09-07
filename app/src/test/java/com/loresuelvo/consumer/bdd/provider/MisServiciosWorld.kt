@@ -229,6 +229,71 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "que el prestador tiene una foto de perfil" — scenario 09-VSP.
+     * Seeds a single proposal whose counterpart carries a
+     * non-null `profilePhotoUrl`. The detail VM is the one that
+     * surfaces that field on the `Ready` state, so the assertion
+     * can read the URL straight off the proposal.
+     */
+    fun seedProposalWithPhoto() {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "40",
+            conversationId = "4000",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "400",
+                name = "Andrés",
+                surname = "Gómez",
+                categoryName = "Electricidad",
+                profilePhotoUrl = "https://cdn.loresuelvo.test/providers/400/avatar.jpg",
+            ),
+            description = "Cambio de disyuntor",
+            amountCents = 4200000L,
+            scheduledOnEpochMillis = 1_792_074_600_000L,
+            createdOnEpochMillis = 1_788_434_400_000L,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
+     * "que el prestador no tiene una foto de perfil" — scenario 10-VSP.
+     * Seeds a single proposal whose counterpart carries a
+     * `null` `profilePhotoUrl`. The detail VM resolves the
+     * proposal into `Ready(proposal)` and the screen falls back
+     * to the avatar placeholder; the BDD asserts the data layer
+     * that backs that fallback.
+     */
+    fun seedProposalWithoutPhoto() {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "50",
+            conversationId = "5000",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "500",
+                name = "Carla",
+                surname = "Domínguez",
+                categoryName = "Carpintería",
+                profilePhotoUrl = null,
+            ),
+            description = "Arreglo de placard",
+            amountCents = 2700000L,
+            scheduledOnEpochMillis = 1_793_500_800_000L,
+            createdOnEpochMillis = 1_789_200_000_000L,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
      * "no tiene propuestas correspondientes al estado seleccionado" —
      * scenario 18-VSP. Seeds two Pending + one Accepted and zero
      * Rejected, so the next filter tap on `Rejected` lands on an

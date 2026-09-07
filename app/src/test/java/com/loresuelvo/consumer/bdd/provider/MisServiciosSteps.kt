@@ -326,6 +326,48 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 09-VSP --------------------------------------
+
+    /**
+     * "que el prestador tiene una foto de perfil" — scenario 09-VSP.
+     * Seeds a single proposal whose counterpart carries a
+     * non-null `profilePhotoUrl`. The detail VM resolves the
+     * proposal into `Ready(proposal)` so the `Then` step can read
+     * the URL straight off the state.
+     */
+    @Given("que el prestador tiene una foto de perfil")
+    fun queElPrestadorTieneUnaFotoDePerfil() {
+        world.startScenario()
+        world.seedProposalWithPhoto()
+    }
+
+    /**
+     * "el usuario consulta el detalle de su propuesta" — scenario 09-VSP.
+     * At the JVM BDD layer "querying the detail" maps to feeding
+     * the detail VM with the chosen proposalId; the modal bottom
+     * sheet itself is exercised by the Compose instrumented test.
+     */
+    @When("el usuario consulta el detalle de su propuesta")
+    fun elUsuarioConsultaElDetalleDeSuPropuesta() {
+        world.openProposalDetail("40")
+    }
+
+    @Then("debe visualizar la foto de perfil del prestador")
+    fun debeVisualizarLaFotoDePerfilDelPrestador() {
+        val detail = world.lastDetailState()
+        assertTrue(
+            "expected ProposalDetailUiState.Ready, was $detail",
+            detail is com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready,
+        )
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(
+            "expected the seeded counterpart to carry a profilePhotoUrl, " +
+                "was ${proposal.counterpart.profilePhotoUrl}",
+            "https://cdn.loresuelvo.test/providers/400/avatar.jpg",
+            proposal.counterpart.profilePhotoUrl,
+        )
+    }
+
     // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")
