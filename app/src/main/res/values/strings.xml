@@ -225,6 +225,23 @@
     <string name="proposal_detail_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="proposal_detail_error_server">No pudimos cargar la propuesta. Reintentá.</string>
     <string name="proposal_detail_error_retry">Reintentar</string>
+    <string name="work_order_title">Orden de trabajo</string>
+    <string name="work_order_provider">Prestador</string>
+    <string name="work_order_category_name">Rubro</string>
+    <string name="work_order_amount">Monto acordado</string>
+    <string name="work_order_date">Fecha y hora</string>
+    <string name="work_order_estimated_duration">Tiempo estimado de trabajo</string>
+    <string name="work_order_description">Descripción del servicio</string>
+    <string name="work_order_status">Estado</string>
+    <string name="work_order_status_pending">Pendiente</string>
+    <string name="work_order_status_accepted">Aceptada</string>
+    <string name="work_order_status_rejected">Rechazada</string>
+    <string name="work_order_loading">Cargando orden de trabajo…</string>
+    <string name="work_order_not_found">No encontramos esta orden de trabajo.</string>
+    <string name="work_order_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="work_order_error_server">No pudimos cargar la orden de trabajo. Reintentá.</string>
+    <string name="work_order_error_retry">Reintentar</string>
+    <string name="proposal_detail_view_work_order">Ver orden de trabajo</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">Mis Servicios</string>
     <string name="home_section_mis_servicios_link">Ver todas</string>

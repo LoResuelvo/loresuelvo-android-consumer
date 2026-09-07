@@ -221,6 +221,23 @@
     <string name="proposal_detail_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="proposal_detail_error_server">We couldn\'t load the proposal. Try again.</string>
     <string name="proposal_detail_error_retry">Retry</string>
+    <string name="work_order_title">Work order</string>
+    <string name="work_order_provider">Provider</string>
+    <string name="work_order_category_name">Category</string>
+    <string name="work_order_amount">Agreed amount</string>
+    <string name="work_order_date">Scheduled date and time</string>
+    <string name="work_order_estimated_duration">Estimated time on site</string>
+    <string name="work_order_description">Service description</string>
+    <string name="work_order_status">Status</string>
+    <string name="work_order_status_pending">Pending</string>
+    <string name="work_order_status_accepted">Accepted</string>
+    <string name="work_order_status_rejected">Rejected</string>
+    <string name="work_order_loading">Loading work order…</string>
+    <string name="work_order_not_found">We couldn\'t find this work order.</string>
+    <string name="work_order_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="work_order_error_server">We couldn\'t load the work order. Try again.</string>
+    <string name="work_order_error_retry">Retry</string>
+    <string name="proposal_detail_view_work_order">View work order</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">My Services</string>
     <string name="home_section_mis_servicios_link">See all</string>
