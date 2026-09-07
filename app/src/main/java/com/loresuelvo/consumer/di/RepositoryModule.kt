@@ -8,6 +8,7 @@ import com.loresuelvo.consumer.data.api.ApiJobRequestRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
 import com.loresuelvo.consumer.data.api.ApiServiceProposalRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
+import com.loresuelvo.consumer.data.api.ApiWorkOrderRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRepository
@@ -18,6 +19,7 @@ import com.loresuelvo.consumer.domain.file.FileRepository
 import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
+import com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -80,5 +82,11 @@ abstract class RepositoryModule {
     abstract fun bindServiceProposalRepository(
         impl: ApiServiceProposalRepository,
     ): ServiceProposalRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkOrderRepository(
+        impl: ApiWorkOrderRepository,
+    ): WorkOrderRepository
 
 }
