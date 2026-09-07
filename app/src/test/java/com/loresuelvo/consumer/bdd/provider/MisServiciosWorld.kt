@@ -230,6 +230,37 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "que existe una propuesta de servicio por un monto de 15000
+     * pesos" — scenario 11-VSP. Seeds a single proposal whose
+     * `amountCents` is `1_500_000L` (= 15000 pesos at 100 cents/peso)
+     * so the formatter's "$ 15.000" output is observable end-to-end.
+     */
+    fun seedProposalWithFifteenThousandPesos() {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "60",
+            conversationId = "6000",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "600",
+                name = "Lucía",
+                surname = "Vidal",
+                categoryName = "Albañilería",
+                profilePhotoUrl = null,
+            ),
+            description = "Reparación de pared",
+            amountCents = 1_500_000L,
+            scheduledOnEpochMillis = 1_792_074_600_000L,
+            createdOnEpochMillis = 1_788_434_400_000L,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
      * "que el prestador tiene una foto de perfil" — scenario 09-VSP.
      * Seeds a single proposal whose counterpart carries a
      * non-null `profilePhotoUrl`. The detail VM is the one that

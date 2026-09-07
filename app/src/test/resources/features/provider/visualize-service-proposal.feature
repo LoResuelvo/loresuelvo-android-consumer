@@ -92,7 +92,6 @@ Característica: Visualizar propuesta de servicio
     When el usuario consulta el detalle de su propuesta
     Then debe visualizar una imagen predeterminada
 
-  @wip
   Escenario: 11-VSP Visualizar el monto acordado formateado como moneda
     Given que existe una propuesta de servicio por un monto de 15000 pesos
     When el usuario consulta el detalle de la propuesta

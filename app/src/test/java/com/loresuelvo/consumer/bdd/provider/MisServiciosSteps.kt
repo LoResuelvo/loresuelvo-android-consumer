@@ -400,6 +400,36 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 11-VSP --------------------------------------
+
+    /**
+     * "que existe una propuesta de servicio por un monto de 15000
+     * pesos" — scenario 11-VSP. The seed carries
+     * `amountCents = 1_500_000L` so the [CurrencyFormatter]
+     * rounds it to `"$ 15.000"`.
+     */
+    @Given("que existe una propuesta de servicio por un monto de 15000 pesos")
+    fun queExisteUnaPropuestaDeServicioPorUnMontoDe15000Pesos() {
+        world.startScenario()
+        world.seedProposalWithFifteenThousandPesos()
+    }
+
+    @Then("debe visualizar el monto como {string}")
+    fun debeVisualizarElMontoComo(expectedFormatted: String) {
+        val detail = world.lastDetailState()
+        assertTrue(
+            "expected ProposalDetailUiState.Ready, was $detail",
+            detail is com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready,
+        )
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(
+            "expected the CurrencyFormatter to round 15000 pesos as the " +
+                "scenario pins, was ${com.loresuelvo.consumer.ui.util.CurrencyFormatter.formatAmount(proposal.amountCents)}",
+            expectedFormatted,
+            com.loresuelvo.consumer.ui.util.CurrencyFormatter.formatAmount(proposal.amountCents),
+        )
+    }
+
     // ---- Scenario 13-VSP --------------------------------------
 
     /**

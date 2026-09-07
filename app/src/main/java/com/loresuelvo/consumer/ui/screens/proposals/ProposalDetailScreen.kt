@@ -32,6 +32,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
+import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 
 /**
  * Modal bottom sheet that renders the full [ServiceProposal]
@@ -140,7 +141,7 @@ private fun ReadyState(
         Spacer(modifier = Modifier.height(4.dp))
         DetailRow(
             label = stringResource(R.string.proposal_detail_amount),
-            value = "$" + proposal.amountCents.toString(),
+            value = CurrencyFormatter.formatAmount(proposal.amountCents),
         )
         DetailRow(
             label = stringResource(R.string.proposal_detail_reason),
