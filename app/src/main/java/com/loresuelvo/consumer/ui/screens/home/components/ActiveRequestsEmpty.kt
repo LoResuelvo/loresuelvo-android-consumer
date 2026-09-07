@@ -75,14 +75,6 @@ fun ActiveRequestsEmpty(
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
                 )
-                Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .size(18.dp),
-                )
             }
         }
     }
