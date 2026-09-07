@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.BorderStroke
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
@@ -157,13 +158,22 @@ private fun StatusBadge(status: ServiceProposalStatus) {
  * minimal.
  */
 @Composable
-private fun ViewRequestCta(onClick: () -> Unit, proposalId: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+private fun ViewRequestCta(
+    onClick: () -> Unit,
+    proposalId: String,
+) {
+    val shape = RoundedCornerShape(percent = 50)
+
+    Surface(
+        shape = shape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary,
+        ),
         modifier = Modifier
+            .clip(shape)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp)
             .testTag(PROPOSAL_CARD_VIEW_TAG_PREFIX + proposalId),
     ) {
         Text(
@@ -171,12 +181,10 @@ private fun ViewRequestCta(onClick: () -> Unit, proposalId: String) {
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = "→",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(
+                horizontal = 18.dp,
+                vertical = 8.dp,
+            ),
         )
     }
 }
