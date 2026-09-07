@@ -368,6 +368,38 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 10-VSP --------------------------------------
+
+    /**
+     * "que el prestador no tiene una foto de perfil" — scenario 10-VSP.
+     * Seeds a single proposal whose counterpart carries a `null`
+     * `profilePhotoUrl`. The detail VM resolves the proposal into
+     * `Ready(proposal)` so the `Then` step can pin the null URL
+     * that backs the avatar fallback.
+     */
+    @Given("que el prestador no tiene una foto de perfil")
+    fun queElPrestadorNoTieneUnaFotoDePerfil() {
+        world.startScenario()
+        world.seedProposalWithoutPhoto()
+    }
+
+    @Then("debe visualizar una imagen predeterminada")
+    fun debeVisualizarUnaImagenPredeterminada() {
+        val detail = world.lastDetailState()
+        assertTrue(
+            "expected ProposalDetailUiState.Ready, was $detail",
+            detail is com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready,
+        )
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        assertEquals(
+            "expected the seeded counterpart to carry a null profilePhotoUrl " +
+                "so the screen can fall back to the placeholder avatar, " +
+                "was ${proposal.counterpart.profilePhotoUrl}",
+            null,
+            proposal.counterpart.profilePhotoUrl,
+        )
+    }
+
     // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")

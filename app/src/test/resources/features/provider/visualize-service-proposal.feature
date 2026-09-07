@@ -87,7 +87,6 @@ Característica: Visualizar propuesta de servicio
     When el usuario consulta el detalle de su propuesta
     Then debe visualizar la foto de perfil del prestador
 
-  @wip
   Escenario: 10-VSP Mostrar imagen predeterminada cuando el prestador no tiene foto
     Given que el prestador no tiene una foto de perfil
     When el usuario consulta el detalle de su propuesta
