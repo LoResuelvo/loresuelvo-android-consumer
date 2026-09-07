@@ -157,6 +157,45 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 06-VSP --------------------------------------
+
+    /**
+     * "selecciona el filtro de propuestas aceptadas" — scenario 06-VSP.
+     * Routes through `GetAcceptedServiceProposalsUseCase`; the fake
+     * repo's mixed-status seed (set up by [seedProposalsReceived])
+     * carries exactly one `Accepted` entry (`id="11"`) so the
+     * narrower result is observable.
+     */
+    @When("selecciona el filtro de propuestas aceptadas")
+    fun seleccionaElFiltroDePropuestasAceptadas() {
+        world.selectFilter(ServiceProposalStatus.Accepted)
+    }
+
+    @Then("debe visualizar únicamente las propuestas aceptadas")
+    fun debeVisualizarUnicamenteLasPropuestasAceptadas() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected MisServiciosUiState.Ready, was $state",
+            state is MisServiciosUiState.Ready,
+        )
+        val ready = state as MisServiciosUiState.Ready
+        assertEquals(
+            "expected the filter chip to land on Accepted after the user tapped it",
+            ServiceProposalStatus.Accepted,
+            ready.selectedStatusFilter,
+        )
+        assertEquals(
+            "expected the GetAccepted use case to keep only the Accepted entries " +
+                "from the mixed seed (id=\"11\")",
+            listOf("11"),
+            ready.proposals.map { it.id },
+        )
+        assertTrue(
+            "every visible proposal must be Accepted, was ${ready.proposals.map { it.status }}",
+            ready.proposals.all { it.status == ServiceProposalStatus.Accepted },
+        )
+    }
+
     // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")

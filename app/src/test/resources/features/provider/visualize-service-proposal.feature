@@ -61,7 +61,6 @@ Característica: Visualizar propuesta de servicio
     When selecciona el filtro de propuestas que requieren su atención
     Then debe visualizar únicamente las propuestas pendientes
 
-  @wip
   Escenario: 06-VSP Consultar propuestas aceptadas
     Given que el usuario tiene propuestas en diferentes estados
     When selecciona el filtro de propuestas aceptadas
