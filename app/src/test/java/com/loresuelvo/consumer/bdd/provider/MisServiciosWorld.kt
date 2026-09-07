@@ -230,6 +230,63 @@ class MisServiciosWorld : AutoCloseable {
     }
 
     /**
+     * "que existe una propuesta de servicio con una duración
+     * estimada de {duracion}" — scenario 15-VSP (Scenario Outline).
+     * Seeds a single proposal whose
+     * [ServiceProposal.estimatedDurationMinutes] is [minutes] so
+     * the [EstimatedDurationFormatter] output is observable.
+     */
+    fun seedProposalWithEstimatedDuration(minutes: Int) {
+        seedProposals.clear()
+        seedProposals += ServiceProposal(
+            id = "80",
+            conversationId = "8000",
+            status = ServiceProposalStatus.Pending,
+            counterpart = ServiceProposalCounterpart(
+                id = "800",
+                name = "Mariana",
+                surname = "Pereyra",
+                categoryName = "Herrería",
+                profilePhotoUrl = null,
+            ),
+            description = "Cambio de cerradura",
+            amountCents = 3_500_000L,
+            scheduledOnEpochMillis = 1_792_074_600_000L,
+            createdOnEpochMillis = 1_788_434_400_000L,
+            estimatedDurationMinutes = minutes,
+        )
+        if (started) {
+            serviceProposalRepo.set(seedProposals.toList())
+            viewModel.load()
+            scheduler.advanceUntilIdle()
+        }
+    }
+
+    /**
+     * Parses the human-readable duration text from the Gherkin
+     * Examples column into a minutes count. Supports the four
+     * shapes pinned by scenario 15-VSP:
+     *  - "45 minutos"      → 45
+     *  - "1 hora"          → 60
+     *  - "1 hora 30 min"   → 90
+     *  - "2 horas"         → 120
+     */
+    fun parseDurationMinutes(text: String): Int {
+        var hours = 0
+        var minutes = 0
+        val pattern = Regex("""(\d+)\s*(horas?|min(?:utos?)?)""")
+        pattern.findAll(text.lowercase()).forEach { match ->
+            val value = match.groupValues[1].toInt()
+            val unit = match.groupValues[2]
+            when {
+                unit.startsWith("hora") -> hours = value
+                unit.startsWith("min") -> minutes = value
+            }
+        }
+        return hours * 60 + minutes
+    }
+
+    /**
      * "que existe una propuesta de servicio para el 15 de octubre
      * de 2026 a las 14:30" — scenario 12-VSP. The timestamp is
      * `1_792_074_600_000L`, which is exactly `2026-10-15T14:30:00Z`

@@ -205,6 +205,7 @@
     <string name="proposal_detail_title">Proposal detail</string>
     <string name="proposal_detail_amount">Agreed amount</string>
     <string name="proposal_detail_date">Date and time</string>
+    <string name="proposal_detail_estimated_duration">Estimated duration</string>
     <string name="proposal_detail_reason">Reason for the visit</string>
     <string name="proposal_detail_status">Status</string>
     <string name="proposal_detail_view_conversation">View conversation</string>

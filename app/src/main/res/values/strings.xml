@@ -209,6 +209,7 @@
     <string name="proposal_detail_title">Detalle de la propuesta</string>
     <string name="proposal_detail_amount">Monto acordado</string>
     <string name="proposal_detail_date">Fecha y hora</string>
+    <string name="proposal_detail_estimated_duration">Duración estimada</string>
     <string name="proposal_detail_reason">Motivo de la visita</string>
     <string name="proposal_detail_status">Estado</string>
     <string name="proposal_detail_view_conversation">Ver conversación</string>

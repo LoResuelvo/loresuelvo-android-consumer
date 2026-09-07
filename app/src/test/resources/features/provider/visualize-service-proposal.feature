@@ -121,7 +121,6 @@ Característica: Visualizar propuesta de servicio
 
   # Duración estimada
 
-  @wip
   Esquema del escenario: 15-VSP Visualizar la duración estimada del servicio
     Given que existe una propuesta de servicio con una duración estimada de <duracion>
     When el usuario consulta el detalle de la propuesta

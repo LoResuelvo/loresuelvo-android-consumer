@@ -400,6 +400,44 @@ class MisServiciosSteps {
         )
     }
 
+    // ---- Scenario 15-VSP --------------------------------------
+
+    /**
+     * "que existe una propuesta de servicio con una duración
+     * estimada de {duracion}" — scenario 15-VSP (Scenario
+     * Outline). The human-readable text is parsed by
+     * [MisServiciosWorld.parseDurationMinutes] into the minutes
+     * count the seed carries; the Examples table maps each
+     * input to the [EstimatedDurationFormatter]'s output.
+     */
+    @Given("que existe una propuesta de servicio con una duración estimada de {string}")
+    fun queExisteUnaPropuestaDeServicioConUnaDuracionEstimadaDe(duracion: String) {
+        world.startScenario()
+        world.seedProposalWithEstimatedDuration(world.parseDurationMinutes(duracion))
+    }
+
+    @Then("debe visualizar la duración estimada como {string}")
+    fun debeVisualizarLaDuracionEstimadaComo(expectedFormatted: String) {
+        val detail = world.lastDetailState()
+        assertTrue(
+            "expected ProposalDetailUiState.Ready, was $detail",
+            detail is com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready,
+        )
+        val proposal = (detail as com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready).proposal
+        val minutes = proposal.estimatedDurationMinutes
+        assertTrue(
+            "expected the proposal to carry an estimatedDurationMinutes " +
+                "so the duration row renders, was $minutes",
+            minutes != null,
+        )
+        assertEquals(
+            "expected the EstimatedDurationFormatter to render the duration " +
+                "as the scenario pins, was ${com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter.formatDuration(minutes!!)}",
+            expectedFormatted,
+            com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter.formatDuration(minutes),
+        )
+    }
+
     // ---- Scenario 12-VSP --------------------------------------
 
     /**

@@ -33,6 +33,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
+import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
 /**
@@ -148,6 +149,12 @@ private fun ReadyState(
             label = stringResource(R.string.proposal_detail_date),
             value = ScheduledDateFormatter.formatScheduled(proposal.scheduledOnEpochMillis),
         )
+        proposal.estimatedDurationMinutes?.let { minutes ->
+            DetailRow(
+                label = stringResource(R.string.proposal_detail_estimated_duration),
+                value = EstimatedDurationFormatter.formatDuration(minutes),
+            )
+        }
         DetailRow(
             label = stringResource(R.string.proposal_detail_reason),
             value = proposal.description,
