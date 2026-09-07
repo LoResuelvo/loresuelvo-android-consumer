@@ -11,17 +11,21 @@ import kotlinx.serialization.Serializable
  * the user shared for US-54: every proposal carries its
  * counterpart snapshot, the agreed amount in cents, the
  * scheduled date, the textual reason for the visit, the lifecycle
- * status, and the originating conversation id.
+ * status, the originating conversation id, and the provider's
+ * estimated duration in minutes (nullable — the backend emits
+ * `null` for proposals created without an estimate yet).
  *
  * `booking_terms` is intentionally **not** modelled here: it
  * carries eleven platform-fee / deposit fields that are irrelevant
- * for the Home / Mis Servicios / Detalle surfaces of US-54 and
- * will be introduced together with the work-order detail screen
- * (scenario 16-VSP). With
- * `Json { ignoreUnknownKeys = true }` (see
- * `data/api/ApiErrorMapperDefaults`) the wire decoder drops the
- * block silently, so adding it later does not break older
- * clients.
+ * for the Home / Mis Servicios / Detalle / Work-order surfaces of
+ * US-54. The work-order detail screen (scenario 16-VSP) consumes
+ * the top-level `estimated_duration_minutes` field above rather
+ * than waiting for the `bookingTerms` block to land — when the
+ * backend does introduce it, drop it into a nested `BookingTermsDto`
+ * here and surface the eleven extra fields through the
+ * `WorkOrder` domain type without breaking the current consumers
+ * (the wire decoder has `ignoreUnknownKeys = true`, so older
+ * clients will simply ignore the new block).
  *
  * Field-name mapping rules:
  *
