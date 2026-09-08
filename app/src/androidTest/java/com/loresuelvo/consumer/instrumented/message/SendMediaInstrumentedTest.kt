@@ -42,6 +42,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
 import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
+import com.loresuelvo.consumer.ui.components.bottomnav.BOTTOM_BAR_ITEM_TAG_PREFIX
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_IMAGE_TAG
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_TAG
@@ -157,19 +158,22 @@ class SendMediaInstrumentedTest {
     fun sent_image_is_rendered_in_conversation() {
         seedConversationWithSentImage()
 
-        val messagesLabel =
-            composeTestRule.activity.getString(R.string.bottom_nav_mensajes)
-
         // 1. Ir a Mensajes desde el bottom navigation.
+        // The floating dock is icon-only (no label text) since the
+        // [Chore] redesign that migrated from M3 `NavigationBar` to
+        // a `Surface` + `Row` capsule. We target the dock item by
+        // its `testTag` instead of looking for "Mensajes" text.
+        val messagesTabTag = BOTTOM_BAR_ITEM_TAG_PREFIX +
+            com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination.Mensajes.route
         composeTestRule.waitUntil(timeoutMillis = 10_000) {
             composeTestRule
-                .onAllNodesWithText(messagesLabel)
+                .onAllNodesWithTag(messagesTabTag)
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
         composeTestRule
-            .onNodeWithText(messagesLabel)
+            .onNodeWithTag(messagesTabTag)
             .assertIsDisplayed()
             .performClick()
 
@@ -285,6 +289,12 @@ class SendMediaInstrumentedTest {
         abstract fun bindServiceProposalRepository(
             repository: FakeServiceProposalRepository,
         ): ServiceProposalRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindWorkOrderRepository(
+            repository: com.loresuelvo.consumer.data.api.ApiWorkOrderRepository,
+        ): com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
     }
 
     @Singleton
