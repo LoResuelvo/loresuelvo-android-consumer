@@ -32,6 +32,11 @@ import org.junit.Test
  *  - Network failure propagates verbatim so the screen renders the
  *    "no internet" copy.
  *  - Server failure propagates verbatim.
+ *  - **Rapid taps cancel the in-flight round trip**: a second
+ *    `load(...)` cancels the first coroutine so the screen only
+ *    observes the last outcome (the bug fix that surfaced after
+ *    every "Ver Solicitud" tap on Home fired three parallel
+ *    requests whose results raced into the uiState slot).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProposalDetailViewModelTest {
@@ -129,5 +134,35 @@ class ProposalDetailViewModelTest {
         assertTrue(error is ServiceProposalsOutcome.Failure.Server)
         error as ServiceProposalsOutcome.Failure.Server
         assertEquals(503, error.code)
+    }
+
+    @Test
+    fun a_second_load_cancels_the_in_flight_round_trip() = runTest {
+        // Without the [loadJob] cancellation, three rapid taps
+        // would fire three parallel `getServiceProposals()` calls
+        // whose completed state raced into the uiState slot. With
+        // the fix, the mock assertion is the contract: the second
+        // tap cancels the first coroutine before its `coEvery`
+        // runs, so the repository only sees the last round trip.
+        coEvery { serviceProposalRepository.getServiceProposals() } returnsMany listOf(
+            ServiceProposalsOutcome.Success(listOf(proposal(id = "1"))),
+            ServiceProposalsOutcome.Success(listOf(proposal(id = "2"))),
+        )
+
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        viewModel.load("1") // first round trip (cancelled before it resumes)
+        viewModel.load("2") // second round trip wins
+
+        val state = viewModel.uiState.value
+        assertTrue(
+            "expected the last load(id=2) to win, was $state",
+            state is ProposalDetailUiState.Ready,
+        )
+        assertEquals(
+            "expected the uiState to reflect the second proposal, " +
+                "not the cancelled first one",
+            "2",
+            (state as ProposalDetailUiState.Ready).proposal.id,
+        )
     }
 }
