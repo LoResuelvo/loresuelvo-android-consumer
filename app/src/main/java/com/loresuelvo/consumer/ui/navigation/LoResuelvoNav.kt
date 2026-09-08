@@ -1,30 +1,29 @@
 package com.loresuelvo.consumer.ui.navigation
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import kotlinx.coroutines.flow.firstOrNull
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import android.Manifest
 import android.content.pm.PackageManager
@@ -125,70 +124,31 @@ fun LoResuelvoNav() {
         lastAppliedSessionRoute.value = currentRoute
     }
 
-    Scaffold(
-        // 08-UXUI: only consume the nav bar inset for the bottom
-        // nav. The top status-bar inset is left for each screen
-        // to consume individually — the screens with a `topBar`
-        // (Chat, Conversation) need it for their `TopAppBar`,
-        // and the bottom-nav screens (Home, Messages, Assistant,
-        // Professionals, Categories) apply their own
-        // `statusBarsPadding()`. Without this carve-out, screens
-        // with a `topBar` would get a double top inset (the outer
-        // Scaffold consumes the status bar for `contentPadding`,
-        // and the inner Scaffold consumes it again for its own
-        // `topBar`).
-        contentWindowInsets = WindowInsets.navigationBars,
-        bottomBar = {
-            if (BottomDestination.shouldShow(navCurrentRoute)) {
-                // The M3 `Scaffold.bottomBar` slot is wrapped by
-                // an opaque `Surface` (`surfaceContainer` +
-                // `tonalElevation` + divider) inside the layout
-                // tree. A plain `Surface(color = Color.Transparent)`
-                // wrapper was tried but its own tonal-elevation
-                // paintable area still leaked a faint tint that read
-                // as a second bar in dark mode (verified visually
-                // on the Pixel 2 device after the test build). A
-                // bare `Box` strips the tonal layer entirely and
-                // covers the wrapped slot pixel-for-pixel, so the
-                // consumer only sees the inner
-                // [LoResuelvoBottomBar] (transparent + floating
-                // shadow). `Scaffold.containerColor =
-                // Color.Transparent` was rejected because two
-                // sibling screens (`MessagesScreen`,
-                // `AssistantScreen`) rely on the Scaffold-level
-                // background and don't paint their own — making
-                // it transparent globally would leave those
-                // screens unbackgrounded.
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.Transparent),
-                ) {
-                    LoResuelvoBottomBar(
-                        currentRoute = navCurrentRoute,
-                        onNavigate = { destination ->
-                        // Bottom-nav navigation follows the Instagram
-                        // pattern: popUpTo the start destination to keep
-                        // the back stack flat, launchSingleTop to avoid
-                        // duplicate instances of the same tab, and
-                        // restoreState to remember scroll positions.
-                        navController.navigate(destination.route) {
-                            if (navController.currentDestination != null) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                            }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    },
-                )
-                }
-            }
-        },
-    ) { padding ->
-        LoResuelvoNavHost(
-            navController = navController,
+Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            // 08-UXUI: only consume the nav bar inset for the bottom
+            // nav. The top status-bar inset is left for each screen
+            // to consume individually — the screens with a `topBar`
+            // (Chat, Conversation) need it for their `TopAppBar`,
+            // and the bottom-nav screens (Home, Messages, Assistant,
+            // Professionals, Categories) apply their own
+            // `statusBarsPadding()`. Without this carve-out, screens
+            // with a `topBar` would get a double top inset (the outer
+            // Scaffold consumes the status bar for `contentPadding`,
+            // and the inner Scaffold consumes it again for its own
+            // `topBar`).
+            contentWindowInsets = WindowInsets.navigationBars,
+            // Empty `bottomBar = {}` placeholder so [Scaffold] still
+            // consumes the navigation-bar inset for the content
+            // padding (otherwise screens would render behind the
+            // bar). The actual floating bar is rendered outside the
+            // [Scaffold] in the enclosing [Box] — see the [Box]
+            // comment below for the rationale.
+            bottomBar = {},
+            containerColor = Color.Transparent,
+        ) { padding ->
+            LoResuelvoNavHost(
+                navController = navController,
             startDestination = currentRoute,
             contentPadding = padding,
             welcome = { WelcomeRoute() },
@@ -215,6 +175,36 @@ fun LoResuelvoNav() {
                 )
             },
         )
+        }
+
+        // Floating bottom-bar overlay. Renders OUTSIDE the
+        // [Scaffold]'s `bottomBar` slot so the M3 wrapper (which
+        // pins `surfaceContainer` + `tonalElevation` + a divider)
+        // never sits behind the transparent bar (the previous
+        // approach wrapped the slot in `Surface(color =
+        // Color.Transparent)` or `Box(background = Transparent)`,
+        // both of which still leaked the wrapper — verified on the
+        // Pixel 2 device). The Scaffold's `bottomBar = {}` empty
+        // placeholder above preserves the navigation-bar inset
+        // for [contentPadding]; here we layer the visible bar
+        // back on top.
+        if (BottomDestination.shouldShow(navCurrentRoute)) {
+            LoResuelvoBottomBar(
+                currentRoute = navCurrentRoute,
+                onNavigate = { destination ->
+                    navController.navigate(destination.route) {
+                        if (navController.currentDestination != null) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
     }
 }
 
