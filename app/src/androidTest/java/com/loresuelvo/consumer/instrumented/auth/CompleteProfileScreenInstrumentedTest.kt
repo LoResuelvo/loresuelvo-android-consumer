@@ -302,6 +302,12 @@ class CompleteProfileScreenInstrumentedTest {
         abstract fun bindServiceProposalRepository(
             repository: com.loresuelvo.consumer.testdi.FakeServiceProposalRepository,
         ): ServiceProposalRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindWorkOrderRepository(
+            repository: com.loresuelvo.consumer.data.api.ApiWorkOrderRepository,
+        ): com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
     }
 
     @Singleton

@@ -14,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -44,6 +45,23 @@ class ProviderAvatarTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    @Test
+    fun dev_local_storage_host_is_replaced_with_api_host() {
+        val original = "http://minio.localhost:9000/profile/provider.webp?x=1"
+
+        val resolved = resolveProfilePhotoUrl(
+            url = original,
+            apiUrl = "http://192.168.1.37:8080",
+            publicMediaBaseUrl = "http://192.168.1.37:9000/loresuelvo-public-local",
+            isDev = true,
+        )
+
+        assertEquals(
+            "http://192.168.1.37:9000/loresuelvo-public-local/profile/provider.webp?x=1",
+            resolved,
+        )
+    }
 
     @Test
     fun no_photo_url_renders_initial_letter_and_skips_coil() {

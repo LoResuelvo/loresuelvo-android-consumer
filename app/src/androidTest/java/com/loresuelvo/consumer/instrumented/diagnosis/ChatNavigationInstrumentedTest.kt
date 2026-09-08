@@ -211,6 +211,12 @@ class ChatNavigationInstrumentedTest {
         abstract fun bindServiceProposalRepository(
             repository: FakeServiceProposalRepository,
         ): ServiceProposalRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindWorkOrderRepository(
+            repository: com.loresuelvo.consumer.data.api.ApiWorkOrderRepository,
+        ): com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
     }
 
     @Singleton

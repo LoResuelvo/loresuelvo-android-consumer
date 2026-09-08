@@ -159,5 +159,11 @@ class RealBackendFlowE2ETest {
         abstract fun bindServiceProposalRepository(
             impl: com.loresuelvo.consumer.testdi.FakeServiceProposalRepository,
         ): ServiceProposalRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindWorkOrderRepository(
+            impl: com.loresuelvo.consumer.data.api.ApiWorkOrderRepository,
+        ): com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
     }
 }

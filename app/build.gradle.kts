@@ -118,8 +118,10 @@ android {
             val auth0Scheme = envVar("AUTH0_SCHEME", "com.loresuelvo.consumer")
             val auth0Audience = envVar("AUTH0_AUDIENCE", "http://localhost:8080")
             val apiUrl = envVar("API_URL", "http://10.0.2.2:8080")
+            val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
+            buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
             buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
@@ -139,8 +141,10 @@ android {
             val auth0Scheme = envVar("AUTH0_SCHEME_STAGING", "com.loresuelvo.consumer.staging")
             val auth0Audience = envVar("AUTH0_AUDIENCE_STAGING")
             val apiUrl = envVar("API_URL_STAGING")
+            val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_STAGING")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
+            buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
             buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
@@ -159,8 +163,10 @@ android {
             val auth0Scheme = envVar("AUTH0_SCHEME_PROD", "com.loresuelvo.consumer.prod")
             val auth0Audience = envVar("AUTH0_AUDIENCE_PROD")
             val apiUrl = envVar("API_URL_PROD")
+            val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_PROD")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
+            buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
             buildConfigField("String", "AUTH0_DOMAIN", "\"$auth0Domain\"")
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")

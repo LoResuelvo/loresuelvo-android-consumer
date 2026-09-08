@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.professional
 
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
@@ -326,6 +328,7 @@ fun ProviderAvatar(
         R.string.provider_photo_content_description,
         name,
     )
+    val imageUrl = profilePhotoUrl?.let { resolveProfilePhotoUrl(it) }
     Box(
         modifier = modifier
             .size(size)
@@ -335,9 +338,9 @@ fun ProviderAvatar(
         contentAlignment = Alignment.Center,
     ) {
         InitialAvatar(initial)
-        if (!profilePhotoUrl.isNullOrBlank()) {
+        if (!imageUrl.isNullOrBlank()) {
             AsyncImage(
-                model = profilePhotoUrl,
+                model = imageUrl,
                 contentDescription = description,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -358,6 +361,68 @@ private fun InitialAvatar(initial: String) {
         fontWeight = FontWeight.Bold,
     )
 }
+
+/**
+ * Makes local object-storage URLs returned by the development backend
+ * reachable from the device. `localhost` and `minio.localhost` refer to
+ * the device itself on Android, not to the developer's machine. The
+ * public media host, port, and bucket path come from
+ * `PUBLIC_MEDIA_BASE_URL`; the source path, query, and fragment are
+ * preserved.
+ */
+internal fun resolveProfilePhotoUrl(url: String): String {
+    return resolveProfilePhotoUrl(
+        url = url,
+        apiUrl = BuildConfig.API_URL,
+        publicMediaBaseUrl = BuildConfig.PUBLIC_MEDIA_BASE_URL,
+        isDev = BuildConfig.FLAVOR == "dev",
+    )
+}
+
+internal fun resolveProfilePhotoUrl(
+    url: String,
+    apiUrl: String,
+    publicMediaBaseUrl: String,
+    isDev: Boolean,
+): String {
+    if (!isDev) return url
+
+    val source = Uri.parse(url)
+    val sourceHost = source.host?.lowercase() ?: return url
+    if (sourceHost !in LOCAL_PROFILE_PHOTO_HOSTS) return url
+
+    val mediaBase = Uri.parse(publicMediaBaseUrl)
+    val apiHost = mediaBase.host ?: Uri.parse(apiUrl).host ?: return url
+    val mediaScheme = mediaBase.scheme ?: source.scheme
+    val mediaBasePath = mediaBase.path.orEmpty().trimEnd('/')
+    val sourcePath = source.path.orEmpty()
+    val resolvedPath = if (
+        mediaBasePath.isNotEmpty() && !sourcePath.startsWith(mediaBasePath)
+    ) {
+        "$mediaBasePath/${sourcePath.trimStart('/')}"
+    } else {
+        sourcePath
+    }
+    return source.buildUpon()
+        .scheme(mediaScheme)
+        .encodedAuthority(
+            buildString {
+                append(apiHost)
+                val mediaPort = mediaBase.port
+                val port = if (mediaPort != -1) mediaPort else source.port
+                if (port != -1) append(":").append(port)
+            },
+        )
+        .encodedPath(resolvedPath)
+        .build()
+        .toString()
+}
+
+private val LOCAL_PROFILE_PHOTO_HOSTS = setOf(
+    "localhost",
+    "127.0.0.1",
+    "minio.localhost",
+)
 
 /**
  * Compose testTag for the [ProviderAvatar] slot (the outer
