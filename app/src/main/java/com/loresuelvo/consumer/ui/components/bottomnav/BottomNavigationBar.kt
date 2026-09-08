@@ -1,13 +1,15 @@
 package com.loresuelvo.consumer.ui.components.bottomnav
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -15,7 +17,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -28,38 +30,31 @@ fun LoResuelvoBottomBar(
 ) {
     if (!BottomDestination.shouldShow(currentRoute)) return
 
-    val barShape = RoundedCornerShape(30.dp)
-
-    // "Floating" bottom-bar: the [Surface] replaces the previous
-    // `Box` + `.shadow(elevation, …, clip = false)` + `.clip(barShape)`
-    // + `.background(MaterialTheme.colorScheme.surface)` stack.
-    // [Surface] coordinates `shape`, `shadowElevation`, and the
-    // painted layer in one place so we can keep `color =
-    // Color.Transparent` (true transparency, you can see the
-    // screen content behind the bar) **and** the floating shadow
-    // stays intact (Compose's `shadow` modifier relies on a
-    // painted layer; an un-painted `Box` would drop the shadow
-    // entirely — see the KDoc in `shadow()` for the caveat).
-    //
-    // `tonalElevation = 0.dp` keeps the bar free from the
-    // Material 3 surface-tint overlay so dark-mode contrast is
-    // predictable instead of inheriting a tonal tint that paints
-    // over the transparency.
+    // "Floating dock" / capsule. A single rounded [Surface]
+    // hosts the three icons with `SpaceEvenly` so the capsule
+    // hugs its content (capped at `widthIn(max = …)` so it never
+    // bleeds to the screen edges). `RoundedCornerShape(50)` gives
+    // the pill geometry on any aspect ratio without ever spilling
+    // past the row's height / 2. The bar's tonalElevation stays
+    // at zero to keep the M3 surface-tint overlay off the
+    // background — only a soft `shadowElevation = 3.dp` projects
+    // the floating drop. `navigationBarsPadding()` keeps the
+    // dock above the Android gesture bar without painting a
+    // backdrop.
     Surface(
-        shape = barShape,
-        color = Color.Transparent,
-        shadowElevation = 10.dp,
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        shadowElevation = 3.dp,
         tonalElevation = 0.dp,
         modifier = modifier
-            .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(bottom = 12.dp)
+            .padding(horizontal = 24.dp)
+            .widthIn(min = 240.dp, max = 400.dp)
             .testTag(LOWRESUELVO_BOTTOM_BAR_TAG),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -68,16 +63,48 @@ fun LoResuelvoBottomBar(
 
                 Box(
                     modifier = Modifier
+                        .padding(8.dp)  // touch-target padding — keeps the
+                                          // area around the icon generous
+                                          // (~64.dp) without painting any
+                                          // additional background.
+                        .size(48.dp)    // circular click target — matches
+                                          // the selected-bubble size so the
+                                          // ripple radius equals the bubble
+                                          // radius (visually consistent).
+                        // `clip(CircleShape)` MUST sit **before**
+                        // `clickable` so the [Box]'s rectangular bounds
+                        // stop clipping the ripple — click()'s default
+                        // indication is rendered at the end of the
+                        // modifier chain and is clipped by every `clip`
+                        // that came before it. Without this clip the
+                        // ripple painted a visible square around the
+                        // icon (the bug fixed in this commit).
+                        .clip(CircleShape)
                         .clickable(onClick = { onNavigate(destination) })
-                        .padding(8.dp)
                         .testTag(BOTTOM_BAR_ITEM_TAG_PREFIX + destination.route),
                     contentAlignment = Alignment.Center,
                 ) {
+                    if (isSelected) {
+                        // Selected bubble: a circular
+                        // `secondaryContainer` painted **before** the
+                        // [Icon] so the icon rests on top of the
+                        // bubble. The 48.dp circle reads as a
+                        // subtle "medallion" inside the capsule
+                        // rather than a card behind the dock.
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .background(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
+                                    shape = CircleShape,
+                                ),
+                        )
+                    }
                     Icon(
                         imageVector = destination.icon,
                         contentDescription = stringResource(destination.labelRes),
                         tint = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.onSecondaryContainer
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
                         },
@@ -90,15 +117,14 @@ fun LoResuelvoBottomBar(
 }
 
 /**
- * Compose testTags for the LoResuelvo floating bottom bar.
+ * Compose testTags for the LoResuelvo floating capsule bar.
  *
  * The bar exposes two tag surfaces:
  *  - [LOWRESUELVO_BOTTOM_BAR_TAG] — the outer Surface so callers
  *    can assert "the bar is rendered / not rendered".
  *  - [BOTTOM_BAR_ITEM_TAG_PREFIX]` + route — one per tab; lets a
  *    test target the click target without depending on the
- *    localised label copy (which the bar no longer paints
- *    because it is icon-only).
+ *    localised label copy (the bar is icon-only).
  */
 const val LOWRESUELVO_BOTTOM_BAR_TAG: String = "lo-resuelvo-bottom-bar"
 const val BOTTOM_BAR_ITEM_TAG_PREFIX: String = "bottom-bar-item-"
