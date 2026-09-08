@@ -4,11 +4,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -136,9 +139,28 @@ fun LoResuelvoNav() {
         contentWindowInsets = WindowInsets.navigationBars,
         bottomBar = {
             if (BottomDestination.shouldShow(navCurrentRoute)) {
-                LoResuelvoBottomBar(
-                    currentRoute = navCurrentRoute,
-                    onNavigate = { destination ->
+                // Outer transparent Surface: the M3 `Scaffold`
+                // wraps every `bottomBar` slot in its own opaque
+                // Surface (`surfaceContainer` + `tonalElevation` +
+                // divider). Without this wrapper a transparent
+                // `LoResuelvoBottomBar` would float **on top of** a
+                // solid color band, giving the user the
+                // double-bar look. The wrapper paints over the
+                // Scaffold's wrapper so only the inner
+                // (transparent + shadowed) bar is visible. Tinted
+                // `Scaffold.containerColor = Color.Transparent`
+                // was rejected because `MessagesScreen` and
+                // `AssistantScreen` rely on the Scaffold-level
+                // background and don't paint their own — making
+                // it transparent globally would leave those screens
+                // unbackgrounded.
+                Surface(
+                    color = Color.Transparent,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    LoResuelvoBottomBar(
+                        currentRoute = navCurrentRoute,
+                        onNavigate = { destination ->
                         // Bottom-nav navigation follows the Instagram
                         // pattern: popUpTo the start destination to keep
                         // the back stack flat, launchSingleTop to avoid
@@ -155,6 +177,7 @@ fun LoResuelvoNav() {
                         }
                     },
                 )
+                }
             }
         },
     ) { padding ->
