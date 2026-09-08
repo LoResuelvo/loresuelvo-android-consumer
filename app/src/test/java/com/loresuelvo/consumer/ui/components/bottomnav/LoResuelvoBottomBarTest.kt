@@ -1,13 +1,10 @@
 package com.loresuelvo.consumer.ui.components.bottomnav
 
-import android.app.Application
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.test.core.app.ApplicationProvider
-import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -27,13 +24,15 @@ import org.robolectric.annotation.Config
  * tests pin visibility + click so future changes to the host
  * wiring can't silently regress the bar.
  *
- * Note: the selection visual (the M3 active-indicator pill) is
- * covered manually on the device — the `ui-test:1.7.x` surface
- * (Compose BOM 2024.09) doesn't expose `onAllNodes(matcher)` /
- * `hasRole`, so the per-tab `Selected` semantics aren't reachable
- * from a test runner. The "exactly one item per label" assertion
- * pins the structural contract; the M3 NavigationBarItem handles
- * the visual selection indicator out of the box.
+ * Tag surfaces (see [LOWRESUELVO_BOTTOM_BAR_TAG] /
+ * [BOTTOM_BAR_ITEM_TAG_PREFIX] in `BottomNavigationBar.kt`):
+ *  - `lo-resuelvo-bottom-bar` — the outer Surface; presence pins
+ *    the bar's visibility contract, absence pins the "hide on
+ *    non-primary routes" contract.
+ *  - `bottom-bar-item-{route}` — one per tab; targeted by the
+ *    click test so the assertion does not depend on the
+ *    localised copy of the tab label (the bar no longer paints
+ *    labels; it's icon-only).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
@@ -41,9 +40,6 @@ class LoResuelvoBottomBarTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
-
-    private fun string(@androidx.annotation.StringRes id: Int): String =
-        ApplicationProvider.getApplicationContext<Application>().getString(id)
 
     @Test
     fun renders_three_tabs_on_a_primary_destination() {
@@ -55,18 +51,12 @@ class LoResuelvoBottomBarTest {
                 )
             }
         }
-        // Every tab exposes its localised label as visible text.
-        for (destination in BottomDestination.all) {
-            composeTestRule.onNodeWithText(string(destination.labelRes))
+        // The outer Surface is present.
+        composeTestRule.onNodeWithTag(LOWRESUELVO_BOTTOM_BAR_TAG).assertExists()
+        // One click target per tab.
+        BottomDestination.all.forEach { destination ->
+            composeTestRule.onNodeWithTag(BOTTOM_BAR_ITEM_TAG_PREFIX + destination.route)
                 .assertExists()
-        }
-        // And exactly one node per label (the icon's content
-        // description shares the label text, so `onAllNodesWithText`
-        // would otherwise return 2). The assertion pins the
-        // "one item per destination" invariant.
-        for (destination in BottomDestination.all) {
-            composeTestRule.onAllNodesWithText(text = string(destination.labelRes))
-                .assertCountEquals(1)
         }
     }
 
@@ -80,11 +70,7 @@ class LoResuelvoBottomBarTest {
                 )
             }
         }
-        // The bar returns early → no tab labels in the tree.
-        for (destination in BottomDestination.all) {
-            composeTestRule.onNodeWithText(string(destination.labelRes))
-                .assertDoesNotExist()
-        }
+        composeTestRule.onAllNodesWithTag(LOWRESUELVO_BOTTOM_BAR_TAG).assertCountEquals(0)
     }
 
     @Test
@@ -97,18 +83,11 @@ class LoResuelvoBottomBarTest {
                 )
             }
         }
-        for (destination in BottomDestination.all) {
-            composeTestRule.onNodeWithText(string(destination.labelRes))
-                .assertDoesNotExist()
-        }
+        composeTestRule.onAllNodesWithTag(LOWRESUELVO_BOTTOM_BAR_TAG).assertCountEquals(0)
     }
 
     @Test
     fun clicking_a_tab_invokes_onNavigate_with_its_destination() {
-        // `setContent` is single-shot per test, so the loop drives
-        // three clicks against a single composition. The bar's
-        // `currentRoute` stays pinned to the Inicio route — the host
-        // is what would react to `onNavigate`, not the bar.
         val captured = mutableListOf<BottomDestination>()
         composeTestRule.setContent {
             LoresuelvoTheme {
@@ -120,7 +99,8 @@ class LoResuelvoBottomBarTest {
         }
         for (destination in BottomDestination.all) {
             captured.clear()
-            composeTestRule.onNodeWithText(string(destination.labelRes))
+            composeTestRule
+                .onNodeWithTag(BOTTOM_BAR_ITEM_TAG_PREFIX + destination.route)
                 .performClick()
             assertEquals(listOf(destination), captured)
         }
