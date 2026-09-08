@@ -70,6 +70,12 @@ fun ProposalDetailScreen(
     ) {
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             when (state) {
+                is ProposalDetailUiState.Idle -> {
+                    // Defensive no-op: the [ProposalDetailBottomSheet]
+                    // gate already hides the sheet for `Idle`, so
+                    // this branch should be unreachable. Keep it
+                    // explicit so the `when` stays exhaustive.
+                }
                 is ProposalDetailUiState.Loading -> LoadingState()
                 is ProposalDetailUiState.Ready -> ReadyState(
                     proposal = state.proposal,

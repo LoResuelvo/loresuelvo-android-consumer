@@ -165,4 +165,67 @@ class ProposalDetailViewModelTest {
             (state as ProposalDetailUiState.Ready).proposal.id,
         )
     }
+
+    @Test
+    fun initial_state_is_Idle_so_the_detail_sheet_stays_hidden_by_default() = runTest {
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+
+        val state = viewModel.uiState.value
+
+        assertTrue(
+            "expected the fresh VM to expose Idle (the bottom-sheet " +
+                "visibility gate hides the sheet for this state), " +
+                "was $state — using `Loading` here would let a race " +
+                "with `onRetry` flash the spinner after dismiss",
+            state is ProposalDetailUiState.Idle,
+        )
+    }
+
+    @Test
+    fun reset_returns_to_Idle_and_cancels_any_in_flight_round_trip() = runTest {
+        // First load a successful card so the VM is in `Ready`
+        // (i.e. sheet is currently visible).
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(listOf(proposal(id = "1")))
+
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        viewModel.load("1")
+        assertTrue(
+            "precondition: load(\"1\") must drive the VM to Ready, was ${viewModel.uiState.value}",
+            viewModel.uiState.value is ProposalDetailUiState.Ready,
+        )
+
+        // The host calls `reset()` from `onDismissRequest`. The
+        // VM must drop the in-flight job (if any) and the new
+        // state must be `Idle` so the sheet's `LaunchedEffect`
+        // treats it as "stay hidden".
+        viewModel.reset()
+
+        val state = viewModel.uiState.value
+        assertTrue(
+            "expected reset() to drive the VM back to Idle so the " +
+                "bottom sheet does not re-open, was $state",
+            state is ProposalDetailUiState.Idle,
+        )
+    }
+
+    @Test
+    fun load_with_blank_id_short_circuits_to_Idle_and_does_not_hit_the_repository() = runTest {
+        // The host used to call `load("")` on dismiss as a way
+        // to "clear" the VM. That drove the state into
+        // `Error(404, "Proposal  not found")`, which the
+        // bottom-sheet gate treated as "show" and re-opened the
+        // modal after the consumer dismissed it. The VM now
+        // treats a blank id as a reset — no round trip is fired
+        // and the state lands on `Idle` so the sheet stays
+        // hidden.
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        viewModel.load("")
+
+        assertTrue(
+            "expected load(\"\") to short-circuit to Idle, " +
+                "was ${viewModel.uiState.value}",
+            viewModel.uiState.value is ProposalDetailUiState.Idle,
+        )
+    }
 }

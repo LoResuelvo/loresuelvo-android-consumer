@@ -390,7 +390,7 @@ private fun HomeRoute(
         onViewWorkOrder = { proposalId ->
             navController.navigate(Route.WorkOrder.buildPath(proposalId))
         },
-        onDetailDismiss = { detailViewModel.load("") },
+        onDetailDismiss = { detailViewModel.reset() },
     )
 }
 
@@ -513,7 +513,7 @@ private fun MisServiciosRoute(
             // to the dedicated work-order route.
             navController.navigate(Route.WorkOrder.buildPath(proposalId))
         },
-        onDetailDismiss = { detailViewModel.load("") },
+        onDetailDismiss = { detailViewModel.reset() },
     )
 }
 

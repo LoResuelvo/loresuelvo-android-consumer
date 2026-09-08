@@ -134,7 +134,16 @@ private fun DetailSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(detailState) {
-        visible = detailState !is ProposalDetailUiState.Loading
+        // US-54 bug fix: gate on `Ready`/`Error`, not on "not
+        // Loading". A post-dismiss `Error(404)` round trip used to
+        // satisfy `!isLoading` and re-open the sheet behind the
+        // consumer's back; routing dismiss through
+        // [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel.reset]
+        // keeps the state at
+        // [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Idle],
+        // which this gate treats as "stay hidden".
+        visible = detailState is ProposalDetailUiState.Ready ||
+            detailState is ProposalDetailUiState.Error
     }
     if (!visible) return
     ModalBottomSheet(

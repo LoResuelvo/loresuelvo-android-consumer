@@ -213,9 +213,14 @@ fun HomeScreen(
  * does (US-54 bug fix: the two surfaces used to render different
  * detail routes).
  *
- * Visibility is gated on the detail VM leaving `Loading` so the
- * sheet never flashes for a microsecond before the round trip
- * resolves.
+ * Visibility is gated on `Ready` or `Error`. Before this fix the
+ * gate was `!isLoading`, which let a post-dismiss `Error(404)`
+ * (the result of the previous `load("")` reset hack) re-open the
+ * sheet behind the consumer's back. Driving the host to
+ * [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel.reset]
+ * on dismiss keeps the state at
+ * [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Idle],
+ * which the gate treats as "stay hidden".
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -229,7 +234,8 @@ private fun ProposalDetailBottomSheet(
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(detailState) {
-        visible = detailState !is ProposalDetailUiState.Loading
+        visible = detailState is ProposalDetailUiState.Ready ||
+            detailState is ProposalDetailUiState.Error
     }
     if (!visible) return
     ModalBottomSheet(
