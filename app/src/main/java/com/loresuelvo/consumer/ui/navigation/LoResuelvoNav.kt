@@ -336,11 +336,18 @@ private fun HomeRoute(
 ) {
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
+    // US-54 bug fix: the Home row's "Ver Solicitud" CTA must open
+    // the same proposal-detail bottom sheet that the MisServicios
+    // list does. Before this wiring the callback was a no-op so
+    // tapping a card from Home did nothing.
+    val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel =
+        hiltViewModel()
     val context = LocalContext.current
     val sessionState by sessionViewModel.uiState.collectAsState()
     // HomeViewModel kicks off `loadCategories()` in its `init { }`
     // block, so we don't repeat it via LaunchedEffect here.
     val homeState by homeViewModel.uiState.collectAsState()
+    val detailState by detailViewModel.uiState.collectAsState()
 
     HomeScreen(
         state = homeState,
@@ -361,10 +368,29 @@ private fun HomeRoute(
         onSeeAllMisServiciosClick = {
             navController.navigate(Route.MisServicios.path)
         },
+        // US-54 bug fix: every "Ver Solicitud" tap from the home
+        // row feeds the Hilt-scoped ProposalDetailViewModel so the
+        // bottom sheet surfaces the full proposal.
+        onProposalClicked = { proposalId -> detailViewModel.load(proposalId) },
         onNotificationsClick = { /* TODO */ },
         onAiSendClick = { navController.navigate(Route.Chat.buildPath()) },
         onRetryClick = { homeViewModel.loadCategories() },
         onLogoutClick = { sessionViewModel.signOut(context) },
+        detailState = detailState,
+        onDetailRetry = {
+            val cachedId = (detailState as? com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready)
+                ?.proposal?.id.orEmpty()
+            detailViewModel.load(cachedId)
+        },
+        onViewConversation = { conversationId ->
+            if (conversationId.isNotBlank()) {
+                navController.navigate(Route.Conversation.buildPath(conversationId))
+            }
+        },
+        onViewWorkOrder = { proposalId ->
+            navController.navigate(Route.WorkOrder.buildPath(proposalId))
+        },
+        onDetailDismiss = { detailViewModel.load("") },
     )
 }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,15 +15,26 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen
+import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -69,6 +81,15 @@ fun HomeScreen(
     onAiSendClick: () -> Unit,
     onRetryClick: () -> Unit,
     onLogoutClick: () -> Unit,
+    // US-54 bug fix: the "Ver Solicitud" CTA on the home row
+    // must open the same modal bottom sheet the MisServicios
+    // list does. The defaults keep existing previews compiling;
+    // the host (`HomeRoute`) wires every callback below.
+    detailState: ProposalDetailUiState = ProposalDetailUiState.Loading,
+    onDetailRetry: () -> Unit = {},
+    onViewConversation: (conversationId: String) -> Unit = {},
+    onViewWorkOrder: (proposalId: String) -> Unit = {},
+    onDetailDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
@@ -169,6 +190,65 @@ fun HomeScreen(
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             )
         }
+    }
+
+    // US-54 bug fix: the proposal-detail bottom sheet is rendered
+    // alongside the scrollable column. The sheet becomes visible
+    // the moment the detail VM leaves `Loading` — see
+    // [DetailSheet] for the visibility gate.
+    ProposalDetailBottomSheet(
+        detailState = detailState,
+        onRetry = onDetailRetry,
+        onViewConversation = onViewConversation,
+        onViewWorkOrder = onViewWorkOrder,
+        onDismiss = onDetailDismiss,
+    )
+}
+
+/**
+ * Modal bottom sheet that surfaces a single proposal's detail on
+ * the Home dashboard. Mirrors the matching helper in
+ * `MisServiciosScreen.DetailSheet` so the "Ver Solicitud" CTA on
+ * the Home row opens the same component the MisServicios list
+ * does (US-54 bug fix: the two surfaces used to render different
+ * detail routes).
+ *
+ * Visibility is gated on the detail VM leaving `Loading` so the
+ * sheet never flashes for a microsecond before the round trip
+ * resolves.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProposalDetailBottomSheet(
+    detailState: ProposalDetailUiState,
+    onRetry: () -> Unit,
+    onViewConversation: (conversationId: String) -> Unit,
+    onViewWorkOrder: (proposalId: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(detailState) {
+        visible = detailState !is ProposalDetailUiState.Loading
+    }
+    if (!visible) return
+    ModalBottomSheet(
+        onDismissRequest = {
+            visible = false
+            onDismiss()
+        },
+        sheetState = sheetState,
+    ) {
+        ProposalDetailScreen(
+            state = detailState,
+            onRetry = onRetry,
+            onViewConversation = onViewConversation,
+            onViewWorkOrder = onViewWorkOrder,
+            onDismiss = {
+                visible = false
+                onDismiss()
+            },
+        )
     }
 }
 
@@ -329,6 +409,16 @@ private fun MisServiciosEmptyCard(
  * Hidden entirely when both sub-states are non-Ready (Loading /
  * Error) so we don't paint cards against a soon-to-be-populated
  * section.
+ *
+ * US-54 bug fix: replaced the previous `LazyRow` with a `Row` +
+ * `horizontalScroll`. Mixing `LazyRow` inside the screen-level
+ * `Column.verticalScroll` crashed the layout pass with an
+ * "infinity maximum height constraints" warning and silently
+ * dropped clicks on the cards — tapping "Ver Solicitud" did
+ * nothing until the navigation graph was rebuilt. `Row` with
+ * `horizontalScroll` is the canonical Compose pattern for a
+ * small set of horizontally-laid-out cards (3–5 entries) and
+ * also keeps the click pipeline responsive.
  */
 @Composable
 private fun MisServiciosRow(
@@ -348,20 +438,14 @@ private fun MisServiciosRow(
         return
     }
 
-    LazyRow(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
             .testTag(HOME_MIS_SERVICIOS_ROW_TAG),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(
-            horizontal = 0.dp,
-            vertical = 8.dp,
-        ),
     ) {
-        items(
-            items = items,
-            key = { it.id },
-        ) { proposal ->
+        items.forEach { proposal ->
             ProposalCard(
                 proposal = proposal,
                 onViewClicked = { onProposalClicked(proposal.id) },
