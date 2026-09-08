@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.navigation
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -139,24 +140,29 @@ fun LoResuelvoNav() {
         contentWindowInsets = WindowInsets.navigationBars,
         bottomBar = {
             if (BottomDestination.shouldShow(navCurrentRoute)) {
-                // Outer transparent Surface: the M3 `Scaffold`
-                // wraps every `bottomBar` slot in its own opaque
-                // Surface (`surfaceContainer` + `tonalElevation` +
-                // divider). Without this wrapper a transparent
-                // `LoResuelvoBottomBar` would float **on top of** a
-                // solid color band, giving the user the
-                // double-bar look. The wrapper paints over the
-                // Scaffold's wrapper so only the inner
-                // (transparent + shadowed) bar is visible. Tinted
-                // `Scaffold.containerColor = Color.Transparent`
-                // was rejected because `MessagesScreen` and
-                // `AssistantScreen` rely on the Scaffold-level
+                // The M3 `Scaffold.bottomBar` slot is wrapped by
+                // an opaque `Surface` (`surfaceContainer` +
+                // `tonalElevation` + divider) inside the layout
+                // tree. A plain `Surface(color = Color.Transparent)`
+                // wrapper was tried but its own tonal-elevation
+                // paintable area still leaked a faint tint that read
+                // as a second bar in dark mode (verified visually
+                // on the Pixel 2 device after the test build). A
+                // bare `Box` strips the tonal layer entirely and
+                // covers the wrapped slot pixel-for-pixel, so the
+                // consumer only sees the inner
+                // [LoResuelvoBottomBar] (transparent + floating
+                // shadow). `Scaffold.containerColor =
+                // Color.Transparent` was rejected because two
+                // sibling screens (`MessagesScreen`,
+                // `AssistantScreen`) rely on the Scaffold-level
                 // background and don't paint their own — making
-                // it transparent globally would leave those screens
-                // unbackgrounded.
-                Surface(
-                    color = Color.Transparent,
-                    modifier = Modifier.fillMaxWidth(),
+                // it transparent globally would leave those
+                // screens unbackgrounded.
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Transparent),
                 ) {
                     LoResuelvoBottomBar(
                         currentRoute = navCurrentRoute,
