@@ -35,9 +35,10 @@ jobs:
           AUTH0_CLIENT_ID_STAGING=${{ secrets.AUTH0_CLIENT_ID_STAGING }}
           AUTH0_CLIENT_SECRET_STAGING=${{ secrets.AUTH0_CLIENT_SECRET_STAGING }}
           AUTH0_AUDIENCE_STAGING=${{ secrets.AUTH0_AUDIENCE_STAGING }}
-          AUTH0_SCHEME_STAGING=${{ secrets.AUTH0_SCHEME_STAGING }}
+          AUTH0_SCHEME_STAGING=com.loresuelvo.consumer.staging
           API_URL_STAGING=${{ secrets.API_URL_STAGING }}
-          NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_STAGING=${{ secrets.NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_STAGING }}
+          PUBLIC_MEDIA_BASE_URL_STAGING=${{ secrets.NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_STAGING }}
+
           # ==========================================
           # PRODUCTION
           # ==========================================
@@ -45,9 +46,9 @@ jobs:
           AUTH0_CLIENT_ID_PROD=${{ secrets.AUTH0_CLIENT_ID_PROD }}
           AUTH0_CLIENT_SECRET_PROD=${{ secrets.AUTH0_CLIENT_SECRET_PROD }}
           AUTH0_AUDIENCE_PROD=${{ secrets.AUTH0_AUDIENCE_PROD }}
-          AUTH0_SCHEME_PROD=${{ secrets.AUTH0_SCHEME_PROD }}
+          AUTH0_SCHEME_PROD=com.loresuelvo.consumer
           API_URL_PROD=${{ secrets.API_URL_PROD }}
-          NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_PROD=${{ secrets.NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_PROD }}
+          PUBLIC_MEDIA_BASE_URL_PROD=${{ secrets.NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_PROD }}
           EOF
 
       - name: Build Staging APK
