@@ -48,6 +48,8 @@ android {
         applicationId = "com.loresuelvo.consumer"
         minSdk = 24
         targetSdk = 35
+        versionCode = 20
+        versionName = "0.20.0"
 
         // Added in Fase 1: HiltTestRunner for instrumented tests with Hilt
         testInstrumentationRunner = "com.loresuelvo.consumer.HiltTestRunner"
