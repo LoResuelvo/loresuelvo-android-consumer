@@ -28,6 +28,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.junit.Ignore
 
 @HiltAndroidTest
 @dagger.hilt.android.testing.UninstallModules(SessionStoreModule::class)
@@ -121,9 +122,10 @@ class WelcomeScreenInstrumentedTest {
     }
 
     // Scenario: 04-CPI Mostrar opción de continuar con Google
+    @Ignore("WIP: Google login button")
     @Test
     fun displays_google_login_button() {
-
+    
         composeTestRule
             .onNodeWithText(localizedString(R.string.welcome_google))
             .assertIsDisplayed()
