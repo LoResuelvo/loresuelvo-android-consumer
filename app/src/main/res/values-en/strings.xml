@@ -238,6 +238,44 @@
     <string name="work_order_error_server">We couldn\'t load the work order. Try again.</string>
     <string name="work_order_error_retry">Retry</string>
     <string name="proposal_detail_view_work_order">View work order</string>
+
+    <!-- US-21: Confirm service agreement (deposit). -->
+    <string name="service_agreement_loading">Loading agreement…</string>
+    <string name="service_agreement_description">Service description</string>
+    <string name="service_agreement_amount">Agreed price</string>
+    <string name="service_agreement_scheduled">Date and time</string>
+    <string name="service_agreement_estimated_duration">Estimated duration</string>
+    <string name="service_agreement_deposit">Deposit amount</string>
+    <string name="service_agreement_readonly_hint">These details come from the provider. You can\'t edit them from the app.</string>
+    <string name="service_agreement_confirm_cta">Confirm agreement</string>
+    <string name="service_agreement_cancel">Cancel</string>
+    <string name="service_agreement_starting">Processing confirmation…</string>
+    <string name="service_agreement_redirecting">Opening payment…</string>
+    <string name="service_agreement_confirm_title">Do you confirm that you want to accept this agreement?</string>
+    <string name="service_agreement_confirm_body">We\'ll start the deposit payment. You can\'t edit the terms from the app.</string>
+    <string name="service_agreement_confirm_yes">Yes, confirm</string>
+    <string name="service_agreement_confirm_no">No, cancel</string>
+    <string name="service_agreement_error_network">We couldn\'t connect. Check your connection and try again.</string>
+    <string name="service_agreement_error_server">We couldn\'t confirm the agreement. Try again.</string>
+    <string name="service_agreement_error_retry">Retry</string>
+    <string name="service_agreement_error_return_home">Back to home</string>
+    <string name="service_agreement_already_paid">This agreement has already been confirmed.</string>
+    <string name="service_agreement_return_home">Back to home</string>
+
+    <!-- US-21 / US-28: payment result (post-redirect polling). -->
+    <string name="payment_result_loading">Verifying payment…</string>
+    <string name="payment_result_processing">The payment is being processed.</string>
+    <string name="payment_result_processing_hint">We keep checking until the bank confirms the status.</string>
+    <string name="payment_result_approved_title">Payment approved</string>
+    <string name="payment_result_approved_body">The agreement was confirmed successfully. The request now shows the agreement as accepted.</string>
+    <string name="payment_result_rejected_title">We couldn\'t process the payment</string>
+    <string name="payment_result_rejected_body">The deposit could not be paid. The agreement is still pending. You can try again.</string>
+    <string name="payment_result_retry">Retry payment</string>
+    <string name="payment_result_return_home">Back to home</string>
+    <string name="payment_result_not_found">We couldn\'t find this payment. Go back to the request to see the updated status.</string>
+    <string name="payment_result_error_network">We couldn\'t connect to verify the payment. Check your connection and try again.</string>
+    <string name="payment_result_error_server">We couldn\'t verify the payment. Try again.</string>
+    <string name="payment_result_error_retry">Retry</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">My Services</string>
     <string name="home_section_mis_servicios_link">See all</string>

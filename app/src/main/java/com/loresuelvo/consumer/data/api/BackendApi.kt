@@ -343,4 +343,46 @@ interface BackendApi {
      */
     @GET("service-proposals")
     suspend fun getServiceProposals(): List<ServiceProposalDto>
+
+    // ---- Payment / checkout (US-21 confirm-agreement flow) ----
+
+    /**
+     * `POST /service-proposals/{serviceProposalID}/checkout-sessions`
+     * — start (or reuse) a Mercado Pago Checkout Pro session for
+     * the booking deposit of a pending service proposal. The
+     * consumer is expected to open the returned `checkout_url` in
+     * a Custom Tab and let the user complete the payment; the
+     * proposal is NOT accepted server-side at this point — that
+     * only happens after the webhook reports an approved payment.
+     *
+     * Idempotent: if an active checkout already exists the
+     * endpoint returns the same payment intent and URL (the API
+     * uses a partial UNIQUE index on `payment_intents` to enforce
+     * one active intent per (proposal, purpose)). A `409 Conflict`
+     * is returned when the proposal is already fully paid — the
+     * data layer maps that to [com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome.AlreadyPaid].
+     *
+     * Requires Auth0 bearer auth.
+     */
+    @POST("service-proposals/{serviceProposalID}/checkout-sessions")
+    suspend fun startServiceProposalCheckout(
+        @Path("serviceProposalID") serviceProposalID: Int,
+    ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
+
+    /**
+     * `GET /payment-intents/{paymentIntentID}` — read the current
+     * status of a payment intent. Used by the post-redirect
+     * polling loop (US-21 confirmation flow + US-28 service-balance
+     * flow). The endpoint is safe to call repeatedly — it is
+     * idempotent and the returned status reflects the last
+     * verified payment event processed by the backend webhook.
+     * `404 Not Found` is mapped to
+     * [com.loresuelvo.consumer.domain.payment.GetPaymentIntentOutcome.NotFound].
+     *
+     * Requires Auth0 bearer auth.
+     */
+    @GET("payment-intents/{paymentIntentID}")
+    suspend fun getPaymentIntent(
+        @Path("paymentIntentID") paymentIntentID: String,
+    ): com.loresuelvo.consumer.data.api.dto.PaymentIntentDto
 }

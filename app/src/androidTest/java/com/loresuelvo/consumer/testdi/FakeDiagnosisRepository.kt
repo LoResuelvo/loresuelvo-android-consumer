@@ -10,7 +10,6 @@ import javax.inject.Singleton
 /**
  * Hilt-friendly fake for the AI diagnostic chat repository. Used
  * by every `@HiltAndroidTest` that uninstalls
- * [com.loresuelvo.consumer.di.RepositoryModule] so the new
  * `DiagnosisRepository` binding is satisfied without dragging in
  * the production Retrofit-typed [com.loresuelvo.consumer.data.api.ApiDiagnosisRepository].
  *

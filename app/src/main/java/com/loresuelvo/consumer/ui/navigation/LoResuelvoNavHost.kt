@@ -41,6 +41,8 @@ fun LoResuelvoNavHost(
     assistant: @Composable () -> Unit,
     misServicios: @Composable () -> Unit,
     workOrder: @Composable (proposalId: String) -> Unit,
+    serviceAgreement: @Composable (NavHostController) -> Unit = {},
+    paymentResult: @Composable (NavHostController, androidx.navigation.NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
     Box(modifier = Modifier.padding(contentPadding)) {
         NavHost(
@@ -111,6 +113,32 @@ fun LoResuelvoNavHost(
                 val proposalId = entry.arguments
                     ?.getString(Route.WorkOrder.ARG_PROPOSAL_ID).orEmpty()
                 workOrder(proposalId)
+            }
+
+            // US-21: Service-agreement confirmation. The host is
+            // responsible for starting the VM's `load(...)` from
+            // the previous screen (the proposal detail bottom
+            // sheet). The route has no args: the VM is keyed on a
+            // single in-flight proposal.
+            composable(Route.ServiceAgreement.path) {
+                serviceAgreement(navController)
+            }
+
+            // US-21 / US-28: post-redirect payment result.
+            //
+            // Mercado Pago returns the consumer to one of the public payment
+            // result URLs. The payment intent is correlated through the
+            // `external_reference` query parameter. The actual payment status
+            // is resolved from the backend, not from the redirect parameters.
+            composable(
+                route = Route.PaymentResult.path,
+                arguments = listOf(
+                    navArgument(Route.ARG_EXTERNAL_REFERENCE) {
+                        type = NavType.StringType
+                    }
+                ),
+            ) { entry ->
+                paymentResult(navController, entry)
             }
         }
     }

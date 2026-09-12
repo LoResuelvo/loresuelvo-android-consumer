@@ -26,6 +26,10 @@ turbine = "1.2.0"
 coroutinesTest = "1.9.0"
 robolectric = "4.13"
 cucumberJvm = "7.20.1"
+# Chrome Custom Tabs (US-21 deposit flow) — opens the Mercado Pago
+# Checkout Pro URL in the user's default browser so the back
+# navigation lands back in our app via the App Link.
+androidx-browser = "1.8.0"
 # Image loading (Coil 3) — Compose-native AsyncImage with built-in
 # memory + disk cache. Used by `ProviderAvatar` to render provider
 # profile photos from `Provider.profilePhotoUrl`.
@@ -76,6 +80,8 @@ cucumber-junit = { group = "io.cucumber", name = "cucumber-junit", version.ref =
 # Image loading (added for provider photos)
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+# Chrome Custom Tabs (US-21 deposit flow)
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "androidx-browser" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

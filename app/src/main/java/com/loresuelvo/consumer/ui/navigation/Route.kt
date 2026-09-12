@@ -111,4 +111,39 @@ sealed class Route(val path: String) {
         const val ARG_PROPOSAL_ID: String = "proposalId"
         fun buildPath(proposalId: String): String = "work-order/$proposalId"
     }
+    /**
+     * US-21 service-agreement confirmation screen. Reached when
+     * the consumer taps the "Confirmar acuerdo" CTA on
+     * [ProposalDetailScreen] (the proposal's bottom sheet). The
+     * route does not carry the `serviceProposalId` because the
+     * host keeps that information in a Hilt-scoped VM keyed off
+     * the [ProposalDetailViewModel] currently driving the sheet.
+     */
+    data object ServiceAgreement : Route("service-agreement")
+
+    /**
+     * US-21 / US-28 payment result screen.
+     *
+     * The screen is entered from the Mercado Pago return URL. The payment
+     * intent ID is provided by the `external_reference` query parameter
+     * of that URL and is resolved from the incoming Android Intent.
+     *
+     * The redirect path (`success`, `pending` or `failure`) is only the
+     * return destination selected by the payment provider. The actual
+     * payment state is always obtained from the backend.
+     */
+    data object PaymentResult : Route(
+        "payment-result?external_reference={external_reference}"
+    ) {
+        fun buildPath(externalReference: String): String =
+            "payment-result?external_reference=${Uri.encode(externalReference)}"
+    }
+
+    companion object {
+        const val PAYMENT_RETURN_SUCCESS_PATH = "/payments/success"
+        const val PAYMENT_RETURN_PENDING_PATH = "/payments/pending"
+        const val PAYMENT_RETURN_FAILURE_PATH = "/payments/failure"
+
+        const val ARG_EXTERNAL_REFERENCE = "external_reference"
+    }
 }

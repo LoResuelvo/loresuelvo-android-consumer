@@ -2,29 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-      Dev-flavor manifest overlay.
+      Production payment App Link.
 
-      DEV uses the public HTTPS tunnel for payment return App Links.
-      The tunnel host is provided through the `paymentReturnHost`
-      manifest placeholder from `app/build.gradle.kts`.
+      Redirect URLs:
+        https://loresuelvo.com.ar/payments/success?external_reference=...
+        https://loresuelvo.com.ar/payments/pending?external_reference=...
+        https://loresuelvo.com.ar/payments/failure?external_reference=...
+
+      The `${paymentReturnHost}` placeholder is populated by
+      `app/build.gradle.kts` for the prod flavor.
     -->
 
-    <application
-        android:networkSecurityConfig="@xml/network_security_config">
+    <application>
 
         <activity
             android:name=".MainActivity"
             android:exported="true">
 
-            <!--
-              US-21 / US-28 DEV App Link.
-
-              Example:
-                https://<ngrok-host>/payments/success?external_reference=...
-
-              Android verifies the host through:
-                https://<ngrok-host>/.well-known/assetlinks.json
-            -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
 

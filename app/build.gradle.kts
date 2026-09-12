@@ -121,6 +121,7 @@ android {
             val auth0Audience = envVar("AUTH0_AUDIENCE", "http://localhost:8080")
             val apiUrl = envVar("API_URL", "http://10.0.2.2:8080")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL")
+            val paymentReturnHost = envVar("PAYMENT_RETURN_HOST", "")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
@@ -128,9 +129,11 @@ android {
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
+            buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
+            manifestPlaceholders["paymentReturnHost"] = paymentReturnHost
         }
 
         create("staging") {
@@ -144,6 +147,7 @@ android {
             val auth0Audience = envVar("AUTH0_AUDIENCE_STAGING")
             val apiUrl = envVar("API_URL_STAGING")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_STAGING")
+            val paymentReturnHost = envVar("PAYMENT_RETURN_HOST_STAGING", "test.loresuelvo.com.ar")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
@@ -151,9 +155,11 @@ android {
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
+            buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
+            manifestPlaceholders["paymentReturnHost"] = paymentReturnHost
         }
 
         create("prod") {
@@ -166,6 +172,7 @@ android {
             val auth0Audience = envVar("AUTH0_AUDIENCE_PROD")
             val apiUrl = envVar("API_URL_PROD")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_PROD")
+            val paymentReturnHost = envVar("PAYMENT_RETURN_HOST_PROD", "loresuelvo.com.ar")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
@@ -173,9 +180,11 @@ android {
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
+            buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
+            manifestPlaceholders["paymentReturnHost"] = paymentReturnHost
         }
     }
 }
@@ -240,6 +249,11 @@ dependencies {
     // Image loading (added for provider photos in Professionals screen)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+
+    // Chrome Custom Tabs (US-21 deposit flow) — opens the Mercado Pago
+    // Checkout Pro URL in the user's default browser so the back
+    // navigation lands back in our app via the App Link.
+    implementation(libs.androidx.browser)
 
     // Hilt (added in Fase 1)
     implementation(libs.hilt.android)

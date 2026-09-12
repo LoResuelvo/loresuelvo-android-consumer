@@ -18,13 +18,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import android.Manifest
 import android.content.pm.PackageManager
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
@@ -46,13 +41,21 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.session.SessionViewModel
+import com.loresuelvo.consumer.ui.payment.PaymentResultRoute
+import com.loresuelvo.consumer.ui.payment.ServiceAgreementRoute
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import com.loresuelvo.consumer.LoresuelvoApp
+import kotlinx.coroutines.flow.collectLatest
+import android.util.Log
 
 /**
  * Composition root for the app. Hosts the navigation graph, the
@@ -80,124 +83,219 @@ import androidx.core.content.ContextCompat
 fun LoResuelvoNav() {
     val navController = androidx.navigation.compose.rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    val navCurrentRoute = backStackEntry?.destination?.route
+    val currentNavRoute = backStackEntry?.destination?.route
 
+    val context = LocalContext.current
+    val app = context.applicationContext as? LoresuelvoApp
+
+    /*
+     * External payment App Links are handled here instead of using
+     * NavController.handleDeepLink(). Android has already delivered
+     * the Intent to MainActivity, so we only translate the external
+     * URL into our internal PaymentResult route.
+     */
+    LaunchedEffect(Unit) {
+        app?.navControllerEvents?.collect { intent ->
+            val uri = intent.data ?: return@collect
+
+            val externalReference =
+                uri.getQueryParameter(Route.ARG_EXTERNAL_REFERENCE)
+
+            val isPaymentReturn = uri.path in setOf(
+                Route.PAYMENT_RETURN_SUCCESS_PATH,
+                Route.PAYMENT_RETURN_PENDING_PATH,
+                Route.PAYMENT_RETURN_FAILURE_PATH,
+            )
+
+            if (!isPaymentReturn || externalReference.isNullOrBlank()) {
+                Log.d(
+                    "APP_LINK",
+                    "Ignoring unsupported deep link: $uri",
+                )
+                return@collect
+            }
+
+            navController.currentBackStackEntryFlow.firstOrNull()
+                ?: return@collect
+
+            navController.navigate(
+                Route.PaymentResult.buildPath(externalReference),
+            ) {
+                launchSingleTop = true
+            }
+
+            Log.d(
+                "APP_LINK",
+                "Navigated to payment result: $externalReference",
+            )
+        }
+    }
+
+    /*
+     * Session routing.
+     *
+     * This router only manages top-level session destinations.
+     * It must never replace deeper routes such as PaymentResult,
+     * ServiceAgreement, Chat, Professionals, or WorkOrder.
+     */
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val sessionState by sessionViewModel.uiState.collectAsState()
 
-    val currentRoute = when {
+    val sessionRoute = when {
         !sessionState.authenticated -> Route.Welcome.path
         !sessionState.profileCompleted -> Route.CompleteProfile.path
         else -> Route.Home.path
     }
 
-    val lastAppliedSessionRoute = androidx.compose.runtime.remember {
-        androidx.compose.runtime.mutableStateOf<String?>(null)
+    val lastAppliedSessionRoute = remember {
+        mutableStateOf<String?>(null)
     }
 
-    androidx.compose.runtime.LaunchedEffect(currentRoute) {
-        // The smart-router waits for the graph to be attached before
-        // deciding whether to navigate. `backStackEntry != null` from
-        // the previous implementation wasn't enough because with
-        // `Scaffold` + `SubcomposeLayout` the NavHost is composed
-        // inside the scaffold's measurement phase, so the
-        // `LaunchedEffect` re-runs triggered by a key change weren't
-        // always observed by the effect body. Subscribing to the
-        // back-stack flow directly is the canonical fix: the flow
-        // only emits once the graph is set.
-        val isGraphReady = navController.currentBackStackEntryFlow
-            .firstOrNull() != null
-        // Only force the smart-router when the derived session route
-        // has actually changed. This avoids bouncing the user back
-        // to Home while they are navigating to deeper routes such as
-        // Professionals or Chat.
-        val currentRouteOnStack = navController.currentDestination?.route
-        if (isGraphReady &&
-            currentRouteOnStack != currentRoute &&
-            lastAppliedSessionRoute.value != currentRoute
-        ) {
-            navController.navigate(currentRoute) {
-                popUpTo(navController.graph.id) { inclusive = true }
+    LaunchedEffect(sessionRoute) {
+        val sessionRoutes = setOf(
+            Route.Welcome.path,
+            Route.CompleteProfile.path,
+            Route.Home.path,
+        )
+
+        val graphReady =
+            navController.currentBackStackEntryFlow.firstOrNull() != null
+
+        if (!graphReady) {
+            return@LaunchedEffect
+        }
+
+        val currentRoute = navController.currentDestination?.route
+
+        if (currentRoute !in sessionRoutes) {
+            return@LaunchedEffect
+        }
+
+        if (lastAppliedSessionRoute.value == sessionRoute) {
+            return@LaunchedEffect
+        }
+
+        if (currentRoute != sessionRoute) {
+            navController.navigate(sessionRoute) {
+                popUpTo(navController.graph.id) {
+                    inclusive = true
+                }
                 launchSingleTop = true
             }
         }
-        lastAppliedSessionRoute.value = currentRoute
+
+        lastAppliedSessionRoute.value = sessionRoute
     }
 
-Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+    ) {
         Scaffold(
-            // 08-UXUI: only consume the nav bar inset for the bottom
-            // nav. The top status-bar inset is left for each screen
-            // to consume individually — the screens with a `topBar`
-            // (Chat, Conversation) need it for their `TopAppBar`,
-            // and the bottom-nav screens (Home, Messages, Assistant,
-            // Professionals, Categories) apply their own
-            // `statusBarsPadding()`. Without this carve-out, screens
-            // with a `topBar` would get a double top inset (the outer
-            // Scaffold consumes the status bar for `contentPadding`,
-            // and the inner Scaffold consumes it again for its own
-            // `topBar`).
             contentWindowInsets = WindowInsets.navigationBars,
-            // Empty `bottomBar = {}` placeholder so [Scaffold] still
-            // consumes the navigation-bar inset for the content
-            // padding (otherwise screens would render behind the
-            // bar). The actual floating bar is rendered outside the
-            // [Scaffold] in the enclosing [Box] — see the [Box]
-            // comment below for the rationale.
             bottomBar = {},
             containerColor = Color.Transparent,
         ) { padding ->
             LoResuelvoNavHost(
                 navController = navController,
-            startDestination = currentRoute,
-            contentPadding = padding,
-            welcome = { WelcomeRoute() },
-            completeProfile = { CompleteProfileRoute(navController = navController) },
-            home = { HomeRoute(navController = navController) },
-            categories = { CategoriesRoute(navController = navController) },
-            professionals = { categoryId, categoryName ->
-                ProfessionalsRoute(navController, categoryId, categoryName)
-            },
-            chat = { conversationId -> ChatRoute(navController = navController, conversationId = conversationId) },
-            conversation = { conversationId ->
-                ConversationRoute(
-                    navController = navController,
-                    conversationId = conversationId,
-                )
-            },
-            messages = { MessagesRoute(navController) },
-            assistant = { AssistantRoute(navController) },
-            misServicios = { MisServiciosRoute(navController = navController) },
-            workOrder = { proposalId ->
-                WorkOrderRoute(
-                    navController = navController,
-                    proposalId = proposalId,
-                )
-            },
-        )
+                startDestination = sessionRoute,
+                contentPadding = padding,
+
+                welcome = {
+                    WelcomeRoute()
+                },
+
+                completeProfile = {
+                    CompleteProfileRoute(navController)
+                },
+
+                home = {
+                    HomeRoute(navController)
+                },
+
+                categories = {
+                    CategoriesRoute(navController)
+                },
+
+                professionals = { categoryId, categoryName ->
+                    ProfessionalsRoute(
+                        navController = navController,
+                        categoryId = categoryId,
+                        categoryName = categoryName,
+                    )
+                },
+
+                chat = { conversationId ->
+                    ChatRoute(
+                        navController = navController,
+                        conversationId = conversationId,
+                    )
+                },
+
+                conversation = { conversationId ->
+                    ConversationRoute(
+                        navController = navController,
+                        conversationId = conversationId,
+                    )
+                },
+
+                messages = {
+                    MessagesRoute(navController)
+                },
+
+                assistant = {
+                    AssistantRoute(navController)
+                },
+
+                misServicios = {
+                    MisServiciosRoute(navController)
+                },
+
+                workOrder = { proposalId ->
+                    WorkOrderRoute(
+                        navController = navController,
+                        proposalId = proposalId,
+                    )
+                },
+
+                serviceAgreement = { nav ->
+                    ServiceAgreementRoute.bind(
+                        navController = nav,
+                        serviceAgreementViewModel = hiltViewModel(),
+                        onReturnHome = {
+                            navController.popBackStack(
+                                Route.Home.path,
+                                inclusive = false,
+                            )
+                        },
+                    )
+                },
+
+                paymentResult = { nav, entry ->
+                    PaymentResultRoute.bind(
+                        navController = nav,
+                        backStackEntry = entry,
+                        onReturnHome = {
+                            navController.popBackStack(
+                                Route.Home.path,
+                                inclusive = false,
+                            )
+                        },
+                    )
+                },
+            )
         }
 
-        // Floating bottom-bar overlay. Renders OUTSIDE the
-        // [Scaffold]'s `bottomBar` slot so the M3 wrapper (which
-        // pins `surfaceContainer` + `tonalElevation` + a divider)
-        // never sits behind the transparent bar (the previous
-        // approach wrapped the slot in `Surface(color =
-        // Color.Transparent)` or `Box(background = Transparent)`,
-        // both of which still leaked the wrapper — verified on the
-        // Pixel 2 device). The Scaffold's `bottomBar = {}` empty
-        // placeholder above preserves the navigation-bar inset
-        // for [contentPadding]; here we layer the visible bar
-        // back on top.
-        if (BottomDestination.shouldShow(navCurrentRoute)) {
+        if (BottomDestination.shouldShow(currentNavRoute)) {
             LoResuelvoBottomBar(
-                currentRoute = navCurrentRoute,
+                currentRoute = currentNavRoute,
                 onNavigate = { destination ->
                     navController.navigate(destination.route) {
-                        if (navController.currentDestination != null) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
+                        popUpTo(
+                            navController.graph.findStartDestination().id,
+                        ) {
+                            saveState = true
                         }
+
                         launchSingleTop = true
                         restoreState = true
                     }

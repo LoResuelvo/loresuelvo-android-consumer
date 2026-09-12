@@ -242,6 +242,44 @@
     <string name="work_order_error_server">No pudimos cargar la orden de trabajo. Reintentá.</string>
     <string name="work_order_error_retry">Reintentar</string>
     <string name="proposal_detail_view_work_order">Ver orden de trabajo</string>
+
+    <!-- US-21: Confirmar acuerdo de servicio (seña). -->
+    <string name="service_agreement_loading">Cargando acuerdo…</string>
+    <string name="service_agreement_description">Descripción del servicio</string>
+    <string name="service_agreement_amount">Precio acordado</string>
+    <string name="service_agreement_scheduled">Fecha y hora</string>
+    <string name="service_agreement_estimated_duration">Duración estimada</string>
+    <string name="service_agreement_deposit">Importe de la seña</string>
+    <string name="service_agreement_readonly_hint">Estos datos son los enviados por el prestador. No se pueden modificar desde la app.</string>
+    <string name="service_agreement_confirm_cta">Confirmar acuerdo</string>
+    <string name="service_agreement_cancel">Cancelar</string>
+    <string name="service_agreement_starting">Procesando confirmación…</string>
+    <string name="service_agreement_redirecting">Abriendo el pago…</string>
+    <string name="service_agreement_confirm_title">¿Confirmás que querés aceptar este acuerdo?</string>
+    <string name="service_agreement_confirm_body">Se va a iniciar el pago de la seña. No vas a poder modificar los términos desde la app.</string>
+    <string name="service_agreement_confirm_yes">Sí, confirmar</string>
+    <string name="service_agreement_confirm_no">No, cancelar</string>
+    <string name="service_agreement_error_network">No pudimos conectarnos. Revisá tu conexión e intentá nuevamente.</string>
+    <string name="service_agreement_error_server">No pudimos confirmar el acuerdo. Intentá nuevamente.</string>
+    <string name="service_agreement_error_retry">Reintentar</string>
+    <string name="service_agreement_error_return_home">Volver al inicio</string>
+    <string name="service_agreement_already_paid">Este acuerdo ya fue confirmado.</string>
+    <string name="service_agreement_return_home">Volver al inicio</string>
+
+    <!-- US-21 / US-28: payment result (post-redirect polling). -->
+    <string name="payment_result_loading">Verificando el pago…</string>
+    <string name="payment_result_processing">El pago está siendo procesado.</string>
+    <string name="payment_result_processing_hint">La consulta continúa hasta confirmar el estado con el banco.</string>
+    <string name="payment_result_approved_title">Pago aprobado</string>
+    <string name="payment_result_approved_body">El acuerdo fue confirmado correctamente. La solicitud refleja que el acuerdo fue aceptado.</string>
+    <string name="payment_result_rejected_title">No pudimos procesar el pago</string>
+    <string name="payment_result_rejected_body">La seña no pudo ser pagada. El acuerdo sigue pendiente. Podés intentar nuevamente.</string>
+    <string name="payment_result_retry">Reintentar pago</string>
+    <string name="payment_result_return_home">Volver al inicio</string>
+    <string name="payment_result_not_found">No encontramos este pago. Volvé a la solicitud para ver el estado actualizado.</string>
+    <string name="payment_result_error_network">No pudimos conectarnos para verificar el pago. Revisá tu conexión e intentá nuevamente.</string>
+    <string name="payment_result_error_server">No pudimos verificar el pago. Intentá nuevamente.</string>
+    <string name="payment_result_error_retry">Reintentar</string>
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">Mis Servicios</string>
     <string name="home_section_mis_servicios_link">Ver todas</string>

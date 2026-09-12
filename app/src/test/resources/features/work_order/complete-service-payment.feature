@@ -32,14 +32,12 @@ Feature: Confirmar acuerdo de servicio
     Then veo un indicador de carga
     And no puedo confirmar nuevamente el acuerdo
 
-  @wip
   Scenario: Iniciar el pago de la seña para confirmar el acuerdo
     Given que tengo un acuerdo de servicio pendiente de confirmación
     And conozco el importe de la seña correspondiente
     When confirmo que quiero aceptar el acuerdo
     Then soy dirigido al proceso de pago de la seña
 
-  @wip
   Scenario: Confirmar el acuerdo cuando la seña fue pagada correctamente
     Given que inicié el pago de la seña de un acuerdo de servicio
     When el pago es aprobado
@@ -47,7 +45,6 @@ Feature: Confirmar acuerdo de servicio
     Then veo un mensaje indicando que el acuerdo fue confirmado correctamente
     And la solicitud de servicio refleja que el acuerdo fue aceptado
 
-  @wip
   Scenario: Informar que la seña no pudo ser pagada
     Given que inicié el pago de la seña de un acuerdo de servicio
     When el pago es rechazado
