@@ -45,10 +45,18 @@ import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
 fun CompleteProfileScreen(
     firstName: String,
     lastName: String,
+    street: String,
+    streetNumber: String,
+    floor: String,
+    unit: String,
     loading: Boolean,
     error: CompleteProfileError?,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
+    onStreetChange: (String) -> Unit,
+    onStreetNumberChange: (String) -> Unit,
+    onFloorChange: (String) -> Unit,
+    onUnitChange: (String) -> Unit,
     onContinueClick: () -> Unit,
     onEvent: (CompleteProfileEvent) -> Unit,
 ) {
@@ -105,9 +113,17 @@ fun CompleteProfileScreen(
             ProfileForm(
                 firstName = firstName,
                 lastName = lastName,
+                street = street,
+                streetNumber = streetNumber,
+                floor = floor,
+                unit = unit,
                 errorMessage = errorMessage,
                 onFirstNameChange = onFirstNameChange,
                 onLastNameChange = onLastNameChange,
+                onStreetChange = onStreetChange,
+                onStreetNumberChange = onStreetNumberChange,
+                onFloorChange = onFloorChange,
+                onUnitChange = onUnitChange,
             )
         }
     }

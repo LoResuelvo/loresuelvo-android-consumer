@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.User
 
 internal fun CurrentUserDto.toDomain(): User = User(
@@ -11,4 +12,12 @@ internal fun CurrentUserDto.toDomain(): User = User(
     firstName = firstName,
     lastName = lastName,
     email = email,
+    address = address?.let {
+        RegisterConsumerAddress(
+            street = it.street,
+            streetNumber = it.streetNumber,
+            floor = it.floor,
+            unit = it.unit,
+        )
+    },
 )

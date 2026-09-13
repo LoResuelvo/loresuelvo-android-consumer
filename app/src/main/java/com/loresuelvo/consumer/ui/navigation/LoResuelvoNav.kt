@@ -354,10 +354,18 @@ private fun CompleteProfileRoute(
     CompleteProfileScreen(
         firstName = state.firstName,
         lastName = state.lastName,
+        street = state.street,
+        streetNumber = state.streetNumber,
+        floor = state.floor,
+        unit = state.unit,
         loading = state.loading,
         error = state.error,
         onFirstNameChange = viewModel::onFirstNameChange,
         onLastNameChange = viewModel::onLastNameChange,
+        onStreetChange = viewModel::onStreetChange,
+        onStreetNumberChange = viewModel::onStreetNumberChange,
+        onFloorChange = viewModel::onFloorChange,
+        onUnitChange = viewModel::onUnitChange,
         onContinueClick = viewModel::onContinueClick,
         onEvent = { /* navigation handled above */ },
     )

@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
@@ -59,6 +60,12 @@ class ApiUserRepositoryIntegrationTest {
                 firstName = "Ana",
                 lastName = "Perez",
                 email = "ana@example.com",
+                address = RegisterConsumerAddress(
+                    street = "Tucuman",
+                    streetNumber = "123",
+                    floor = "1",
+                    unit = "A"
+                )
             ),
             accessToken = "test-token",
         )
@@ -157,6 +164,7 @@ class ApiUserRepositoryIntegrationTest {
             email = "ana@example.com",
             firstName = "Ana",
             lastName = "Perez",
+            address = RegisterConsumerAddress("Tucuman", "123", "1", "A"),
         )
 
         val outcome = repository.registerConsumer(data)
@@ -190,7 +198,7 @@ class ApiUserRepositoryIntegrationTest {
         )
 
         val outcome = repository.registerConsumer(
-            RegisterConsumerData("a@x.com", "A", "B")
+            RegisterConsumerData("a@x.com", "A", "B", RegisterConsumerAddress("Tucuman", "123", "1", "A"))
         )
 
         assertTrue(outcome is UserRegistrationOutcome.Failure)
@@ -209,7 +217,12 @@ class ApiUserRepositoryIntegrationTest {
         )
 
         val outcome = repository.registerConsumer(
-            RegisterConsumerData("dup@x.com", "X", "Y")
+            RegisterConsumerData(
+                "dup@x.com",
+                "X",
+                "Y",
+                RegisterConsumerAddress("Tucuman", "123", "1", "A"),
+            )
         )
 
         assertTrue(outcome is UserRegistrationOutcome.Failure)
@@ -228,7 +241,7 @@ class ApiUserRepositoryIntegrationTest {
         )
 
         val outcome = repository.registerConsumer(
-            RegisterConsumerData("a@x.com", "A", "B")
+            RegisterConsumerData("a@x.com", "A", "B", RegisterConsumerAddress("Tucuman", "123", "1", "A"))
         )
 
         assertTrue(outcome is UserRegistrationOutcome.Failure)
@@ -246,7 +259,7 @@ class ApiUserRepositoryIntegrationTest {
         )
 
         val outcome = repository.registerConsumer(
-            RegisterConsumerData("a@x.com", "A", "B")
+            RegisterConsumerData("a@x.com", "A", "B", RegisterConsumerAddress("Tucuman", "123", "1", "A"))
         )
 
         assertTrue(outcome is UserRegistrationOutcome.Failure)
@@ -264,7 +277,7 @@ class ApiUserRepositoryIntegrationTest {
         )
 
         val outcome = repository.registerConsumer(
-            RegisterConsumerData("a@x.com", "A", "B")
+            RegisterConsumerData("a@x.com", "A", "B", RegisterConsumerAddress("Tucuman", "123", "1", "A"))
         )
 
         assertTrue(outcome is UserRegistrationOutcome.Failure)
@@ -281,7 +294,7 @@ class ApiUserRepositoryIntegrationTest {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
         val outcome = repository.registerConsumer(
-            RegisterConsumerData("a@x.com", "A", "B")
+            RegisterConsumerData("a@x.com", "A", "B", RegisterConsumerAddress("Tucuman", "123", "1", "A"))
         )
 
         assertTrue("outcome must be Failure.Network", outcome is UserRegistrationOutcome.Failure.Network)

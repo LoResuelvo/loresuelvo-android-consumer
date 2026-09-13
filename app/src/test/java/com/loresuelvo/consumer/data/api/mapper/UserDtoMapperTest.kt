@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
+import com.loresuelvo.consumer.data.api.dto.RegisterConsumerAddressDto
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -19,6 +21,12 @@ class UserDtoMapperTest {
             email = "ana@example.com",
             firstName = "Ana",
             lastName = "Perez",
+            address = RegisterConsumerAddress(
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
+            )
         )
         val dto = data.toDto()
         assertEquals("ana@example.com", dto.email)
@@ -34,6 +42,12 @@ class UserDtoMapperTest {
             email = "a@x.com",
             firstName = "",
             lastName = "",
+            address = RegisterConsumerAddress(
+                street = "",
+                streetNumber = "",
+                floor = "",
+                unit = "",
+            )
         )
         val dto = data.toDto()
         assertEquals("", dto.firstName)
@@ -51,11 +65,17 @@ class UserDtoMapperTest {
             email = "x",
             firstName = "X",
             surname = "Y",
+            address = RegisterConsumerAddressDto(
+                street = "S",
+                streetNumber = "N",
+                floor = "F",
+                unit = "U",
+            )
         )
         val json = kotlinx.serialization.json.Json
         val encoded = json.encodeToString(RegisterConsumerRequestDto.serializer(), dto)
         assertEquals(
-            """{"email":"x","name":"X","surname":"Y"}""",
+            """{"email":"x","name":"X","surname":"Y","address":{"street":"S","street_number":"N","floor":"F","unit":"U"}}""",
             encoded,
         )
     }

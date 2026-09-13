@@ -23,6 +23,7 @@ import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRepository
@@ -99,6 +100,12 @@ class SendMediaInstrumentedTest {
                         firstName = "Matias",
                         lastName = "Consumer",
                         email = "matias@example.com",
+                        address = RegisterConsumerAddress(
+                            street = "Calle Falsa",
+                            streetNumber = "123",
+                            floor = "2",
+                            unit = "A",
+                        ),
                     ),
                     accessToken = "fake-token",
                 ),
@@ -307,6 +314,12 @@ class SendMediaInstrumentedTest {
                     firstName = "Matias",
                     lastName = "Consumer",
                     email = "matias@example.com",
+                    address = RegisterConsumerAddress(
+                        street = "Calle Falsa",
+                        streetNumber = "123",
+                        floor = "2",
+                        unit = "A",
+                    ),
                 ),
             )
 

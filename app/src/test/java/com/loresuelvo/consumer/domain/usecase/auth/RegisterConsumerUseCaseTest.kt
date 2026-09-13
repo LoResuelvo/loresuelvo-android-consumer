@@ -44,7 +44,7 @@ class RegisterConsumerUseCaseTest {
     fun returns_Unauthorized_when_no_active_session() = runTest {
         every { sessionStore.getSession() } returns null
 
-        val outcome = useCase(RegisterConsumerCommand("Andres", "Colina"))
+        val outcome = useCase(RegisterConsumerCommand("Andres", "Colina", "Tucuman", "123", "1", "A"))
 
         assertTrue(outcome is UserRegistrationOutcome.Failure.Unauthorized)
         val failure = outcome as UserRegistrationOutcome.Failure.Unauthorized
@@ -57,7 +57,7 @@ class RegisterConsumerUseCaseTest {
     fun returns_Server_when_session_email_is_null() = runTest {
         every { sessionStore.getSession() } returns sessionWithEmail(email = null)
 
-        val outcome = useCase(RegisterConsumerCommand("Andres", "Colina"))
+        val outcome = useCase(RegisterConsumerCommand("Andres", "Colina", "Tucuman", "123", "1", "A"))
 
         assertTrue(outcome is UserRegistrationOutcome.Failure.Server)
         val failure = outcome as UserRegistrationOutcome.Failure.Server
@@ -79,7 +79,7 @@ class RegisterConsumerUseCaseTest {
             )
         )
 
-        val outcome = useCase(RegisterConsumerCommand("  Andres  ", "  Colina  "))
+        val outcome = useCase(RegisterConsumerCommand("  Andres  ", "  Colina  ", "Tucuman", "123", "1", "A"))
 
         assertTrue(outcome is UserRegistrationOutcome.Success)
         val dataSlot = slot<RegisterConsumerData>()
@@ -103,7 +103,7 @@ class RegisterConsumerUseCaseTest {
         coEvery { userRepository.registerConsumer(any()) } returns
             UserRegistrationOutcome.Failure.Network(IOException("dns error"))
 
-        val outcome = useCase(RegisterConsumerCommand("A", "B"))
+        val outcome = useCase(RegisterConsumerCommand("A", "B", "Tucuman", "123", "1", "A"))
 
         assertTrue(outcome is UserRegistrationOutcome.Failure.Network)
         verify(exactly = 0) { sessionStore.saveSession(any()) }
@@ -115,7 +115,7 @@ class RegisterConsumerUseCaseTest {
         coEvery { userRepository.registerConsumer(any()) } returns
             UserRegistrationOutcome.Failure.Server(code = 409, message = "Email is already registered")
 
-        val outcome = useCase(RegisterConsumerCommand("A", "B"))
+        val outcome = useCase(RegisterConsumerCommand("A", "B", "Tucuman", "123", "1", "A"))
 
         assertTrue(outcome is UserRegistrationOutcome.Failure.Server)
         val failure = outcome as UserRegistrationOutcome.Failure.Server
@@ -130,7 +130,7 @@ class RegisterConsumerUseCaseTest {
         coEvery { userRepository.registerConsumer(any()) } returns
             UserRegistrationOutcome.Failure.Unauthorized("Token expired")
 
-        val outcome = useCase(RegisterConsumerCommand("A", "B"))
+        val outcome = useCase(RegisterConsumerCommand("A", "B", "Tucuman", "123", "1", "A"))
 
         assertTrue(outcome is UserRegistrationOutcome.Failure.Unauthorized)
         val failure = outcome as UserRegistrationOutcome.Failure.Unauthorized

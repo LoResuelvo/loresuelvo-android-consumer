@@ -16,6 +16,10 @@ package com.loresuelvo.consumer.ui.screens.profile
 data class CompleteProfileUiState(
     val firstName: String = "",
     val lastName: String = "",
+    val street: String = "",
+    val streetNumber: String = "",
+    val floor: String = "",
+    val unit: String = "",
     val loading: Boolean = false,
     val error: CompleteProfileError? = null,
 )
@@ -29,11 +33,12 @@ data class CompleteProfileUiState(
 sealed interface CompleteProfileError {
     data object MissingFirstName : CompleteProfileError
     data object MissingLastName : CompleteProfileError
+    data object MissingStreet : CompleteProfileError
+    data object MissingStreetNumber : CompleteProfileError
     data class Network(val message: String) : CompleteProfileError
     data class Server(val code: Int, val message: String) : CompleteProfileError
     data class Unauthorized(val message: String) : CompleteProfileError
 }
-
 /**
  * One-shot events emitted by [CompleteProfileViewModel]. Distinct
  * from the [CompleteProfileUiState] so the screen can react to

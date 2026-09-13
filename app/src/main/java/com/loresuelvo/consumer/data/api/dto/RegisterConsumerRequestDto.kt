@@ -21,4 +21,5 @@ data class RegisterConsumerRequestDto(
     @SerialName("email") val email: String,
     @SerialName("name") val firstName: String,
     @SerialName("surname") val surname: String,
+    @SerialName("address") val address: RegisterConsumerAddressDto,
 )

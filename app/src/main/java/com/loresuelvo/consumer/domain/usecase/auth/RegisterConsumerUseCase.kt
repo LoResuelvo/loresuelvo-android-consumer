@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -42,6 +43,12 @@ class RegisterConsumerUseCase @Inject constructor(
             email = email,
             firstName = command.firstName.trim(),
             lastName = command.lastName.trim(),
+            address = RegisterConsumerAddress(
+                street = command.street.trim(),
+                streetNumber = command.streetNumber.trim(),
+                floor = command.floor.trim(),
+                unit = command.unit.trim(),
+            ),
         )
 
         val outcome = userRepository.registerConsumer(data)

@@ -87,6 +87,10 @@ class CucumberWorld : AutoCloseable {
             RegisterConsumerUseCase(userRepo, sessionStore),
             sessionStore,
         )
+        viewModel.onStreetChange("Calle Falsa")
+        viewModel.onStreetNumberChange("123")
+        viewModel.onFloorChange("1")
+        viewModel.onUnitChange("A")
 
         // UNDISPATCHED so the collector receives the initial state
         // synchronously on `startScenario`'s call stack.

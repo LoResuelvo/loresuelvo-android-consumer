@@ -36,6 +36,12 @@ class SyncAuthenticatedSessionUseCaseTest {
             firstName = "Ana",
             lastName = "Perez",
             email = "ana@example.com",
+            address = com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress(
+                street = "Calle Falsa",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
+            ),
         )
         coEvery { repository.getCurrentUser() } returns CurrentUserOutcome.Success(persistedUser)
 

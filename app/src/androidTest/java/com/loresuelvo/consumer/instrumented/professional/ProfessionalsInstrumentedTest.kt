@@ -22,6 +22,7 @@ import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
@@ -106,6 +107,12 @@ class ProfessionalsInstrumentedTest {
                         firstName = "Test",
                         lastName = "User",
                         email = "test@example.com",
+                        address = RegisterConsumerAddress(
+                            street = "Calle Falsa",
+                            streetNumber = "123",
+                            floor = "2",
+                            unit = "A",
+                        ),
                     ),
                     accessToken = "test-token",
                 ),
@@ -230,6 +237,12 @@ class ProfessionalsInstrumentedTest {
                     firstName = "Test",
                     lastName = "User",
                     email = "test@example.com",
+                    address = RegisterConsumerAddress(
+                        street = "Calle Falsa",
+                        streetNumber = "123",
+                        floor = "2",
+                        unit = "A",
+                    ),
                 ),
             )
 
@@ -241,6 +254,12 @@ class ProfessionalsInstrumentedTest {
                 firstName = "Test",
                 lastName = "User",
                 email = "test@example.com",
+                address = RegisterConsumerAddress(
+                    street = "Calle Falsa",
+                    streetNumber = "123",
+                    floor = "2",
+                    unit = "A",
+                ),
             ),
         )
     }

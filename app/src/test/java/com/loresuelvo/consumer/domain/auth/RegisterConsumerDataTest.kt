@@ -19,6 +19,12 @@ class RegisterConsumerDataTest {
             email = "ana@example.com",
             firstName = "Ana",
             lastName = "Perez",
+            address = RegisterConsumerAddress(
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
+            )
         )
         assertEquals("ana@example.com", data.email)
         assertEquals("Ana", data.firstName)
@@ -27,7 +33,7 @@ class RegisterConsumerDataTest {
 
     @Test
     fun copy_preserves_immutability() {
-        val original = RegisterConsumerData("a@x.com", "A", "B")
+        val original = RegisterConsumerData("a@x.com", "A", "B", address = RegisterConsumerAddress("Street", "123", "1", "A"))
         val copy = original.copy(firstName = "C")
         assertEquals("A", original.firstName)
         assertEquals("C", copy.firstName)

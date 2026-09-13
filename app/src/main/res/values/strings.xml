@@ -47,11 +47,16 @@
     <string name="complete_profile_field_last_name">Apellido</string>
     <string name="complete_profile_button_continue">Continuar</string>
     <string name="complete_profile_footer">Tu nombre será visible para los profesionales que acepten tus solicitudes.</string>
-
+    <string name="complete_profile_field_street">Calle</string>
+    <string name="complete_profile_field_street_number">Número</string>
+    <string name="complete_profile_field_floor">Piso (opcional)</string>
+    <string name="complete_profile_field_unit">Unidad (opcional)</string>
     <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">El nombre es obligatorio</string>
     <string name="complete_profile_error_missing_last_name">El apellido es obligatorio</string>
     <string name="complete_profile_error_network">No pudimos contactar al servidor. Revisá tu conexión e intentá de nuevo.</string>
+    <string name="complete_profile_error_missing_street">La calle es obligatoria</string>
+    <string name="complete_profile_error_missing_street_number">El número es obligatorio</string>
     <!-- Generic server error: %1$s is the HTTP code, %2$s is the message. -->
     <string name="complete_profile_error_server">No pudimos completar el registro (%1$d). %2$s</string>
     <!-- Unauthorized: %1$s is the message from the server. -->

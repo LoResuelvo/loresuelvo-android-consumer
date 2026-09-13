@@ -45,7 +45,7 @@ class Auth0CredentialsMapperTest {
         assertEquals("Colina", session.user.lastName)
         assertEquals("andy@pro.com", session.user.email)
 
-        assertTrue(session.user.isProfileComplete())
+        assertFalse(session.user.isProfileComplete())
     }
 
     @Test

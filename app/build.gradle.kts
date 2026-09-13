@@ -15,12 +15,10 @@ plugins {
     id("com.google.devtools.ksp")
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.navigation.safeargs)
-    // Fix: Hilt 2.50 + KSP 2.0.21-1.0.28 incompatibility. KAPT is used
-    // for the Hilt annotation processor instead of KSP, even though
-    // the KSP plugin is applied. The combination works because Hilt's
-    // processor runs through KAPT (kapt configuration) while KSP is
-    // used for kotlinx-serialization and any future code generators.
-    id("org.jetbrains.kotlin.kapt")
+    // Hilt 2.50 supports Kotlin 2.0 when the compiler runs through KSP.
+    // Keep KSP for annotation processing and avoid the Kotlin 2.0 KAPT
+    // incompatibility that triggers the generic "Could not load module"
+    // failure during `kaptGenerateStubs*`.
 }
 
 // ==========================================
@@ -258,7 +256,7 @@ dependencies {
     // Hilt (added in Fase 1)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
-    kapt(libs.hilt.android.compiler)
+    ksp(libs.hilt.android.compiler)
 
     // Networking (added in Fase 1)
     implementation(libs.retrofit)
@@ -289,7 +287,7 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     // Hilt testing (added in Fase 1)
     androidTestImplementation(libs.hilt.android.testing)
-    kaptAndroidTest(libs.hilt.android.compiler)
+    kspAndroidTest(libs.hilt.android.compiler)
 
     // Debugging (Previews y Manifest para tests)
     debugImplementation(libs.androidx.compose.ui.tooling)

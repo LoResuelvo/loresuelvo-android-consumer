@@ -72,6 +72,10 @@ class CompleteProfileViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { sessionStore.sessionFlow } returns MutableStateFlow(sessionWith())
         viewModel = CompleteProfileViewModel(useCase, sessionStore)
+        viewModel.onStreetChange("Calle Falsa")
+        viewModel.onStreetNumberChange("123")
+        viewModel.onFloorChange("1")
+        viewModel.onUnitChange("A")
     }
 
     @After

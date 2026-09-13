@@ -33,9 +33,17 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
 fun ProfileForm(
     firstName: String,
     lastName: String,
+    street: String,
+    streetNumber: String,
+    floor: String,
+    unit: String,
     errorMessage: String?,
     onFirstNameChange: (String) -> Unit,
     onLastNameChange: (String) -> Unit,
+    onStreetChange: (String) -> Unit,
+    onStreetNumberChange: (String) -> Unit,
+    onFloorChange: (String) -> Unit,
+    onUnitChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -71,6 +79,42 @@ fun ProfileForm(
                 onValueChange = onLastNameChange,
                 testTag = "last-name",
             )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            PrimaryTextField(
+                value = street,
+                label = stringResource(R.string.complete_profile_field_street),
+                onValueChange = onStreetChange,
+                testTag = "street",
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            PrimaryTextField(
+                value = streetNumber,
+                label = stringResource(R.string.complete_profile_field_street_number),
+                onValueChange = onStreetNumberChange,
+                testTag = "street-number",
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            PrimaryTextField(
+                value = floor,
+                label = stringResource(R.string.complete_profile_field_floor),
+                onValueChange = onFloorChange,
+                testTag = "floor",
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            PrimaryTextField(
+                value = unit,
+                label = stringResource(R.string.complete_profile_field_unit),
+                onValueChange = onUnitChange,
+                testTag = "unit",
+            )
         }
     }
 }
@@ -93,4 +137,8 @@ internal fun errorToMessage(error: CompleteProfileError): String = when (error) 
         stringResource(R.string.complete_profile_error_server, error.code, error.message)
     is CompleteProfileError.Unauthorized ->
         stringResource(R.string.complete_profile_error_unauthorized, error.message)
+    is CompleteProfileError.MissingStreet ->
+        stringResource(R.string.complete_profile_error_missing_street)
+    is CompleteProfileError.MissingStreetNumber ->
+        stringResource(R.string.complete_profile_error_missing_street_number)
 }

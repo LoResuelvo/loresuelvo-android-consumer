@@ -63,7 +63,18 @@ class AuthenticationSessionWorld : AutoCloseable {
 
     fun configureCompleteBackendProfile() {
         userRepository.currentUserOutcome = CurrentUserOutcome.Success(
-            User("Ana Perez", "Ana", "Perez", "ana@example.com"),
+            User(
+                displayName = "Ana Perez",
+                firstName = "Ana",
+                lastName = "Perez",
+                email = "ana@example.com",
+                address = com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress(
+                    street = "Calle Falsa",
+                    streetNumber = "123",
+                    floor = "1",
+                    unit = "A",
+                ),
+            ),
         )
     }
 

@@ -47,6 +47,10 @@
     <string name="complete_profile_field_last_name">Last name</string>
     <string name="complete_profile_button_continue">Continue</string>
     <string name="complete_profile_footer">Your name will be visible to the professionals who accept your requests.</string>
+    <string name="complete_profile_field_street">Street</string>
+    <string name="complete_profile_field_street_number">Street number</string>
+    <string name="complete_profile_field_floor">Floor (optional)</string>
+    <string name="complete_profile_field_unit">Unit (optional)</string>
 
     <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">First name is required</string>
@@ -54,6 +58,9 @@
     <string name="complete_profile_error_network">We could not reach the server. Check your connection and try again.</string>
     <string name="complete_profile_error_server">We could not complete the registration (%1$d). %2$s</string>
     <string name="complete_profile_error_unauthorized">Your session expired. Please sign in again. (%1$s)</string>
+    <string name="complete_profile_error_missing_street">Street is required</string>
+    <string name="complete_profile_error_missing_street_number">Street number is required</string>
+
     <!-- Providers screen -->
     <string name="professionals_empty_title">No professionals in %1$s</string>
     <string name="professionals_empty_body">There are no pros available in this category yet. Try another one.</string>

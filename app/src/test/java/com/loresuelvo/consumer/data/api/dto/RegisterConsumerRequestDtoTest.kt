@@ -26,21 +26,29 @@ class RegisterConsumerRequestDtoTest {
             email = "ana@example.com",
             firstName = "Ana",
             surname = "Perez",
+            address = RegisterConsumerAddressDto(
+                street = "Street",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A"
+            )
         )
         val encoded = json.encodeToString(RegisterConsumerRequestDto.serializer(), dto)
         assertEquals(
-            """{"email":"ana@example.com","name":"Ana","surname":"Perez"}""",
+            """{"email":"ana@example.com","name":"Ana","surname":"Perez","address":{"street":"Street","street_number":"123","floor":"1","unit":"A"}}""",
             encoded,
         )
     }
 
     @Test
     fun deserializes_from_snake_case_payload() {
-        val payload = """{"email":"a@x.com","name":"A","surname":"B"}"""
+        val payload = """{"email":"a@x.com","name":"A","surname":"B","address":{"street":"Street","street_number":"123","floor":"1","unit":"A"}}"""
         val decoded = json.decodeFromString(RegisterConsumerRequestDto.serializer(), payload)
         assertEquals("a@x.com", decoded.email)
         assertEquals("A", decoded.firstName)
         assertEquals("B", decoded.surname)
+        assertEquals("Street", decoded.address.street)
+        assertEquals("123", decoded.address.streetNumber)
     }
 
     @Test
@@ -49,6 +57,12 @@ class RegisterConsumerRequestDtoTest {
             email = "x@y.com",
             firstName = "X",
             surname = "Y",
+            address = RegisterConsumerAddressDto(
+                street = "Street",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A"
+            )
         )
         val encoded = json.encodeToString(RegisterConsumerRequestDto.serializer(), original)
         val decoded = json.decodeFromString(RegisterConsumerRequestDto.serializer(), encoded)
@@ -57,9 +71,10 @@ class RegisterConsumerRequestDtoTest {
 
     @Test
     fun accepts_payload_with_extra_unknown_keys() {
-        val payload = """{"email":"a@x.com","name":"A","surname":"B","future_field":"ignored"}"""
+        val payload = """{"email":"a@x.com","name":"A","surname":"B","address":{"street":"Street","street_number":"123","floor":"1","unit":"A"},"future_field":"ignored"}"""
         val decoded = json.decodeFromString(RegisterConsumerRequestDto.serializer(), payload)
         assertEquals("a@x.com", decoded.email)
         assertTrue(decoded.firstName.isNotEmpty())
+        assertEquals("Street", decoded.address.street)
     }
 }

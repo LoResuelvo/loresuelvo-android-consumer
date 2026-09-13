@@ -41,11 +41,19 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "",
                 lastName = "",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "",
+                unit = "",
                 loading = false,
                 error = null,
                 onFirstNameChange = {},
                 onLastNameChange = {},
                 onContinueClick = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onEvent = {},
             )
         }
@@ -68,11 +76,19 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "",
                 lastName = "Colina",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
                 loading = false,
                 error = CompleteProfileError.MissingFirstName,
                 onFirstNameChange = {},
                 onLastNameChange = {},
                 onContinueClick = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onEvent = {},
             )
         }
@@ -88,10 +104,18 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "Andres",
                 lastName = "",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
                 loading = false,
                 error = CompleteProfileError.MissingLastName,
                 onFirstNameChange = {},
                 onLastNameChange = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onContinueClick = {},
                 onEvent = {},
             )
@@ -108,6 +132,10 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "Andres",
                 lastName = "Colina",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
                 loading = false,
                 error = CompleteProfileError.Server(
                     code = 409,
@@ -115,6 +143,10 @@ class CompleteProfileScreenTest {
                 ),
                 onFirstNameChange = {},
                 onLastNameChange = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onContinueClick = {},
                 onEvent = {},
             )
@@ -133,11 +165,19 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "Andres",
                 lastName = "Colina",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
                 loading = true,
                 error = null,
                 onFirstNameChange = {},
                 onLastNameChange = {},
                 onContinueClick = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onEvent = {},
             )
         }
@@ -155,11 +195,19 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "Andres",
                 lastName = "Colina",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
                 loading = false,
                 error = null,
                 onFirstNameChange = {},
                 onLastNameChange = {},
                 onContinueClick = { clicked += 1 },
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onEvent = {},
             )
         }
@@ -178,11 +226,19 @@ class CompleteProfileScreenTest {
             CompleteProfileScreen(
                 firstName = "",
                 lastName = "",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "1",
+                unit = "A",
                 loading = false,
                 error = null,
                 onFirstNameChange = { captured = it },
                 onLastNameChange = {},
                 onContinueClick = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
                 onEvent = {},
             )
         }
@@ -192,5 +248,163 @@ class CompleteProfileScreenTest {
             .performTextInput("Andres")
 
         assert(captured == "Andres")
+    }
+
+    @Test
+    fun displays_address_fields() {
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "Andres",
+                lastName = "Colina",
+                street = "Tucuman",
+                streetNumber = "123",
+                floor = "",
+                unit = "",
+                loading = false,
+                error = null,
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
+                onContinueClick = {},
+                onEvent = {},
+            )
+        }
+
+        composeTestRule.onNodeWithText("Calle").assertExists()
+        composeTestRule.onNodeWithText("Número").assertExists()
+        composeTestRule.onNodeWithText("Piso (opcional)").assertExists()
+        composeTestRule.onNodeWithText("Unidad (opcional)").assertExists()
+    }
+
+    @Test
+    fun typing_in_street_invokes_callback() {
+        var captured = ""
+
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                street = "",
+                streetNumber = "",
+                floor = "",
+                unit = "",
+                loading = false,
+                error = null,
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onStreetChange = { captured = it },
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = {},
+                onContinueClick = {},
+                onEvent = {},
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag("street")
+            .performTextInput("Avellaneda")
+
+        assert(captured == "Avellaneda")
+    }
+
+    @Test
+    fun typing_in_street_number_invokes_callback() {
+        var captured = ""
+
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                street = "",
+                streetNumber = "",
+                floor = "",
+                unit = "",
+                loading = false,
+                error = null,
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onStreetChange = {},
+                onStreetNumberChange = { captured = it },
+                onFloorChange = {},
+                onUnitChange = {},
+                onContinueClick = {},
+                onEvent = {},
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag("street-number")
+            .performTextInput("456")
+
+        assert(captured == "456")
+    }
+
+    @Test   
+    fun typing_in_floor_invokes_callback() {
+        var captured = ""
+
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                street = "",
+                streetNumber = "",
+                floor = "",
+                unit = "",
+                loading = false,
+                error = null,
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = { captured = it },
+                onUnitChange = {},
+                onContinueClick = {},
+                onEvent = {},
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag("floor")
+            .performTextInput("2")
+
+        assert(captured == "2")
+    }
+
+    @Test
+    fun typing_in_unit_invokes_callback() {
+        var captured = ""
+
+        composeTestRule.setContent {
+            CompleteProfileScreen(
+                firstName = "",
+                lastName = "",
+                street = "",
+                streetNumber = "",
+                floor = "",
+                unit = "",
+                loading = false,
+                error = null,
+                onFirstNameChange = {},
+                onLastNameChange = {},
+                onStreetChange = {},
+                onStreetNumberChange = {},
+                onFloorChange = {},
+                onUnitChange = { captured = it },
+                onContinueClick = {},
+                onEvent = {},
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag("unit")
+            .performTextInput("B")
+
+     
+            assert(captured == "B")
     }
 }

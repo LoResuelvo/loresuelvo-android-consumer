@@ -60,6 +60,22 @@ class CompleteProfileViewModel @Inject constructor(
         _uiState.update { it.copy(lastName = value, error = null) }
     }
 
+    fun onStreetChange(value: String) {
+        _uiState.update { it.copy(street = value, error = null) }
+    }
+
+    fun onStreetNumberChange(value: String) {
+        _uiState.update { it.copy(streetNumber = value, error = null) }
+    }
+
+    fun onFloorChange(value: String) {
+        _uiState.update { it.copy(floor = value, error = null) }
+    }
+
+    fun onUnitChange(value: String) {
+        _uiState.update { it.copy(unit = value, error = null) }
+    }
+
     fun onContinueClick() {
         val state = _uiState.value
         when {
@@ -69,6 +85,14 @@ class CompleteProfileViewModel @Inject constructor(
             }
             state.lastName.isBlank() -> {
                 _uiState.update { it.copy(error = CompleteProfileError.MissingLastName) }
+                return
+            }
+            state.street.isBlank() -> {
+                _uiState.update { it.copy(error = CompleteProfileError.MissingStreet) }
+                return
+            }
+            state.streetNumber.isBlank() -> {
+                _uiState.update { it.copy(error = CompleteProfileError.MissingStreetNumber) }
                 return
             }
         }
@@ -85,6 +109,10 @@ class CompleteProfileViewModel @Inject constructor(
                 RegisterConsumerCommand(
                     firstName = state.firstName,
                     lastName = state.lastName,
+                    street = state.street,
+                    streetNumber = state.streetNumber,
+                    floor = state.floor,
+                    unit = state.unit,
                 )
             )
             when (outcome) {

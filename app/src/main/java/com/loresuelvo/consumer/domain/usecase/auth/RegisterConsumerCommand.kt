@@ -10,4 +10,8 @@ package com.loresuelvo.consumer.domain.usecase.auth
 data class RegisterConsumerCommand(
     val firstName: String,
     val lastName: String,
+    val street: String,
+    val streetNumber: String,
+    val floor: String,
+    val unit: String,
 )

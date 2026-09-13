@@ -28,6 +28,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.data.auth.SessionStoreModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import dagger.hilt.EntryPoint
@@ -202,7 +203,13 @@ class RegisterWithAuth0InstrumentedTest {
                         displayName = "Andres",
                         firstName = "Andres",
                         lastName = "Colina",
-                        email = "andy@pro.com"
+                        email = "andy@pro.com",
+                        address = RegisterConsumerAddress(
+                            street = "Calle Falsa",
+                            streetNumber = "123",
+                            floor = "2",
+                            unit = "A",
+                        ),
                     ),
                     accessToken = "fake-token"
                 )
