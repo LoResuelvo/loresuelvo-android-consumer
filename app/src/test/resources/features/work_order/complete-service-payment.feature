@@ -4,7 +4,6 @@ Feature: Confirmar acuerdo de servicio
   quiero ver y confirmar en la app el acuerdo del servicio enviado por el prestador
   para aceptar los términos pactados y avanzar con la contratación
 
-  @wip
   Scenario: Visualizar el acuerdo enviado por el prestador
     Given que tengo un acuerdo de servicio enviado por un prestador
     When consulto el acuerdo
