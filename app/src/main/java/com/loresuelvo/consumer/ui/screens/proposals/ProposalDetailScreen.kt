@@ -36,23 +36,6 @@ import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
-/**
- * Modal bottom sheet that renders the full [ServiceProposal]
- * (US-54 scenario 08-VSP). Mounted as the detail surface that
- * `ProposalCard` opens from the Home dashboard or from
- * MisServicios. Stateless: every visible value is sourced from
- * [ProposalDetailUiState] and the only user action (the "Ver
- * conversación" CTA) is delegated via [onViewConversation].
- *
- * State rendering:
- *  - [ProposalDetailUiState.Loading] → centred spinner.
- *  - [ProposalDetailUiState.Ready] → full proposal layout (foto +
- *    nombre + rubro + monto + fecha + descripción + estado + CTA).
- *  - [ProposalDetailUiState.Error] → typed copy + retry button.
- *
- * The CTA is hidden when `proposal.conversationId == null` so the
- * screen never offers a navigation that would later crash.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProposalDetailScreen(
@@ -60,32 +43,50 @@ fun ProposalDetailScreen(
     onRetry: () -> Unit,
     onViewConversation: (conversationId: String) -> Unit,
     onDismiss: () -> Unit,
-    onViewWorkOrder: (proposalId: String) -> Unit = {},
+    onPayNow: (proposalId: String) -> Unit = {},
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         modifier = Modifier.testTag(PROPOSAL_DETAIL_SHEET_TAG),
     ) {
-        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
             when (state) {
                 is ProposalDetailUiState.Idle -> {
-                    // Defensive no-op: the [ProposalDetailBottomSheet]
-                    // gate already hides the sheet for `Idle`, so
-                    // this branch should be unreachable. Keep it
-                    // explicit so the `when` stays exhaustive.
+                    // Defensive no-op.
                 }
-                is ProposalDetailUiState.Loading -> LoadingState()
-                is ProposalDetailUiState.Ready -> ReadyState(
-                    proposal = state.proposal,
-                    onViewConversation = { onViewConversation(state.proposal.conversationId ?: "") },
-                    onViewWorkOrder = { onViewWorkOrder(state.proposal.id) },
-                )
-                is ProposalDetailUiState.Error -> ErrorState(
-                    failure = state.failure,
-                    onRetry = onRetry,
-                )
+
+                is ProposalDetailUiState.Loading -> {
+                    LoadingState()
+                }
+
+                is ProposalDetailUiState.Ready -> {
+                    ReadyState(
+                        proposal = state.proposal,
+                        onViewConversation = {
+                            onViewConversation(
+                                state.proposal.conversationId ?: "",
+                            )
+                        },
+                        onPayNow = {
+                            onPayNow(state.proposal.id)
+                        },
+                    )
+                }
+
+                is ProposalDetailUiState.Error -> {
+                    ErrorState(
+                        failure = state.failure,
+                        onRetry = onRetry,
+                    )
+                }
             }
         }
     }
@@ -103,6 +104,7 @@ private fun LoadingState() {
         CircularProgressIndicator(
             modifier = Modifier.testTag(PROPOSAL_DETAIL_LOADING_TAG),
         )
+
         Text(
             text = stringResource(R.string.proposal_detail_loading),
             style = MaterialTheme.typography.bodyMedium,
@@ -115,7 +117,7 @@ private fun LoadingState() {
 private fun ReadyState(
     proposal: ServiceProposal,
     onViewConversation: () -> Unit,
-    onViewWorkOrder: () -> Unit,
+    onPayNow: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -134,14 +136,19 @@ private fun ReadyState(
                 size = 56.dp,
                 testTag = PROPOSAL_DETAIL_AVATAR_TAG,
             )
+
             Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.SemiBold,
                 )
+
                 Text(
                     text = proposal.counterpart.categoryName,
                     style = MaterialTheme.typography.bodyMedium,
@@ -149,30 +156,46 @@ private fun ReadyState(
                 )
             }
         }
+
         Spacer(modifier = Modifier.height(4.dp))
+
         DetailRow(
             label = stringResource(R.string.proposal_detail_amount),
-            value = CurrencyFormatter.formatAmount(proposal.amountCents),
+            value = CurrencyFormatter.formatAmount(
+                proposal.amountCents,
+            ),
         )
+
         DetailRow(
             label = stringResource(R.string.proposal_detail_date),
-            value = ScheduledDateFormatter.formatScheduled(proposal.scheduledOnEpochMillis),
+            value = ScheduledDateFormatter.formatScheduled(
+                proposal.scheduledOnEpochMillis,
+            ),
         )
+
         proposal.estimatedDurationMinutes?.let { minutes ->
             DetailRow(
-                label = stringResource(R.string.proposal_detail_estimated_duration),
-                value = EstimatedDurationFormatter.formatDuration(minutes),
+                label = stringResource(
+                    R.string.proposal_detail_estimated_duration,
+                ),
+                value = EstimatedDurationFormatter.formatDuration(
+                    minutes,
+                ),
             )
         }
+
         DetailRow(
             label = stringResource(R.string.proposal_detail_reason),
             value = proposal.description,
         )
+
         DetailRow(
             label = stringResource(R.string.proposal_detail_status),
             value = statusLabel(proposal.status),
         )
+
         Spacer(modifier = Modifier.height(8.dp))
+
         if (proposal.conversationId != null) {
             Button(
                 onClick = onViewConversation,
@@ -181,20 +204,24 @@ private fun ReadyState(
                     .testTag(PROPOSAL_DETAIL_VIEW_CONVERSATION_TAG),
             ) {
                 Text(
-                    text = stringResource(R.string.proposal_detail_view_conversation),
+                    text = stringResource(
+                        R.string.proposal_detail_view_conversation,
+                    ),
                     style = MaterialTheme.typography.labelLarge,
                 )
             }
         }
-        Spacer(modifier = Modifier.height(8.dp))
+
         Button(
-            onClick = onViewWorkOrder,
+            onClick = onPayNow,
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(PROPOSAL_DETAIL_VIEW_WORK_ORDER_TAG),
+                .testTag(PROPOSAL_DETAIL_PAY_NOW_TAG),
         ) {
             Text(
-                text = stringResource(R.string.proposal_detail_view_work_order),
+                text = stringResource(
+                    R.string.proposal_detail_pay_now,
+                ),
                 style = MaterialTheme.typography.labelLarge,
             )
         }
@@ -209,9 +236,11 @@ private fun ErrorState(
     val message = when (failure) {
         is ServiceProposalsOutcome.Failure.Network ->
             stringResource(R.string.proposal_detail_error_network)
+
         is ServiceProposalsOutcome.Failure.Server ->
             stringResource(R.string.proposal_detail_error_server)
     }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -226,17 +255,27 @@ private fun ErrorState(
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
         )
+
         Button(
             onClick = onRetry,
-            modifier = Modifier.testTag(PROPOSAL_DETAIL_ERROR_RETRY_TAG),
+            modifier = Modifier.testTag(
+                PROPOSAL_DETAIL_ERROR_RETRY_TAG,
+            ),
         ) {
-            Text(stringResource(R.string.proposal_detail_error_retry))
+            Text(
+                stringResource(
+                    R.string.proposal_detail_error_retry,
+                ),
+            )
         }
     }
 }
 
 @Composable
-private fun DetailRow(label: String, value: String) {
+private fun DetailRow(
+    label: String,
+    value: String,
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -247,6 +286,7 @@ private fun DetailRow(label: String, value: String) {
             color = SubtitleGray,
             fontWeight = FontWeight.SemiBold,
         )
+
         Text(
             text = value,
             style = MaterialTheme.typography.bodyLarge,
@@ -255,17 +295,34 @@ private fun DetailRow(label: String, value: String) {
     }
 }
 
-private fun statusLabel(status: ServiceProposalStatus): String = when (status) {
+private fun statusLabel(
+    status: ServiceProposalStatus,
+): String = when (status) {
     ServiceProposalStatus.Pending -> "Pendiente"
     ServiceProposalStatus.Accepted -> "Aceptada"
     ServiceProposalStatus.Rejected -> "Rechazada"
 }
 
-const val PROPOSAL_DETAIL_SHEET_TAG: String = "proposal-detail-sheet"
-const val PROPOSAL_DETAIL_LOADING_TAG: String = "proposal-detail-loading"
-const val PROPOSAL_DETAIL_READY_TAG: String = "proposal-detail-ready"
-const val PROPOSAL_DETAIL_ERROR_TAG: String = "proposal-detail-error"
-const val PROPOSAL_DETAIL_ERROR_RETRY_TAG: String = "proposal-detail-error-retry"
-const val PROPOSAL_DETAIL_VIEW_CONVERSATION_TAG: String = "proposal-detail-view-conversation"
-const val PROPOSAL_DETAIL_VIEW_WORK_ORDER_TAG: String = "proposal-detail-view-work-order"
-const val PROPOSAL_DETAIL_AVATAR_TAG: String = "proposal-detail-avatar"
+const val PROPOSAL_DETAIL_SHEET_TAG: String =
+    "proposal-detail-sheet"
+
+const val PROPOSAL_DETAIL_LOADING_TAG: String =
+    "proposal-detail-loading"
+
+const val PROPOSAL_DETAIL_READY_TAG: String =
+    "proposal-detail-ready"
+
+const val PROPOSAL_DETAIL_ERROR_TAG: String =
+    "proposal-detail-error"
+
+const val PROPOSAL_DETAIL_ERROR_RETRY_TAG: String =
+    "proposal-detail-error-retry"
+
+const val PROPOSAL_DETAIL_VIEW_CONVERSATION_TAG: String =
+    "proposal-detail-view-conversation"
+
+const val PROPOSAL_DETAIL_PAY_NOW_TAG: String =
+    "proposal-detail-pay-now"
+
+const val PROPOSAL_DETAIL_AVATAR_TAG: String =
+    "proposal-detail-avatar"

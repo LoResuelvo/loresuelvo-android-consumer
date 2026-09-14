@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedService
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAllServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetRejectedServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.usecase.payment.StartServiceProposalCheckoutUseCase
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosUiState
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosViewModel
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
@@ -22,6 +23,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import io.mockk.mockk
 
 /**
  * Per-scenario world for the US-54 "Mis Servicios" BDD specs
@@ -50,6 +52,8 @@ class MisServiciosWorld : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
     private val serviceProposalRepo = FakeServiceProposalRepository()
+    private val startServiceProposalCheckout =
+        mockk<StartServiceProposalCheckoutUseCase>()
     private lateinit var viewModel: MisServiciosViewModel
     private lateinit var detailViewModel: ProposalDetailViewModel
 
@@ -79,7 +83,7 @@ class MisServiciosWorld : AutoCloseable {
             getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
             getRejectedServiceProposals = GetRejectedServiceProposalsUseCase(serviceProposalRepo),
         )
-        detailViewModel = ProposalDetailViewModel(serviceProposalRepo)
+        detailViewModel = ProposalDetailViewModel(serviceProposalRepo, startServiceProposalCheckout)
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             viewModel.uiState.collect { observedUiStates += it }

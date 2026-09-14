@@ -75,7 +75,7 @@ class HomeScreenTest {
                         detailState = ProposalDetailUiState.Loading,
                         onDetailRetry = {},
                         onViewConversation = {},
-                        onViewWorkOrder = {},
+                        onPayNow = {},
                         onDetailDismiss = {},
                     )
                 }

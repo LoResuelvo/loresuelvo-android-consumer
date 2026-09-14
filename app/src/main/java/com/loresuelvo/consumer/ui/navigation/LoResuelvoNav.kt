@@ -56,6 +56,8 @@ import androidx.compose.runtime.remember
 import com.loresuelvo.consumer.LoresuelvoApp
 import kotlinx.coroutines.flow.collectLatest
 import android.util.Log
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 
 /**
  * Composition root for the app. Hosts the navigation graph, the
@@ -469,10 +471,16 @@ private fun HomeRoute(
         hiltViewModel()
     val context = LocalContext.current
     val sessionState by sessionViewModel.uiState.collectAsState()
-    // HomeViewModel kicks off `loadCategories()` in its `init { }`
-    // block, so we don't repeat it via LaunchedEffect here.
     val homeState by homeViewModel.uiState.collectAsState()
     val detailState by detailViewModel.uiState.collectAsState()
+
+    LaunchedEffect(detailViewModel) {
+        detailViewModel.checkoutUrl.collect { url ->
+            CustomTabsIntent.Builder()
+                .build()
+                .launchUrl(context, Uri.parse(url))
+        }
+    }
 
     HomeScreen(
         state = homeState,
@@ -512,8 +520,8 @@ private fun HomeRoute(
                 navController.navigate(Route.Conversation.buildPath(conversationId))
             }
         },
-        onViewWorkOrder = { proposalId ->
-            navController.navigate(Route.WorkOrder.buildPath(proposalId))
+        onPayNow = { proposalId ->
+            detailViewModel.payNow(proposalId)
         },
         onDetailDismiss = { detailViewModel.reset() },
     )
@@ -602,13 +610,17 @@ private fun MisServiciosRoute(
 ) {
     val viewModel: MisServiciosViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
-    // US-54 scenario 08-VSP: the proposal-detail bottom sheet is
-    // driven by its own Hilt-managed VM; the consumer taps a card
-    // on the list and the route forwards the id into the VM so
-    // the sheet can render the full proposal (photo, name,
-    // category, amount, status, "Ver conversación" CTA).
     val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel = hiltViewModel()
     val detailState by detailViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(detailViewModel) {
+        detailViewModel.checkoutUrl.collect { url ->
+            CustomTabsIntent.Builder()
+                .build()
+                .launchUrl(context, Uri.parse(url))
+        }
+    }
 
     MisServiciosScreen(
         state = state,
@@ -632,11 +644,8 @@ private fun MisServiciosRoute(
                 )
             }
         },
-        onViewWorkOrder = { proposalId ->
-            // US-54 scenario 16-VSP: the "Ver orden de trabajo"
-            // CTA on the proposal detail bottom sheet navigates
-            // to the dedicated work-order route.
-            navController.navigate(Route.WorkOrder.buildPath(proposalId))
+        onPayNow = { proposalId ->
+            detailViewModel.payNow(proposalId)
         },
         onDetailDismiss = { detailViewModel.reset() },
     )

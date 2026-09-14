@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
+import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -88,7 +89,7 @@ fun HomeScreen(
     detailState: ProposalDetailUiState = ProposalDetailUiState.Loading,
     onDetailRetry: () -> Unit = {},
     onViewConversation: (conversationId: String) -> Unit = {},
-    onViewWorkOrder: (proposalId: String) -> Unit = {},
+    onPayNow: (proposalId: String) -> Unit = {},
     onDetailDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -200,7 +201,7 @@ fun HomeScreen(
         detailState = detailState,
         onRetry = onDetailRetry,
         onViewConversation = onViewConversation,
-        onViewWorkOrder = onViewWorkOrder,
+        onPayNow = onPayNow,
         onDismiss = onDetailDismiss,
     )
 }
@@ -228,7 +229,7 @@ private fun ProposalDetailBottomSheet(
     detailState: ProposalDetailUiState,
     onRetry: () -> Unit,
     onViewConversation: (conversationId: String) -> Unit,
-    onViewWorkOrder: (proposalId: String) -> Unit,
+    onPayNow: (proposalId: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -249,7 +250,7 @@ private fun ProposalDetailBottomSheet(
             state = detailState,
             onRetry = onRetry,
             onViewConversation = onViewConversation,
-            onViewWorkOrder = onViewWorkOrder,
+            onPayNow = onPayNow,
             onDismiss = {
                 visible = false
                 onDismiss()
@@ -336,6 +337,7 @@ private fun HomeScreenReadyPreview() {
             onAiSendClick = {},
             onRetryClick = {},
             onLogoutClick = {},
+            onPayNow = {},
         )
     }
 }

@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.usecase.payment.StartServiceProposalCheckoutUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.io.IOException
@@ -42,6 +43,7 @@ import org.junit.Test
 class ProposalDetailViewModelTest {
 
     private val serviceProposalRepository = mockk<ServiceProposalRepository>()
+    private val startServiceProposalCheckout = mockk<StartServiceProposalCheckoutUseCase>()
 
     @Before
     fun setUp() {
@@ -80,7 +82,7 @@ class ProposalDetailViewModelTest {
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Success(proposals)
 
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("2")
 
         val state = viewModel.uiState.value
@@ -95,7 +97,7 @@ class ProposalDetailViewModelTest {
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Success(listOf(proposal(id = "1")))
 
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("missing")
 
         val state = viewModel.uiState.value
@@ -111,7 +113,7 @@ class ProposalDetailViewModelTest {
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Failure.Network(IOException("dns"))
 
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("1")
 
         val state = viewModel.uiState.value
@@ -125,7 +127,7 @@ class ProposalDetailViewModelTest {
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Failure.Server(code = 503, message = "boom")
 
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("1")
 
         val state = viewModel.uiState.value
@@ -149,7 +151,7 @@ class ProposalDetailViewModelTest {
             ServiceProposalsOutcome.Success(listOf(proposal(id = "2"))),
         )
 
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("1") // first round trip (cancelled before it resumes)
         viewModel.load("2") // second round trip wins
 
@@ -168,7 +170,7 @@ class ProposalDetailViewModelTest {
 
     @Test
     fun initial_state_is_Idle_so_the_detail_sheet_stays_hidden_by_default() = runTest {
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
 
         val state = viewModel.uiState.value
 
@@ -188,7 +190,7 @@ class ProposalDetailViewModelTest {
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Success(listOf(proposal(id = "1")))
 
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("1")
         assertTrue(
             "precondition: load(\"1\") must drive the VM to Ready, was ${viewModel.uiState.value}",
@@ -219,7 +221,7 @@ class ProposalDetailViewModelTest {
         // treats a blank id as a reset — no round trip is fired
         // and the state lands on `Idle` so the sheet stays
         // hidden.
-        val viewModel = ProposalDetailViewModel(serviceProposalRepository)
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
         viewModel.load("")
 
         assertTrue(

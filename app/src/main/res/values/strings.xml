@@ -226,6 +226,7 @@
     <string name="proposal_detail_reason">Motivo de la visita</string>
     <string name="proposal_detail_status">Estado</string>
     <string name="proposal_detail_view_conversation">Ver conversación</string>
+    <string name="proposal_detail_pay_now">Pagar ahora</string>
     <string name="proposal_detail_loading">Cargando propuesta…</string>
     <string name="proposal_detail_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="proposal_detail_error_server">No pudimos cargar la propuesta. Reintentá.</string>
@@ -246,7 +247,6 @@
     <string name="work_order_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="work_order_error_server">No pudimos cargar la orden de trabajo. Reintentá.</string>
     <string name="work_order_error_retry">Reintentar</string>
-    <string name="proposal_detail_view_work_order">Ver orden de trabajo</string>
 
     <!-- US-21: Confirmar acuerdo de servicio (seña). -->
     <string name="service_agreement_loading">Cargando acuerdo…</string>

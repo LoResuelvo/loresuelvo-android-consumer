@@ -228,6 +228,7 @@
     <string name="proposal_detail_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="proposal_detail_error_server">We couldn\'t load the proposal. Try again.</string>
     <string name="proposal_detail_error_retry">Retry</string>
+    <string name="proposal_detail_pay_now">Pay now</string>
     <string name="work_order_title">Work order</string>
     <string name="work_order_provider">Provider</string>
     <string name="work_order_category_name">Category</string>
@@ -244,7 +245,6 @@
     <string name="work_order_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="work_order_error_server">We couldn\'t load the work order. Try again.</string>
     <string name="work_order_error_retry">Retry</string>
-    <string name="proposal_detail_view_work_order">View work order</string>
 
     <!-- US-21: Confirm service agreement (deposit). -->
     <string name="service_agreement_loading">Loading agreement…</string>
