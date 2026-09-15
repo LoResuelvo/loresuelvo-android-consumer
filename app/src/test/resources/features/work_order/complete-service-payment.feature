@@ -16,18 +16,6 @@ Feature: Confirmar acuerdo de servicio
     When selecciono la opción para confirmar el acuerdo
     Then veo un mensaje solicitando confirmar la aceptación del acuerdo
 
-  @wip
-  @manual
-  # Cancel modal is rendered inside ServiceAgreementScreen; the JVM
-  # BDD has no hook into Compose's dialog dismissal flow. This
-  # scenario is verified by the Compose instrumented suite
-  # (`ServiceAgreementDialogInstrumentedTest` once added).
-  Scenario: Cancelar la confirmación del acuerdo
-    Given que estoy confirmando un acuerdo de servicio
-    When cancelo el mensaje de confirmación
-    Then el acuerdo permanece pendiente de confirmación
-    And no se inicia la contratación
-
   Scenario: Mostrar un indicador mientras se procesa la confirmación
     Given que confirmé que quiero aceptar el acuerdo
     When se está procesando la confirmación

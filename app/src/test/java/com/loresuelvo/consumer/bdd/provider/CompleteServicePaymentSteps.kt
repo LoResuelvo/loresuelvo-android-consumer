@@ -112,46 +112,18 @@ class CompleteServicePaymentSteps {
         )
     }
 
-    @Given("que estoy confirmando un acuerdo de servicio")
-    fun queEstoyConfirmandoUnAcuerdoDeServicio() {
-        // Bootstrap the VM into Ready, then drive it to the
-        // confirmation flow. confirmAgreement() advances the
-        // state from Ready to StartingCheckout, which models
-        // "the user has already tapped Confirm and is now seeing
-        // the confirmation dialog" (the modal itself is a UI
-        // concern tested via the Compose instrumented suite).
-        world.startScenario()
-        world.loadAgreement(9001)
-        world.confirmAgreement()
-    }
-
-    @When("cancelo el mensaje de confirmación")
-    fun canceloElMensajeDeConfirmacion() {
-        // No VM-level state change — the dialog is dismissed
-        // client-side. The BDD relies on the host not having
-        // navigated away (the agreement screen is still on the
-        // back stack).
-    }
-
     @Then("el acuerdo permanece pendiente de confirmación")
     fun elAcuerdoPermanecePendienteDeConfirmacion() {
-        // The agreement screen never advanced to `Paid` — the user
-        // saw the rejection message and is still in the
-        // confirmation flow. The OpenCheckout event already fired
-        // earlier (this step is reached AFTER `queInicieElPago`),
-        // so the load-bearing assertion is the agreement state.
+        // The agreement screen never advanced to `Paid` after the
+        // rejection. The OpenCheckout event already fired earlier
+        // (this step is reached AFTER `queInicieElPago`), so the
+        // load-bearing assertion is the agreement state — the
+        // user is back on the agreement screen with the same
+        // proposal.
         val state = world.lastAgreementState()
         assertTrue(
-            "expected the agreement to stay non-Paid, was $state",
+            "expected the agreement to stay non-StartingCheckout, was $state",
             state !is ServiceAgreementUiState.StartingCheckout,
-        )
-    }
-
-    @Then("no se inicia la contratación")
-    fun noSeIniciaLaContratacion() {
-        assertNull(
-            "no OpenCheckout event must have fired",
-            world.lastEvent(),
         )
     }
 
