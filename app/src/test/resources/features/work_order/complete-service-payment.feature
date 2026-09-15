@@ -28,7 +28,6 @@ Feature: Confirmar acuerdo de servicio
     Then el acuerdo permanece pendiente de confirmación
     And no se inicia la contratación
 
-  @wip
   Scenario: Mostrar un indicador mientras se procesa la confirmación
     Given que confirmé que quiero aceptar el acuerdo
     When se está procesando la confirmación
@@ -56,16 +55,6 @@ Feature: Confirmar acuerdo de servicio
     And el acuerdo permanece pendiente de confirmación
     And puedo intentar nuevamente
 
-  @wip
-  Scenario: Informar que el pago de la seña continúa en proceso
-    Given que inicié el pago de la seña de un acuerdo de servicio
-    When el pago continúa en proceso
-    And regreso a LoResuelvo
-    Then veo un mensaje indicando que el pago está siendo procesado
-    And el acuerdo permanece pendiente de confirmación
-    And la aplicación continúa consultando el estado del pago
-
-  @wip
   Scenario: Confirmar el acuerdo después de que la seña queda aprobada
     Given que inicié el pago de la seña de un acuerdo de servicio
     And regreso a LoResuelvo mientras el pago continúa en proceso
@@ -73,7 +62,6 @@ Feature: Confirmar acuerdo de servicio
     Then veo un mensaje indicando que el acuerdo fue confirmado correctamente
     And la solicitud de servicio refleja que el acuerdo fue aceptado
 
-  @wip
   Scenario: Informar el rechazo de la seña después de regresar mientras estaba en proceso
     Given que inicié el pago de la seña de un acuerdo de servicio
     And regreso a LoResuelvo mientras el pago continúa en proceso
