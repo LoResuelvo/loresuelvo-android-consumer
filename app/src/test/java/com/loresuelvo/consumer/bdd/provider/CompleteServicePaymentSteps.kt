@@ -408,39 +408,70 @@ class CompleteServicePaymentSteps {
     fun puedoRevisarSusCondiciones() {
         val state = world.lastAgreementState()
         assertTrue(
-            "expected Ready, was $state",
+            "expected Ready so the user can review the agreement, was $state",
             state is ServiceAgreementUiState.Ready,
+        )
+        val ready = state as ServiceAgreementUiState.Ready
+        // Contract: the Ready state surfaces the proposal the
+        // backend returned, unmodified. The data class
+        // [ServiceProposal] is immutable (all `val`); the only
+        // way to "mutate" a term would be to construct a new
+        // [ServiceProposal]. The BDD asserts this cannot happen
+        // by comparing the proposal's read-only fields to the
+        // values the FakeServiceProposalRepository returned.
+        assertEquals(
+            "Reparación de pérdida en cocina",
+            ready.proposal.description,
+        )
+        assertEquals(1_500_000L, ready.proposal.amountCents)
+        assertTrue(
+            "expected scheduledOnEpochMillis to be non-zero (read-only)",
+            ready.proposal.scheduledOnEpochMillis > 0L,
         )
     }
 
     @And("no puedo modificar la descripción del servicio")
     fun noPuedoModificarLaDescripcionDelServicio() {
-        val state = world.lastAgreementState() as ServiceAgreementUiState.Ready
-        // The Ready state exposes `proposal.description` as a
-        // read-only field. The screen does not offer an editable
-        // input for it. This is a property assertion on the data
-        // model: the description is fixed once the provider sent
-        // the proposal.
+        // Read-only contract: the VM must not expose any
+        // mutation path for [ServiceProposal.description]. The
+        // [ServiceAgreementUiState] sealed interface has no
+        // setter for description; the [ServiceProposal] data
+        // class is immutable. The screen renders the value
+        // through plain [Text]; no [TextField] is bound. We
+        // assert the value the VM surfaces matches the value
+        // the FakeServiceProposalRepository returned.
+        val ready = world.lastAgreementState() as ServiceAgreementUiState.Ready
         assertEquals(
+            "the description surfaced by the VM must equal the one " +
+                "loaded from the repository (read-only contract)",
             "Reparación de pérdida en cocina",
-            state.proposal.description,
+            ready.proposal.description,
         )
     }
 
     @And("no puedo modificar el precio acordado")
     fun noPuedoModificarElPrecioAcordado() {
-        val state = world.lastAgreementState() as ServiceAgreementUiState.Ready
+        // Same contract applied to [ServiceProposal.amountCents].
         // The amount comes from the backend; the screen renders
-        // it read-only via `CurrencyFormatter.formatAmount(...)`.
-        assertEquals(1_500_000L, state.proposal.amountCents)
+        // it read-only via [CurrencyFormatter].
+        val ready = world.lastAgreementState() as ServiceAgreementUiState.Ready
+        assertEquals(
+            "the amountCents surfaced by the VM must equal the one " +
+                "loaded from the repository (read-only contract)",
+            1_500_000L,
+            ready.proposal.amountCents,
+        )
     }
 
     @And("no puedo modificar la fecha o el horario acordado")
     fun noPuedoModificarLaFechaOElHorarioAcordado() {
-        val state = world.lastAgreementState() as ServiceAgreementUiState.Ready
-        assertTrue(
-            "expected scheduledOnEpochMillis to be non-zero (read-only)",
-            state.proposal.scheduledOnEpochMillis > 0L,
+        // Same contract applied to [ServiceProposal.scheduledOnEpochMillis].
+        val ready = world.lastAgreementState() as ServiceAgreementUiState.Ready
+        assertEquals(
+            "the scheduledOnEpochMillis surfaced by the VM must equal " +
+                "the one loaded from the repository (read-only contract)",
+            1_792_074_600_000L,
+            ready.proposal.scheduledOnEpochMillis,
         )
     }
 

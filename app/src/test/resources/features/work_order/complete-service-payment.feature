@@ -86,7 +86,6 @@ Feature: Confirmar acuerdo de servicio
     Then veo un mensaje indicando que no fue posible confirmar el acuerdo
     And el acuerdo permanece sin cambios
 
-  @wip
   Scenario: No permitir editar los términos al confirmar el acuerdo
     Given que tengo un acuerdo de servicio pendiente de confirmación
     When consulto el acuerdo
