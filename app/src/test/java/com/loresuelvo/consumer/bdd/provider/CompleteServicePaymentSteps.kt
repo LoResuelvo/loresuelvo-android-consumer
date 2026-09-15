@@ -337,41 +337,56 @@ class CompleteServicePaymentSteps {
 
     @When("intento confirmar el acuerdo")
     fun intentoConfirmarElAcuerdo() {
-        // No VM-level effect — the screen is already in Ready
-        // (from the previous Given); the BDD asserts that the
-        // Ready -> StartingCheckout transition fires.
+        // The VM transitions Ready -> StartingCheckout when
+        // confirmAgreement() fires. We queue a forced Network
+        // failure on the fake so the in-flight coroutine
+        // surfaces it to the error branch, which the next step
+        // observes.
+        world.setNextCheckoutOutcome(
+            com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome.Network(
+                cause = java.io.IOException("simulated network failure"),
+            ),
+        )
         world.confirmAgreement()
     }
 
     @When("no es posible procesar la confirmación")
-    fun noEsPosibleProcesarLaConfirmacion() {
-        // Inject a forced failure into the fake checkout repository.
-        // The world exposes no setter for that yet — the
-        // instrumented test covers this path. At the JVM layer
-        // the BDD asserts the Ready state is preserved.
+    fun noEsPosableProcesarLaConfirmacion() {
+        // No additional effect at the JVM layer: the forced
+        // Network failure was queued by the previous step. The
+        // step is preserved so the scenario reads naturally and
+        // so a follow-up step (e.g. "veo un mensaje de error")
+        // can assert the resulting VM state.
     }
 
     @Then("veo un mensaje indicando que no fue posible confirmar el acuerdo")
     fun veoUnMensajeIndicandoQueNoFuePosibleConfirmarElAcuerdo() {
+        // After the forced Network failure, the VM must surface
+        // a NetworkError state so the screen can render the
+        // "No fue posible confirmar" message.
         val state = world.lastAgreementState()
         assertTrue(
-            "expected an agreement state, was $state",
-            state is ServiceAgreementUiState.Ready ||
-                state is ServiceAgreementUiState.NetworkError ||
-                state is ServiceAgreementUiState.ServerError,
+            "expected NetworkError, was $state",
+            state is ServiceAgreementUiState.NetworkError,
         )
     }
 
     @Then("el acuerdo permanece sin cambios")
     fun elAcuerdoPermaneceSinCambios() {
+        // The Ready -> StartingCheckout -> NetworkError
+        // transition must NOT have persisted any checkout
+        // side-effect: no new transaction, no accepted
+        // proposal. The BDD asserts the VM is still in the
+        // error branch (the Ready state was lost to the error,
+        // which is the actual current contract — the user is
+        // expected to retry from the error screen).
         val state = world.lastAgreementState()
         assertTrue(
-            "expected an agreement state without status change, was $state",
-            state is ServiceAgreementUiState.Ready ||
-                state is ServiceAgreementUiState.NetworkError ||
-                state is ServiceAgreementUiState.ServerError,
+            "expected NetworkError, was $state",
+            state is ServiceAgreementUiState.NetworkError,
         )
     }
+
 
     @Then("puedo revisar sus condiciones")
     fun puedoRevisarSusCondiciones() {

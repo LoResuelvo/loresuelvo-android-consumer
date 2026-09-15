@@ -70,7 +70,6 @@ Feature: Confirmar acuerdo de servicio
     And el acuerdo permanece pendiente de confirmación
     And puedo intentar nuevamente
 
-  @wip
   Scenario: Informar un error al confirmar el acuerdo
     Given que tengo un acuerdo de servicio pendiente de confirmación
     When intento confirmar el acuerdo

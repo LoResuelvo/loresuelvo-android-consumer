@@ -190,6 +190,18 @@ class CompleteServicePaymentWorld : AutoCloseable {
     }
 
     /**
+     * Queue a one-shot checkout failure for the next
+     * [ServiceAgreementViewModel.confirmAgreement] call. After the
+     * fake returns this outcome it clears the queue so a follow-up
+     * confirm goes back to the default Created path — mirrors how
+     * the real backend behaves on transient errors (next call is
+     * unaffected unless the failure recurs).
+     */
+    fun setNextCheckoutOutcome(outcome: CheckoutSessionOutcome) {
+        checkoutRepo.nextOutcome = outcome
+    }
+
+    /**
      * Snapshot the current list of proposals as the fake repository
      * serves them. Used by the BDD to assert the post-refresh state
      * after [markProposalAsAccepted] has flipped the status.
@@ -255,11 +267,16 @@ class CompleteServicePaymentWorld : AutoCloseable {
 
     private class FakeCheckoutSessionRepository : CheckoutSessionRepository {
         var nextStatus: PaymentIntentStatus = PaymentIntentStatus.CheckoutReady
+        var nextOutcome: CheckoutSessionOutcome? = null
         private val intents = mutableListOf<PaymentIntent>()
 
         override suspend fun startServiceProposalCheckout(
             serviceProposalId: Int,
         ): CheckoutSessionOutcome {
+            nextOutcome?.let {
+                nextOutcome = null
+                return it
+            }
             val intent = PaymentIntent(
                 id = "pi-${intents.size + 1}",
                 serviceProposalId = serviceProposalId,
