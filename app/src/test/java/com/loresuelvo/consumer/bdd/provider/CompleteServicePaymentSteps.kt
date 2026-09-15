@@ -114,11 +114,14 @@ class CompleteServicePaymentSteps {
 
     @Given("que estoy confirmando un acuerdo de servicio")
     fun queEstoyConfirmandoUnAcuerdoDeServicio() {
-        // The previous step already drove the screen to Ready;
-        // confirmAgreement() drives it to StartingCheckout. The
-        // "cancelar el mensaje de confirmación" path is verified in
-        // the Compose instrumented suite (the dialog dismissal
-        // flow has no JVM-level observable effect).
+        // Bootstrap the VM into Ready, then drive it to the
+        // confirmation flow. confirmAgreement() advances the
+        // state from Ready to StartingCheckout, which models
+        // "the user has already tapped Confirm and is now seeing
+        // the confirmation dialog" (the modal itself is a UI
+        // concern tested via the Compose instrumented suite).
+        world.startScenario()
+        world.loadAgreement(9001)
         world.confirmAgreement()
     }
 

@@ -11,13 +11,17 @@ Feature: Confirmar acuerdo de servicio
     And veo el precio acordado
     And veo la fecha o el horario estimado del servicio cuando corresponda
 
-  @wip
   Scenario: Confirmar que quiero aceptar el acuerdo
     Given que tengo un acuerdo de servicio pendiente de confirmación
     When selecciono la opción para confirmar el acuerdo
     Then veo un mensaje solicitando confirmar la aceptación del acuerdo
 
   @wip
+  @manual
+  # Cancel modal is rendered inside ServiceAgreementScreen; the JVM
+  # BDD has no hook into Compose's dialog dismissal flow. This
+  # scenario is verified by the Compose instrumented suite
+  # (`ServiceAgreementDialogInstrumentedTest` once added).
   Scenario: Cancelar la confirmación del acuerdo
     Given que estoy confirmando un acuerdo de servicio
     When cancelo el mensaje de confirmación
