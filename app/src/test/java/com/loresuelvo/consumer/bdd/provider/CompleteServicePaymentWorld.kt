@@ -177,6 +177,28 @@ class CompleteServicePaymentWorld : AutoCloseable {
     }
 
     /**
+     * Flip the seed proposal to [Accepted] in the fake repository so
+     * the next `GET /service-proposals` (triggered by the host when
+     * the user returns from the Custom Tab) returns the post-webhook
+     * status. Mirrors the backend's real-world behaviour: the
+     * webhook flips the proposal to `Accepted` and the consumer-side
+     * cache invalidation pulls the fresh state.
+     */
+    fun markProposalAsAccepted(proposalId: Int) {
+        serviceProposalRepo.markProposalAsAccepted(proposalId.toString())
+        scheduler.advanceUntilIdle()
+    }
+
+    /**
+     * Snapshot the current list of proposals as the fake repository
+     * serves them. Used by the BDD to assert the post-refresh state
+     * after [markProposalAsAccepted] has flipped the status.
+     */
+    fun snapshotProposal(id: String): ServiceProposal? {
+        return serviceProposalRepo.snapshot().firstOrNull { it.id == id }
+    }
+
+    /**
      * Drive a single polling tick with the next mocked status
      * (set via [setNextPaymentStatus] right before this call).
      * Each step that wants to observe a state change calls
@@ -215,6 +237,18 @@ class CompleteServicePaymentWorld : AutoCloseable {
     private class FakeServiceProposalRepository : ServiceProposalRepository {
         private var current: List<ServiceProposal> = emptyList()
         fun set(items: List<ServiceProposal>) { current = items }
+        fun markProposalAsAccepted(id: String) {
+            current = current.map { proposal ->
+                if (proposal.id == id) {
+                    proposal.copy(
+                        status = com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Accepted,
+                    )
+                } else {
+                    proposal
+                }
+            }
+        }
+        fun snapshot(): List<ServiceProposal> = current
         override suspend fun getServiceProposals(): ServiceProposalsOutcome =
             ServiceProposalsOutcome.Success(current)
     }

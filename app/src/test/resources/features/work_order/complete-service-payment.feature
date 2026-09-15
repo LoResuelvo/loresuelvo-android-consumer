@@ -86,7 +86,6 @@ Feature: Confirmar acuerdo de servicio
     And no puedo modificar el precio acordado
     And no puedo modificar la fecha o el horario acordado
 
-  @wip
   Scenario: Actualizar el estado de la solicitud después de confirmar el acuerdo
     Given que tengo un acuerdo de servicio pendiente de confirmación
     And la seña fue pagada correctamente

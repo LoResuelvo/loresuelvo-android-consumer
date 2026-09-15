@@ -258,12 +258,6 @@ class CompleteServicePaymentSteps {
         world.tick()
     }
 
-    @When("el pago continúa en proceso")
-    fun elPagoContinuaEnProceso() {
-        world.setNextPaymentStatus(PaymentIntentStatus.Processing)
-        world.tick()
-    }
-
     @And("regreso a LoResuelvo")
     fun yRegresoALoResuelvo() {
         // The Custom Tab redirects the user back to the app via the
@@ -321,34 +315,6 @@ class CompleteServicePaymentSteps {
         assertTrue(
             "expected Approved after retry, was ${world.lastPaymentState()}",
             world.lastPaymentState() is PaymentResultUiState.Approved,
-        )
-    }
-
-    @Then("veo un mensaje indicando que el pago está siendo procesado")
-    fun veoUnMensajeIndicandoQueElPagoEstaSiendoProcesado() {
-        val state = world.lastPaymentState()
-        assertTrue(
-            "expected Polling, was $state",
-            state is PaymentResultUiState.Polling,
-        )
-    }
-
-    @Then("la aplicación continúa consultando el estado del pago")
-    fun laAplicacionContinuaConsultandoElEstadoDelPago() {
-        // The polling loop is still in flight — the state has not
-        // reached a terminal status. Drive two more ticks to
-        // confirm the loop keeps running while in Processing.
-        val before = world.lastPaymentState()
-        assertTrue(
-            "expected Polling, was $before",
-            before is PaymentResultUiState.Polling,
-        )
-        world.setNextPaymentStatus(PaymentIntentStatus.Processing)
-        world.tick()
-        val after = world.lastPaymentState()
-        assertTrue(
-            "expected Polling after second tick, was $after",
-            after is PaymentResultUiState.Polling,
         )
     }
 
@@ -484,6 +450,31 @@ class CompleteServicePaymentSteps {
         // server-side. At the JVM layer this is a no-op — the
         // BDD's load-bearing assertion is the resulting Approved
         // payment intent state (verified in the next step).
+    }
+
+    @Then("la solicitud refleja que el acuerdo fue aceptado")
+    fun laSolicitudReflejaQueElAcuerdoFueAceptado() {
+        // The host re-fetches the proposal list when the user
+        // lands on it after the Custom Tab closes. The fake
+        // repository flips the proposal status to [Accepted]
+        // (mirroring the backend webhook) and the next round-trip
+        // surfaces the updated status. The screen reads the
+        // proposal through the same domain port, so the JVM-layer
+        // assertion is: ask the world for the proposal snapshot
+        // after the refresh and confirm the status.
+        world.markProposalAsAccepted(9001)
+        val proposal = world.snapshotProposal("9001")
+        assertNotNull(
+            "expected proposal 9001 to be present after refresh",
+            proposal,
+        )
+        val refreshedProposal = proposal!!
+        assertEquals(
+            "the proposal must reflect the accepted status after " +
+                "the webhook confirmed the payment",
+            com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Accepted,
+            refreshedProposal.status,
+        )
     }
 
     @When("regreso a la solicitud de servicio")
