@@ -77,7 +77,6 @@ Característica: Visualizar mis turnos
 
   # Estados posibles
 
-  @wip
   Escenario: 06-VT Visualizar turno pendiente
     Given que tengo un turno con estado "Pendiente"
     When visualizo el turno
