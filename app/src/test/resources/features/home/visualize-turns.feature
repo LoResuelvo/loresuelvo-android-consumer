@@ -4,9 +4,15 @@
 # Cubre el journey del consumidor que necesita ver los turnos
 # agendados con cada prestador: acceder desde el Home, ver la
 # lista, ver el empty state, inspeccionar la información de un
-# turno (contraparte, motivo, monto, fecha, hora), ver el estado
-# del turno (Pendiente / Confirmado / Finalizado / Cancelado) y
-# contactar a la contraparte.
+# turno (contraparte, motivo, monto, fecha, hora) y ver el estado
+# del turno (Pendiente / Confirmado / Finalizado / Cancelado).
+#
+# **Fuera de scope de esta feature** (viven en 12-VT, post-MVP):
+#  - Pantalla de detalle de un turno individual (`TurnoDetail`).
+#  - CTA "Contactar" desde el detalle: el `conversation_id` se
+#    obtiene de `GET /work-orders/{id}` (no del listado, que
+#    debe quedarse liviano), por lo que el contact belongs to
+#    the detail screen — no al listado de "Mis Turnos".
 #
 # Cada escenario arranca marcado con `@wip` (salteado). Cada
 # commit remueve el `@wip` de exactamente un escenario, deja sus
@@ -97,14 +103,6 @@ Característica: Visualizar mis turnos
     When visualizo el turno
     Then veo el estado "Cancelado"
 
-  # Contactar
-
-  @wip
-  Escenario: 10-VT Contactar a la contraparte desde un turno
-    Given que tengo un turno registrado
-    When selecciono la opción "Contactar" del turno
-    Then se abre la conversación con la contraparte
-
   # Errores
 
   Escenario: 13-VT Mostrar error de red al cargar turnos
@@ -113,7 +111,6 @@ Característica: Visualizar mis turnos
     Then veo un mensaje de error de conexión
     And veo un botón para reintentar
 
-  @wip
   Escenario: 14-VT Mostrar error de servidor al cargar turnos
     Given que el backend responde con error
     When accedo a la pantalla "Mis Turnos"
