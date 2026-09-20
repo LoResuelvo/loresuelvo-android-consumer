@@ -101,6 +101,7 @@ import org.junit.runner.RunWith
  * hard-coded Spanish literals.
  */
 @HiltAndroidTest
+@UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
 class MisTurnosScreenInstrumentedTest {
 
