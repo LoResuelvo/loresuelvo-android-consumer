@@ -171,6 +171,12 @@ class WelcomeCategoriesInstrumentedTest {
         abstract fun bindWorkOrderRepository(
             repository: com.loresuelvo.consumer.data.api.ApiWorkOrderRepository,
         ): com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindTurnosRepository(
+            repository: com.loresuelvo.consumer.testdi.FakeTurnosRepository,
+        ): com.loresuelvo.consumer.domain.turno.TurnosRepository
     }
 
     @Singleton
