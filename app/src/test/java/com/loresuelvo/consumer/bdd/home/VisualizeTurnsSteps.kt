@@ -100,6 +100,74 @@ class VisualizeTurnsSteps {
             ?: error("expected Ready with empty list, was $state")
         assertTrue("expected empty turnos", ready.turnos.isEmpty())
     }
+
+    @Given("que tengo un turno registrado")
+    fun queTengoUnTurnoRegistrado() {
+        world.startScenario()
+        world.seedTurnos(
+            listOf(
+                turno(
+                    id = "1",
+                    status = TurnoStatus.Confirmed,
+                    counterpartName = "Juan",
+                    counterpartSurname = "Gómez",
+                    categoryName = "Plomería",
+                    description = "Reparación de cañería",
+                    amountCents = 1_500_000L,
+                    scheduledOnEpochMillis = 1_792_074_600_000L,
+                ),
+            ),
+        )
+    }
+
+    @Then("veo el nombre y apellido de la contraparte")
+    fun veoElNombreYApellidoDeLaContraparte() {
+        val state = world.lastUiState() as TurnosUiState.Ready
+        val first = state.turnos.first()
+        assertTrue(first.counterpart.name.isNotBlank())
+        assertTrue(first.counterpart.surname.isNotBlank())
+    }
+
+    @Then("veo la foto de perfil de la contraparte")
+    fun veoLaFotoDePerfilDeLaContraparte() {
+        // The full UI assertion lives in
+        // [com.loresuelvo.consumer.ui.components.turnocard.TurnoCardTest];
+        // the BDD only pins that the seeded turno carries a
+        // photo URL so the avatar branch can render it.
+        val state = world.lastUiState() as TurnosUiState.Ready
+        val first = state.turnos.first()
+        assertNotNull(first.counterpart.profilePhotoUrl)
+    }
+
+    @Then("veo el motivo del servicio")
+    fun veoElMotivoDelServicio() {
+        val state = world.lastUiState() as TurnosUiState.Ready
+        assertTrue(state.turnos.first().description.isNotBlank())
+    }
+
+    @Then("veo el monto del servicio")
+    fun veoElMontoDelServicio() {
+        val state = world.lastUiState() as TurnosUiState.Ready
+        assertTrue(state.turnos.first().amountCents > 0)
+    }
+
+    @Then("veo la fecha del turno")
+    fun veoLaFechaDelTurno() {
+        val state = world.lastUiState() as TurnosUiState.Ready
+        assertTrue(state.turnos.first().scheduledOnEpochMillis > 0)
+    }
+
+    @Then("veo la hora del turno")
+    fun veoLaHoraDelTurno() {
+        // The Turno domain type stores a single
+        // `scheduledOnEpochMillis` that encodes date + time;
+        // `ScheduledDateFormatter.formatScheduled` splits them
+        // visually as "dd/MM/yyyy - HH:mm hs". The BDD asserts
+        // the underlying timestamp is non-zero; the formatted
+        // "fecha" / "hora" split is covered by the JVM
+        // `TurnoCardTest` + `ScheduledDateFormatterTest`.
+        veoLaFechaDelTurno()
+    }
 }
 
 /**
