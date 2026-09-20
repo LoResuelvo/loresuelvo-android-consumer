@@ -291,4 +291,5 @@
     <string name="home_section_mis_turnos">My Appointments</string>
     <string name="home_section_mis_turnos_link">See all</string>
     <string name="turnos_title">My Appointments</string>
+    <string name="turnos_loading">Loading appointments…</string>
 </resources>

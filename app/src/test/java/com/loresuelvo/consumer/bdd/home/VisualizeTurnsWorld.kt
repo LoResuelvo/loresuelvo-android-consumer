@@ -1,14 +1,17 @@
 package com.loresuelvo.consumer.bdd.home
 
+import com.loresuelvo.consumer.domain.turno.Turno
+import com.loresuelvo.consumer.domain.turno.TurnosOutcome
+import com.loresuelvo.consumer.domain.turno.TurnosRepository
+import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosUiState
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestCoroutineScheduler
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
@@ -16,16 +19,13 @@ import kotlinx.coroutines.test.setMain
  * Per-scenario world for the "Mis Turnos" BDD specs
  * (visualize-turns.feature).
  *
- * Landed minimally for scenario 01-VT: it builds the
- * [TurnosViewModel] (which today only holds a Loading state —
- * no fetch yet) and observes its emissions so step defs can
- * assert `world.lastUiState()` after the scenario's "veo la
- * pantalla" step.
+ * Landed minimally for scenario 02-VT: it builds the
+ * [TurnosViewModel] against an in-memory [TurnosRepository] the
+ * scenario can seed via [seedTurnos] and exposes the resulting
+ * [TurnosUiState] for assertions.
  *
- * The full world (turno seeding, failure injection, contact
- * capture) lands with scenarios 02-VT..14-VT — see the
- * `visualize-turns.feature` header for the per-scenario
- * cadence.
+ * The full world (failure injection, contact capture, detail
+ * navigation) lands with subsequent scenarios.
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class VisualizeTurnsWorld : AutoCloseable {
@@ -35,9 +35,8 @@ class VisualizeTurnsWorld : AutoCloseable {
     private val supervisorJob = SupervisorJob()
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
+    private lateinit var repository: FakeTurnosRepository
     private lateinit var viewModel: TurnosViewModel
-
-    private val observedUiStates: MutableList<TurnosUiState> = mutableListOf()
 
     private var started: Boolean = false
 
@@ -47,22 +46,41 @@ class VisualizeTurnsWorld : AutoCloseable {
 
         Dispatchers.setMain(dispatcher)
 
-        // 01-VT wires no repository yet — the VM emits Loading
-        // directly. Scenarios 02-VT..14-VT inject a fake
-        // `TurnosRepository` here.
-        viewModel = TurnosViewModel()
+        repository = FakeTurnosRepository(items = emptyList())
+        viewModel = TurnosViewModel(getTurnos = GetTurnosUseCase(repository))
+    }
 
-        scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            viewModel.uiState.collect { observedUiStates += it }
-        }
-
+    /**
+     * Replaces the seeded list and re-fires the VM's `load()`
+     * so the world observes the new `Ready(items)` state.
+     */
+    fun seedTurnos(items: List<Turno>) {
+        repository.set(items)
+        viewModel.load()
         scheduler.advanceUntilIdle()
     }
 
-    fun lastUiState(): TurnosUiState = observedUiStates.last()
+    fun lastUiState(): TurnosUiState = viewModel.uiState.value
 
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()
+    }
+
+    /**
+     * In-memory [TurnosRepository] that returns whatever the
+     * step def seeded.
+     */
+    private class FakeTurnosRepository(
+        items: List<Turno>,
+    ) : TurnosRepository {
+        private var current: List<Turno> = items
+
+        override suspend fun getTurnos(): TurnosOutcome =
+            TurnosOutcome.Success(current)
+
+        fun set(items: List<Turno>) {
+            current = items
+        }
     }
 }

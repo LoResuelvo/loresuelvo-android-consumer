@@ -293,4 +293,5 @@
     <string name="home_section_mis_turnos">Mis Turnos</string>
     <string name="home_section_mis_turnos_link">Ver todas</string>
     <string name="turnos_title">Mis Turnos</string>
+    <string name="turnos_loading">Cargando turnos…</string>
 </resources>
