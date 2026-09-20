@@ -15,6 +15,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.ui.components.turnocard.TURNO_CARD_TAG_PREFIX
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -26,7 +27,7 @@ import org.robolectric.annotation.Config
  *
  * Landed incrementally per scenario:
  *  - 01-VT → `loading_state_renders_top_app_bar_and_spinner`
- *  - 02-VT → `ready_state_with_items_renders_one_row_per_turno`
+ *  - 02-VT → `ready_state_with_items_renders_one_card_per_turno`
  *  - 03-VT → `ready_state_with_empty_list_renders_empty_state_copy`
  *
  * Locale is pinned to `es-rAR` so the localised copy matches
@@ -59,7 +60,7 @@ class TurnosScreenTest {
     }
 
     @Test
-    fun ready_state_with_items_renders_one_row_per_turno() {
+    fun ready_state_with_items_renders_one_card_per_turno() {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
@@ -76,8 +77,12 @@ class TurnosScreenTest {
         }
 
         composeTestRule.onNodeWithTag(TURNOS_LIST_TAG).assertIsDisplayed()
-        composeTestRule.onAllNodesWithTag(TURNOS_ROW_TAG_PREFIX + "1").assertCountEquals(1)
-        composeTestRule.onAllNodesWithTag(TURNOS_ROW_TAG_PREFIX + "2").assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "1")
+            .assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "2")
+            .assertCountEquals(1)
     }
 
     @Test
@@ -91,12 +96,12 @@ class TurnosScreenTest {
         }
 
         composeTestRule.onNodeWithTag(TURNOS_EMPTY_TAG).assertIsDisplayed()
-        composeTestRule.onAllNodesWithText(
-            localizedString(R.string.turnos_empty_title),
-        ).assertCountEquals(1)
-        composeTestRule.onAllNodesWithText(
-            localizedString(R.string.turnos_empty_body),
-        ).assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithText(localizedString(R.string.turnos_empty_title))
+            .assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithText(localizedString(R.string.turnos_empty_body))
+            .assertCountEquals(1)
     }
 
     private fun sampleTurno(id: String): Turno = Turno(

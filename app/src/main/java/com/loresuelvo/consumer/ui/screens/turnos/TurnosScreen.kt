@@ -20,11 +20,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
+import com.loresuelvo.consumer.ui.components.turnocard.TurnoCard
 
 /**
  * State-driven surface for the "Mis Turnos" screen
@@ -32,9 +32,7 @@ import com.loresuelvo.consumer.domain.turno.Turno
  *
  * Landed incrementally per scenario:
  *  - 01-VT → Loading branch + top app bar.
- *  - 02-VT → Ready(non-empty) branch with the plain `Text`
- *    row list. The rich `TurnoCard` (avatar + status badge +
- *    formatted date) lands with scenario 04-VT.
+ *  - 02-VT → Ready(non-empty) branch with a list of [TurnoCard]s.
  *  - 03-VT → Ready(empty) branch with the empty-state copy.
  *
  * The Error branch (scenarios 13-VT / 14-VT) lands in its own
@@ -127,14 +125,10 @@ private fun ReadyList(turnos: List<Turno>) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(items = turnos, key = { it.id }) { turno ->
-            Text(
-                text = "${turno.counterpart.name} ${turno.counterpart.surname}",
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
-                    .testTag(TURNOS_ROW_TAG_PREFIX + turno.id),
+            TurnoCard(
+                turno = turno,
+                onCardClicked = { /* post-MVP detail (12-VT) */ },
+                modifier = Modifier.padding(horizontal = 20.dp),
             )
         }
     }
@@ -145,4 +139,3 @@ const val TURNOS_TITLE_TAG: String = "turnos-title"
 const val TURNOS_LOADING_TAG: String = "turnos-loading"
 const val TURNOS_LIST_TAG: String = "turnos-list"
 const val TURNOS_EMPTY_TAG: String = "turnos-empty"
-const val TURNOS_ROW_TAG_PREFIX: String = "turnos-row-"
