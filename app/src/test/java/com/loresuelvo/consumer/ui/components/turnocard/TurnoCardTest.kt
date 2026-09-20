@@ -95,10 +95,31 @@ class TurnoCardTest {
             .assertCountEquals(1)
     }
 
-    private fun sampleTurno(id: String): Turno = Turno(
+    @Test
+    fun status_badge_renders_Pending() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    TurnoCard(
+                        turno = sampleTurno(id = "1", status = TurnoStatus.Pending),
+                        onCardClicked = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithText(localizedString(R.string.turno_status_pending))
+            .assertCountEquals(1)
+    }
+
+    private fun sampleTurno(
+        id: String,
+        status: TurnoStatus = TurnoStatus.Confirmed,
+    ): Turno = Turno(
         id = id,
         serviceProposalId = "p-$id",
-        status = TurnoStatus.Confirmed,
+        status = status,
         counterpart = TurnoCounterpart(
             id = "$id-c",
             name = "Juan",
