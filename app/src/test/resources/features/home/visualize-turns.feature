@@ -107,14 +107,12 @@ Característica: Visualizar mis turnos
 
   # Errores
 
-  @wip
   Escenario: 13-VT Mostrar error de red al cargar turnos
     Given que el backend no responde
     When accedo a la pantalla "Mis Turnos"
     Then veo un mensaje de error de conexión
     And veo un botón para reintentar
 
-  @wip
   Escenario: 14-VT Mostrar error de servidor al cargar turnos
     Given que el backend responde con error
     When accedo a la pantalla "Mis Turnos"
