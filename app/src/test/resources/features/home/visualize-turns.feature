@@ -60,7 +60,6 @@ Característica: Visualizar mis turnos
 
   # Información de un turno
 
-  @wip
   Escenario: 04-VT Visualizar la información de un turno
     Given que tengo un turno registrado
     When accedo a la pantalla "Mis Turnos"
