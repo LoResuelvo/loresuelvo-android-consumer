@@ -16,8 +16,15 @@ import org.junit.Assert.assertTrue
  * step is intentionally thin: the heavy lifting lives in
  * [VisualizeTurnsWorld].
  *
- * Landed minimally for scenarios 01-VT + 02-VT. Subsequent
- * scenarios add their own step patterns here as they land.
+ * Landed incrementally per scenario:
+ *  - 01-VT → Background steps + navigation step.
+ *  - 02-VT → `queTengoTurnosRegistrados` (seed non-empty) +
+ *    `veoUnaListaConMisTurnos`.
+ *  - 03-VT → `queNoTengoTurnosRegistrados` (seed empty) +
+ *    `veoUnMensajeIndicandoQueNoTengoTurnos`.
+ *
+ * Subsequent scenarios (04-VT..14-VT) add their own step
+ * patterns here as they land.
  */
 class VisualizeTurnsSteps {
 
@@ -67,6 +74,12 @@ class VisualizeTurnsSteps {
         )
     }
 
+    @Given("que no tengo turnos registrados")
+    fun queNoTengoTurnosRegistrados() {
+        world.startScenario()
+        world.seedTurnos(emptyList())
+    }
+
     @When("accedo a la pantalla {string}")
     fun accedoALaPantalla(screen: String) {
         assertEquals("Mis Turnos", screen)
@@ -78,6 +91,14 @@ class VisualizeTurnsSteps {
         val ready = state as? TurnosUiState.Ready
             ?: error("expected Ready, was $state")
         assertTrue("expected at least one turno", ready.turnos.isNotEmpty())
+    }
+
+    @Then("veo un mensaje indicando que no tengo turnos")
+    fun veoUnMensajeIndicandoQueNoTengoTurnos() {
+        val state = world.lastUiState()
+        val ready = state as? TurnosUiState.Ready
+            ?: error("expected Ready with empty list, was $state")
+        assertTrue("expected empty turnos", ready.turnos.isEmpty())
     }
 }
 
