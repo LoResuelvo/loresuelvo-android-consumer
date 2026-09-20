@@ -288,4 +288,9 @@
     <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">Mis Servicios</string>
     <string name="home_section_mis_servicios_link">Ver todas</string>
+
+    <!-- Mis Turnos screen (visualize-turns.feature, scenario 01-VT) -->
+    <string name="home_section_mis_turnos">Mis Turnos</string>
+    <string name="home_section_mis_turnos_link">Ver todas</string>
+    <string name="turnos_title">Mis Turnos</string>
 </resources>
