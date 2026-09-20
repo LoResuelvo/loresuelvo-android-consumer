@@ -92,7 +92,6 @@ Característica: Visualizar mis turnos
     When visualizo el turno
     Then veo el estado "Finalizado"
 
-  @wip
   Escenario: 09-VT Visualizar turno cancelado
     Given que tengo un turno con estado "Cancelado"
     When visualizo el turno
