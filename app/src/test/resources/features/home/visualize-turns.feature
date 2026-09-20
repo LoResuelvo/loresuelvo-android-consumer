@@ -48,7 +48,6 @@ Característica: Visualizar mis turnos
 
   # Lista
 
-  @wip
   Escenario: 02-VT Visualizar mis turnos registrados
     Given que tengo turnos registrados
     When accedo a la pantalla "Mis Turnos"
