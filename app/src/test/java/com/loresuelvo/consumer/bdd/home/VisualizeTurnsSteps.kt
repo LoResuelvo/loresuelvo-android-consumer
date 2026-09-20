@@ -184,6 +184,39 @@ class VisualizeTurnsSteps {
         val state = world.lastUiState() as TurnosUiState.Ready
         assertNotNull(state.turnos.first().status)
     }
+
+    @Given("que tengo un turno con estado {string}")
+    fun queTengoUnTurnoConEstado(statusLabel: String) {
+        world.startScenario()
+        val parsed = parseStatusLabel(statusLabel)
+        world.seedTurnos(
+            listOf(
+                turno(
+                    id = "1",
+                    status = parsed,
+                    counterpartName = "Juan",
+                    counterpartSurname = "Gómez",
+                    categoryName = "Plomería",
+                    description = "Reparación de cañería",
+                ),
+            ),
+        )
+    }
+
+    @Then("veo el estado {string}")
+    fun veoElEstado(statusLabel: String) {
+        val expected = parseStatusLabel(statusLabel)
+        val state = world.lastUiState() as TurnosUiState.Ready
+        assertEquals(expected, state.turnos.first().status)
+    }
+
+    private fun parseStatusLabel(label: String): TurnoStatus = when (label) {
+        "Pendiente" -> TurnoStatus.Pending
+        "Confirmado" -> TurnoStatus.Confirmed
+        "Finalizado" -> TurnoStatus.Finished
+        "Cancelado" -> TurnoStatus.Cancelled
+        else -> error("unknown status label: $label")
+    }
 }
 
 /**
