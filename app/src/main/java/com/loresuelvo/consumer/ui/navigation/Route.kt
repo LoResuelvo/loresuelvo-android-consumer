@@ -100,6 +100,13 @@ sealed class Route(val path: String) {
     data object MisServicios : Route("mis-servicios")
 
     /**
+     * "Mis Turnos" surface — visualize-turns.feature scenario
+     * 01-VT. The route lands on a dedicated screen reached from
+     * the Home entry point. Hidden from the bottom nav.
+     */
+    data object Turnos : Route("turnos")
+
+    /**
      * Work-order detail screen (US-54 scenario 16-VSP). Reached
      * from the "Ver orden de trabajo" CTA on
      * [ProposalDetailScreen]. The proposal id is the join key
