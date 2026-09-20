@@ -53,7 +53,6 @@ Característica: Visualizar mis turnos
     When accedo a la pantalla "Mis Turnos"
     Then veo una lista con mis turnos
 
-  @wip
   Escenario: 03-VT Visualizar mensaje cuando no tengo turnos
     Given que no tengo turnos registrados
     When accedo a la pantalla "Mis Turnos"
