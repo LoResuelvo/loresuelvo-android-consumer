@@ -22,6 +22,13 @@
 # El acceso a la app sin sesión ya está cubierto por el smart
 # router de `LoResuelvoNav` y por `authentication-session.feature`,
 # por lo que no se replica acá.
+#
+# **Nota sobre los keywords del Gherkin**: aunque el `# language:
+# es` declara la feature como española, los keywords usados son
+# los ingleses (`Given`, `And`, `When`, `Then`) — el patrón que
+# ya siguen `visualize-service-proposal.feature` y otros del
+# repo. Cucumber JVM matchea los steps por el texto que sigue al
+# keyword, no por el keyword en sí.
 
 Característica: Visualizar mis turnos
 
@@ -30,95 +37,94 @@ Característica: Visualizar mis turnos
   Para organizarme y recibir al prestador correctamente
 
   Antecedente:
-    Dado que estoy autenticado como usuario
-    Y me encuentro en la pantalla Home
+    Given que estoy autenticado como usuario
+    And me encuentro en la pantalla Home
 
   # Acceso
 
-  @wip
   Escenario: 01-VT Acceder a Mis Turnos desde el Home
-    Cuando selecciono la opción "Mis Turnos"
-    Entonces veo la pantalla "Mis Turnos"
+    When selecciono la opción "Mis Turnos"
+    Then veo la pantalla "Mis Turnos"
 
   # Lista
 
   @wip
   Escenario: 02-VT Visualizar mis turnos registrados
-    Dado que tengo turnos registrados
-    Cuando accedo a la pantalla "Mis Turnos"
-    Entonces veo una lista con mis turnos
+    Given que tengo turnos registrados
+    When accedo a la pantalla "Mis Turnos"
+    Then veo una lista con mis turnos
 
   @wip
   Escenario: 03-VT Visualizar mensaje cuando no tengo turnos
-    Dado que no tengo turnos registrados
-    Cuando accedo a la pantalla "Mis Turnos"
-    Entonces veo un mensaje indicando que no tengo turnos
+    Given que no tengo turnos registrados
+    When accedo a la pantalla "Mis Turnos"
+    Then veo un mensaje indicando que no tengo turnos
 
   # Información de un turno
 
   @wip
   Escenario: 04-VT Visualizar la información de un turno
-    Dado que tengo un turno registrado
-    Cuando accedo a la pantalla "Mis Turnos"
-    Entonces veo el nombre y apellido de la contraparte
-    Y veo la foto de perfil de la contraparte
-    Y veo el motivo del servicio
-    Y veo el monto del servicio
-    Y veo la fecha del turno
-    Y veo la hora del turno
+    Given que tengo un turno registrado
+    When accedo a la pantalla "Mis Turnos"
+    Then veo el nombre y apellido de la contraparte
+    And veo la foto de perfil de la contraparte
+    And veo el motivo del servicio
+    And veo el monto del servicio
+    And veo la fecha del turno
+    And veo la hora del turno
 
   @wip
   Escenario: 05-VT Visualizar el estado del turno
-    Dado que tengo un turno registrado
-    Cuando visualizo el turno
-    Entonces veo el estado actual del turno
+    Given que tengo un turno registrado
+    When visualizo el turno
+    Then veo el estado actual del turno
 
   # Estados posibles
 
   @wip
   Escenario: 06-VT Visualizar turno pendiente
-    Dado que tengo un turno con estado "Pendiente"
-    Cuando visualizo el turno
-    Entonces veo el estado "Pendiente"
+    Given que tengo un turno con estado "Pendiente"
+    When visualizo el turno
+    Then veo el estado "Pendiente"
 
   @wip
   Escenario: 07-VT Visualizar turno confirmado
-    Dado que tengo un turno con estado "Confirmado"
-    Cuando visualizo el turno
-    Entonces veo el estado "Confirmado"
+    Given que tengo un turno con estado "Confirmado"
+    When visualizo el turno
+    Then veo el estado "Confirmado"
 
   @wip
   Escenario: 08-VT Visualizar turno finalizado
-    Dado que tengo un turno con estado "Finalizado"
-    Cuando visualizo el turno
-    Entonces veo el estado "Finalizado"
+    Given que tengo un turno con estado "Finalizado"
+    When visualizo el turno
+    Then veo el estado "Finalizado"
 
   @wip
   Escenario: 09-VT Visualizar turno cancelado
-    Dado que tengo un turno con estado "Cancelado"
-    Cuando visualizo el turno
-    Entonces veo el estado "Cancelado"
+    Given que tengo un turno con estado "Cancelado"
+    When visualizo el turno
+    Then veo el estado "Cancelado"
 
   # Contactar
 
   @wip
   Escenario: 10-VT Contactar a la contraparte desde un turno
-    Dado que tengo un turno registrado
-    Cuando selecciono la opción "Contactar" del turno
-    Entonces se abre la conversación con la contraparte
+    Given que tengo un turno registrado
+    When selecciono la opción "Contactar" del turno
+    Then se abre la conversación con la contraparte
 
   # Errores
 
   @wip
   Escenario: 13-VT Mostrar error de red al cargar turnos
-    Dado que el backend no responde
-    Cuando accedo a la pantalla "Mis Turnos"
-    Entonces veo un mensaje de error de conexión
-    Y veo un botón para reintentar
+    Given que el backend no responde
+    When accedo a la pantalla "Mis Turnos"
+    Then veo un mensaje de error de conexión
+    And veo un botón para reintentar
 
   @wip
   Escenario: 14-VT Mostrar error de servidor al cargar turnos
-    Dado que el backend responde con error
-    Cuando accedo a la pantalla "Mis Turnos"
-    Entonces veo un mensaje de error del servidor
-    Y veo un botón para reintentar
+    Given que el backend responde con error
+    When accedo a la pantalla "Mis Turnos"
+    Then veo un mensaje de error del servidor
+    And veo un botón para reintentar
