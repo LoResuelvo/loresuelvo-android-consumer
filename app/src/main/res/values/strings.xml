@@ -150,19 +150,12 @@
     <string name="home_ai_search_microcopy">Tarda 30 segundos y te ayuda a encontrar al profesional correcto.</string>
     <string name="home_section_categories">¿Qué necesitás arreglar?</string>
     <string name="home_section_categories_link">Ver todas</string>
-    <string name="home_section_requests">Solicitudes en curso</string>
-    <string name="home_section_requests_link">Ver todas</string>
     <string name="home_section_diagnoses">Diagnósticos recientes</string>
     <string name="home_diagnoses_empty">Sin diagnósticos recientes</string>
     <string name="home_diagnoses_empty_title">Probá el diagnóstico con IA</string>
     <string name="home_diagnoses_empty_body">Contale qué te pasa y te decimos qué tipo de profesional necesitás. Tarda 30 segundos.</string>
     <string name="home_diagnoses_empty_cta">Iniciar diagnóstico</string>
-    <string name="home_requests_empty">No tienes ninguna solicitud en curso.</string>
-    <string name="home_requests_empty_title">Todavía no realizaste ninguna solicitud.</string>
-    <string name="home_requests_empty_body">Elegí una categoría y encontrá un profesional en minutos.</string>
-    <string name="home_requests_empty_cta">Ver categorías</string>
     <string name="home_request_status_on_the_way">En camino</string>
-    <string name="home_request_rating">★ %1$.1f (%2$d reseñas)</string>
     <string name="home_notifications_content_description">Notificaciones</string>
     <string name="home_search_send_content_description">Enviar problema</string>
 
@@ -206,6 +199,7 @@
     <string name="mis_servicios_loading">Cargando propuestas…</string>
     <string name="mis_servicios_empty_title">Ningún prestador te ha enviado una propuesta.</string>
     <string name="mis_servicios_empty_body">Cuando contactes a uno, te enviará su propuesta y la verás acá.</string>
+    <string name="mis_servicios_empty_cta">Buscar profesionales</string>
     <string name="mis_servicios_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="mis_servicios_error_server">No pudimos cargar tus propuestas. Reintentá.</string>
     <string name="mis_servicios_error_retry">Reintentar</string>
@@ -292,6 +286,9 @@
     <!-- Mis Turnos screen (visualize-turns.feature, scenario 01-VT) -->
     <string name="home_section_mis_turnos">Mis Turnos</string>
     <string name="home_section_mis_turnos_link">Ver todas</string>
+    <string name="home_turnos_empty_title">Todavía no tenés turnos.</string>
+    <string name="home_turnos_empty_body">Cuando confirmes una solicitud de servicio, vas a ver el turno acá.</string>
+    <string name="home_turnos_empty_cta">Buscar profesionales</string>
     <string name="turnos_title">Mis Turnos</string>
     <string name="turnos_loading">Cargando turnos…</string>
 </resources>

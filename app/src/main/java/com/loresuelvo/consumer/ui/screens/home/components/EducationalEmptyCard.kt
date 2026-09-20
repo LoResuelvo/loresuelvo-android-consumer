@@ -4,11 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -16,28 +12,38 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
- * Educational empty-state for the "Diagnósticos recientes" section.
+ * Educational empty-state card used by the Home dashboard
+ * sections that share the same "title + items | title + body +
+ * CTA" pattern: Diagnósticos recientes, Mis Servicios (Home
+ * row) and Mis Turnos (andamiaje until the endpoint lands).
  *
- * Mirrors [ActiveRequestsEmpty]: a short title that frames why the
- * list is empty, a one-line body that tells the user what to do,
- * and a pill-shaped CTA that opens the AI diagnosis flow. The
- * section title (`home_section_diagnoses`) already lives in the
- * parent `SectionTitle`, so we don't repeat it here.
+ * Layout: short title (why the list is empty), one-line body
+ * (what to do about it), and a pill-shaped CTA that opens the
+ * conversion flow tied to that section (AI diagnosis, category
+ * grid, etc.). The card carries a `Surface` so the empty state
+ * reads as a discrete affordance on the dashboard rather than
+ * floating text.
  *
- * Stateless: the parent (`HomeScreen`) wires the click to its
- * existing `onAiSendClick` so the user lands in the AI flow.
+ * Stateless: the parent (`HomeScreen`) wires the click to the
+ * appropriate callback (`onAiSendClick`, `onSeeAllCategoriesClick`,
+ * etc.) — the card only renders.
+ *
+ * [modifier] lets the caller apply a `testTag` (e.g. the Home
+ * MisServicios empty-state tag) without this composable having
+ * to know about each consumer's test contract.
  */
 @Composable
-fun RecentDiagnosesEmpty(
+fun EducationalEmptyCard(
+    title: String,
+    body: String,
+    ctaText: String,
     onCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -52,13 +58,13 @@ fun RecentDiagnosesEmpty(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
-                text = stringResource(R.string.home_diagnoses_empty_title),
+                text = title,
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = stringResource(R.string.home_diagnoses_empty_body),
+                text = body,
                 style = MaterialTheme.typography.bodyMedium,
                 color = SubtitleGray,
             )
@@ -70,7 +76,7 @@ fun RecentDiagnosesEmpty(
                     .align(Alignment.CenterHorizontally),
             ) {
                 Text(
-                    text = stringResource(R.string.home_diagnoses_empty_cta),
+                    text = ctaText,
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.SemiBold,
@@ -82,10 +88,15 @@ fun RecentDiagnosesEmpty(
 
 @Preview(showBackground = true)
 @Composable
-private fun RecentDiagnosesEmptyPreview() {
+private fun EducationalEmptyCardPreview() {
     LoresuelvoTheme {
         Column(modifier = Modifier.padding(24.dp)) {
-            RecentDiagnosesEmpty(onCtaClick = {})
+            EducationalEmptyCard(
+                title = "Probá el diagnóstico con IA",
+                body = "Contale qué te pasa y te decimos qué tipo de profesional necesitás. Tarda 30 segundos.",
+                ctaText = "Iniciar diagnóstico",
+                onCtaClick = {},
+            )
         }
     }
 }

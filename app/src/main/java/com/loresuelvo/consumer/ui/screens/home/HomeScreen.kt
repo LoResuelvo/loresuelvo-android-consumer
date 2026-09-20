@@ -34,35 +34,34 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.ui.screens.home.components.ActiveRequest
-import com.loresuelvo.consumer.ui.screens.home.components.ActiveRequestsSection
 import com.loresuelvo.consumer.ui.screens.home.components.AiSearchBar
 import com.loresuelvo.consumer.ui.screens.home.components.CategoryGrid
+import com.loresuelvo.consumer.ui.screens.home.components.EducationalEmptyCard
 import com.loresuelvo.consumer.ui.screens.home.components.HomeHeader
-import com.loresuelvo.consumer.ui.screens.home.components.RecentDiagnosesEmpty
 import com.loresuelvo.consumer.ui.screens.home.components.SectionTitle
 import com.loresuelvo.consumer.ui.components.proposalcard.ProposalCard
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
-import com.loresuelvo.consumer.ui.theme.SubtitleGray
-import kotlinx.coroutines.launch
 
 /**
  * Home screen for the authenticated consumer. The layout follows
  * the "value-first" principle: greeting + AI-driven entry point on
  * top, the category grid (the primary conversion action) in the
- * middle, and below-fold secondary information (active requests,
- * recent diagnoses).
+ * middle, and below-fold secondary information (Mis Servicios,
+ * Mis Turnos, Diagnósticos recientes).
+ *
+ * Mis Turnos body: the dashboard only renders the shared
+ * empty-state for now. The preview row of `Turno` cards lands
+ * with scenario 02-VT once the `GET /work-orders` endpoint is
+ * surfaced via [HomeViewModel].
  *
  * Stateless: every visible value is sourced from [HomeUiState] and
  * every user action is delegated to a callback. The hosting
@@ -73,7 +72,6 @@ import kotlinx.coroutines.launch
 fun HomeScreen(
     state: HomeUiState,
     displayName: String?,
-    activeRequests: List<ActiveRequest> = emptyList(),
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
     onSeeAllCategoriesClick: () -> Unit,
     onSeeAllMisServiciosClick: () -> Unit = {},
@@ -95,14 +93,6 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
-
-    // Active requests list comes from the caller (HomeViewModel once
-    // `/requests` exists). Empty by default today, which surfaces the
-    // empty-state copy "No tienes ninguna solicitud en curso."
-    val scrollToCategories: () -> Unit = {
-        scope.launch { scrollState.animateScrollTo(0) }
-    }
 
     Column(
         modifier = modifier
@@ -139,13 +129,24 @@ fun HomeScreen(
             onRetryClick = onRetryClick,
         )
 
+        // visualize-turns.feature scenario 01-VT: dedicated entry
+        // into the "Mis Turnos" surface. Today the dashboard only
+        // renders the shared empty-state card; the row of `Turno`
+        // cards lands with scenario 02-VT once `GET /work-orders`
+        // is surfaced via [HomeViewModel]. The CTA routes the
+        // user back to the categories grid so they can act on the
+        // prompt without leaving the dashboard.
         SectionTitle(
-            text = stringResource(R.string.home_section_requests),
-            link = stringResource(R.string.home_section_requests_link),
+            text = stringResource(R.string.home_section_mis_turnos),
+            link = stringResource(R.string.home_section_mis_turnos_link),
+            linkTestTag = HOME_TURNOS_LINK_TAG,
+            onLinkClick = onSeeAllTurnosClick,
         )
-        ActiveRequestsSection(
-            requests = activeRequests,
-            onEmptyCtaClick = scrollToCategories,
+        EducationalEmptyCard(
+            title = stringResource(R.string.home_turnos_empty_title),
+            body = stringResource(R.string.home_turnos_empty_body),
+            ctaText = stringResource(R.string.home_turnos_empty_cta),
+            onCtaClick = onSeeAllCategoriesClick,
         )
 
         // US-54 scenario 03-VSP: dedicated entry into the "Mis
@@ -155,9 +156,8 @@ fun HomeScreen(
         // Accepted) we render a horizontally-scrollable row of
         // compact cards using the shared `ProposalCard` component;
         // when neither sub-state has items we fall back to the
-        // same empty-state copy the dedicated MisServicios screen
-        // shows, so the dashboard never leaves the user wondering
-        // "what is this empty box?".
+        // shared `EducationalEmptyCard` so the dashboard never
+        // leaves the user wondering "what is this empty box?".
         SectionTitle(
             text = stringResource(R.string.home_section_mis_servicios),
             link = stringResource(R.string.home_section_mis_servicios_link),
@@ -167,18 +167,8 @@ fun HomeScreen(
         MisServiciosRow(
             pending = state.pendingServiceProposals,
             upcoming = state.upcomingServiceProposals,
+            onCtaClick = onSeeAllCategoriesClick,
             onProposalClicked = onProposalClicked,
-        )
-
-        // visualize-turns.feature scenario 01-VT: dedicated entry
-        // into the "Mis Turnos" surface. Today only the section
-        // header lands; the row content (turno cards) is wired
-        // with scenario 02-VT.
-        SectionTitle(
-            text = stringResource(R.string.home_section_mis_turnos),
-            link = stringResource(R.string.home_section_mis_turnos_link),
-            linkTestTag = HOME_TURNOS_LINK_TAG,
-            onLinkClick = onSeeAllTurnosClick,
         )
 
         Text(
@@ -188,7 +178,12 @@ fun HomeScreen(
             color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
         )
-        RecentDiagnosesEmpty(onCtaClick = onAiSendClick)
+        EducationalEmptyCard(
+            title = stringResource(R.string.home_diagnoses_empty_title),
+            body = stringResource(R.string.home_diagnoses_empty_body),
+            ctaText = stringResource(R.string.home_diagnoses_empty_cta),
+            onCtaClick = onAiSendClick,
+        )
 
         Spacer(Modifier.height(8.dp))
 
@@ -332,17 +327,6 @@ private fun HomeScreenReadyPreview() {
                 upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
             ),
             displayName = "Matias",
-            activeRequests = listOf(
-                ActiveRequest(
-                    title = "Fuga en lavamanos",
-                    time = "Hoy 14:30",
-                    status = "En camino",
-                    proName = "Carlos M.",
-                    proInitial = "C",
-                    rating = 4.9,
-                    reviewCount = 120,
-                ),
-            ),
             onCategoryClick = { _, _ -> },
             onSeeAllCategoriesClick = {},
             onNotificationsClick = {},
@@ -372,53 +356,6 @@ private fun HomeScreenLoadingPreview() {
 }
 
 /**
- * Card shown beneath the "Mis Servicios" section on Home when the
- * dashboard has neither pending nor upcoming proposals to show.
- * Renders the same copy the dedicated MisServicios screen uses,
- * so the dashboard never leaves the user wondering "what is this
- * empty box?". Hidden during Loading and Error so a transient
- * empty list (still loading, or just failed) doesn't paint an
- * empty card over a soon-to-be-populated section.
- */
-@Composable
-private fun MisServiciosEmptyCard(
-    pending: ServiceProposalsState,
-    upcoming: ServiceProposalsState,
-) {
-    val bothReady =
-        pending is ServiceProposalsState.Ready &&
-        upcoming is ServiceProposalsState.Ready
-
-    val hasItems =
-        (pending as? ServiceProposalsState.Ready)?.items?.isNotEmpty() == true ||
-        (upcoming as? ServiceProposalsState.Ready)?.items?.isNotEmpty() == true
-
-    if (bothReady && !hasItems) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp)
-                .testTag(HOME_MIS_SERVICIOS_EMPTY_CARD_TAG),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.mis_servicios_empty_title),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = stringResource(R.string.mis_servicios_empty_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = SubtitleGray,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-/**
  * Horizontal row of `ProposalCard`s under the Home "Mis Servicios"
  * section (US-54 scenario 03-VSP with proposals present). The
  * row concatenates the pending proposals (which need consumer
@@ -426,9 +363,12 @@ private fun MisServiciosEmptyCard(
  * preview; the "Ver todas" link on the section header remains
  * the path to the full MisServicios list.
  *
- * Hidden entirely when both sub-states are non-Ready (Loading /
- * Error) so we don't paint cards against a soon-to-be-populated
- * section.
+ * When both sub-states are `Ready(emptyList())` we render the
+ * shared [EducationalEmptyCard] so the dashboard never leaves the
+ * user wondering "what is this empty box?". The empty-state is
+ * hidden during Loading and Error so a transient empty list
+ * (still loading, or just failed) doesn't paint an empty card
+ * over a soon-to-be-populated section.
  *
  * US-54 bug fix: replaced the previous `LazyRow` with a `Row` +
  * `horizontalScroll`. Mixing `LazyRow` inside the screen-level
@@ -444,16 +384,24 @@ private fun MisServiciosEmptyCard(
 private fun MisServiciosRow(
     pending: ServiceProposalsState,
     upcoming: ServiceProposalsState,
+    onCtaClick: () -> Unit,
     onProposalClicked: (proposalId: String) -> Unit,
 ) {
     val pendingItems = (pending as? ServiceProposalsState.Ready)?.items.orEmpty()
     val upcomingItems = (upcoming as? ServiceProposalsState.Ready)?.items.orEmpty()
     val items = pendingItems + upcomingItems
 
-    if (items.isEmpty()) {
-        MisServiciosEmptyCard(
-            pending = pending,
-            upcoming = upcoming,
+    val bothReady =
+        pending is ServiceProposalsState.Ready &&
+        upcoming is ServiceProposalsState.Ready
+
+    if (items.isEmpty() && bothReady) {
+        EducationalEmptyCard(
+            title = stringResource(R.string.mis_servicios_empty_title),
+            body = stringResource(R.string.mis_servicios_empty_body),
+            ctaText = stringResource(R.string.mis_servicios_empty_cta),
+            onCtaClick = onCtaClick,
+            modifier = Modifier.testTag(HOME_MIS_SERVICIOS_EMPTY_CARD_TAG),
         )
         return
     }
