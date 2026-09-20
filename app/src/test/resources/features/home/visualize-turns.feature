@@ -87,7 +87,6 @@ Característica: Visualizar mis turnos
     When visualizo el turno
     Then veo el estado "Confirmado"
 
-  @wip
   Escenario: 08-VT Visualizar turno finalizado
     Given que tengo un turno con estado "Finalizado"
     When visualizo el turno
