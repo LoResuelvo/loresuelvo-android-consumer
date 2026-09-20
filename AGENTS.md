@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-09-07 (US-54 `visualize-service-proposal` completa + helpers de `ui/util/`)
+Última actualización: 2026-09-20 (US-55 `visualize-turns` completa: 11 escenarios destageados, dominio `Turno`/`TurnosRepository`/`GetTurnosUseCase`, componente `TurnoCard`, screen `TurnosScreen` + estados Loading/Ready/Error)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -96,18 +96,21 @@ app/
           auth/                               # User, AuthProvider, AuthSessionStore, etc.
           category/                           # Category, CategoriesOutcome, CategoryRepository
           serviceproposal/                    # ServiceProposal + Repository + Outcomes
+          turno/                              # Turno + TurnoStatus + TurnoCounterpart + TurnosRepository + TurnosOutcome (US-55 visualize-turns.feature)
           workorder/                          # WorkOrder + Repository + Outcomes (US-54 16-VSP)
           usecase/auth/                       # RegisterConsumerUseCase, etc.
           usecase/category/                   # GetCategoriesUseCase
           usecase/serviceproposal/            # GetAll/Pending/Accepted/Rejected + GetServiceProposalByConversationId (US-54 14-VSP)
+          usecase/turno/                      # GetTurnosUseCase (US-55 visualize-turns.feature)
           usecase/workorder/                  # GetWorkOrderByProposalId (US-54 16-VSP)
           api/                                # ApiError (sealed)
         ui/                                  # Composables, ViewModels, Navigation
           auth/                              # WelcomeVM/State, CompleteProfileVM/State
           components/                        # Botones, inputs, cards, branding
             proposalcard/                    # ProposalCard reusable (US-54)
+            turnocard/                       # TurnoCard reusable (US-55 visualize-turns.feature)
           navigation/                        # LoResuelvoNav, LoResuelvoNavHost, Route
-          screens/                           # auth/, home/, chat/, misservicios/, proposals/, workorder/, …
+          screens/                           # auth/, home/, chat/, misservicios/, proposals/, turnos/, workorder/, …
             auth/components/                 # WelcomeScaffold, TopBar, HeroSection, etc.
             chat/components/                 # ConversationTopBar, ConversationMessageBubble, NewMessageBanner, ProposalSummaryCard (US-54 14-VSP)
             home/components/                 # home tiles + Ver-todas links
@@ -124,6 +127,9 @@ app/
       resources/features/                    # .feature BDD de Cucumber (JVM, no androidTest)
       java/.../bdd/                          # Step definitions + CucumberWorld + fakes
         provider/                            # VisualizeServiceProposal*, MisServicios*, ConversationProposalSummary*, WorkOrder*
+        home/                                # VisualizeTurns* (US-55) — landed together with HomeSteps/HomeWorld/HomeCucumberTest
+      java/.../testdi/                       # Fakes reusables para tests instrumentados
+                                              # FakeServiceProposalRepository, FakeTurnosRepository (US-55), etc.
       java/.../domain/usecase/                # Tests JVM de use cases (sin Robolectric)
       java/.../ui/util/                       # Tests JVM de formatters
       java/.../ui/screens/                    # Tests Compose JVM con @RunWith(RobolectricTestRunner::class)
