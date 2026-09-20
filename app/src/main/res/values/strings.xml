@@ -291,4 +291,6 @@
     <string name="home_turnos_empty_cta">Buscar profesionales</string>
     <string name="turnos_title">Mis Turnos</string>
     <string name="turnos_loading">Cargando turnos…</string>
+    <string name="turnos_empty_title">No tenés turnos agendados.</string>
+    <string name="turnos_empty_body">Cuando un prestador confirme un turno, va a aparecer acá.</string>
 </resources>

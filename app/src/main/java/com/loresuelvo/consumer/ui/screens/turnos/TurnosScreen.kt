@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
@@ -29,14 +30,15 @@ import com.loresuelvo.consumer.domain.turno.Turno
  * State-driven surface for the "Mis Turnos" screen
  * (`Route.Turnos`).
  *
- * Landed minimally for scenario 02-VT: the screen renders the
- * top app bar plus the Loading + Ready(non-empty) branches. The
- * Ready(empty) branch (scenario 03-VT) and the Error branch
- * (scenarios 13-VT / 14-VT) arrive in their own commits.
+ * Landed incrementally per scenario:
+ *  - 01-VT → Loading branch + top app bar.
+ *  - 02-VT → Ready(non-empty) branch with the plain `Text`
+ *    row list. The rich `TurnoCard` (avatar + status badge +
+ *    formatted date) lands with scenario 04-VT.
+ *  - 03-VT → Ready(empty) branch with the empty-state copy.
  *
- * The Ready branch renders a `LazyColumn` of plain `Text`
- * rows. The rich `TurnoCard` (avatar + status badge +
- * formatted date) lands with scenario 04-VT.
+ * The Error branch (scenarios 13-VT / 14-VT) lands in its own
+ * commit.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,9 +69,8 @@ fun TurnosScreen(
         ) {
             when (state) {
                 is TurnosUiState.Loading -> LoadingState()
-                is TurnosUiState.Ready -> ReadyList(
-                    turnos = state.turnos,
-                )
+                is TurnosUiState.Ready ->
+                    if (state.turnos.isEmpty()) EmptyState() else ReadyList(state.turnos)
             }
         }
     }
@@ -93,10 +94,31 @@ private fun LoadingState() {
 }
 
 @Composable
+private fun EmptyState() {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 32.dp)
+            .testTag(TURNOS_EMPTY_TAG),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.turnos_empty_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.turnos_empty_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
 private fun ReadyList(turnos: List<Turno>) {
-    // Landed minimally for scenario 02-VT: a plain LazyColumn
-    // of full-name `Text` rows. The rich `TurnoCard` (avatar,
-    // status badge, formatted date) lands with scenario 04-VT.
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -122,4 +144,5 @@ const val TURNOS_SCREEN_TAG: String = "turnos-screen"
 const val TURNOS_TITLE_TAG: String = "turnos-title"
 const val TURNOS_LOADING_TAG: String = "turnos-loading"
 const val TURNOS_LIST_TAG: String = "turnos-list"
+const val TURNOS_EMPTY_TAG: String = "turnos-empty"
 const val TURNOS_ROW_TAG_PREFIX: String = "turnos-row-"
