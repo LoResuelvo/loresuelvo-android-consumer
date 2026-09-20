@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.bdd.home
 
 import com.loresuelvo.consumer.domain.turno.Turno
+import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
@@ -19,13 +21,14 @@ import kotlinx.coroutines.test.setMain
  * Per-scenario world for the "Mis Turnos" BDD specs
  * (visualize-turns.feature).
  *
- * Landed minimally for scenario 02-VT: it builds the
- * [TurnosViewModel] against an in-memory [TurnosRepository] the
- * scenario can seed via [seedTurnos] and exposes the resulting
- * [TurnosUiState] for assertions.
+ * Builds the [TurnosViewModel] against an in-memory
+ * [TurnosRepository] the scenario can seed via [seedTurnos] or
+ * [seedTurnosFailure] and exposes the resulting [TurnosUiState]
+ * for assertions.
  *
- * The full world (failure injection, contact capture, detail
- * navigation) lands with subsequent scenarios.
+ * Landed incrementally per scenario:
+ *  - 02-VT → [seedTurnos] (Success path).
+ *  - 13-VT / 14-VT → [seedTurnosFailure] (Network / Server paths).
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class VisualizeTurnsWorld : AutoCloseable {
@@ -50,12 +53,14 @@ class VisualizeTurnsWorld : AutoCloseable {
         viewModel = TurnosViewModel(getTurnos = GetTurnosUseCase(repository))
     }
 
-    /**
-     * Replaces the seeded list and re-fires the VM's `load()`
-     * so the world observes the new `Ready(items)` state.
-     */
     fun seedTurnos(items: List<Turno>) {
         repository.set(items)
+        viewModel.load()
+        scheduler.advanceUntilIdle()
+    }
+
+    fun seedTurnosFailure(failure: TurnosOutcome.Failure) {
+        repository.setFailure(failure)
         viewModel.load()
         scheduler.advanceUntilIdle()
     }
@@ -69,18 +74,56 @@ class VisualizeTurnsWorld : AutoCloseable {
 
     /**
      * In-memory [TurnosRepository] that returns whatever the
-     * step def seeded.
+     * step def seeded. Supports both Success and Failure
+     * outcomes so the BDD can assert the screen's Error
+     * branches (scenarios 13-VT / 14-VT).
      */
     private class FakeTurnosRepository(
         items: List<Turno>,
     ) : TurnosRepository {
-        private var current: List<Turno> = items
+        private var currentSuccess: List<Turno> = items
+        private var currentFailure: TurnosOutcome.Failure? = null
 
         override suspend fun getTurnos(): TurnosOutcome =
-            TurnosOutcome.Success(current)
+            currentFailure ?: TurnosOutcome.Success(currentSuccess)
 
         fun set(items: List<Turno>) {
-            current = items
+            currentSuccess = items
+            currentFailure = null
+        }
+
+        fun setFailure(failure: TurnosOutcome.Failure) {
+            currentFailure = failure
         }
     }
 }
+
+/**
+ * Builder used by the step defs to construct turnos without
+ * duplicating boilerplate. Landed minimally for 02-VT; richer
+ * fields land alongside the scenarios that surface them.
+ */
+internal fun turno(
+    id: String,
+    status: TurnoStatus = TurnoStatus.Confirmed,
+    counterpartName: String = "Juan",
+    counterpartSurname: String = "Gómez",
+    categoryName: String = "Plomería",
+    description: String = "Reparación de cañería",
+    amountCents: Long = 150_005_0L,
+    scheduledOnEpochMillis: Long = 1_783_540_200_000L,
+): Turno = Turno(
+    id = id,
+    serviceProposalId = "p-$id",
+    status = status,
+    counterpart = com.loresuelvo.consumer.domain.turno.TurnoCounterpart(
+        id = "$id-c",
+        name = counterpartName,
+        surname = counterpartSurname,
+        categoryName = categoryName,
+        profilePhotoUrl = null,
+    ),
+    description = description,
+    amountCents = amountCents,
+    scheduledOnEpochMillis = scheduledOnEpochMillis,
+)

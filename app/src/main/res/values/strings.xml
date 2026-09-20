@@ -297,4 +297,7 @@
     <string name="turno_status_confirmed">Confirmado</string>
     <string name="turno_status_finished">Finalizado</string>
     <string name="turno_status_cancelled">Cancelado</string>
+    <string name="turnos_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="turnos_error_server">No pudimos cargar tus turnos. Reintentá.</string>
+    <string name="turnos_error_retry">Reintentar</string>
 </resources>

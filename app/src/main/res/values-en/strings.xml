@@ -295,4 +295,7 @@
     <string name="turno_status_confirmed">Confirmed</string>
     <string name="turno_status_finished">Finished</string>
     <string name="turno_status_cancelled">Cancelled</string>
+    <string name="turnos_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="turnos_error_server">We couldn\'t load your appointments. Try again.</string>
+    <string name="turnos_error_retry">Retry</string>
 </resources>

@@ -847,7 +847,10 @@ private fun TurnosRoute(
 ) {
     val viewModel: TurnosViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
-    TurnosScreen(state = state)
+    TurnosScreen(
+        state = state,
+        onRetryClick = viewModel::load,
+    )
     // `onBackClick` is intentionally not wired today — the
     // top app bar does not expose a back button yet (post-MVP).
     // When it does, route through `navController.popBackStack()`

@@ -30,6 +30,10 @@ import org.robolectric.annotation.Config
  *  - 02-VT → `ready_state_with_items_renders_one_card_per_turno`
  *  - 03-VT → `ready_state_with_empty_list_renders_empty_state_copy`
  *
+ * Error branches live in `TurnosErrorStateTest` (scenarios
+ * 13-VT / 14-VT) — kept in a separate file so the failure
+ * surface doesn't drown the happy-path tests.
+ *
  * Locale is pinned to `es-rAR` so the localised copy matches
  * the `values/strings.xml` strings the production app ships.
  */
@@ -49,7 +53,10 @@ class TurnosScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    TurnosScreen(state = TurnosUiState.Loading)
+                    TurnosScreen(
+                        state = TurnosUiState.Loading,
+                        onRetryClick = {},
+                    )
                 }
             }
         }
@@ -71,6 +78,7 @@ class TurnosScreenTest {
                                 sampleTurno(id = "2"),
                             ),
                         ),
+                        onRetryClick = {},
                     )
                 }
             }
@@ -90,7 +98,10 @@ class TurnosScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    TurnosScreen(state = TurnosUiState.Ready(emptyList()))
+                    TurnosScreen(
+                        state = TurnosUiState.Ready(emptyList()),
+                        onRetryClick = {},
+                    )
                 }
             }
         }

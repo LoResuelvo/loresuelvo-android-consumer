@@ -15,15 +15,21 @@ import kotlinx.coroutines.launch
 /**
  * UDF ViewModel for the "Mis Turnos" screen (`Route.Turnos`).
  *
- * Landed minimally for scenario 02-VT: it injects
- * [GetTurnosUseCase] and round-trips on `init { load() }`,
- * transitioning [TurnosUiState.Loading] → [TurnosUiState.Ready]
- * on `Success`. The [TurnosUiState.Error] branch arrives with
- * scenarios 13-VT / 14-VT.
+ * Drives the round trip against
+ * [com.loresuelvo.consumer.domain.turno.TurnosRepository] via
+ * [GetTurnosUseCase]. The full state machine
+ * ([Loading] → [Ready] / [Error]) is now wired:
  *
- * Errors are not swallowed: [TurnosOutcome.Failure.Network] and
- * [TurnosOutcome.Failure.Server] propagate verbatim so the
- * screen can render the typed retry CTA.
+ *  - 01-VT → Loading.
+ *  - 02-VT → Ready (non-empty).
+ *  - 03-VT → Ready (empty).
+ *  - 13-VT → Error(Network) — surfaces the connection-lost copy
+ *    + retry CTA.
+ *  - 14-VT → Error(Server) — surfaces the typed server copy
+ *    + retry CTA.
+ *
+ * [load] is re-entrant so the screen can re-fire on retry
+ * (scenarios 13-VT / 14-VT).
  */
 @HiltViewModel
 class TurnosViewModel @Inject constructor(
@@ -37,10 +43,6 @@ class TurnosViewModel @Inject constructor(
         load()
     }
 
-    /**
-     * Public so the screen can re-trigger on retry (13-VT /
-     * 14-VT).
-     */
     fun load() {
         viewModelScope.launch {
             _uiState.update { TurnosUiState.Loading }
@@ -49,11 +51,7 @@ class TurnosViewModel @Inject constructor(
                     is TurnosOutcome.Success ->
                         TurnosUiState.Ready(outcome.turnos)
                     is TurnosOutcome.Failure ->
-                        // Landed minimally: for 02-VT the world
-                        // only seeds `Success`. The Error branch
-                        // is plugged in with scenarios 13-VT /
-                        // 14-VT.
-                        TurnosUiState.Loading
+                        TurnosUiState.Error(outcome)
                 }
             }
         }

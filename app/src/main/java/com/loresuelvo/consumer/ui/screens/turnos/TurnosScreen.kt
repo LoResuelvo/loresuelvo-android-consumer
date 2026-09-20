@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
+import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.ui.components.turnocard.TurnoCard
 
 /**
@@ -34,14 +36,16 @@ import com.loresuelvo.consumer.ui.components.turnocard.TurnoCard
  *  - 01-VT → Loading branch + top app bar.
  *  - 02-VT → Ready(non-empty) branch with a list of [TurnoCard]s.
  *  - 03-VT → Ready(empty) branch with the empty-state copy.
- *
- * The Error branch (scenarios 13-VT / 14-VT) lands in its own
- * commit.
+ *  - 13-VT → Error(Network) branch with the connection-lost copy
+ *    + retry CTA.
+ *  - 14-VT → Error(Server) branch with the typed server copy +
+ *    retry CTA.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TurnosScreen(
     state: TurnosUiState,
+    onRetryClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -69,6 +73,10 @@ fun TurnosScreen(
                 is TurnosUiState.Loading -> LoadingState()
                 is TurnosUiState.Ready ->
                     if (state.turnos.isEmpty()) EmptyState() else ReadyList(state.turnos)
+                is TurnosUiState.Error -> ErrorState(
+                    failure = state.failure,
+                    onRetryClick = onRetryClick,
+                )
             }
         }
     }
@@ -116,6 +124,40 @@ private fun EmptyState() {
 }
 
 @Composable
+private fun ErrorState(
+    failure: TurnosOutcome.Failure,
+    onRetryClick: () -> Unit,
+) {
+    val message = when (failure) {
+        is TurnosOutcome.Failure.Network ->
+            stringResource(R.string.turnos_error_network)
+        is TurnosOutcome.Failure.Server ->
+            stringResource(R.string.turnos_error_server)
+    }
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 32.dp)
+            .testTag(TURNOS_ERROR_TAG),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = onRetryClick,
+            modifier = Modifier.testTag(TURNOS_ERROR_RETRY_TAG),
+        ) {
+            Text(stringResource(R.string.turnos_error_retry))
+        }
+    }
+}
+
+@Composable
 private fun ReadyList(turnos: List<Turno>) {
     LazyColumn(
         modifier = Modifier
@@ -139,3 +181,5 @@ const val TURNOS_TITLE_TAG: String = "turnos-title"
 const val TURNOS_LOADING_TAG: String = "turnos-loading"
 const val TURNOS_LIST_TAG: String = "turnos-list"
 const val TURNOS_EMPTY_TAG: String = "turnos-empty"
+const val TURNOS_ERROR_TAG: String = "turnos-error"
+const val TURNOS_ERROR_RETRY_TAG: String = "turnos-error-retry"

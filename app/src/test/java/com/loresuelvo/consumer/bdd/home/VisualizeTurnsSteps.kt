@@ -218,33 +218,3 @@ class VisualizeTurnsSteps {
         else -> error("unknown status label: $label")
     }
 }
-
-/**
- * Builder used by the step defs to construct turnos without
- * duplicating boilerplate. Landed minimally for 02-VT; richer
- * fields land alongside the scenarios that surface them.
- */
-internal fun turno(
-    id: String,
-    status: TurnoStatus = TurnoStatus.Confirmed,
-    counterpartName: String = "Juan",
-    counterpartSurname: String = "Gómez",
-    categoryName: String = "Plomería",
-    description: String = "Reparación de cañería",
-    amountCents: Long = 150_005_0L,
-    scheduledOnEpochMillis: Long = 1_783_540_200_000L,
-): Turno = Turno(
-    id = id,
-    serviceProposalId = "p-$id",
-    status = status,
-    counterpart = TurnoCounterpart(
-        id = "$id-c",
-        name = counterpartName,
-        surname = counterpartSurname,
-        categoryName = categoryName,
-        profilePhotoUrl = null,
-    ),
-    description = description,
-    amountCents = amountCents,
-    scheduledOnEpochMillis = scheduledOnEpochMillis,
-)
