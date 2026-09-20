@@ -82,7 +82,6 @@ Característica: Visualizar mis turnos
     When visualizo el turno
     Then veo el estado "Pendiente"
 
-  @wip
   Escenario: 07-VT Visualizar turno confirmado
     Given que tengo un turno con estado "Confirmado"
     When visualizo el turno
