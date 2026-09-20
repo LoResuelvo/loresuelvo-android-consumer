@@ -77,6 +77,7 @@ fun HomeScreen(
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
     onSeeAllCategoriesClick: () -> Unit,
     onSeeAllMisServiciosClick: () -> Unit = {},
+    onSeeAllTurnosClick: () -> Unit = {},
     onProposalClicked: (proposalId: String) -> Unit = {},
     onNotificationsClick: () -> Unit,
     onAiSendClick: () -> Unit,
@@ -167,6 +168,17 @@ fun HomeScreen(
             pending = state.pendingServiceProposals,
             upcoming = state.upcomingServiceProposals,
             onProposalClicked = onProposalClicked,
+        )
+
+        // visualize-turns.feature scenario 01-VT: dedicated entry
+        // into the "Mis Turnos" surface. Today only the section
+        // header lands; the row content (turno cards) is wired
+        // with scenario 02-VT.
+        SectionTitle(
+            text = stringResource(R.string.home_section_mis_turnos),
+            link = stringResource(R.string.home_section_mis_turnos_link),
+            linkTestTag = HOME_TURNOS_LINK_TAG,
+            onLinkClick = onSeeAllTurnosClick,
         )
 
         Text(
@@ -468,3 +480,4 @@ private fun MisServiciosRow(
  */
 const val HOME_MIS_SERVICIOS_ROW_TAG: String = "home-mis-servicios-row"
 const val HOME_MIS_SERVICIOS_EMPTY_CARD_TAG: String = "home-mis-servicios-empty-card"
+const val HOME_TURNOS_LINK_TAG: String = "home-turnos-link"

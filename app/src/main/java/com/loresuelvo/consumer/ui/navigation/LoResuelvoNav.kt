@@ -37,6 +37,8 @@ import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
 import com.loresuelvo.consumer.ui.screens.messages.MessagesScreen
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreen
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosViewModel
+import com.loresuelvo.consumer.ui.screens.turnos.TurnosScreen
+import com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
@@ -250,6 +252,10 @@ fun LoResuelvoNav() {
 
                 misServicios = {
                     MisServiciosRoute(navController)
+                },
+
+                turnos = {
+                    TurnosRoute(navController)
                 },
 
                 workOrder = { proposalId ->
@@ -500,6 +506,11 @@ private fun HomeRoute(
         // every service proposal regardless of status.
         onSeeAllMisServiciosClick = {
             navController.navigate(Route.MisServicios.path)
+        },
+        // visualize-turns.feature scenario 01-VT: the Home "Mis
+        // Turnos" link lands on the dedicated screen.
+        onSeeAllTurnosClick = {
+            navController.navigate(Route.Turnos.path)
         },
         // US-54 bug fix: every "Ver Solicitud" tap from the home
         // row feeds the Hilt-scoped ProposalDetailViewModel so the
@@ -821,6 +832,26 @@ private fun ConversationRoute(
         onScrollPositionChanged = viewModel::onScrollPositionChanged,
         onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
     )
+}
+
+/**
+ * "Mis Turnos" route (visualize-turns.feature scenario 01-VT).
+ * Resolves the [TurnosViewModel] through Hilt and forwards the
+ * UDF state to [TurnosScreen]. The VM does not yet fetch
+ * (scenario 02-VT wires the round trip); today it just holds
+ * the Loading state.
+ */
+@Composable
+private fun TurnosRoute(
+    navController: androidx.navigation.NavHostController,
+) {
+    val viewModel: TurnosViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+    TurnosScreen(state = state)
+    // `onBackClick` is intentionally not wired today — the
+    // top app bar does not expose a back button yet (post-MVP).
+    // When it does, route through `navController.popBackStack()`
+    // here.
 }
 
 /**
