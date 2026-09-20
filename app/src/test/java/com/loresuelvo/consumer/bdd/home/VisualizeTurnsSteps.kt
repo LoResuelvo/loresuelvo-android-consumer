@@ -168,6 +168,22 @@ class VisualizeTurnsSteps {
         // `TurnoCardTest` + `ScheduledDateFormatterTest`.
         veoLaFechaDelTurno()
     }
+
+    @When("visualizo el turno")
+    fun visualizoElTurno() {
+        // The screen always renders the seeded turno; this step
+        // is a marker for the Gherkin narrative.
+    }
+
+    @Then("veo el estado actual del turno")
+    fun veoElEstadoActualDelTurno() {
+        // The badge label rendering is pinned by
+        // [com.loresuelvo.consumer.ui.components.turnocard.TurnoCardTest];
+        // the BDD asserts the domain type carries a non-null
+        // [TurnoStatus] so the badge can render it.
+        val state = world.lastUiState() as TurnosUiState.Ready
+        assertNotNull(state.turnos.first().status)
+    }
 }
 
 /**
