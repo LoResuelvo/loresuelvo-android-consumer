@@ -21,6 +21,7 @@ import com.loresuelvo.consumer.data.api.dto.RegisterConsumerRequestDto
 import com.loresuelvo.consumer.data.api.dto.RegisterConsumerResponseDto
 import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.dto.ServiceProposalDto
+import com.loresuelvo.consumer.data.api.dto.TurnoDto
 import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -343,6 +344,20 @@ interface BackendApi {
      */
     @GET("service-proposals")
     suspend fun getServiceProposals(): List<ServiceProposalDto>
+
+    /**
+     * `GET /work-orders` — the consumer's full list of scheduled
+     * appointments ("turnos"). The Mis Turnos surface consumes
+     * the full list and applies its own ordering. See
+     * `data/api/dto/TurnoDto.kt` for the field mapping and
+     * `data/api/mapper/TurnoDtoMapper.kt` for the domain
+     * translation.
+     *
+     * Requires a valid Auth0 JWT (the `AuthInterceptor` injects
+     * the bearer token automatically).
+     */
+    @GET("work-orders")
+    suspend fun getWorkOrders(): List<TurnoDto>
 
     // ---- Payment / checkout (US-21 confirm-agreement flow) ----
 
