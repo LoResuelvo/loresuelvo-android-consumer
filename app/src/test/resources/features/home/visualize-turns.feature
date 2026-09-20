@@ -70,7 +70,6 @@ Característica: Visualizar mis turnos
     And veo la fecha del turno
     And veo la hora del turno
 
-  @wip
   Escenario: 05-VT Visualizar el estado del turno
     Given que tengo un turno registrado
     When visualizo el turno
