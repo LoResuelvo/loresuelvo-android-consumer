@@ -113,6 +113,42 @@ class TurnoCardTest {
             .assertCountEquals(1)
     }
 
+    @Test
+    fun status_badge_renders_Finished() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    TurnoCard(
+                        turno = sampleTurno(id = "1", status = TurnoStatus.Finished),
+                        onCardClicked = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithText(localizedString(R.string.turno_status_finished))
+            .assertCountEquals(1)
+    }
+
+    @Test
+    fun status_badge_renders_Cancelled() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    TurnoCard(
+                        turno = sampleTurno(id = "1", status = TurnoStatus.Cancelled),
+                        onCardClicked = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithText(localizedString(R.string.turno_status_cancelled))
+            .assertCountEquals(1)
+    }
+
     private fun sampleTurno(
         id: String,
         status: TurnoStatus = TurnoStatus.Confirmed,
