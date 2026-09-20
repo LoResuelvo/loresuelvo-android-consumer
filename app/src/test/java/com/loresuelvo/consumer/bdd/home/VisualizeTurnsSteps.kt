@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.bdd.home
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosUiState
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -216,5 +217,46 @@ class VisualizeTurnsSteps {
         "Finalizado" -> TurnoStatus.Finished
         "Cancelado" -> TurnoStatus.Cancelled
         else -> error("unknown status label: $label")
+    }
+
+    @Given("que el backend no responde")
+    fun queElBackendNoResponde() {
+        world.startScenario()
+        world.seedTurnosFailure(
+            TurnosOutcome.Failure.Network(java.io.IOException("dns")),
+        )
+    }
+
+    @Given("que el backend responde con error")
+    fun queElBackendRespondeConError() {
+        world.startScenario()
+        world.seedTurnosFailure(
+            TurnosOutcome.Failure.Server(code = 500, message = "boom"),
+        )
+    }
+
+    @Then("veo un mensaje de error de conexión")
+    fun veoUnMensajeDeErrorDeConexion() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected Error with Failure.Network, was $state",
+            state is TurnosUiState.Error &&
+                state.failure is TurnosOutcome.Failure.Network,
+        )
+    }
+
+    @Then("veo un mensaje de error del servidor")
+    fun veoUnMensajeDeErrorDelServidor() {
+        val state = world.lastUiState()
+        assertTrue(
+            "expected Error with Failure.Server, was $state",
+            state is TurnosUiState.Error &&
+                state.failure is TurnosOutcome.Failure.Server,
+        )
+    }
+
+    @Then("veo un botón para reintentar")
+    fun veoUnBotonParaReintentar() {
+        assertTrue(world.lastUiState() is TurnosUiState.Error)
     }
 }
