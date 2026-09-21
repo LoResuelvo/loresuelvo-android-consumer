@@ -41,6 +41,12 @@ class VisualizeTurnsDetailSteps {
     @Given("participa en una orden de trabajo")
     fun participaEnUnaOrdenDeTrabajo() {
         world.startScenario()
+        // Scenario 01-VTD does not specify a state; seed a
+        // default `scheduled` work order so the trigger step
+        // resolves to Ready. Scenarios that require a different
+        // state (03-VTD, 04-VTD, etc.) override the seed via
+        // the `la orden se encuentra en estado ...` step.
+        world.seedScheduledWorkOrder()
     }
 
     /**
@@ -99,6 +105,11 @@ class VisualizeTurnsDetailSteps {
     @Given("que el usuario está visualizando una orden")
     fun queElUsuarioEstaVisualizandoUnaOrden() {
         world.startScenario()
+        // Scenario 08-VTD does not specify a state in the
+        // Background; seed a default `paid` work order so the
+        // trigger step resolves to Ready with a paidOnEpochMillis
+        // (the scenario's first Then asserts the paid-on row).
+        world.seedPaidWorkOrderWithoutReview()
     }
 
     @When("selecciona para ver detalle de la orden desde la Home")

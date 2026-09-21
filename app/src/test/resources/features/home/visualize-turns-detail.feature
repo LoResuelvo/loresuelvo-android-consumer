@@ -8,7 +8,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     Given que estoy autenticado como usuario
     And me encuentro en la pantalla Home
 
-  @wip
   Scenario: 01-VTD El consumidor puede abrir el detalle de una orden desde la Home
     Given participa en una orden de trabajo
     When selecciona para ver detalle de la orden desde la Home
