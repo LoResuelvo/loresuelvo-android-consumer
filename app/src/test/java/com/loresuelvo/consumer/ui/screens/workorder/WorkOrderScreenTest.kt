@@ -16,7 +16,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
-import com.loresuelvo.consumer.domain.workorder.WorkOrder
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -195,7 +195,7 @@ class WorkOrderScreenTest {
 
     private fun workOrder(
         estimatedDurationMinutes: Int? = 90,
-    ): WorkOrder = WorkOrder(
+    ): WorkOrderDetail = WorkOrderDetail(
         proposalId = "wo-1",
         providerName = "Carlos López",
         categoryName = "Plomería",

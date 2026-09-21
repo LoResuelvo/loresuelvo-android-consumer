@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.workorder
 
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
-import com.loresuelvo.consumer.domain.workorder.WorkOrder
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 
 /**
  * UDF state for the work-order detail screen (US-54 scenario
@@ -21,7 +21,7 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrder
  */
 sealed interface WorkOrderUiState {
     data object Loading : WorkOrderUiState
-    data class Ready(val workOrder: WorkOrder) : WorkOrderUiState
+    data class Ready(val workOrder: WorkOrderDetail) : WorkOrderUiState
     data object NotFound : WorkOrderUiState
     data class Error(val failure: ServiceProposalsOutcome.Failure) : WorkOrderUiState
 }

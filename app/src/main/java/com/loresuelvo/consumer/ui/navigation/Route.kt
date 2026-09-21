@@ -119,8 +119,8 @@ sealed class Route(val path: String) {
      * endpoint has not been wired yet) — the rename is purely
      * the navigation surface so callers stop coupling to the
      * service-proposal id. The downstream rename of the
-     * `WorkOrder` domain type, repository and screen lands in
-     * commits #2-#4.
+     * `WorkOrderDetail` domain type, repository and screen
+     * lands in commits #2-#6.
      */
     data object WorkOrderDetail : Route("work-order-detail/{workOrderId}") {
         const val ARG_WORK_ORDER_ID: String = "workOrderId"

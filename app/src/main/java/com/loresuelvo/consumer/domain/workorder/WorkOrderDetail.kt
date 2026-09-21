@@ -24,7 +24,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
  *   how long the visit will take. Nullable because the backend
  *   may not have it when the proposal was just accepted.
  */
-data class WorkOrder(
+data class WorkOrderDetail(
     val proposalId: String,
     val providerName: String,
     val categoryName: String,

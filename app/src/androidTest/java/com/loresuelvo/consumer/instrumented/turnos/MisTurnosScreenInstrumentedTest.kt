@@ -82,7 +82,7 @@ import org.junit.runner.RunWith
  *    graph: every port the production ViewModels transitively
  *    need (Categories / Provider / AuthSessionStore /
  *    Diagnosis / JobRequest / Conversation /
- *    ServiceProposal / WorkOrder / Turnos) is bound to a fake /
+     *    ServiceProposal / WorkOrderDetail / Turnos) is bound to a fake /
  *    production stub that returns a fast, in-memory result.
  *  - `@EntryPoint` to resolve the **same** `@Singleton` instance of
  *    `AuthSessionStore` that `SessionViewModel` observes, so the

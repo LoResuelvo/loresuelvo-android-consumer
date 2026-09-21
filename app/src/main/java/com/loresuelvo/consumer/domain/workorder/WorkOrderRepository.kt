@@ -17,7 +17,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
  *    never blocked by a missing work-order fetch.
  */
 sealed interface GetWorkOrderOutcome {
-    data class Found(val workOrder: WorkOrder) : GetWorkOrderOutcome
+    data class Found(val workOrder: WorkOrderDetail) : GetWorkOrderOutcome
     data object NotFound : GetWorkOrderOutcome
     data class Failure(val failure: ServiceProposalsOutcome.Failure) : GetWorkOrderOutcome
 }

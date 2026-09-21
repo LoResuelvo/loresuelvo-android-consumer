@@ -4,7 +4,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
-import com.loresuelvo.consumer.domain.workorder.WorkOrder
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -43,7 +43,7 @@ class ApiWorkOrderRepository @Inject constructor(
             is ServiceProposalsOutcome.Success ->
                 outcome.proposals
                     .firstOrNull { it.id == proposalId }
-                    ?.toWorkOrder()
+                    ?.toWorkOrderDetail()
                     ?.let { GetWorkOrderOutcome.Found(it) }
                     ?: GetWorkOrderOutcome.NotFound
             is ServiceProposalsOutcome.Failure ->
@@ -51,7 +51,7 @@ class ApiWorkOrderRepository @Inject constructor(
         }
 }
 
-private fun ServiceProposal.toWorkOrder(): WorkOrder = WorkOrder(
+private fun ServiceProposal.toWorkOrderDetail(): WorkOrderDetail = WorkOrderDetail(
     proposalId = id,
     providerName = "${counterpart.name} ${counterpart.surname}",
     categoryName = counterpart.categoryName,
@@ -63,12 +63,12 @@ private fun ServiceProposal.toWorkOrder(): WorkOrder = WorkOrder(
 )
 
 /**
- * Public façade for the production [toWorkOrder] mapping so JVM
+ * Public façade for the production [toWorkOrderDetail] mapping so JVM
  * unit tests can assert the conversion without re-implementing
  * it. The production site still calls the private extension
  * directly — the façade exists only to make the mapping
  * testable from `src/test`.
  */
 object ApiWorkOrderMapping {
-    fun toWorkOrder(proposal: ServiceProposal): WorkOrder = proposal.toWorkOrder()
+    fun toWorkOrderDetail(proposal: ServiceProposal): WorkOrderDetail = proposal.toWorkOrderDetail()
 }

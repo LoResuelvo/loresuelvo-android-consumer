@@ -140,7 +140,7 @@ fun LoResuelvoNav() {
      *
      * This router only manages top-level session destinations.
      * It must never replace deeper routes such as PaymentResult,
-     * ServiceAgreement, Chat, Professionals, or WorkOrder.
+     * ServiceAgreement, Chat, Professionals, or WorkOrderDetail.
      */
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val sessionState by sessionViewModel.uiState.collectAsState()

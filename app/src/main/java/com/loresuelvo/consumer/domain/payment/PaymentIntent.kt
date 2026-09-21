@@ -3,7 +3,7 @@ package com.loresuelvo.consumer.domain.payment
 /**
  * Read-only projection of a backend payment intent — the join
  * entity between a `ServiceProposal` (booking-deposit flow, US-21)
- * or a `WorkOrder` (service-balance flow, US-28) and the external
+     * or a `WorkOrderDetail` (service-balance flow, US-28) and the external
  * Mercado Pago checkout session.
  *
  * Identified by [id] (a UUID minted by the backend). [status] is

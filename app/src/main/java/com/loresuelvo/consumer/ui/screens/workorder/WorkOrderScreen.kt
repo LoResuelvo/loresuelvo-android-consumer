@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
-import com.loresuelvo.consumer.domain.workorder.WorkOrder
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
@@ -109,7 +109,7 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun ReadyState(workOrder: WorkOrder) {
+private fun ReadyState(workOrder: WorkOrderDetail) {
     Column(
         modifier = Modifier
             .fillMaxSize()

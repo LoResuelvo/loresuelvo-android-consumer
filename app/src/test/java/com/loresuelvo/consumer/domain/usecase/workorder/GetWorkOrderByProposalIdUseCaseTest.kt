@@ -142,7 +142,7 @@ class GetWorkOrderByProposalIdUseCaseTest {
                 is ServiceProposalsOutcome.Success ->
                     result.proposals
                         .firstOrNull { it.id == proposalId }
-                        ?.let { GetWorkOrderOutcome.Found(ApiWorkOrderMapping.toWorkOrder(it)) }
+                        ?.let { GetWorkOrderOutcome.Found(ApiWorkOrderMapping.toWorkOrderDetail(it)) }
                         ?: GetWorkOrderOutcome.NotFound
                 is ServiceProposalsOutcome.Failure -> GetWorkOrderOutcome.Failure(result)
             }

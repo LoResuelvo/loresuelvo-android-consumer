@@ -23,7 +23,7 @@ import kotlinx.serialization.Serializable
  * than waiting for the `bookingTerms` block to land — when the
  * backend does introduce it, drop it into a nested `BookingTermsDto`
  * here and surface the eleven extra fields through the
- * `WorkOrder` domain type without breaking the current consumers
+     * `WorkOrderDetail` domain type without breaking the current consumers
  * (the wire decoder has `ignoreUnknownKeys = true`, so older
  * clients will simply ignore the new block).
  *
