@@ -359,6 +359,25 @@ interface BackendApi {
     @GET("work-orders")
     suspend fun getWorkOrders(): List<TurnoDto>
 
+    /**
+     * `GET /work-orders/{workOrderID}` — the work-order detail
+     * endpoint backing the `WorkOrderDetailScreen`
+     * (US-27 `visualize-turns-detail`). The wire shape is
+     * conditional on `status` (see
+     * `data/api/dto/WorkOrderDetailDto.kt` for the full
+     * mapping). The companion DTOs (`CompletionReportDto`,
+     * `CompletionReportPhotoDto`, `ReviewDto`,
+     * `WorkOrderDetailCounterpartDto`) decode the nested blocks
+     * through the standard `kotlinx.serialization` machinery.
+     *
+     * Requires a valid Auth0 JWT (the `AuthInterceptor` injects
+     * the bearer token automatically).
+     */
+    @GET("work-orders/{workOrderID}")
+    suspend fun getWorkOrder(
+        @Path("workOrderID") workOrderID: String,
+    ): com.loresuelvo.consumer.data.api.dto.WorkOrderDetailDto
+
     // ---- Payment / checkout (US-21 confirm-agreement flow) ----
 
     /**
