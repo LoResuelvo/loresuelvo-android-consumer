@@ -70,10 +70,10 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     And debe mostrar la reseña del consumidor
     And debe mostrar la calificación de la reseña
 
-  @wip
   Scenario: 08-VTD Una orden paid sin reseña no muestra una reseña inexistente
     Given que el usuario está visualizando una orden
     And la orden se encuentra en estado "paid"
+    And el pago de la orden fue realizado
     And el consumidor todavía no emitió una reseña
     When selecciona para ver detalle de la orden desde la Home
     Then debe mostrar la fecha en que se saldó el pago
