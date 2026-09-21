@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.screens.workorder
+package com.loresuelvo.consumer.ui.screens.workorderdetail
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -24,10 +24,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose UI tests for [WorkOrderScreen] (US-54 scenario
- * 16-VSP). Runs on the JVM via [RobolectricTestRunner] so it
- * participates in the fast `./gradlew testDevDebugUnitTest` task
- * without needing an emulator.
+ * Compose UI tests for [WorkOrderDetailScreen] (US-54 scenario
+ * 16-VSP, US-27 `visualize-turns-detail`). Runs on the JVM via
+ * [RobolectricTestRunner] so it participates in the fast
+ * `./gradlew testDevDebugUnitTest` task without needing an
+ * emulator.
  *
  * Pins the four observable branches:
  *  - Loading → spinner + loading copy.
@@ -44,7 +45,7 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
-class WorkOrderScreenTest {
+class WorkOrderDetailScreenTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
@@ -58,8 +59,8 @@ class WorkOrderScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    WorkOrderScreen(
-                        state = WorkOrderUiState.Ready(workOrder()),
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(workOrder()),
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -93,8 +94,8 @@ class WorkOrderScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    WorkOrderScreen(
-                        state = WorkOrderUiState.Ready(workOrder(estimatedDurationMinutes = null)),
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(workOrder(estimatedDurationMinutes = null)),
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -117,8 +118,8 @@ class WorkOrderScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    WorkOrderScreen(
-                        state = WorkOrderUiState.Loading,
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Loading,
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -137,8 +138,8 @@ class WorkOrderScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    WorkOrderScreen(
-                        state = WorkOrderUiState.NotFound,
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.NotFound,
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -156,8 +157,8 @@ class WorkOrderScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    WorkOrderScreen(
-                        state = WorkOrderUiState.Error(ServiceProposalsOutcome.Failure.Network(java.io.IOException())),
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Error(ServiceProposalsOutcome.Failure.Network(java.io.IOException())),
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -176,8 +177,8 @@ class WorkOrderScreenTest {
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
-                    WorkOrderScreen(
-                        state = WorkOrderUiState.Error(
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Error(
                             ServiceProposalsOutcome.Failure.Server(500, "down for maintenance"),
                         ),
                         onRetry = {},

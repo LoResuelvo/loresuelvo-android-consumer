@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.screens.workorder
+package com.loresuelvo.consumer.ui.screens.workorderdetail
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,30 +33,36 @@ import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
 /**
- * Consumer work-order detail screen (US-54 scenario 16-VSP).
- * Mirrors [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen]
+ * Consumer work-order detail screen (US-54 scenario 16-VSP,
+ * US-27 `visualize-turns-detail`). Mirrors
+ * [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen]
  * structurally — a vertical stack of label / value rows — but
- * the data source is the [WorkOrder] type instead of the raw
+ * the data source is the [com.loresuelvo.consumer.domain.workorder.WorkOrderDetail]
+ * type instead of the raw
  * [com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal].
  * The screen is stateless: every visible value is sourced from
- * [WorkOrderUiState] and the only user action (the "Reintentar"
- * CTA on the error branch) is delegated via [onRetry].
+ * [WorkOrderDetailUiState] and the only user action (the
+ * "Reintentar" CTA on the error branch) is delegated via
+ * [onRetry].
  *
- *  - [WorkOrderUiState.Loading] → centred spinner.
- *  - [WorkOrderUiState.Ready] → top bar + the full work-order
+ *  - [WorkOrderDetailUiState.Loading] → centred spinner.
+ *  - [WorkOrderDetailUiState.Ready] → top bar + the full work-order
  *    layout (provider, category, amount, scheduled date,
  *    estimated time on site, description, status).
- *  - [WorkOrderUiState.NotFound] → not-found copy.
- *  - [WorkOrderUiState.Error] → typed copy + retry button.
+ *  - [WorkOrderDetailUiState.NotFound] → not-found copy.
+ *  - [WorkOrderDetailUiState.Error] → typed copy + retry button.
  *
  * Compose testTags are exported as `WORK_ORDER_*` constants
  * so the instrumented suite can target each row without
- * depending on the localised copy.
+ * depending on the localised copy. US-27 keeps the tag names
+ * to avoid touching the instrumented suite that already
+ * targets them; a future refactor commit can align them with
+ * the new screen / route name.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WorkOrderScreen(
-    state: WorkOrderUiState,
+fun WorkOrderDetailScreen(
+    state: WorkOrderDetailUiState,
     onRetry: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -81,10 +87,10 @@ fun WorkOrderScreen(
             contentAlignment = Alignment.Center,
         ) {
             when (state) {
-                is WorkOrderUiState.Loading -> LoadingState()
-                is WorkOrderUiState.Ready -> ReadyState(state.workOrder)
-                is WorkOrderUiState.NotFound -> NotFoundState()
-                is WorkOrderUiState.Error -> ErrorState(state.failure, onRetry)
+                is WorkOrderDetailUiState.Loading -> LoadingState()
+                is WorkOrderDetailUiState.Ready -> ReadyState(state.workOrder)
+                is WorkOrderDetailUiState.NotFound -> NotFoundState()
+                is WorkOrderDetailUiState.Error -> ErrorState(state.failure, onRetry)
             }
         }
     }

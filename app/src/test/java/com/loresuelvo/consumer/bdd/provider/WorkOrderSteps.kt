@@ -1,6 +1,6 @@
 package com.loresuelvo.consumer.bdd.provider
 
-import com.loresuelvo.consumer.ui.screens.workorder.WorkOrderUiState
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
@@ -12,7 +12,7 @@ import org.junit.Assert.assertTrue
  * Real step implementations for the US-54 BDD spec
  * `16-VSP Consultar el tiempo estimado de trabajo en la orden`.
  * The [WorkOrderWorld] drives the
- * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel]
+ * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
  * with a fake repo whose only proposal is the seeded accepted
  * proposal with a 90-minute estimate, so the work-order detail
  * renders the pinned `1 h 30 min` formatter output alongside
@@ -51,10 +51,10 @@ class WorkOrderSteps {
     fun debeVisualizarElTiempoEstimadoDeTrabajoJuntoConLosDatosAcordadosDelServicio() {
         val state = world.lastWorkOrderState()
         assertTrue(
-            "expected WorkOrderUiState.Ready, was $state",
-            state is WorkOrderUiState.Ready,
+            "expected WorkOrderDetailUiState.Ready, was $state",
+            state is WorkOrderDetailUiState.Ready,
         )
-        val workOrder = (state as WorkOrderUiState.Ready).workOrder
+        val workOrder = (state as WorkOrderDetailUiState.Ready).workOrder
 
         // Pinned formatter output for 90 minutes.
         val minutes = workOrder.estimatedDurationMinutes

@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.screens.workorder
+package com.loresuelvo.consumer.ui.screens.workorderdetail
 
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
@@ -19,9 +19,9 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
  *    render network vs server strings distinctly and offer a
  *    retry CTA.
  */
-sealed interface WorkOrderUiState {
-    data object Loading : WorkOrderUiState
-    data class Ready(val workOrder: WorkOrderDetail) : WorkOrderUiState
-    data object NotFound : WorkOrderUiState
-    data class Error(val failure: ServiceProposalsOutcome.Failure) : WorkOrderUiState
+sealed interface WorkOrderDetailUiState {
+    data object Loading : WorkOrderDetailUiState
+    data class Ready(val workOrder: WorkOrderDetail) : WorkOrderDetailUiState
+    data object NotFound : WorkOrderDetailUiState
+    data class Error(val failure: ServiceProposalsOutcome.Failure) : WorkOrderDetailUiState
 }

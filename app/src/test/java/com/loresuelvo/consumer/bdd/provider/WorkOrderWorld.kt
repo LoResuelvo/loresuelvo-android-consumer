@@ -6,8 +6,8 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
-import com.loresuelvo.consumer.ui.screens.workorder.WorkOrderUiState
-import com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -21,12 +21,12 @@ import kotlinx.coroutines.test.setMain
 /**
  * Per-scenario world for the US-54 BDD spec 16-VSP ("consult the
  * work-order detail"). Drives the
- * [WorkOrderViewModel] against a fake
+ * [WorkOrderDetailViewModel] against a fake
  * [ServiceProposalRepository] (which the production
  * [com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository] also
  * reuses) so the step defs can deterministically mount the VM
  * with a seeded accepted proposal and observe the resolved
- * [WorkOrderUiState].
+ * [WorkOrderDetailUiState].
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class WorkOrderWorld : AutoCloseable {
@@ -37,9 +37,9 @@ class WorkOrderWorld : AutoCloseable {
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
     private val serviceProposalRepo = FakeServiceProposalRepository()
-    private lateinit var viewModel: WorkOrderViewModel
+    private lateinit var viewModel: WorkOrderDetailViewModel
 
-    private val observedWorkOrderStates: MutableList<WorkOrderUiState> = mutableListOf()
+    private val observedWorkOrderStates: MutableList<WorkOrderDetailUiState> = mutableListOf()
     private var started: Boolean = false
 
     fun startScenario() {
@@ -48,7 +48,7 @@ class WorkOrderWorld : AutoCloseable {
 
         Dispatchers.setMain(dispatcher)
 
-        viewModel = WorkOrderViewModel(
+        viewModel = WorkOrderDetailViewModel(
             getWorkOrderDetail = GetWorkOrderDetailUseCase(
                 com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository(serviceProposalRepo),
             ),
@@ -98,16 +98,16 @@ class WorkOrderWorld : AutoCloseable {
 
     /**
      * "el usuario consulta el detalle de la orden de trabajo" —
-     * scenario 16-VSP. Drives [WorkOrderViewModel.load] against
+     * scenario 16-VSP. Drives [WorkOrderDetailViewModel.load] against
      * the seeded repo; the BDD's `Then` step observes the
-     * resolved [WorkOrderUiState.Ready].
+     * resolved [WorkOrderDetailUiState.Ready].
      */
     fun openWorkOrder() {
         viewModel.load(PROPOSAL_ID)
         scheduler.advanceUntilIdle()
     }
 
-    fun lastWorkOrderState(): WorkOrderUiState = observedWorkOrderStates.last()
+    fun lastWorkOrderState(): WorkOrderDetailUiState = observedWorkOrderStates.last()
 
     override fun close() {
         supervisorJob.cancel()

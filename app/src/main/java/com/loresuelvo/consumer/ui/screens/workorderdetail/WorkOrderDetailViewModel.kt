@@ -1,4 +1,4 @@
-package com.loresuelvo.consumer.ui.screens.workorder
+package com.loresuelvo.consumer.ui.screens.workorderdetail
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,28 +14,28 @@ import kotlinx.coroutines.launch
 
 /**
  * ViewModel for the consumer work-order detail screen
- * ([WorkOrderScreen], US-54 scenario 16-VSP, US-27
+ * ([WorkOrderDetailScreen], US-54 scenario 16-VSP, US-27
  * `visualize-turns-detail`). Looks up the
  * [com.loresuelvo.consumer.domain.workorder.WorkOrderDetail]
  * tied to the work-order id via
  * [GetWorkOrderDetailUseCase] and exposes a sealed
- * [WorkOrderUiState].
+ * [WorkOrderDetailUiState].
  *
  * The host
  * ([com.loresuelvo.consumer.ui.navigation.WorkOrderDetailRoute])
  * feeds the work-order id into [load] on first composition and
- * on manual retry from the [WorkOrderUiState.Error] surface.
- * The VM is Hilt-scoped to the route entry, so navigating to a
- * different work order triggers a fresh instance and a fresh
- * round trip.
+ * on manual retry from the [WorkOrderDetailUiState.Error]
+ * surface. The VM is Hilt-scoped to the route entry, so
+ * navigating to a different work order triggers a fresh
+ * instance and a fresh round trip.
  */
 @HiltViewModel
-class WorkOrderViewModel @Inject constructor(
+class WorkOrderDetailViewModel @Inject constructor(
     private val getWorkOrderDetail: GetWorkOrderDetailUseCase,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<WorkOrderUiState>(WorkOrderUiState.Loading)
-    val uiState: StateFlow<WorkOrderUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<WorkOrderDetailUiState>(WorkOrderDetailUiState.Loading)
+    val uiState: StateFlow<WorkOrderDetailUiState> = _uiState.asStateFlow()
 
     /**
      * Loads the work order for [workOrderId]. Re-entrant so the
@@ -45,12 +45,12 @@ class WorkOrderViewModel @Inject constructor(
      */
     fun load(workOrderId: String) {
         viewModelScope.launch {
-            _uiState.update { WorkOrderUiState.Loading }
+            _uiState.update { WorkOrderDetailUiState.Loading }
             val outcome = getWorkOrderDetail(workOrderId)
             val next = when (outcome) {
-                is GetWorkOrderOutcome.Found -> WorkOrderUiState.Ready(outcome.workOrder)
-                is GetWorkOrderOutcome.NotFound -> WorkOrderUiState.NotFound
-                is GetWorkOrderOutcome.Failure -> WorkOrderUiState.Error(outcome.failure)
+                is GetWorkOrderOutcome.Found -> WorkOrderDetailUiState.Ready(outcome.workOrder)
+                is GetWorkOrderOutcome.NotFound -> WorkOrderDetailUiState.NotFound
+                is GetWorkOrderOutcome.Failure -> WorkOrderDetailUiState.Error(outcome.failure)
             }
             _uiState.update { next }
         }

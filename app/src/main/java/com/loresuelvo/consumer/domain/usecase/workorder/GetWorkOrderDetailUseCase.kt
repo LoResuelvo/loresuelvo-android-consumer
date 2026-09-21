@@ -9,7 +9,7 @@ import javax.inject.Inject
  * tied to a work-order id. Drives the consumer work-order detail
  * screen (US-54 scenario 16-VSP, US-27 `visualize-turns-detail`).
  * Pure passthrough — the use case exists to keep the
- * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel]
+ * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
  * free of any repository import and to match the
  * one-use-case-per-action convention the rest of the app follows.
  */

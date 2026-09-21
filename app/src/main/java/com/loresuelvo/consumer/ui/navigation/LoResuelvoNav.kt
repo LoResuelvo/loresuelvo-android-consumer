@@ -858,11 +858,11 @@ private fun TurnosRoute(
 }
 
 /**
- * Work-order detail route (US-54 scenario 16-VSP, US-56
+ * Work-order detail route (US-54 scenario 16-VSP, US-27
  * `visualize-turns-detail`). Resolves the
- * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel]
+ * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
  * through Hilt and forwards the UDF state to
- * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderScreen].
+ * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen].
  * The work-order id from the back-stack entry is fed to the VM's
  * `load(workOrderId)` once on first composition (and again on
  * the screen-level retry from the `Error` state).
@@ -872,13 +872,13 @@ private fun WorkOrderDetailRoute(
     navController: androidx.navigation.NavHostController,
     workOrderId: String,
 ) {
-    val viewModel: com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel =
+    val viewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
         hiltViewModel()
     val state by viewModel.uiState.collectAsState()
     androidx.compose.runtime.LaunchedEffect(workOrderId) {
         viewModel.load(workOrderId)
     }
-    com.loresuelvo.consumer.ui.screens.workorder.WorkOrderScreen(
+    com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
         state = state,
         onRetry = { viewModel.load(workOrderId) },
         onBackClick = { navController.popBackStack() },
