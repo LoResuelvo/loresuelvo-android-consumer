@@ -60,7 +60,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     When selecciona una fotografía de evidencia
     Then debe abrirse la fotografía en un visor de tamaño completo
 
-  @wip
   Scenario: 07-VTD Una orden paid muestra la información del pago y la reseña
     Given participa en una orden de trabajo
     And la orden se encuentra en estado "paid"
