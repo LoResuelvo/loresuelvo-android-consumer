@@ -33,7 +33,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     And debe mostrar la fecha y hora programada
     And debe mostrar la descripción original del servicio
 
-  @wip
   Scenario: 04-VTD Una orden awaiting_payment muestra la evidencia de finalización
     Given participa en una orden de trabajo
     And la orden se encuentra en estado "awaiting_payment"
