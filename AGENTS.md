@@ -17,6 +17,7 @@ Fuente canónica para agentes. Leer este archivo primero y cargar skills locales
 - **UI**: Jetpack Compose (BOM 2024.09), Material 3, Navigation Compose, `minSdk 24` / `targetSdk 35`.
 - **Estado**: StateFlow + UDF. Los `UiState` son `data class` inmutables; los `ViewModel` exponen `StateFlow<UiState>`.
 - **DI**: Hilt + `hilt-navigation-compose` para `hiltViewModel()` en composables. `LoresuelvoApp` con `@HiltAndroidApp`. `MainActivity` con `@AndroidEntryPoint`.
+- **Debug-only mocks para testeo manual**: para probar pantallas que requieren backend sin levantarlo, usar el approach del `FakeTurnosInterceptor` en `app/src/debug/.../data/api/`. Vive en el source set `src/debug/` (compilado en todo `*Debug`, ausente en `*Release` — convention de Android). `NetworkModule.provideOkHttpClient` chequea `BuildConfig.DEBUG` y lo agrega al `OkHttpClient` solo en builds debug. El interceptor short-circuitea `GET /work-orders` con un payload JSON mockeado. Ventaja sobre flavor-specific overrides: no necesita `@UninstallModules` en cada test instrumentado, no genera `DuplicateBindings` de Hilt, y desaparece automáticamente en release builds.
 - **Auth**: Auth0 SDK 2.11.0.
 - **Networking**: Retrofit + OkHttp + `kotlinx-serialization`.
 - **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD. Compose UI tests para componentes simples (`WorkOrderScreenTest`) corren en JVM con Robolectric; escenarios BDD + tests unitarios siguen siendo la fuente primaria de cobertura.
@@ -122,7 +123,7 @@ app/
         values/strings.xml                    # Strings de UI en español (default)
         values-en/strings.xml                 # Strings en inglés
         xml/                                 # Network security config, etc.
-      dev/                                   # Overlays del flavor dev (manifest, res)
+      dev/                                   # Overlays del flavor dev (manifest, res, Hilt debug overrides)
     test/                                    # Unit tests JVM (JUnit4 + MockK + Turbine + Cucumber JVM + Robolectric)
       resources/features/                    # .feature BDD de Cucumber (JVM, no androidTest)
       java/.../bdd/                          # Step definitions + CucumberWorld + fakes
