@@ -208,6 +208,10 @@ class WorkOrderDetailScreenTest {
         description = "Fuga en el lavamanos",
         amountCents = 1_500_000L,
         scheduledOnEpochMillis = 1_792_074_600_000L,
+        acceptedOnEpochMillis = 1_788_434_364_640L,
+        paidOnEpochMillis = null,
+        completionReport = null,
+        review = null,
         estimatedDurationMinutes = estimatedDurationMinutes,
         status = TurnoStatus.Pending,
     )

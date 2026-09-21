@@ -22,6 +22,22 @@ import com.loresuelvo.consumer.domain.turno.TurnoStatus
  *   categoryName: String` pair so the screen can render the
  *   avatar + full name + category without round-tripping to
  *   the chat / provider endpoints.
+ * @property acceptedOnEpochMillis the wall-clock instant the
+ *   proposal was promoted to a work order (provider accepted
+ *   the service agreement). Surfaced on the detail screen under
+ *   the "Fecha y hora" row of `state == AwaitingPayment` and
+ *   `state == Paid` orders so the consumer can see how long ago
+ *   the work was booked.
+ * @property paidOnEpochMillis nullable — only populated once the
+ *   consumer clears the remaining balance (state == `paid`).
+ *   The detail screen surfaces it under the "Fecha en que se
+ *   saldó el pago" row when present.
+ * @property completionReport nullable — populated when the
+ *   provider files the completion report (state in
+ *   `awaiting_payment` / `paid`). Carries the description,
+ *   wall-clock instant and the photographic evidence.
+ * @property review nullable — populated when the consumer files
+ *   a review (state == `paid`). Carries rating + description.
  * @property estimatedDurationMinutes the provider's estimate of
  *   how long the visit will take. Nullable because the backend
  *   may not have it when the proposal was just accepted.
@@ -39,6 +55,10 @@ data class WorkOrderDetail(
     val description: String,
     val amountCents: Long,
     val scheduledOnEpochMillis: Long,
-    val estimatedDurationMinutes: Int?,
+    val acceptedOnEpochMillis: Long,
+    val paidOnEpochMillis: Long?,
     val status: TurnoStatus,
+    val completionReport: CompletionReport?,
+    val review: WorkOrderReview?,
+    val estimatedDurationMinutes: Int?,
 )

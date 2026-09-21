@@ -65,6 +65,21 @@ private fun ServiceProposal.toWorkOrderDetail(): WorkOrderDetail = WorkOrderDeta
     description = description,
     amountCents = amountCents,
     scheduledOnEpochMillis = scheduledOnEpochMillis,
+    // US-27: the dedicated endpoint surfaces `accepted_on` /
+    // `paid_on`. The legacy adapter derives from the proposal
+    // so we fall back to `createdOnEpochMillis` (the moment the
+    // consumer filed the proposal) and `null` respectively;
+    // a follow-up commit replaces this adapter with the new
+    // endpoint and the values become authoritative.
+    acceptedOnEpochMillis = createdOnEpochMillis,
+    paidOnEpochMillis = null,
+    // US-27: completion report + review are absent from the
+    // legacy adapter. A follow-up commit sources both blocks
+    // from `GET /work-orders/{workOrderID}` once it's wired up;
+    // today they're `null` because the adapter derives from the
+    // proposal-only endpoint.
+    completionReport = null,
+    review = null,
     estimatedDurationMinutes = estimatedDurationMinutes,
     // US-27: map the proposal-side status to the work-order
     // vocabulary. `Accepted` is the only proposal-side value the
