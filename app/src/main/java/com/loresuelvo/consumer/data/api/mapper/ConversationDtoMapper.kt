@@ -49,6 +49,12 @@ internal fun ConversationDetailDto.toDomain(): ConversationDetail {
         counterpart = counterpartDto.toDomain(),
         messages = messages.map { it.toDomain() },
         updatedOnEpochMillis = parseIsoMillisOrZero(updatedOn) ?: 0L,
+        // The wire `Long?` collapses to a domain `String?` so
+        // the rest of the app does not have to reason about
+        // the platform `Long`. Mapping is a no-op when the
+        // wire emits `null` — the chat top bar then hides
+        // the "Ver orden de trabajo" CTA (see scenario 02-VTD).
+        workOrderId = workOrderId?.toString(),
     )
 }
 

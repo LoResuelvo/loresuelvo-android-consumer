@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -41,13 +42,21 @@ import com.loresuelvo.consumer.domain.conversation.ConversationStatus
  * badge on the right when the conversation is still awaiting
  * the provider's acceptance.
  *
- * Stateless — the parent owns the navigation callback.
+ * US-27 `visualize-turns-detail` scenario 02-VTD: when the
+ * conversation is associated with a work order the trailing
+ * edge renders a "Ver orden" icon button — tapping it
+ * delegates to [onViewWorkOrder] so the route handler can
+ * navigate to `Route.WorkOrderDetail`. Hidden for every
+ * pre-acceptance conversation (`workOrderId == null`).
+ *
+ * Stateless — the parent owns the navigation callbacks.
  */
 @Composable
 fun ConversationTopBar(
     counterpart: ConversationCounterpart,
     status: ConversationStatus,
     onBackClick: () -> Unit,
+    onViewWorkOrder: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -110,6 +119,20 @@ fun ConversationTopBar(
                 Spacer(Modifier.width(8.dp))
                 PendingPill()
             }
+            if (onViewWorkOrder != null) {
+                Spacer(Modifier.width(4.dp))
+                IconButton(
+                    onClick = onViewWorkOrder,
+                    modifier = Modifier.testTag(CONVERSATION_TOP_BAR_VIEW_WORK_ORDER_TAG),
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Filled.Description,
+                        contentDescription = stringResource(
+                            R.string.conversation_top_bar_view_work_order_content_description,
+                        ),
+                    )
+                }
+            }
         }
     }
 }
@@ -140,3 +163,5 @@ private fun PendingPill() {
 const val CONVERSATION_TOP_BAR_TAG: String = "conversation-top-bar"
 const val CONVERSATION_TOP_BAR_BACK_TAG: String = "conversation-top-bar-back"
 const val CONVERSATION_TOP_BAR_PENDING_TAG: String = "conversation-top-bar-pending"
+const val CONVERSATION_TOP_BAR_VIEW_WORK_ORDER_TAG: String =
+    "conversation-top-bar-view-work-order"

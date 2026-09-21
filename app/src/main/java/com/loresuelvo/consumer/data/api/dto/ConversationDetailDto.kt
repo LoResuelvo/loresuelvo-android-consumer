@@ -53,6 +53,14 @@ data class ConversationDetailDto(
     @SerialName("counterpart") val counterpart: ConversationCounterpartDto? = null,
     @SerialName("messages") val messages: List<ConversationMessageDto> = emptyList(),
     @SerialName("updated_on") val updatedOn: String? = null,
+    // US-27 `visualize-turns-detail` scenario 02-VTD: the
+    // conversation is associated with at most one work order;
+    // the wire emits the id (as a `Long` keyed to the
+    // work-order endpoint) when the conversation has been
+    // promoted from `POST /job-requests` into a WorkOrder
+    // through the provider acceptance flow. `null` for every
+    // pre-acceptance conversation or for ad-hoc chats.
+    @SerialName("work_order_id") val workOrderId: Long? = null,
 ) {
     /**
      * Wrapper the dev backend emits around the counterpart

@@ -100,6 +100,13 @@ fun ConversationScreen(
     onPromptChange: (String) -> Unit,
     onSendClick: () -> Unit,
     onBackClick: () -> Unit,
+    // US-27 scenario 02-VTD: tap "Ver orden" CTA in the top
+    // bar. `onViewWorkOrder` is invoked with the work-order id
+    // already known to the domain; the route handler navigates
+    // to `Route.WorkOrderDetail`. Wired only by the production
+    // route — the default `null` keeps host-free previews
+    // compiling.
+    onViewWorkOrder: ((String) -> Unit)? = null,
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
     onPlayAudio: (String) -> Unit = {},
@@ -152,6 +159,17 @@ fun ConversationScreen(
                             counterpart = state.detail.counterpart,
                             status = state.detail.status,
                             onBackClick = onBackClick,
+                            // US-27 scenario 02-VTD: when the
+                            // conversation has an associated work
+                            // order, the top bar surfaces an icon
+                            // button that navigates to the work-order
+                            // detail screen via the route handler.
+                            // `null` for pre-acceptance conversations
+                            // hides the button entirely.
+                            onViewWorkOrder = state.detail.workOrderId
+                                ?.let { workOrderId ->
+                                    { onViewWorkOrder?.invoke(workOrderId) }
+                                },
                         )
                     },
                     bottomBar = {

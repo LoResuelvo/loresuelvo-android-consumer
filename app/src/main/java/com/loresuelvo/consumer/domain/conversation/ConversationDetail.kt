@@ -33,4 +33,12 @@ data class ConversationDetail(
     val counterpart: ConversationCounterpart,
     val messages: List<ConversationMessage>,
     val updatedOnEpochMillis: Long,
+    // US-27 `visualize-turns-detail` scenario 02-VTD: stable
+    // id of the work order associated with this conversation
+    // (emitted by the backend once the provider accepts the
+    // originating job-request). `null` for every pre-acceptance
+    // conversation or for chats that the backend has not linked
+    // to a work order. The chat surface uses this to render
+    // the "Ver orden de trabajo" CTA in the top bar.
+    val workOrderId: String? = null,
 )

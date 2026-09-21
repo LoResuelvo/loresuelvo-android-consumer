@@ -802,6 +802,15 @@ private fun ConversationRoute(
         onPauseAudio = viewModel::onPauseAudio,
         onImageClick = viewModel::onImageClick,
         onFullscreenImageDismiss = viewModel::onFullscreenImageDismiss,
+        // US-27 scenario 02-VTD: tapping the "Ver orden" CTA in
+        // the chat top bar navigates to the work-order detail
+        // screen. The work-order id comes from the conversation
+        // surface (carried on `ConversationDetail.workOrderId`
+        // from the `GET /conversations/{id}` response) so this
+        // single callback is enough — no `state` plumbing here.
+        onViewWorkOrder = { workOrderId ->
+            navController.navigate(Route.WorkOrderDetail.buildPath(workOrderId))
+        },
         onAttachClick = { sheetState.value = true },
         onGalleryClick = {
             galleryLauncher.launch(
