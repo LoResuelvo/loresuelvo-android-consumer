@@ -1,4 +1,4 @@
-# language: es
+# language: en
 #
 # Especificación ejecutable para la US "Visualizar mis turnos".
 # Cubre el journey del consumidor que necesita ver los turnos
@@ -29,44 +29,45 @@
 # router de `LoResuelvoNav` y por `authentication-session.feature`,
 # por lo que no se replica acá.
 #
-# **Nota sobre los keywords del Gherkin**: aunque el `# language:
-# es` declara la feature como española, los keywords usados son
-# los ingleses (`Given`, `And`, `When`, `Then`) — el patrón que
-# ya siguen `visualize-service-proposal.feature` y otros del
-# repo. Cucumber JVM matchea los steps por el texto que sigue al
-# keyword, no por el keyword en sí.
+# **Nota sobre los keywords del Gherkin**: el `# language: en`
+# declara la feature como inglesa y los keywords usados son los
+# ingleses (`Given`, `And`, `When`, `Then`) — el mismo patrón
+# que ya sigue `home.feature` del repo. Cucumber JVM matchea
+# los steps por el texto que sigue al keyword, no por el keyword
+# en sí; el cuerpo de cada step queda en español para alinear
+# el journey con el resto del feature.
 
-Característica: Visualizar mis turnos
+Feature: Visualizar mis turnos
 
   Como usuario
   Quiero visualizar mis turnos
   Para organizarme y recibir al prestador correctamente
 
-  Antecedente:
+  Background:
     Given que estoy autenticado como usuario
     And me encuentro en la pantalla Home
 
   # Acceso
 
-  Escenario: 01-VT Acceder a Mis Turnos desde el Home
+  Scenario: 01-VT Acceder a Mis Turnos desde el Home
     When selecciono la opción "Mis Turnos"
     Then veo la pantalla "Mis Turnos"
 
   # Lista
 
-  Escenario: 02-VT Visualizar mis turnos registrados
+  Scenario: 02-VT Visualizar mis turnos registrados
     Given que tengo turnos registrados
     When accedo a la pantalla "Mis Turnos"
     Then veo una lista con mis turnos
 
-  Escenario: 03-VT Visualizar mensaje cuando no tengo turnos
+  Scenario: 03-VT Visualizar mensaje cuando no tengo turnos
     Given que no tengo turnos registrados
     When accedo a la pantalla "Mis Turnos"
     Then veo un mensaje indicando que no tengo turnos
 
   # Información de un turno
 
-  Escenario: 04-VT Visualizar la información de un turno
+  Scenario: 04-VT Visualizar la información de un turno
     Given que tengo un turno registrado
     When accedo a la pantalla "Mis Turnos"
     Then veo el nombre y apellido de la contraparte
@@ -76,42 +77,42 @@ Característica: Visualizar mis turnos
     And veo la fecha del turno
     And veo la hora del turno
 
-  Escenario: 05-VT Visualizar el estado del turno
+  Scenario: 05-VT Visualizar el estado del turno
     Given que tengo un turno registrado
     When visualizo el turno
     Then veo el estado actual del turno
 
   # Estados posibles
 
-  Escenario: 06-VT Visualizar turno pendiente
+  Scenario: 06-VT Visualizar turno pendiente
     Given que tengo un turno con estado "Pendiente"
     When visualizo el turno
     Then veo el estado "Pendiente"
 
-  Escenario: 07-VT Visualizar turno confirmado
+  Scenario: 07-VT Visualizar turno confirmado
     Given que tengo un turno con estado "Confirmado"
     When visualizo el turno
     Then veo el estado "Confirmado"
 
-  Escenario: 08-VT Visualizar turno finalizado
+  Scenario: 08-VT Visualizar turno finalizado
     Given que tengo un turno con estado "Finalizado"
     When visualizo el turno
     Then veo el estado "Finalizado"
 
-  Escenario: 09-VT Visualizar turno cancelado
+  Scenario: 09-VT Visualizar turno cancelado
     Given que tengo un turno con estado "Cancelado"
     When visualizo el turno
     Then veo el estado "Cancelado"
 
   # Errores
 
-  Escenario: 13-VT Mostrar error de red al cargar turnos
+  Scenario: 13-VT Mostrar error de red al cargar turnos
     Given que el backend no responde
     When accedo a la pantalla "Mis Turnos"
     Then veo un mensaje de error de conexión
     And veo un botón para reintentar
 
-  Escenario: 14-VT Mostrar error de servidor al cargar turnos
+  Scenario: 14-VT Mostrar error de servidor al cargar turnos
     Given que el backend responde con error
     When accedo a la pantalla "Mis Turnos"
     Then veo un mensaje de error del servidor

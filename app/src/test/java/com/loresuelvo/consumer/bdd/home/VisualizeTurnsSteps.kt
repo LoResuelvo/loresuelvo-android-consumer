@@ -36,8 +36,8 @@ class VisualizeTurnsSteps {
         world.startScenario()
     }
 
-    @Given("y me encuentro en la pantalla Home")
-    fun yMeEncuentroEnLaPantallaHome() {
+    @Given("me encuentro en la pantalla Home")
+    fun meEncuentroEnLaPantallaHome() {
         // Home routing is owned by the navigation graph; the BDD
         // asserts the VM state without composing the host.
     }
@@ -116,6 +116,7 @@ class VisualizeTurnsSteps {
                     description = "Reparación de cañería",
                     amountCents = 1_500_000L,
                     scheduledOnEpochMillis = 1_792_074_600_000L,
+                    counterpartProfilePhotoUrl = "https://cdn.example.com/avatar.jpg",
                 ),
             ),
         )

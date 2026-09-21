@@ -112,6 +112,7 @@ internal fun turno(
     description: String = "Reparación de cañería",
     amountCents: Long = 150_005_0L,
     scheduledOnEpochMillis: Long = 1_783_540_200_000L,
+    counterpartProfilePhotoUrl: String? = null,
 ): Turno = Turno(
     id = id,
     serviceProposalId = "p-$id",
@@ -121,7 +122,7 @@ internal fun turno(
         name = counterpartName,
         surname = counterpartSurname,
         categoryName = categoryName,
-        profilePhotoUrl = null,
+        profilePhotoUrl = counterpartProfilePhotoUrl,
     ),
     description = description,
     amountCents = amountCents,
