@@ -87,7 +87,7 @@ fun TurnoCard(
                     color = SubtitleGray,
                 )
             }
-            TurnoStatusBadge(status = turno.status)
+            TurnoStatusBadge(status = turno.status, scheduledOnEpochMillis = turno.scheduledOnEpochMillis)
         }
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -123,8 +123,32 @@ fun TurnoCard(
  * `R.string.turno_status_*`.
  */
 @Composable
-private fun TurnoStatusBadge(status: TurnoStatus) {
-    val (labelResId, containerColor, contentColor) = when (status) {
+private fun TurnoStatusBadge(
+    status: TurnoStatus,
+    scheduledOnEpochMillis: Long,
+) {
+    // When the turno is scheduled for today AND status is
+    // Confirmed, render the "(hoy)" pill in light green instead
+    // of the regular "Confirmado" pill. UTC consistency matches
+    // `ScheduledDateFormatter` (which formats in UTC too).
+    val isToday = run {
+        val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        cal.timeInMillis = scheduledOnEpochMillis
+        val now = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+        cal.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR) &&
+            cal.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+    }
+    val showTodayLabel = status == TurnoStatus.Confirmed && isToday
+    val (labelResId, containerColor, contentColor) = if (showTodayLabel) {
+        Triple(
+            R.string.turno_today_label,
+            // Light green surfaces onMaterial3 are `secondaryContainer`
+            // in the default light theme — visually distinct from
+            // the primary teal the regular "Confirmado" pill uses.
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+    } else when (status) {
         TurnoStatus.Pending -> Triple(
             R.string.turno_status_pending,
             MaterialTheme.colorScheme.tertiary,
