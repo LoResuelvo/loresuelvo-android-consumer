@@ -88,7 +88,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     Then debe mostrarse un apartado de pago pendiente antes de las categorías
     And debe destacarse la acción principal para abonar el saldo restante
 
-  @wip
   Scenario: 10-VTD La evidencia no se muestra para una orden scheduled
     Given que el usuario está visualizando una orden
     And la orden se encuentra en estado "scheduled"
