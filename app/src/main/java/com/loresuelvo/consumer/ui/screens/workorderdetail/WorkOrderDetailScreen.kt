@@ -1,11 +1,14 @@
 package com.loresuelvo.consumer.ui.screens.workorderdetail
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -26,7 +29,10 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.domain.workorder.CompletionReport
+import com.loresuelvo.consumer.domain.workorder.CompletionReportPhoto
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
+import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
@@ -161,6 +167,116 @@ private fun ReadyState(workOrder: WorkOrderDetail) {
             value = statusLabel(workOrder.status),
             valueTestTag = WORK_ORDER_STATUS_TAG,
         )
+        // US-27 `visualize-turns-detail`: the "Fecha en que se
+        // saldó el pago" row is only present once the consumer
+        // clears the remaining balance (state == `paid`). The
+        // `ScheduledDateFormatter` formats the same way the
+        // "Fecha y hora" row does, so the consumer reads them
+        // consistently.
+        workOrder.paidOnEpochMillis?.let { paidOn ->
+            DetailRow(
+                label = stringResource(R.string.work_order_paid_on),
+                value = ScheduledDateFormatter.formatScheduled(paidOn),
+                valueTestTag = WORK_ORDER_PAID_ON_TAG,
+            )
+        }
+        // US-27 scenarios 04-VTD / 05-VTD: the "Evidencia de
+        // finalización" section only renders when the provider
+        // filed a completion report (state in `awaiting_payment`
+        // / `paid`). Photos render as a horizontal row of
+        // thumbnails; tapping one opens the lightbox (the
+        // lightbox hook is wired up in a follow-up commit).
+        workOrder.completionReport?.let { report ->
+            CompletionReportSection(
+                report = report,
+                onPhotoClick = { /* TODO(US-27 06-VTD): open lightbox */ },
+            )
+        }
+        // US-27 scenarios 07-VTD / 08-VTD: the "Reseña" section
+        // only renders when the consumer filed a review
+        // (state == `paid`).
+        workOrder.review?.let { review ->
+            ReviewSection(review = review)
+        }
+    }
+}
+
+@Composable
+private fun CompletionReportSection(
+    report: CompletionReport,
+    onPhotoClick: (CompletionReportPhoto) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.work_order_evidence_section_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.testTag(WORK_ORDER_EVIDENCE_SECTION_TAG),
+        )
+        Text(
+            text = report.description,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag(WORK_ORDER_EVIDENCE_DESCRIPTION_TAG),
+        )
+        Text(
+            text = stringResource(R.string.work_order_evidence_reported_on) +
+                " " + ScheduledDateFormatter.formatScheduled(report.reportedOnEpochMillis),
+            style = MaterialTheme.typography.bodySmall,
+            color = SubtitleGray,
+        )
+        if (report.images.isNotEmpty()) {
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .testTag(WORK_ORDER_EVIDENCE_PHOTOS_ROW_TAG),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                report.images.forEach { photo ->
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .size(96.dp)
+                            .clickable { onPhotoClick(photo) }
+                            .testTag(WORK_ORDER_EVIDENCE_PHOTO_TAG_PREFIX + photo.fileId),
+                    ) {
+                        coil3.compose.SubcomposeAsyncImage(
+                            model = photo.url,
+                            contentDescription = photo.originalName,
+                            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReviewSection(review: WorkOrderReview) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.work_order_review_section_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.testTag(WORK_ORDER_REVIEW_SECTION_TAG),
+        )
+        Text(
+            text = stringResource(R.string.work_order_review_rating) + ": ${review.rating}",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag(WORK_ORDER_REVIEW_RATING_TAG),
+        )
+        Text(
+            text = review.description,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.testTag(WORK_ORDER_REVIEW_DESCRIPTION_TAG),
+        )
     }
 }
 
@@ -264,3 +380,12 @@ const val WORK_ORDER_DATE_TAG: String = "work-order-date"
 const val WORK_ORDER_ESTIMATED_DURATION_TAG: String = "work-order-estimated-duration"
 const val WORK_ORDER_DESCRIPTION_TAG: String = "work-order-description"
 const val WORK_ORDER_STATUS_TAG: String = "work-order-status"
+const val WORK_ORDER_PAID_ON_TAG: String = "work-order-paid-on"
+const val WORK_ORDER_EVIDENCE_SECTION_TAG: String = "work-order-evidence-section"
+const val WORK_ORDER_EVIDENCE_DESCRIPTION_TAG: String = "work-order-evidence-description"
+const val WORK_ORDER_EVIDENCE_REPORTED_ON_TAG: String = "work-order-evidence-reported-on"
+const val WORK_ORDER_EVIDENCE_PHOTOS_ROW_TAG: String = "work-order-evidence-photos-row"
+const val WORK_ORDER_EVIDENCE_PHOTO_TAG_PREFIX: String = "work-order-evidence-photo-"
+const val WORK_ORDER_REVIEW_SECTION_TAG: String = "work-order-review-section"
+const val WORK_ORDER_REVIEW_RATING_TAG: String = "work-order-review-rating"
+const val WORK_ORDER_REVIEW_DESCRIPTION_TAG: String = "work-order-review-description"

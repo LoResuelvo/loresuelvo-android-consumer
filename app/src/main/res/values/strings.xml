@@ -233,6 +233,11 @@
     <string name="work_order_estimated_duration">Tiempo estimado de trabajo</string>
     <string name="work_order_description">Descripción del servicio</string>
     <string name="work_order_status">Estado</string>
+    <string name="work_order_paid_on">Fecha en que se saldó el pago</string>
+    <string name="work_order_evidence_section_title">Evidencia de finalización</string>
+    <string name="work_order_evidence_reported_on">Reportado el</string>
+    <string name="work_order_review_section_title">Reseña</string>
+    <string name="work_order_review_rating">Calificación</string>
     <string name="work_order_status_pending">Pendiente</string>
     <string name="work_order_status_accepted">Aceptada</string>
     <string name="work_order_status_rejected">Rechazada</string>

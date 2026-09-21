@@ -231,6 +231,11 @@
     <string name="work_order_estimated_duration">Estimated time on site</string>
     <string name="work_order_description">Service description</string>
     <string name="work_order_status">Status</string>
+    <string name="work_order_paid_on">Payment date</string>
+    <string name="work_order_evidence_section_title">Completion evidence</string>
+    <string name="work_order_evidence_reported_on">Reported on</string>
+    <string name="work_order_review_section_title">Review</string>
+    <string name="work_order_review_rating">Rating</string>
     <string name="work_order_status_pending">Pending</string>
     <string name="work_order_status_accepted">Accepted</string>
     <string name="work_order_status_rejected">Rejected</string>
