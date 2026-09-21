@@ -24,8 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
@@ -235,13 +235,19 @@ private fun DetailRow(label: String, value: String, valueTestTag: String) {
 }
 
 @Composable
-private fun statusLabel(status: ServiceProposalStatus): String = when (status) {
-    ServiceProposalStatus.Pending ->
-        stringResource(R.string.work_order_status_pending)
-    ServiceProposalStatus.Accepted ->
-        stringResource(R.string.work_order_status_accepted)
-    ServiceProposalStatus.Rejected ->
-        stringResource(R.string.work_order_status_rejected)
+private fun statusLabel(status: TurnoStatus): String = when (status) {
+    TurnoStatus.Pending ->
+        stringResource(R.string.turno_status_pending)
+    TurnoStatus.Confirmed ->
+        stringResource(R.string.turno_status_confirmed)
+    TurnoStatus.AwaitingPayment ->
+        stringResource(R.string.turno_status_awaiting_payment)
+    TurnoStatus.Paid ->
+        stringResource(R.string.turno_status_paid)
+    TurnoStatus.Finished ->
+        stringResource(R.string.turno_status_finished)
+    TurnoStatus.Cancelled ->
+        stringResource(R.string.turno_status_cancelled)
 }
 
 const val WORK_ORDER_SCREEN_TAG: String = "work-order-screen"

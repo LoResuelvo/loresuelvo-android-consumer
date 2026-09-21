@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.bdd.provider
 
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then

@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
@@ -59,7 +60,16 @@ private fun ServiceProposal.toWorkOrderDetail(): WorkOrderDetail = WorkOrderDeta
     amountCents = amountCents,
     scheduledOnEpochMillis = scheduledOnEpochMillis,
     estimatedDurationMinutes = estimatedDurationMinutes,
-    status = status,
+    // US-27: map the proposal-side status to the work-order
+    // vocabulary. `Accepted` is the only proposal-side value the
+    // legacy adapter surfaces (only accepted proposals are
+    // promoted to work orders today); the TurnoStatus enum
+    // already has the appropriate name for it.
+    status = when (status) {
+        com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Accepted -> TurnoStatus.Confirmed
+        com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Pending -> TurnoStatus.Pending
+        com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Rejected -> TurnoStatus.Cancelled
+    },
 )
 
 /**

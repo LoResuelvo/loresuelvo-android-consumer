@@ -6,6 +6,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import kotlinx.coroutines.test.runTest
@@ -43,7 +44,7 @@ class GetWorkOrderDetailUseCaseTest {
         assertEquals("Fuga en el lavamanos", found.description)
         assertEquals(1500000L, found.amountCents)
         assertEquals(45, found.estimatedDurationMinutes)
-        assertEquals(ServiceProposalStatus.Pending, found.status)
+        assertEquals(TurnoStatus.Pending, found.status)
         assertEquals("Carlos López", found.providerName)
     }
 

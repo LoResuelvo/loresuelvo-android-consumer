@@ -14,8 +14,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import org.junit.Rule
 import org.junit.Test
@@ -85,7 +85,7 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithText("15/10/2026 - 14:30 hs").assertCountEquals(1)
         composeTestRule.onAllNodesWithText("1 h 30 min").assertCountEquals(1)
         composeTestRule.onAllNodesWithText("Fuga en el lavamanos").assertCountEquals(1)
-        composeTestRule.onAllNodesWithText(localizedString(R.string.work_order_status_pending))
+        composeTestRule.onAllNodesWithText(localizedString(R.string.turno_status_pending))
             .assertCountEquals(1)
     }
 
@@ -204,6 +204,6 @@ class WorkOrderDetailScreenTest {
         amountCents = 1_500_000L,
         scheduledOnEpochMillis = 1_792_074_600_000L,
         estimatedDurationMinutes = estimatedDurationMinutes,
-        status = ServiceProposalStatus.Pending,
+        status = TurnoStatus.Pending,
     )
 }
