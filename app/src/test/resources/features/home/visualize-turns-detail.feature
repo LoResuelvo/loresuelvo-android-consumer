@@ -21,7 +21,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     When selecciona para ver detalle de la orden desde el Chat
     Then el sistema debe mostrar el detalle de la orden
 
-  @wip
   Scenario: 03-VTD El detalle muestra la información principal de la orden
     Given participa en una orden de trabajo
     And selecciona para ver detalle de la orden desde la Home
