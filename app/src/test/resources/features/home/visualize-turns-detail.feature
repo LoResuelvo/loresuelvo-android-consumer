@@ -78,7 +78,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     Then debe mostrar la fecha en que se saldó el pago
     And no debe mostrar una reseña inexistente
 
-  @wip
   Scenario: 09-VTD El consumidor puede abonar una orden awaiting_payment
     Given que el consumidor está visualizando una orden
     And la orden se encuentra en estado "awaiting_payment"

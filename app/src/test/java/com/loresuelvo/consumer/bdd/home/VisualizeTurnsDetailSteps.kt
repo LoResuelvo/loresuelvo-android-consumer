@@ -112,6 +112,19 @@ class VisualizeTurnsDetailSteps {
         world.seedPaidWorkOrderWithoutReview()
     }
 
+    @Given("que el consumidor está visualizando una orden")
+    fun queElConsumidorEstaVisualizandoUnaOrden() {
+        // Scenario 09-VTD uses the same Background as 08-VTD
+        // but framed from the consumer's perspective ("el
+        // consumidor"). The seam between the two phrasings is
+        // incidental; the step seeds the same default so the
+        // `la orden se encuentra en estado awaiting_payment`
+        // step that follows overrides the seed for the
+        // AwaitingPayment branch.
+        world.startScenario()
+        world.seedPaidWorkOrderWithoutReview()
+    }
+
     @When("selecciona para ver detalle de la orden desde la Home")
     fun seleccionaParaVerDetalleDeLaOrdenDesdeLaHome() {
         world.openWorkOrder()
