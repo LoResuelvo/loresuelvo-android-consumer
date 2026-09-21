@@ -128,6 +128,7 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
+            buildConfigField("boolean", "MOCK_TURNOS", "true")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -153,6 +154,7 @@ android {
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"$auth0ClientId\"")
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
+            buildConfigField("boolean", "MOCK_TURNOS", "false")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
@@ -179,6 +181,7 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
+            buildConfigField("boolean", "MOCK_TURNOS", "false")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
