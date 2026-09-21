@@ -295,6 +295,8 @@
     <string name="turnos_empty_body">Cuando un prestador confirme un turno, va a aparecer acá.</string>
     <string name="turno_status_pending">Pendiente</string>
     <string name="turno_status_confirmed">Confirmado</string>
+    <string name="turno_status_awaiting_payment">Esperando pago</string>
+    <string name="turno_status_paid">Pagado</string>
     <string name="turno_status_finished">Finalizado</string>
     <string name="turno_status_cancelled">Cancelado</string>
     <string name="turnos_error_network">No pudimos conectarnos. Revisá tu conexión.</string>

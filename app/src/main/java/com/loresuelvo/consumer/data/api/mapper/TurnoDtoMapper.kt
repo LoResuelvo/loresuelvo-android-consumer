@@ -16,15 +16,18 @@ import com.loresuelvo.consumer.domain.turno.TurnoStatus
  * - `scheduled_on` is parsed through `parseIsoTimestampMillisOrZero`;
  *   on a malformed timestamp the mapper collapses to `0L`.
  * - `status` is normalised lowercase and mapped to [TurnoStatus].
- *   Today only `"scheduled"` is known — mapped to
- *   [TurnoStatus.Confirmed]. Unknown statuses return `null` from
- *   the single-element mapper and the list overload filters
- *   them out via `mapNotNull`.
+ *   Known values: `scheduled` → [TurnoStatus.Confirmed],
+ *   `awaiting_payment` → [TurnoStatus.AwaitingPayment],
+ *   `paid` → [TurnoStatus.Paid]. Unknown statuses return `null`
+ *   from the single-element mapper and the list overload
+ *   filters them out via `mapNotNull`.
  * - `counterpart.role` is intentionally NOT mapped.
  */
 internal fun TurnoDto.toDomain(): Turno? {
     val status = when (status.lowercase()) {
         "scheduled" -> TurnoStatus.Confirmed
+        "awaiting_payment" -> TurnoStatus.AwaitingPayment
+        "paid" -> TurnoStatus.Paid
         else -> return null
     }
     return Turno(

@@ -293,6 +293,8 @@
     <string name="turnos_empty_body">When a provider confirms an appointment, it will appear here.</string>
     <string name="turno_status_pending">Pending</string>
     <string name="turno_status_confirmed">Confirmed</string>
+    <string name="turno_status_awaiting_payment">Awaiting payment</string>
+    <string name="turno_status_paid">Paid</string>
     <string name="turno_status_finished">Finished</string>
     <string name="turno_status_cancelled">Cancelled</string>
     <string name="turnos_error_network">We couldn\'t connect. Check your connection.</string>

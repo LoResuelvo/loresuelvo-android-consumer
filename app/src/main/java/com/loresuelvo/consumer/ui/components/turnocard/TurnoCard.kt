@@ -159,6 +159,16 @@ private fun TurnoStatusBadge(
             MaterialTheme.colorScheme.primary,
             MaterialTheme.colorScheme.onPrimary,
         )
+        TurnoStatus.AwaitingPayment -> Triple(
+            R.string.turno_status_awaiting_payment,
+            MaterialTheme.colorScheme.error,
+            MaterialTheme.colorScheme.onError,
+        )
+        TurnoStatus.Paid -> Triple(
+            R.string.turno_status_paid,
+            MaterialTheme.colorScheme.surfaceVariant,
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         TurnoStatus.Finished -> Triple(
             R.string.turno_status_finished,
             MaterialTheme.colorScheme.surfaceVariant,
