@@ -29,7 +29,7 @@ import kotlinx.coroutines.test.setMain
  * [WorkOrderDetailUiState].
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
-class WorkOrderWorld : AutoCloseable {
+class WorkOrderDetailWorld : AutoCloseable {
 
     private val scheduler: TestCoroutineScheduler = TestCoroutineScheduler()
     private val dispatcher = StandardTestDispatcher(scheduler)

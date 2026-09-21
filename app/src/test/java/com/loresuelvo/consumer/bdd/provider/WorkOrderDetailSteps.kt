@@ -11,16 +11,16 @@ import org.junit.Assert.assertTrue
 /**
  * Real step implementations for the US-54 BDD spec
  * `16-VSP Consultar el tiempo estimado de trabajo en la orden`.
- * The [WorkOrderWorld] drives the
+ * The [WorkOrderDetailWorld] drives the
  * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
  * with a fake repo whose only proposal is the seeded accepted
  * proposal with a 90-minute estimate, so the work-order detail
  * renders the pinned `1 h 30 min` formatter output alongside
  * every agreed-terms field.
  */
-class WorkOrderSteps {
+class WorkOrderDetailSteps {
 
-    private val world: WorkOrderWorld = WorkOrderWorld()
+    private val world: WorkOrderDetailWorld = WorkOrderDetailWorld()
 
     // ---- Scenario 16-VSP --------------------------------------
 
