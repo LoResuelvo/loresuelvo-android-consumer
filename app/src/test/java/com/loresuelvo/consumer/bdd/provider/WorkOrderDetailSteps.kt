@@ -1,7 +1,6 @@
 package com.loresuelvo.consumer.bdd.provider
 
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
-import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
@@ -10,13 +9,19 @@ import org.junit.Assert.assertTrue
 
 /**
  * Real step implementations for the US-54 BDD spec
- * `16-VSP Consultar el tiempo estimado de trabajo en la orden`.
- * The [WorkOrderDetailWorld] drives the
+ * `16-VSP Consultar el detalle de la orden de trabajo`. The
+ * [WorkOrderDetailWorld] drives the
  * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
  * with a fake repo whose only proposal is the seeded accepted
- * proposal with a 90-minute estimate, so the work-order detail
- * renders the pinned `1 h 30 min` formatter output alongside
- * every agreed-terms field.
+ * proposal, so the work-order detail renders every agreed-terms
+ * field.
+ *
+ * US-27 (`visualize-turns-detail`) drops the original duration
+ * assertion: the new dedicated `GET /work-orders/{workOrderID}`
+ * endpoint does not carry `estimated_duration_minutes`, so the
+ * formatter output can no longer be pinned to `"1 h 30 min"`.
+ * The screen / formatter stay in the codebase for future use;
+ * the scenario relaxes to "the agreed-terms fields render".
  */
 class WorkOrderDetailSteps {
 
@@ -25,11 +30,9 @@ class WorkOrderDetailSteps {
     // ---- Scenario 16-VSP --------------------------------------
 
     /**
-     * "que existe una orden de trabajo con un tiempo estimado
-     * para realizar el servicio" — scenario 16-VSP. The seed
-     * carries a single accepted proposal with
-     * `estimatedDurationMinutes = 90` so the formatter renders
-     * `"1 h 30 min"`.
+     * "que existe una orden de trabajo" — scenario 16-VSP. The
+     * seed carries a single accepted proposal whose agreed
+     * terms are the scenario's pin.
      */
     @Given("que existe una orden de trabajo con un tiempo estimado para realizar el servicio")
     fun queExisteUnaOrdenDeTrabajoConUnTiempoEstimadoParaRealizarElServicio() {
@@ -39,16 +42,16 @@ class WorkOrderDetailSteps {
 
     /**
      * "el usuario consulta el detalle de la orden de trabajo" —
-     * scenario 16-VSP. Drives the VM's `load(proposalId)` so the
-     * `Then` assertion observes the resolved state.
+     * scenario 16-VSP. Drives the VM's `load(workOrderId)` so
+     * the `Then` assertion observes the resolved state.
      */
     @When("el usuario consulta el detalle de la orden de trabajo")
     fun elUsuarioConsultaElDetalleDeLaOrdenDeTrabajo() {
         world.openWorkOrder()
     }
 
-    @Then("debe visualizar el tiempo estimado de trabajo junto con los datos acordados del servicio")
-    fun debeVisualizarElTiempoEstimadoDeTrabajoJuntoConLosDatosAcordadosDelServicio() {
+    @Then("debe visualizar los datos acordados del servicio")
+    fun debeVisualizarLosDatosAcordadosDelServicio() {
         val state = world.lastWorkOrderState()
         assertTrue(
             "expected WorkOrderDetailUiState.Ready, was $state",
@@ -56,23 +59,10 @@ class WorkOrderDetailSteps {
         )
         val workOrder = (state as WorkOrderDetailUiState.Ready).workOrder
 
-        // Pinned formatter output for 90 minutes.
-        val minutes = workOrder.estimatedDurationMinutes
-        assertTrue(
-            "expected the work order to carry an estimatedDurationMinutes, was $minutes",
-            minutes != null,
-        )
-        assertEquals(
-            "expected the EstimatedDurationFormatter to render the " +
-                "estimated work time as the scenario pins",
-            "1 h 30 min",
-            EstimatedDurationFormatter.formatDuration(minutes!!),
-        )
-
-        // "junto con los datos acordados del servicio" — the work
-        // order also carries the agreed amount, scheduled date,
-        // description and status, so the BDD pins they survive
-        // the lookup.
+        // "datos acordados del servicio" — the work order carries
+        // the agreed amount, scheduled date, description, status
+        // and counterpart. The BDD pins they survive the lookup
+        // (US-54 16-VSP).
         assertEquals("wo-100", workOrder.proposalId)
         assertEquals("Cambio de termotanque", workOrder.description)
         assertEquals(8_500_000L, workOrder.amountCents)
