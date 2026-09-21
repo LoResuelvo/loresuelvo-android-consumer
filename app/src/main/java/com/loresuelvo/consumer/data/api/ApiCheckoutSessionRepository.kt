@@ -31,15 +31,38 @@ class ApiCheckoutSessionRepository @Inject constructor(
     override suspend fun startServiceProposalCheckout(
         serviceProposalId: Int,
     ): CheckoutSessionOutcome =
+        runCheckout(backendApi::startServiceProposalCheckout, proposalId = serviceProposalId)
+
+    override suspend fun startWorkOrderCheckout(
+        workOrderId: Int,
+    ): CheckoutSessionOutcome =
+        runCheckout(backendApi::startWorkOrderCheckout, workOrderId = workOrderId)
+
+    private suspend fun runCheckout(
+        call: suspend (Int) -> CheckoutSessionDto,
+        proposalId: Int? = null,
+        workOrderId: Int? = null,
+    ): CheckoutSessionOutcome =
         try {
-            val response: CheckoutSessionDto = backendApi.startServiceProposalCheckout(serviceProposalId)
+            val response: CheckoutSessionDto = call(
+                proposalId ?: workOrderId ?: error("proposalId or workOrderId required"),
+            )
             val pricing = response.pricing.toDomain()
-            val intent = response.toDomain(serviceProposalId)
+            // The intent's `serviceProposalId` field on the wire
+            // is the source of truth; for the work-order flow the
+            // backend reuses the originating proposal id, so we
+            // pass `proposalId` when present and `0` otherwise. The
+            // payNow call sites already key on the work-order id
+            // (the route arg) so the integer in the intent is a
+            // tiebreaker only — see [PaymentIntent].
+            val intent = response.toDomain(
+                serviceProposalId = proposalId ?: 0,
+            )
             CheckoutSessionOutcome.Created(intent = intent, pricing = pricing)
         } catch (e: HttpException) {
             when (e.code()) {
                 409 -> CheckoutSessionOutcome.AlreadyPaid(
-                    message = decodeMessage(e) ?: "Este acuerdo ya fue confirmado.",
+                    message = decodeMessage(e) ?: "Este pago ya fue confirmado.",
                 )
                 else -> CheckoutSessionOutcome.Server(
                     code = e.code(),

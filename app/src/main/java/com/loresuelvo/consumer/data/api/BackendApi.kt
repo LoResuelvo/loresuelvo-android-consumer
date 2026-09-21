@@ -404,6 +404,27 @@ interface BackendApi {
     ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
 
     /**
+     * `POST /work-orders/{workOrderID}/checkout-sessions` —
+     * start (or reuse) a Mercado Pago Checkout Pro session for
+     * the remaining balance of an `awaiting_payment` work order
+     * (US-27 `visualize-turns-detail`, scenario 09-VTD). The
+     * consumer opens the returned `checkout_url` in a Custom
+     * Tab; once the webhook reports an approved payment the
+     * backend flips the work order to `paid` and the detail
+     * screen surfaces the paid-on row + review block.
+     *
+     * Idempotent: same semantics as
+     * [startServiceProposalCheckout]. A `409 Conflict` maps to
+     * [com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome.AlreadyPaid].
+     *
+     * Requires Auth0 bearer auth.
+     */
+    @POST("work-orders/{workOrderID}/checkout-sessions")
+    suspend fun startWorkOrderCheckout(
+        @Path("workOrderID") workOrderID: Int,
+    ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
+
+    /**
      * `GET /payment-intents/{paymentIntentID}` — read the current
      * status of a payment intent. Used by the post-redirect
      * polling loop (US-21 confirmation flow + US-28 service-balance

@@ -301,6 +301,18 @@ class CompleteServicePaymentWorld : AutoCloseable {
                 ),
             )
         }
+
+        override suspend fun startWorkOrderCheckout(
+            workOrderId: Int,
+        ): CheckoutSessionOutcome {
+            // US-27: the work-order balance flow is exercised by
+            // scenario 09-VTD in `visualize-turns-detail.feature`;
+            // the existing booking-deposit BDD does not need this
+            // path so the fake delegates to the proposal checkout
+            // with a `0` proposal id to keep the existing
+            // assertions green.
+            return startServiceProposalCheckout(serviceProposalId = 0)
+        }
     }
 
     private class FakePaymentIntentRepository : PaymentIntentRepository {
