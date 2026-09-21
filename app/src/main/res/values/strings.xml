@@ -239,6 +239,7 @@
     <string name="work_order_review_section_title">Reseña</string>
     <string name="work_order_review_rating">Calificación</string>
     <string name="work_order_pay_now_cta">Pagar saldo restante</string>
+    <string name="work_order_lightbox_close_hint">Tocá para cerrar</string>
     <string name="work_order_status_pending">Pendiente</string>
     <string name="work_order_status_accepted">Aceptada</string>
     <string name="work_order_status_rejected">Rechazada</string>

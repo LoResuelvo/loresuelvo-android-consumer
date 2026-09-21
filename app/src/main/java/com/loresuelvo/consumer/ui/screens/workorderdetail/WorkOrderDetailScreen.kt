@@ -19,6 +19,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -33,6 +38,7 @@ import com.loresuelvo.consumer.domain.workorder.CompletionReport
 import com.loresuelvo.consumer.domain.workorder.CompletionReportPhoto
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
+import com.loresuelvo.consumer.ui.components.images.FullScreenImageViewer
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
@@ -87,6 +93,12 @@ fun WorkOrderDetailScreen(
             )
         },
     ) { padding ->
+        // US-27 scenario 06-VTD: the lightbox is host-owned state
+        // so it survives recomposition + process death (the
+        // config-change / rotate case). When the photo is set
+        // the overlay renders on top of the regular surface.
+        var lightboxPhoto by rememberSaveable { mutableStateOf<CompletionReportPhoto?>(null) }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -95,9 +107,20 @@ fun WorkOrderDetailScreen(
         ) {
             when (state) {
                 is WorkOrderDetailUiState.Loading -> LoadingState()
-                is WorkOrderDetailUiState.Ready -> ReadyState(state.workOrder, onPayNow)
+                is WorkOrderDetailUiState.Ready -> ReadyState(
+                    workOrder = state.workOrder,
+                    onPayNow = onPayNow,
+                    onPhotoClick = { lightboxPhoto = it },
+                )
                 is WorkOrderDetailUiState.NotFound -> NotFoundState()
                 is WorkOrderDetailUiState.Error -> ErrorState(state.failure, onRetry)
+            }
+            lightboxPhoto?.let { photo ->
+                FullScreenImageViewer(
+                    imageUrl = photo.url,
+                    imageName = photo.originalName,
+                    onDismiss = { lightboxPhoto = null },
+                )
             }
         }
     }
@@ -122,7 +145,11 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun ReadyState(workOrder: WorkOrderDetail, onPayNow: () -> Unit) {
+private fun ReadyState(
+    workOrder: WorkOrderDetail,
+    onPayNow: () -> Unit,
+    onPhotoClick: (CompletionReportPhoto) -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -206,7 +233,7 @@ private fun ReadyState(workOrder: WorkOrderDetail, onPayNow: () -> Unit) {
         workOrder.completionReport?.let { report ->
             CompletionReportSection(
                 report = report,
-                onPhotoClick = { /* TODO(US-27 06-VTD): open lightbox */ },
+                onPhotoClick = onPhotoClick,
             )
         }
         // US-27 scenarios 07-VTD / 08-VTD: the "Reseña" section
