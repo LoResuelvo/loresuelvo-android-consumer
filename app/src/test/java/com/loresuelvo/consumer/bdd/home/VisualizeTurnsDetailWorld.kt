@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.bdd.home
 
+import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.domain.workorder.CompletionReport
 import com.loresuelvo.consumer.domain.workorder.CompletionReportPhoto
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
@@ -61,6 +63,9 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
         viewModel = WorkOrderDetailViewModel(
             getWorkOrderDetail = com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase(
                 repository,
+            ),
+            startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
+                NoOpWorkOrderCheckoutRepository,
             ),
         )
 
@@ -256,4 +261,29 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
     private companion object {
         const val DEFAULT_WORK_ORDER_ID: String = "wo-42"
     }
+}
+
+/**
+ * Stand-in [com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository]
+ * for the BDD world — every checkout call is a no-op (returns
+ * [CheckoutSessionOutcome.Server] so the screen surfaces a
+ * typed error rather than crashing). The pay-now scenario
+ * (09-VTD) asserts the CTA presence; the underlying flow is
+ * covered by the proposal-payment BDD suite.
+ */
+private object NoOpWorkOrderCheckoutRepository :
+    com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository {
+    override suspend fun startServiceProposalCheckout(
+        serviceProposalId: Int,
+    ): CheckoutSessionOutcome = CheckoutSessionOutcome.Server(
+        code = 0,
+        message = "no-op",
+    )
+
+    override suspend fun startWorkOrderCheckout(
+        workOrderId: Int,
+    ): CheckoutSessionOutcome = CheckoutSessionOutcome.Server(
+        code = 0,
+        message = "no-op",
+    )
 }

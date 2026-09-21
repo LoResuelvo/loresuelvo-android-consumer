@@ -71,6 +71,7 @@ fun WorkOrderDetailScreen(
     state: WorkOrderDetailUiState,
     onRetry: () -> Unit,
     onBackClick: () -> Unit,
+    onPayNow: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -94,7 +95,7 @@ fun WorkOrderDetailScreen(
         ) {
             when (state) {
                 is WorkOrderDetailUiState.Loading -> LoadingState()
-                is WorkOrderDetailUiState.Ready -> ReadyState(state.workOrder)
+                is WorkOrderDetailUiState.Ready -> ReadyState(state.workOrder, onPayNow)
                 is WorkOrderDetailUiState.NotFound -> NotFoundState()
                 is WorkOrderDetailUiState.Error -> ErrorState(state.failure, onRetry)
             }
@@ -121,7 +122,7 @@ private fun LoadingState() {
 }
 
 @Composable
-private fun ReadyState(workOrder: WorkOrderDetail) {
+private fun ReadyState(workOrder: WorkOrderDetail, onPayNow: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -130,6 +131,22 @@ private fun ReadyState(workOrder: WorkOrderDetail) {
             .testTag(WORK_ORDER_READY_TAG),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        // US-27 scenario 09-VTD: the "Pagar saldo restante" CTA
+        // is the primary action when the work order is in
+        // `awaiting_payment`. Renders above the counterpart row
+        // so it's the first thing the consumer sees; uses the
+        // filled `Button` tonal so it stands out from the rest
+        // of the surface.
+        if (workOrder.status == TurnoStatus.AwaitingPayment) {
+            Button(
+                onClick = onPayNow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(WORK_ORDER_PAY_NOW_TAG),
+            ) {
+                Text(stringResource(R.string.work_order_pay_now_cta))
+            }
+        }
         DetailRow(
             label = stringResource(R.string.work_order_provider),
             value = "${workOrder.provider.name} ${workOrder.provider.surname}",
@@ -381,6 +398,7 @@ const val WORK_ORDER_ESTIMATED_DURATION_TAG: String = "work-order-estimated-dura
 const val WORK_ORDER_DESCRIPTION_TAG: String = "work-order-description"
 const val WORK_ORDER_STATUS_TAG: String = "work-order-status"
 const val WORK_ORDER_PAID_ON_TAG: String = "work-order-paid-on"
+const val WORK_ORDER_PAY_NOW_TAG: String = "work-order-pay-now"
 const val WORK_ORDER_EVIDENCE_SECTION_TAG: String = "work-order-evidence-section"
 const val WORK_ORDER_EVIDENCE_DESCRIPTION_TAG: String = "work-order-evidence-description"
 const val WORK_ORDER_EVIDENCE_REPORTED_ON_TAG: String = "work-order-evidence-reported-on"

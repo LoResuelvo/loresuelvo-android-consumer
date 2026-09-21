@@ -1,6 +1,9 @@
 package com.loresuelvo.consumer.bdd.provider
 
+import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
+import com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
@@ -53,6 +56,7 @@ class WorkOrderDetailWorld : AutoCloseable {
 
         viewModel = WorkOrderDetailViewModel(
             getWorkOrderDetail = GetWorkOrderDetailUseCase(repository),
+            startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpWorkOrderCheckoutRepository),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -138,4 +142,25 @@ class WorkOrderDetailWorld : AutoCloseable {
     private companion object {
         const val PROPOSAL_ID: String = "wo-100"
     }
+}
+
+/**
+ * Stand-in [CheckoutSessionRepository] for the US-54 BDD world —
+ * every checkout call is a no-op (returns [CheckoutSessionOutcome.Server]
+ * so the VM surfaces a typed error rather than crashing).
+ */
+private object NoOpWorkOrderCheckoutRepository : CheckoutSessionRepository {
+    override suspend fun startServiceProposalCheckout(
+        serviceProposalId: Int,
+    ): CheckoutSessionOutcome = CheckoutSessionOutcome.Server(
+        code = 0,
+        message = "no-op",
+    )
+
+    override suspend fun startWorkOrderCheckout(
+        workOrderId: Int,
+    ): CheckoutSessionOutcome = CheckoutSessionOutcome.Server(
+        code = 0,
+        message = "no-op",
+    )
 }

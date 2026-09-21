@@ -887,13 +887,28 @@ private fun WorkOrderDetailRoute(
     val viewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
         hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
     androidx.compose.runtime.LaunchedEffect(workOrderId) {
         viewModel.load(workOrderId)
+    }
+    // US-27 scenario 09-VTD: when the VM emits a checkout URL
+    // (the "Pagar saldo restante" CTA), open it in a Custom Tab
+    // so the consumer can complete the payment. The MP redirect
+    // returns the consumer to `Route.PaymentResult` via the
+    // existing deep-link plumbing.
+    androidx.compose.runtime.LaunchedEffect(viewModel) {
+        viewModel.checkoutUrl.collect { url ->
+            androidx.browser.customtabs.CustomTabsIntent.Builder()
+                .build()
+                .launchUrl(context, android.net.Uri.parse(url))
+        }
     }
     com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
         state = state,
         onRetry = { viewModel.load(workOrderId) },
         onBackClick = { navController.popBackStack() },
+        onPayNow = { viewModel.payNow(workOrderId) },
     )
 }
 
