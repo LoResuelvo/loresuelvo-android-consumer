@@ -43,6 +43,22 @@ class VisualizeTurnsDetailSteps {
         world.startScenario()
     }
 
+    /**
+     * Cucumber JVM matches step definitions across `@Given`,
+     * `@When` and `@Then` by pattern, not by keyword. The
+     * `visualize-turns-detail.feature` scenarios use both
+     * `Given la orden se encuentra en estado "..."` (04-VTD /
+     * 05-VTD / 07-VTD) and `When la orden se encuentra en
+     * estado "..."` (03-VTD); a single `@Given` step def covers
+     * both, since the runner treats the annotation as a label
+     * for reporting and matches by the captured step text.
+     *
+     * Declaring both `@Given` and `@When` with the same pattern
+     * makes Cucumber JVM 7.x raise `DuplicateStepDefinitionException`
+     * because it indexes each annotation as a separate binding.
+     * Using a single `@Given` avoids the duplication and still
+     * matches both Gherkin keywords.
+     */
     @Given("la orden se encuentra en estado {string}")
     fun laOrdenSeEncuentraEnEstadoScheduled(stateLabel: String) {
         when (stateLabel.lowercase()) {
@@ -51,6 +67,7 @@ class VisualizeTurnsDetailSteps {
             "paid" -> world.seedPaidWorkOrderWithoutReview()
             else -> error("unknown state label: $stateLabel")
         }
+        world.openWorkOrder()
     }
 
     @Given("la orden tiene un reporte de finalización")
