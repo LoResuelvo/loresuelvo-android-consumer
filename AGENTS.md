@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-09-20 (US-55 `visualize-turns` completa: 11 escenarios destageados, dominio `Turno`/`TurnosRepository`/`GetTurnosUseCase`, componente `TurnoCard`, screen `TurnosScreen` + estados Loading/Ready/Error)
+Última actualización: 2026-09-21 (US-27 `visualize-turns-detail` completa: 9 escenarios destageados — 02-VTD deferido a otra US; dominio `WorkOrderDetail`/`WorkOrderDetailCounterpart`/`CompletionReport`/`CompletionReportPhoto`/`WorkOrderReview`; `TurnoStatus` extendido con `AwaitingPayment` + `Paid`; ruta `Route.WorkOrderDetail`; screen `WorkOrderDetailScreen` con pay CTA + lightbox de fotos; `CheckoutSessionRepository.startWorkOrderCheckout`; `StartWorkOrderCheckoutUseCase`; `FullScreenImageViewer` extraído a `ui/components/images/`)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -20,7 +20,7 @@ Fuente canónica para agentes. Leer este archivo primero y cargar skills locales
 - **Debug-only mocks para testeo manual**: para probar pantallas que requieren backend sin levantarlo, usar el approach del `FakeTurnosInterceptor` en `app/src/debug/.../data/api/`. Vive en el source set `src/debug/` (compilado en todo `*Debug`, ausente en `*Release` — convention de Android). `NetworkModule.provideOkHttpClient` chequea `BuildConfig.DEBUG` y lo agrega al `OkHttpClient` solo en builds debug. El interceptor short-circuitea `GET /work-orders` con un payload JSON mockeado. Ventaja sobre flavor-specific overrides: no necesita `@UninstallModules` en cada test instrumentado, no genera `DuplicateBindings` de Hilt, y desaparece automáticamente en release builds.
 - **Auth**: Auth0 SDK 2.11.0.
 - **Networking**: Retrofit + OkHttp + `kotlinx-serialization`.
-- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD. Compose UI tests para componentes simples (`WorkOrderScreenTest`) corren en JVM con Robolectric; escenarios BDD + tests unitarios siguen siendo la fuente primaria de cobertura.
+- **Testing**: JUnit4, MockK, Turbine, `kotlinx-coroutines-test`, Robolectric, `MockWebServer` (OkHttp), Compose-test, Cucumber JVM 7.x para BDD. Compose UI tests para componentes simples (`WorkOrderDetailScreenTest`) corren en JVM con Robolectric; escenarios BDD + tests unitarios siguen siendo la fuente primaria de cobertura.
 
 ## Arquitectura y capas (Clean Architecture liviana + Ports & Adapters)
 
@@ -97,21 +97,23 @@ app/
           auth/                               # User, AuthProvider, AuthSessionStore, etc.
           category/                           # Category, CategoriesOutcome, CategoryRepository
           serviceproposal/                    # ServiceProposal + Repository + Outcomes
-          turno/                              # Turno + TurnoStatus + TurnoCounterpart + TurnosRepository + TurnosOutcome (US-55 visualize-turns.feature)
-          workorder/                          # WorkOrder + Repository + Outcomes (US-54 16-VSP)
+          turno/                              # Turno + TurnoStatus + TurnoCounterpart + TurnosRepository + TurnosOutcome (US-55 visualize-turns.feature + US-27 visualize-turns-detail; TurnoStatus extendido con AwaitingPayment + Paid)
+          workorder/                          # WorkOrderDetail + WorkOrderDetailCounterpart + CompletionReport + CompletionReportPhoto + WorkOrderReview + Repository + Outcomes (US-54 16-VSP + US-27 visualize-turns-detail)
           usecase/auth/                       # RegisterConsumerUseCase, etc.
           usecase/category/                   # GetCategoriesUseCase
           usecase/serviceproposal/            # GetAll/Pending/Accepted/Rejected + GetServiceProposalByConversationId (US-54 14-VSP)
           usecase/turno/                      # GetTurnosUseCase (US-55 visualize-turns.feature)
-          usecase/workorder/                  # GetWorkOrderByProposalId (US-54 16-VSP)
+          usecase/workorder/                  # GetWorkOrderDetailUseCase (US-27 visualize-turns-detail; US-54 16-VSP absorbed via rename)
+          usecase/payment/                    # StartServiceProposalCheckout (US-21) + StartWorkOrderCheckout (US-27 09-VTD)
           api/                                # ApiError (sealed)
         ui/                                  # Composables, ViewModels, Navigation
-          auth/                              # WelcomeVM/State, CompleteProfileVM/State
-          components/                        # Botones, inputs, cards, branding
-            proposalcard/                    # ProposalCard reusable (US-54)
-            turnocard/                       # TurnoCard reusable (US-55 visualize-turns.feature)
+           auth/                              # WelcomeVM/State, CompleteProfileVM/State
+           components/                        # Botones, inputs, cards, branding
+             images/                          # FullScreenImageViewer reusable (US-27 visualize-turns-detail 06-VTD; reusa el patrón del chat)
+             proposalcard/                    # ProposalCard reusable (US-54)
+             turnocard/                       # TurnoCard reusable (US-55 visualize-turns.feature)
           navigation/                        # LoResuelvoNav, LoResuelvoNavHost, Route
-          screens/                           # auth/, home/, chat/, misservicios/, proposals/, turnos/, workorder/, …
+          screens/                           # auth/, home/, chat/, misservicios/, proposals/, turnos/, workorderdetail/, …
             auth/components/                 # WelcomeScaffold, TopBar, HeroSection, etc.
             chat/components/                 # ConversationTopBar, ConversationMessageBubble, NewMessageBanner, ProposalSummaryCard (US-54 14-VSP)
             home/components/                 # home tiles + Ver-todas links
