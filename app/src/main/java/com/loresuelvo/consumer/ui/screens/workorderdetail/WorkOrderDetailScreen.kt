@@ -126,12 +126,12 @@ private fun ReadyState(workOrder: WorkOrderDetail) {
     ) {
         DetailRow(
             label = stringResource(R.string.work_order_provider),
-            value = workOrder.providerName,
+            value = "${workOrder.provider.name} ${workOrder.provider.surname}",
             valueTestTag = WORK_ORDER_PROVIDER_TAG,
         )
         DetailRow(
             label = stringResource(R.string.work_order_category_name),
-            value = workOrder.categoryName,
+            value = workOrder.provider.categoryName,
             valueTestTag = WORK_ORDER_CATEGORY_TAG,
         )
         DetailRow(

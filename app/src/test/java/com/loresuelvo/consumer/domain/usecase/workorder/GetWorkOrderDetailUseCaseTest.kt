@@ -40,12 +40,12 @@ class GetWorkOrderDetailUseCaseTest {
         )
         val found = (outcome as GetWorkOrderOutcome.Found).workOrder
         assertEquals("wo-1", found.proposalId)
-        assertEquals("Plomería", found.categoryName)
+        assertEquals("Plomería", found.provider.categoryName)
         assertEquals("Fuga en el lavamanos", found.description)
         assertEquals(1500000L, found.amountCents)
         assertEquals(45, found.estimatedDurationMinutes)
         assertEquals(TurnoStatus.Pending, found.status)
-        assertEquals("Carlos López", found.providerName)
+        assertEquals("Carlos López", "${found.provider.name} ${found.provider.surname}")
     }
 
     @Test

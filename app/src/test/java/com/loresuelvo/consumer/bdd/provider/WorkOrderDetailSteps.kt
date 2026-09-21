@@ -67,8 +67,8 @@ class WorkOrderDetailSteps {
         assertEquals("wo-100", workOrder.proposalId)
         assertEquals("Cambio de termotanque", workOrder.description)
         assertEquals(8_500_000L, workOrder.amountCents)
-        assertEquals("Gas", workOrder.categoryName)
-        assertEquals("Andrés Quiroga", workOrder.providerName)
+        assertEquals("Gas", workOrder.provider.categoryName)
+        assertEquals("Andrés Quiroga", "${workOrder.provider.name} ${workOrder.provider.surname}")
         assertEquals(1_793_500_800_000L, workOrder.scheduledOnEpochMillis)
     }
 }

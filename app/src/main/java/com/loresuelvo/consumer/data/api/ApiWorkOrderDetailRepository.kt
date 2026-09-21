@@ -6,6 +6,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -54,8 +55,13 @@ class ApiWorkOrderDetailRepository @Inject constructor(
 
 private fun ServiceProposal.toWorkOrderDetail(): WorkOrderDetail = WorkOrderDetail(
     proposalId = id,
-    providerName = "${counterpart.name} ${counterpart.surname}",
-    categoryName = counterpart.categoryName,
+    provider = WorkOrderDetailCounterpart(
+        id = counterpart.id,
+        name = counterpart.name,
+        surname = counterpart.surname,
+        categoryName = counterpart.categoryName,
+        profilePhotoUrl = counterpart.profilePhotoUrl,
+    ),
     description = description,
     amountCents = amountCents,
     scheduledOnEpochMillis = scheduledOnEpochMillis,

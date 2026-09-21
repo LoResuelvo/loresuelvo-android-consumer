@@ -198,8 +198,13 @@ class WorkOrderDetailScreenTest {
         estimatedDurationMinutes: Int? = 90,
     ): WorkOrderDetail = WorkOrderDetail(
         proposalId = "wo-1",
-        providerName = "Carlos López",
-        categoryName = "Plomería",
+        provider = com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
+            id = "100",
+            name = "Carlos",
+            surname = "López",
+            categoryName = "Plomería",
+            profilePhotoUrl = null,
+        ),
         description = "Fuga en el lavamanos",
         amountCents = 1_500_000L,
         scheduledOnEpochMillis = 1_792_074_600_000L,
