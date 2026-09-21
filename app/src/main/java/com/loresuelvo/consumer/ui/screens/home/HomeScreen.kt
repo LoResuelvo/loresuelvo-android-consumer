@@ -130,24 +130,47 @@ fun HomeScreen(
         )
 
         // visualize-turns.feature scenario 01-VT: dedicated entry
-        // into the "Mis Turnos" surface. Today the dashboard only
-        // renders the shared empty-state card; the row of `Turno`
-        // cards lands with scenario 02-VT once `GET /work-orders`
-        // is surfaced via [HomeViewModel]. The CTA routes the
-        // user back to the categories grid so they can act on the
-        // prompt without leaving the dashboard.
+        // into the "Mis Turnos" surface. The SectionTitle's "Ver
+        // todas" link routes to the full list screen
+        // (`Route.Turnos`); the body below it shows the closest-
+        // to-now `MAX_TURNOS_ON_HOME` scheduled appointments as
+        // [TurnoCard]s when the round trip succeeded (scenarios
+        // 02-VT / 03-VT distinguish non-empty vs empty). When the
+        // list is empty / loading / errored the shared
+        // [EducationalEmptyCard] keeps the section visually
+        // consistent so the user never sees a blank box.
         SectionTitle(
             text = stringResource(R.string.home_section_mis_turnos),
             link = stringResource(R.string.home_section_mis_turnos_link),
             linkTestTag = HOME_TURNOS_LINK_TAG,
             onLinkClick = onSeeAllTurnosClick,
         )
-        EducationalEmptyCard(
-            title = stringResource(R.string.home_turnos_empty_title),
-            body = stringResource(R.string.home_turnos_empty_body),
-            ctaText = stringResource(R.string.home_turnos_empty_cta),
-            onCtaClick = onSeeAllCategoriesClick,
-        )
+        when (val t = state.turnos) {
+            is TurnosState.Ready -> {
+                if (t.items.isEmpty()) {
+                    EducationalEmptyCard(
+                        title = stringResource(R.string.home_turnos_empty_title),
+                        body = stringResource(R.string.home_turnos_empty_body),
+                        ctaText = stringResource(R.string.home_turnos_empty_cta),
+                        onCtaClick = onSeeAllCategoriesClick,
+                    )
+                } else {
+                    TurnosRow(turnos = t.items)
+                }
+            }
+            // Loading and Error silently fall back to the empty
+            // card so the dashboard doesn't break on a failed
+            // `GET /work-orders`; the dedicated Mis Turnos
+            // screen renders the typed retry branch instead.
+            TurnosState.Loading,
+            TurnosState.Error,
+            -> EducationalEmptyCard(
+                title = stringResource(R.string.home_turnos_empty_title),
+                body = stringResource(R.string.home_turnos_empty_body),
+                ctaText = stringResource(R.string.home_turnos_empty_cta),
+                onCtaClick = onSeeAllCategoriesClick,
+            )
+        }
 
         // US-54 scenario 03-VSP: dedicated entry into the "Mis
         // Servicios" surface. The "Ver todas" link lands on a
@@ -428,5 +451,38 @@ private fun MisServiciosRow(
  * Compose testTags for the MisServicios block on Home.
  */
 const val HOME_MIS_SERVICIOS_ROW_TAG: String = "home-mis-servicios-row"
+/**
+ * Horizontal row of up to [HomeViewModel.MAX_TURNOS_ON_HOME]
+ * scheduled-appointment [TurnoCard]s for the Home "Mis Turnos"
+ * section. The VM takes the closest-to-now N before this
+ * composable runs, so the row always renders at most N items.
+ *
+ * `Row + horizontalScroll` mirrors [MisServiciosRow]'s pattern:
+ * small N, scroll only if the user's locale makes the cards
+ * wider than the viewport.
+ */
+@Composable
+private fun TurnosRow(
+    turnos: List<com.loresuelvo.consumer.domain.turno.Turno>,
+) {
+    androidx.compose.foundation.layout.Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .testTag(HOME_TURNOS_ROW_TAG),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        turnos.forEach { turno ->
+            com.loresuelvo.consumer.ui.components.turnocard.TurnoCard(
+                turno = turno,
+                onCardClicked = { /* post-MVP detail (12-VT) */ },
+                modifier = Modifier.width(370.dp),
+            )
+        }
+    }
+}
+
+const val HOME_TURNOS_ROW_TAG: String = "home-turnos-row"
+
 const val HOME_MIS_SERVICIOS_EMPTY_CARD_TAG: String = "home-mis-servicios-empty-card"
 const val HOME_TURNOS_LINK_TAG: String = "home-turnos-link"
