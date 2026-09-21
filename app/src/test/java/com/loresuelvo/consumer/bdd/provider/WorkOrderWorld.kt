@@ -5,7 +5,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
-import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderByProposalIdUseCase
+import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
 import com.loresuelvo.consumer.ui.screens.workorder.WorkOrderUiState
 import com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +23,7 @@ import kotlinx.coroutines.test.setMain
  * work-order detail"). Drives the
  * [WorkOrderViewModel] against a fake
  * [ServiceProposalRepository] (which the production
- * [com.loresuelvo.consumer.data.api.ApiWorkOrderRepository] also
+ * [com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository] also
  * reuses) so the step defs can deterministically mount the VM
  * with a seeded accepted proposal and observe the resolved
  * [WorkOrderUiState].
@@ -49,8 +49,8 @@ class WorkOrderWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         viewModel = WorkOrderViewModel(
-            getWorkOrderByProposalId = GetWorkOrderByProposalIdUseCase(
-                com.loresuelvo.consumer.data.api.ApiWorkOrderRepository(serviceProposalRepo),
+            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+                com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository(serviceProposalRepo),
             ),
         )
 

@@ -162,9 +162,9 @@ class RealBackendFlowE2ETest {
 
         @Binds
         @Singleton
-        abstract fun bindWorkOrderRepository(
-            repository: com.loresuelvo.consumer.data.api.ApiWorkOrderRepository,
-        ): com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
+        abstract fun bindWorkOrderDetailRepository(
+            repository: com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository,
+        ): com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 
         @Binds
         @Singleton

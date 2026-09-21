@@ -5,17 +5,17 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
-import com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Adapter that fulfils [WorkOrderRepository] by reusing the
+ * Adapter that fulfils [WorkOrderDetailRepository] by reusing the
  * existing [ServiceProposalRepository] round trip. Today the
  * work order is just the originating proposal flattened — the
- * dedicated `GET /work-orders/by-proposal/{id}` endpoint does
- * not yet exist on the backend, so a single repository call
- * feeds both surfaces.
+ * dedicated `GET /work-orders/{workOrderID}` endpoint is wired
+ * up in a follow-up US-27 commit; until then this adapter
+ * feeds the same data the proposal list does.
  *
  * Reusing the proposal repository avoids a second round trip on
  * every work-order detail mount, and keeps the wire shape
@@ -34,15 +34,15 @@ import javax.inject.Singleton
  *    exception-free.
  */
 @Singleton
-class ApiWorkOrderRepository @Inject constructor(
+class ApiWorkOrderDetailRepository @Inject constructor(
     private val serviceProposalRepository: ServiceProposalRepository,
-) : WorkOrderRepository {
+) : WorkOrderDetailRepository {
 
-    override suspend fun getWorkOrderByProposalId(proposalId: String): GetWorkOrderOutcome =
+    override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
         when (val outcome = serviceProposalRepository.getServiceProposals()) {
             is ServiceProposalsOutcome.Success ->
                 outcome.proposals
-                    .firstOrNull { it.id == proposalId }
+                    .firstOrNull { it.id == workOrderId }
                     ?.toWorkOrderDetail()
                     ?.let { GetWorkOrderOutcome.Found(it) }
                     ?: GetWorkOrderOutcome.NotFound

@@ -16,7 +16,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.data.api.ApiCategoryRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
-import com.loresuelvo.consumer.data.api.ApiWorkOrderRepository
+import com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.data.auth.SessionStoreModule
 import com.loresuelvo.consumer.di.RepositoryModule
@@ -38,7 +38,7 @@ import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
-import com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository
 import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
@@ -298,9 +298,9 @@ class MisTurnosScreenInstrumentedTest {
 
         @Binds
         @Singleton
-        abstract fun bindWorkOrderRepository(
-            repository: ApiWorkOrderRepository,
-        ): WorkOrderRepository
+        abstract fun bindWorkOrderDetailRepository(
+            repository: ApiWorkOrderDetailRepository,
+        ): WorkOrderDetailRepository
 
         @Binds
         @Singleton

@@ -7,28 +7,28 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
-import com.loresuelvo.consumer.domain.workorder.WorkOrderRepository
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertNull as junitAssertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure JVM unit tests for [GetWorkOrderByProposalIdUseCase] and
- * the [WorkOrderRepository] adapter contract it depends on.
+ * Pure JVM unit tests for [GetWorkOrderDetailUseCase] and the
+ * [WorkOrderDetailRepository] adapter contract it depends on.
  * US-54 scenario 16-VSP pins the work-order detail surface;
  * these tests guard the data layer so the screen can rely on a
- * typed outcome.
+ * typed outcome. US-27 keeps them green while migrating the
+ * surface to the new `GET /work-orders/{workOrderID}` endpoint.
  */
-class GetWorkOrderByProposalIdUseCaseTest {
+class GetWorkOrderDetailUseCaseTest {
 
     @Test
     fun returns_found_when_proposal_matches() = runTest {
         val proposal = proposal(id = "wo-1", conversationId = "c-1")
-        val useCase = GetWorkOrderByProposalIdUseCase(
-            FakeWorkOrderRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
+        val useCase = GetWorkOrderDetailUseCase(
+            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
         )
 
         val outcome = useCase("wo-1")
@@ -50,8 +50,8 @@ class GetWorkOrderByProposalIdUseCaseTest {
     @Test
     fun returns_not_found_when_no_proposal_matches_the_id() = runTest {
         val proposal = proposal(id = "wo-1", conversationId = "c-1")
-        val useCase = GetWorkOrderByProposalIdUseCase(
-            FakeWorkOrderRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
+        val useCase = GetWorkOrderDetailUseCase(
+            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
         )
 
         assertEquals(
@@ -62,8 +62,8 @@ class GetWorkOrderByProposalIdUseCaseTest {
 
     @Test
     fun returns_not_found_when_repository_succeeds_with_empty_list() = runTest {
-        val useCase = GetWorkOrderByProposalIdUseCase(
-            FakeWorkOrderRepository(ServiceProposalsOutcome.Success(emptyList())),
+        val useCase = GetWorkOrderDetailUseCase(
+            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(emptyList())),
         )
 
         assertEquals(
@@ -75,8 +75,8 @@ class GetWorkOrderByProposalIdUseCaseTest {
     @Test
     fun returns_failure_when_repository_surfaces_a_failure() = runTest {
         val failure = ServiceProposalsOutcome.Failure.Server(500, "down for maintenance")
-        val useCase = GetWorkOrderByProposalIdUseCase(
-            FakeWorkOrderRepository(failure),
+        val useCase = GetWorkOrderDetailUseCase(
+            FakeWorkOrderDetailRepository(failure),
         )
 
         val result = useCase("wo-1")
@@ -93,8 +93,8 @@ class GetWorkOrderByProposalIdUseCaseTest {
         val proposal = proposal(id = "wo-1", conversationId = "c-1").copy(
             estimatedDurationMinutes = null,
         )
-        val useCase = GetWorkOrderByProposalIdUseCase(
-            FakeWorkOrderRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
+        val useCase = GetWorkOrderDetailUseCase(
+            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
         )
 
         val outcome = useCase("wo-1")
@@ -126,22 +126,23 @@ class GetWorkOrderByProposalIdUseCaseTest {
         )
 
     /**
-     * In-memory [WorkOrderRepository] that runs the same lookup
-     * logic the production adapter uses (the proposal repo round
-     * trip plus the [ApiWorkOrderMapping.toWorkOrder] conversion),
-     * so the tests pin the end-to-end mapping without depending
-     * on Hilt or the network.
+     * In-memory [WorkOrderDetailRepository] that runs the same
+     * lookup logic the production adapter uses (the proposal
+     * repo round trip plus the
+     * [ApiWorkOrderMapping.toWorkOrderDetail] conversion), so
+     * the tests pin the end-to-end mapping without depending on
+     * Hilt or the network.
      */
-    private class FakeWorkOrderRepository(
+    private class FakeWorkOrderDetailRepository(
         private val outcome: ServiceProposalsOutcome,
-    ) : WorkOrderRepository {
+    ) : WorkOrderDetailRepository {
         private val delegate = FakeServiceProposalRepository(outcome)
 
-        override suspend fun getWorkOrderByProposalId(proposalId: String): GetWorkOrderOutcome =
+        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
             when (val result = delegate.getServiceProposals()) {
                 is ServiceProposalsOutcome.Success ->
                     result.proposals
-                        .firstOrNull { it.id == proposalId }
+                        .firstOrNull { it.id == workOrderId }
                         ?.let { GetWorkOrderOutcome.Found(ApiWorkOrderMapping.toWorkOrderDetail(it)) }
                         ?: GetWorkOrderOutcome.NotFound
                 is ServiceProposalsOutcome.Failure -> GetWorkOrderOutcome.Failure(result)
