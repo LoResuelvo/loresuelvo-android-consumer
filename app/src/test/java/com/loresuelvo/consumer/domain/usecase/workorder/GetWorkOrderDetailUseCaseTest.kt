@@ -1,17 +1,13 @@
 package com.loresuelvo.consumer.domain.usecase.workorder
 
-import com.loresuelvo.consumer.data.api.ApiWorkOrderMapping
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull as junitAssertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -25,11 +21,36 @@ import org.junit.Test
  */
 class GetWorkOrderDetailUseCaseTest {
 
+    private fun workOrder(
+        proposalId: String = "wo-1",
+        description: String = "Fuga en el lavamanos",
+        amountCents: Long = 1_500_000L,
+        scheduledOnEpochMillis: Long = 1_792_074_600_000L,
+        acceptedOnEpochMillis: Long = 1_788_434_364_640L,
+    ): WorkOrderDetail = WorkOrderDetail(
+        proposalId = proposalId,
+        provider = WorkOrderDetailCounterpart(
+            id = "100",
+            name = "Carlos",
+            surname = "López",
+            categoryName = "Plomería",
+            profilePhotoUrl = null,
+        ),
+        description = description,
+        amountCents = amountCents,
+        scheduledOnEpochMillis = scheduledOnEpochMillis,
+        acceptedOnEpochMillis = acceptedOnEpochMillis,
+        paidOnEpochMillis = null,
+        status = TurnoStatus.Pending,
+        completionReport = null,
+        review = null,
+        estimatedDurationMinutes = 90,
+    )
+
     @Test
-    fun returns_found_when_proposal_matches() = runTest {
-        val proposal = proposal(id = "wo-1", conversationId = "c-1")
+    fun returns_found_when_work_order_matches() = runTest {
         val useCase = GetWorkOrderDetailUseCase(
-            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
+            FakeWorkOrderDetailRepository(workOrder(proposalId = "wo-1")),
         )
 
         val outcome = useCase("wo-1")
@@ -42,17 +63,16 @@ class GetWorkOrderDetailUseCaseTest {
         assertEquals("wo-1", found.proposalId)
         assertEquals("Plomería", found.provider.categoryName)
         assertEquals("Fuga en el lavamanos", found.description)
-        assertEquals(1500000L, found.amountCents)
-        assertEquals(45, found.estimatedDurationMinutes)
+        assertEquals(1_500_000L, found.amountCents)
+        assertEquals(90, found.estimatedDurationMinutes)
         assertEquals(TurnoStatus.Pending, found.status)
         assertEquals("Carlos López", "${found.provider.name} ${found.provider.surname}")
     }
 
     @Test
-    fun returns_not_found_when_no_proposal_matches_the_id() = runTest {
-        val proposal = proposal(id = "wo-1", conversationId = "c-1")
+    fun returns_not_found_when_id_does_not_match() = runTest {
         val useCase = GetWorkOrderDetailUseCase(
-            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
+            FakeWorkOrderDetailRepository(workOrder(proposalId = "wo-1")),
         )
 
         assertEquals(
@@ -62,9 +82,9 @@ class GetWorkOrderDetailUseCaseTest {
     }
 
     @Test
-    fun returns_not_found_when_repository_succeeds_with_empty_list() = runTest {
+    fun returns_not_found_when_repository_has_no_work_order() = runTest {
         val useCase = GetWorkOrderDetailUseCase(
-            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(emptyList())),
+            FakeWorkOrderDetailRepository(),
         )
 
         assertEquals(
@@ -77,7 +97,7 @@ class GetWorkOrderDetailUseCaseTest {
     fun returns_failure_when_repository_surfaces_a_failure() = runTest {
         val failure = ServiceProposalsOutcome.Failure.Server(500, "down for maintenance")
         val useCase = GetWorkOrderDetailUseCase(
-            FakeWorkOrderDetailRepository(failure),
+            FakeWorkOrderDetailRepository(failure = failure),
         )
 
         val result = useCase("wo-1")
@@ -90,12 +110,10 @@ class GetWorkOrderDetailUseCaseTest {
     }
 
     @Test
-    fun proposal_without_estimated_duration_surfaces_null_in_the_work_order() = runTest {
-        val proposal = proposal(id = "wo-1", conversationId = "c-1").copy(
-            estimatedDurationMinutes = null,
-        )
+    fun work_order_without_estimated_duration_surfaces_null() = runTest {
+        val detail = workOrder().copy(estimatedDurationMinutes = null)
         val useCase = GetWorkOrderDetailUseCase(
-            FakeWorkOrderDetailRepository(ServiceProposalsOutcome.Success(listOf(proposal))),
+            FakeWorkOrderDetailRepository(detail),
         )
 
         val outcome = useCase("wo-1")
@@ -104,55 +122,24 @@ class GetWorkOrderDetailUseCaseTest {
             "expected Found, was $outcome",
             outcome is GetWorkOrderOutcome.Found,
         )
-        junitAssertNull((outcome as GetWorkOrderOutcome.Found).workOrder.estimatedDurationMinutes)
+        assertEquals(null, (outcome as GetWorkOrderOutcome.Found).workOrder.estimatedDurationMinutes)
     }
-
-    private fun proposal(id: String, conversationId: String?): ServiceProposal =
-        ServiceProposal(
-            id = id,
-            conversationId = conversationId,
-            status = ServiceProposalStatus.Pending,
-            counterpart = ServiceProposalCounterpart(
-                id = "100",
-                name = "Carlos",
-                surname = "López",
-                categoryName = "Plomería",
-                profilePhotoUrl = null,
-            ),
-            description = "Fuga en el lavamanos",
-            amountCents = 1500000L,
-            scheduledOnEpochMillis = 1_792_074_600_000L,
-            createdOnEpochMillis = 1_788_434_364_640L,
-            estimatedDurationMinutes = 45,
-        )
 
     /**
-     * In-memory [WorkOrderDetailRepository] that runs the same
-     * lookup logic the production adapter uses (the proposal
-     * repo round trip plus the
-     * [ApiWorkOrderMapping.toWorkOrderDetail] conversion), so
-     * the tests pin the end-to-end mapping without depending on
-     * Hilt or the network.
+     * Port-level fake. Holds a single `WorkOrderDetail` or a
+     * failure to assert the typed outcomes the use case passes
+     * through unchanged.
      */
     private class FakeWorkOrderDetailRepository(
-        private val outcome: ServiceProposalsOutcome,
+        private val detail: WorkOrderDetail? = null,
+        private val failure: ServiceProposalsOutcome.Failure? = null,
     ) : WorkOrderDetailRepository {
-        private val delegate = FakeServiceProposalRepository(outcome)
-
-        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
-            when (val result = delegate.getServiceProposals()) {
-                is ServiceProposalsOutcome.Success ->
-                    result.proposals
-                        .firstOrNull { it.id == workOrderId }
-                        ?.let { GetWorkOrderOutcome.Found(ApiWorkOrderMapping.toWorkOrderDetail(it)) }
-                        ?: GetWorkOrderOutcome.NotFound
-                is ServiceProposalsOutcome.Failure -> GetWorkOrderOutcome.Failure(result)
-            }
-    }
-
-    private class FakeServiceProposalRepository(
-        private val outcome: ServiceProposalsOutcome,
-    ) : ServiceProposalRepository {
-        override suspend fun getServiceProposals(): ServiceProposalsOutcome = outcome
+        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome {
+            failure?.let { return GetWorkOrderOutcome.Failure(it) }
+            return detail
+                ?.takeIf { it.proposalId == workOrderId }
+                ?.let { GetWorkOrderOutcome.Found(it) }
+                ?: GetWorkOrderOutcome.NotFound
+        }
     }
 }

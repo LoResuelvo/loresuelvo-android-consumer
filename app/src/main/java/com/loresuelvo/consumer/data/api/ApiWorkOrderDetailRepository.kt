@@ -1,105 +1,91 @@
 package com.loresuelvo.consumer.data.api
 
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
+import com.loresuelvo.consumer.data.api.mapper.toDomain
+import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
-import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
-import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
-import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Adapter that fulfils [WorkOrderDetailRepository] by reusing the
- * existing [ServiceProposalRepository] round trip. Today the
- * work order is just the originating proposal flattened — the
- * dedicated `GET /work-orders/{workOrderID}` endpoint is wired
- * up in a follow-up US-27 commit; until then this adapter
- * feeds the same data the proposal list does.
+ * Adapter that fulfils [WorkOrderDetailRepository] against the
+ * dedicated `GET /work-orders/{workOrderID}` endpoint (US-27
+ * `visualize-turns-detail`).
  *
- * Reusing the proposal repository avoids a second round trip on
- * every work-order detail mount, and keeps the wire shape
- * consistent across the consumer app. When the dedicated
- * endpoint lands, this adapter swaps `getServiceProposals()` for
- * the new call without changing the [GetWorkOrderOutcome]
- * surface that callers depend on.
+ * The legacy adapter reused the proposal list endpoint to avoid
+ * a second round trip; the dedicated endpoint now exists so this
+ * adapter swaps the call. The [GetWorkOrderOutcome] surface stays
+ * identical so the screen / use case / VM are untouched.
  *
- * Implementation notes:
- *  - A `Failure(failure)` outcome collapses to `Failure(failure)`
- *    so the screen can render its retry CTA on backend errors.
- *  - A `Success(emptyList())` and `Success(...)` whose head
- *    doesn't match the id both surface as [GetWorkOrderOutcome.NotFound].
- *  - The result is **never thrown** — exceptions are caught
- *    inside the upstream repository, so this adapter is also
- *    exception-free.
+ * Error mapping:
+ *  - `404 Not Found` → [GetWorkOrderOutcome.NotFound] (the screen
+ *    renders its not-found copy; same UX as the legacy
+ *    `Success(emptyList())` outcome).
+ *  - Other non-2xx → [GetWorkOrderOutcome.Failure.Server] so the
+ *    screen renders its retry CTA.
+ *  - `IOException` (no network, timeout, DNS failure) →
+ *    [GetWorkOrderOutcome.Failure.Network] via
+ *    [toApiError].
+ *  - `401 Unauthorized` (the JWT expired) → mapped through the
+ *    same path as any other `Server(code = 401, message = ...)`;
+ *    the session layer observes the auth event out of band.
+ *
+ * Implementations never throw.
  */
 @Singleton
 class ApiWorkOrderDetailRepository @Inject constructor(
-    private val serviceProposalRepository: ServiceProposalRepository,
+    private val backendApi: BackendApi,
 ) : WorkOrderDetailRepository {
 
     override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
-        when (val outcome = serviceProposalRepository.getServiceProposals()) {
-            is ServiceProposalsOutcome.Success ->
-                outcome.proposals
-                    .firstOrNull { it.id == workOrderId }
-                    ?.toWorkOrderDetail()
-                    ?.let { GetWorkOrderOutcome.Found(it) }
-                    ?: GetWorkOrderOutcome.NotFound
-            is ServiceProposalsOutcome.Failure ->
-                GetWorkOrderOutcome.Failure(outcome)
+        try {
+            val dto = backendApi.getWorkOrder(workOrderId)
+            val detail = dto.toDomain()
+            if (detail == null) {
+                // The mapper returns null for unknown statuses;
+                // today that's a contract violation on the
+                // backend, but we surface it as a server failure
+                // rather than a not-found so the screen offers
+                // the retry CTA.
+                GetWorkOrderOutcome.Failure(
+                    ServiceProposalsOutcome.Failure.Server(
+                        code = 0,
+                        message = "Unknown work-order status",
+                    ),
+                )
+            } else {
+                GetWorkOrderOutcome.Found(detail)
+            }
+        } catch (e: Throwable) {
+            when (val error = e.toApiError()) {
+                is ApiError.Server -> when (error.code) {
+                    404 -> GetWorkOrderOutcome.NotFound
+                    else -> GetWorkOrderOutcome.Failure(
+                        ServiceProposalsOutcome.Failure.Server(
+                            code = error.code,
+                            message = error.errorMessage,
+                        ),
+                    )
+                }
+                is ApiError.Network ->
+                    GetWorkOrderOutcome.Failure(
+                        ServiceProposalsOutcome.Failure.Network(error.networkCause),
+                    )
+                is ApiError.Unauthorized ->
+                    GetWorkOrderOutcome.Failure(
+                        ServiceProposalsOutcome.Failure.Server(
+                            code = 401,
+                            message = error.errorMessage,
+                        ),
+                    )
+                is ApiError.Unknown ->
+                    GetWorkOrderOutcome.Failure(
+                        ServiceProposalsOutcome.Failure.Server(
+                            code = 0,
+                            message = error.message ?: "Unknown error",
+                        ),
+                    )
+            }
         }
-}
-
-private fun ServiceProposal.toWorkOrderDetail(): WorkOrderDetail = WorkOrderDetail(
-    proposalId = id,
-    provider = WorkOrderDetailCounterpart(
-        id = counterpart.id,
-        name = counterpart.name,
-        surname = counterpart.surname,
-        categoryName = counterpart.categoryName,
-        profilePhotoUrl = counterpart.profilePhotoUrl,
-    ),
-    description = description,
-    amountCents = amountCents,
-    scheduledOnEpochMillis = scheduledOnEpochMillis,
-    // US-27: the dedicated endpoint surfaces `accepted_on` /
-    // `paid_on`. The legacy adapter derives from the proposal
-    // so we fall back to `createdOnEpochMillis` (the moment the
-    // consumer filed the proposal) and `null` respectively;
-    // a follow-up commit replaces this adapter with the new
-    // endpoint and the values become authoritative.
-    acceptedOnEpochMillis = createdOnEpochMillis,
-    paidOnEpochMillis = null,
-    // US-27: completion report + review are absent from the
-    // legacy adapter. A follow-up commit sources both blocks
-    // from `GET /work-orders/{workOrderID}` once it's wired up;
-    // today they're `null` because the adapter derives from the
-    // proposal-only endpoint.
-    completionReport = null,
-    review = null,
-    estimatedDurationMinutes = estimatedDurationMinutes,
-    // US-27: map the proposal-side status to the work-order
-    // vocabulary. `Accepted` is the only proposal-side value the
-    // legacy adapter surfaces (only accepted proposals are
-    // promoted to work orders today); the TurnoStatus enum
-    // already has the appropriate name for it.
-    status = when (status) {
-        com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Accepted -> TurnoStatus.Confirmed
-        com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Pending -> TurnoStatus.Pending
-        com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Rejected -> TurnoStatus.Cancelled
-    },
-)
-
-/**
- * Public façade for the production [toWorkOrderDetail] mapping so JVM
- * unit tests can assert the conversion without re-implementing
- * it. The production site still calls the private extension
- * directly — the façade exists only to make the mapping
- * testable from `src/test`.
- */
-object ApiWorkOrderMapping {
-    fun toWorkOrderDetail(proposal: ServiceProposal): WorkOrderDetail = proposal.toWorkOrderDetail()
 }

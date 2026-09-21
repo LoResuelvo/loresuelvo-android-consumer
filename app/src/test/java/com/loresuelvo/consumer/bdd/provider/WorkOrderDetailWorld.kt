@@ -1,11 +1,11 @@
 package com.loresuelvo.consumer.bdd.provider
 
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
-import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
+import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -22,11 +22,14 @@ import kotlinx.coroutines.test.setMain
  * Per-scenario world for the US-54 BDD spec 16-VSP ("consult the
  * work-order detail"). Drives the
  * [WorkOrderDetailViewModel] against a fake
- * [ServiceProposalRepository] (which the production
- * [com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository] also
- * reuses) so the step defs can deterministically mount the VM
- * with a seeded accepted proposal and observe the resolved
- * [WorkOrderDetailUiState].
+ * [WorkOrderDetailRepository] seeded with a single accepted
+ * proposal so the step defs can deterministically mount the VM
+ * and observe the resolved [WorkOrderDetailUiState].
+ *
+ * US-27 widens this world: the production adapter now consumes
+ * `GET /work-orders/{workOrderID}`, but the BDD does not need
+ * the wire surface — seeding the port's `WorkOrderDetail`
+ * directly is the cheapest way to keep the step defs stable.
  */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class WorkOrderDetailWorld : AutoCloseable {
@@ -36,7 +39,7 @@ class WorkOrderDetailWorld : AutoCloseable {
     private val supervisorJob = SupervisorJob()
     private val scope = CoroutineScope(dispatcher + supervisorJob)
 
-    private val serviceProposalRepo = FakeServiceProposalRepository()
+    private val repository = FakeWorkOrderDetailRepository()
     private lateinit var viewModel: WorkOrderDetailViewModel
 
     private val observedWorkOrderStates: MutableList<WorkOrderDetailUiState> = mutableListOf()
@@ -49,9 +52,7 @@ class WorkOrderDetailWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
-                com.loresuelvo.consumer.data.api.ApiWorkOrderDetailRepository(serviceProposalRepo),
-            ),
+            getWorkOrderDetail = GetWorkOrderDetailUseCase(repository),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -64,30 +65,31 @@ class WorkOrderDetailWorld : AutoCloseable {
     /**
      * "que existe una orden de trabajo con un tiempo estimado
      * para realizar el servicio" — scenario 16-VSP. Seeds a
-     * single accepted proposal whose `estimatedDurationMinutes`
-     * is `90L` so the work-order detail surfaces the
-     * "1 h 30 min" formatter output the scenario asserts.
+     * single accepted work order so the detail surface renders
+     * every agreed-terms field. US-27 drops the
+     * `estimatedDurationMinutes` pin (A2) so the seed only
+     * carries what the new endpoint surfaces.
      */
     fun seedAcceptedProposalWithNinetyMinutesEstimate() {
-        serviceProposalRepo.set(
-            listOf(
-                ServiceProposal(
-                    id = PROPOSAL_ID,
-                    conversationId = "wo-conv-1",
-                    status = ServiceProposalStatus.Accepted,
-                    counterpart = ServiceProposalCounterpart(
-                        id = "wo-cp-1",
-                        name = "Andrés",
-                        surname = "Quiroga",
-                        categoryName = "Gas",
-                        profilePhotoUrl = null,
-                    ),
-                    description = "Cambio de termotanque",
-                    amountCents = 8_500_000L,
-                    scheduledOnEpochMillis = 1_793_500_800_000L,
-                    createdOnEpochMillis = 1_789_200_000_000L,
-                    estimatedDurationMinutes = 90,
+        repository.set(
+            WorkOrderDetail(
+                proposalId = PROPOSAL_ID,
+                provider = WorkOrderDetailCounterpart(
+                    id = "wo-cp-1",
+                    name = "Andrés",
+                    surname = "Quiroga",
+                    categoryName = "Gas",
+                    profilePhotoUrl = null,
                 ),
+                description = "Cambio de termotanque",
+                amountCents = 8_500_000L,
+                scheduledOnEpochMillis = 1_793_500_800_000L,
+                acceptedOnEpochMillis = 1_789_200_000_000L,
+                paidOnEpochMillis = null,
+                status = TurnoStatus.Confirmed,
+                completionReport = null,
+                review = null,
+                estimatedDurationMinutes = 90,
             ),
         )
         if (started) {
@@ -114,11 +116,23 @@ class WorkOrderDetailWorld : AutoCloseable {
         Dispatchers.resetMain()
     }
 
-    private class FakeServiceProposalRepository : ServiceProposalRepository {
-        private var current: List<ServiceProposal> = emptyList()
-        fun set(items: List<ServiceProposal>) { current = items }
-        override suspend fun getServiceProposals(): ServiceProposalsOutcome =
-            ServiceProposalsOutcome.Success(current)
+    /**
+     * Port-level fake. Holds a single `WorkOrderDetail` the
+     * scenarios seed; returns [GetWorkOrderOutcome.Found] when
+     * the id matches and [GetWorkOrderOutcome.NotFound] otherwise.
+     */
+    private class FakeWorkOrderDetailRepository : WorkOrderDetailRepository {
+        private var current: WorkOrderDetail? = null
+
+        fun set(item: WorkOrderDetail) {
+            current = item
+        }
+
+        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
+            current
+                ?.takeIf { it.proposalId == workOrderId }
+                ?.let { GetWorkOrderOutcome.Found(it) }
+                ?: GetWorkOrderOutcome.NotFound
     }
 
     private companion object {
