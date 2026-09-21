@@ -102,6 +102,19 @@ class VisualizeTurnsDetailSteps {
         // already carry a single photo each.
     }
 
+    @Given("participa en una orden de trabajo con evidencia fotográfica")
+    fun participaEnUnaOrdenDeTrabajoConEvidenciaFotografica() {
+        // Scenario 06-VTD bundles the setup: starts the scenario
+        // and seeds an `awaiting_payment` work order (which is
+        // the lifecycle where evidence shows up). The trigger
+        // step (`selecciona para ver detalle ...`) opens the
+        // detail so the photo's `Then` assertion observes the
+        // `completionReport` slot.
+        world.startScenario()
+        world.seedAwaitingPaymentWorkOrder()
+        world.openWorkOrder()
+    }
+
     @Given("que el usuario está visualizando una orden")
     fun queElUsuarioEstaVisualizandoUnaOrden() {
         world.startScenario()

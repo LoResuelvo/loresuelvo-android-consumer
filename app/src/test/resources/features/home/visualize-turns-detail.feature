@@ -52,7 +52,6 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     And debe mostrar la descripción de entrega del prestador
     And debe mostrar las fotografías de evidencia
 
-  @wip
   Scenario: 06-VTD El usuario puede visualizar una fotografía de evidencia en tamaño completo
     Given participa en una orden de trabajo con evidencia fotográfica
     And selecciona para ver detalle de la orden desde la Home
