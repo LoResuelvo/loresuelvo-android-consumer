@@ -325,6 +325,7 @@ private fun HomeScreenReadyPreview() {
                 ),
                 pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
                 upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+                turnos = TurnosState.Ready(emptyList()),
             ),
             displayName = "Matias",
             onCategoryClick = { _, _ -> },

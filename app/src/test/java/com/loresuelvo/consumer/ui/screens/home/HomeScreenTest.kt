@@ -20,6 +20,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.ui.components.proposalcard.PROPOSAL_CARD_TAG_PREFIX
+import com.loresuelvo.consumer.ui.screens.home.TurnosState
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -160,5 +161,6 @@ class HomeScreenTest {
                 ),
             ),
             upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+            turnos = TurnosState.Ready(emptyList()),
         )
 }
