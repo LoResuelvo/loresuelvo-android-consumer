@@ -258,10 +258,10 @@ fun LoResuelvoNav() {
                     TurnosRoute(navController)
                 },
 
-                workOrder = { proposalId ->
-                    WorkOrderRoute(
+                workOrderDetail = { workOrderId ->
+                    WorkOrderDetailRoute(
                         navController = navController,
-                        proposalId = proposalId,
+                        workOrderId = workOrderId,
                     )
                 },
 
@@ -858,28 +858,29 @@ private fun TurnosRoute(
 }
 
 /**
- * Work-order detail route (US-54 scenario 16-VSP). Resolves the
+ * Work-order detail route (US-54 scenario 16-VSP, US-56
+ * `visualize-turns-detail`). Resolves the
  * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel]
  * through Hilt and forwards the UDF state to
  * [com.loresuelvo.consumer.ui.screens.workorder.WorkOrderScreen].
- * The proposal id from the back-stack entry is fed to the VM's
- * `load(proposalId)` once on first composition (and again on
+ * The work-order id from the back-stack entry is fed to the VM's
+ * `load(workOrderId)` once on first composition (and again on
  * the screen-level retry from the `Error` state).
  */
 @Composable
-private fun WorkOrderRoute(
+private fun WorkOrderDetailRoute(
     navController: androidx.navigation.NavHostController,
-    proposalId: String,
+    workOrderId: String,
 ) {
     val viewModel: com.loresuelvo.consumer.ui.screens.workorder.WorkOrderViewModel =
         hiltViewModel()
     val state by viewModel.uiState.collectAsState()
-    androidx.compose.runtime.LaunchedEffect(proposalId) {
-        viewModel.load(proposalId)
+    androidx.compose.runtime.LaunchedEffect(workOrderId) {
+        viewModel.load(workOrderId)
     }
     com.loresuelvo.consumer.ui.screens.workorder.WorkOrderScreen(
         state = state,
-        onRetry = { viewModel.load(proposalId) },
+        onRetry = { viewModel.load(workOrderId) },
         onBackClick = { navController.popBackStack() },
     )
 }

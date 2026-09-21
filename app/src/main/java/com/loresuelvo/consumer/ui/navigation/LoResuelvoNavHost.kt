@@ -41,7 +41,7 @@ fun LoResuelvoNavHost(
     assistant: @Composable () -> Unit,
     misServicios: @Composable () -> Unit,
     turnos: @Composable () -> Unit = {},
-    workOrder: @Composable (proposalId: String) -> Unit,
+    workOrderDetail: @Composable (workOrderId: String) -> Unit,
     serviceAgreement: @Composable (NavHostController) -> Unit = {},
     paymentResult: @Composable (NavHostController, androidx.navigation.NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
@@ -103,21 +103,26 @@ fun LoResuelvoNavHost(
             // Mis Turnos screen, reached from the Home "Ver
             // todas" link.
             composable(Route.Turnos.path) { turnos() }
-            // US-54 scenario 16-VSP: work-order detail. Reached
-            // from the "Ver orden de trabajo" CTA on
-            // [ProposalDetailScreen]; the proposal id is the
-            // join key for the lookup.
+            // US-54 scenario 16-VSP + US-56 (`visualize-turns-detail`):
+            // work-order detail. Reached from the "Ver orden de
+            // trabajo" CTA on [ProposalDetailScreen] (US-54) and
+            // from the "Mis Turnos" list / Home preview card
+            // (US-56). The arg is the dedicated work-order id
+            // since the backend `GET /work-orders/{id}` endpoint
+            // exists; the upstream US-54 code that surfaced this
+            // route keyed on the proposal id is being migrated
+            // commit by commit.
             composable(
-                route = Route.WorkOrder.path,
+                route = Route.WorkOrderDetail.path,
                 arguments = listOf(
-                    androidx.navigation.navArgument(Route.WorkOrder.ARG_PROPOSAL_ID) {
+                    androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_WORK_ORDER_ID) {
                         type = androidx.navigation.NavType.StringType
                     },
                 ),
             ) { entry ->
-                val proposalId = entry.arguments
-                    ?.getString(Route.WorkOrder.ARG_PROPOSAL_ID).orEmpty()
-                workOrder(proposalId)
+                val workOrderId = entry.arguments
+                    ?.getString(Route.WorkOrderDetail.ARG_WORK_ORDER_ID).orEmpty()
+                workOrderDetail(workOrderId)
             }
 
             // US-21: Service-agreement confirmation. The host is

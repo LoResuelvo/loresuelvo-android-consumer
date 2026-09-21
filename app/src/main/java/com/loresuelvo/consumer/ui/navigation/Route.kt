@@ -107,16 +107,24 @@ sealed class Route(val path: String) {
     data object Turnos : Route("turnos")
 
     /**
-     * Work-order detail screen (US-54 scenario 16-VSP). Reached
-     * from the "Ver orden de trabajo" CTA on
-     * [ProposalDetailScreen]. The proposal id is the join key
-     * because the work-order surface is a flat view over the
-     * same data set until the backend exposes a dedicated
-     * work-order endpoint.
+     * Work-order detail screen. Originally landed for US-54
+     * scenario 16-VSP keyed on the originating service-proposal
+     * id (the work-order surface was a flat view over the
+     * proposal until the backend exposed a dedicated endpoint).
+     *
+     * Renamed for US-56 (`visualize-work-order-detail`) so the
+     * route arg matches the new dedicated endpoint
+     * `GET /work-orders/{workOrderID}`. The screen + VM still
+     * read `proposalId` semantics for now (the dedicated
+     * endpoint has not been wired yet) — the rename is purely
+     * the navigation surface so callers stop coupling to the
+     * service-proposal id. The downstream rename of the
+     * `WorkOrder` domain type, repository and screen lands in
+     * commits #2-#4.
      */
-    data object WorkOrder : Route("work-order/{proposalId}") {
-        const val ARG_PROPOSAL_ID: String = "proposalId"
-        fun buildPath(proposalId: String): String = "work-order/$proposalId"
+    data object WorkOrderDetail : Route("work-order-detail/{workOrderId}") {
+        const val ARG_WORK_ORDER_ID: String = "workOrderId"
+        fun buildPath(workOrderId: String): String = "work-order-detail/$workOrderId"
     }
     /**
      * US-21 service-agreement confirmation screen. Reached when

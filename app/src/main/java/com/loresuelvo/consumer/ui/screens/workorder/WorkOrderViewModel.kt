@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
  * [WorkOrderUiState].
  *
  * The host
- * ([com.loresuelvo.consumer.ui.navigation.WorkOrderRoute])
+ * ([com.loresuelvo.consumer.ui.navigation.WorkOrderDetailRoute])
  * feeds the proposal id into [load] on first composition and on
  * manual retry from the [WorkOrderUiState.Error] surface. The
  * VM is Hilt-scoped to the route entry, so navigating to a
