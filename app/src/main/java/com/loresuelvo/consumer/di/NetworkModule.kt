@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.data.api.ApiConfig
 import com.loresuelvo.consumer.data.api.AuthInterceptor
 import com.loresuelvo.consumer.data.api.BackendApi
+import com.loresuelvo.consumer.data.api.FakeTurnosInterceptor
 import com.loresuelvo.consumer.data.api.RetryOn401Authenticator
 import com.loresuelvo.consumer.data.api.upload.FileUploader
 import com.loresuelvo.consumer.data.api.upload.OkHttpFileUploader
@@ -68,6 +69,12 @@ object NetworkModule {
                     level = HttpLoggingInterceptor.Level.BODY
                 }
                 it.addInterceptor(logger)
+                // Mock the "Mis Turnos" surface so it can be exercised
+                // manually on a real device / emulator without a live
+                // backend. The class lives in  so it is
+                // absent from  builds — returning mocked data
+                // from a production APK would be a security regression.
+                it.addInterceptor(FakeTurnosInterceptor())
             }
         }
         .authenticator(retryAuthenticator)
@@ -125,6 +132,12 @@ object NetworkModule {
                     level = HttpLoggingInterceptor.Level.BODY
                 }
                 it.addInterceptor(logger)
+                // Mock the "Mis Turnos" surface so it can be exercised
+                // manually on a real device / emulator without a live
+                // backend. The class lives in  so it is
+                // absent from  builds — returning mocked data
+                // from a production APK would be a security regression.
+                it.addInterceptor(FakeTurnosInterceptor())
             }
         }
         .build()
