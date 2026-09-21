@@ -301,4 +301,5 @@
     <string name="turnos_error_server">We couldn\'t load your appointments. Try again.</string>
     <string name="turnos_error_retry">Retry</string>
     <string name="turno_today_label">(today)</string>
+    <string name="turno_details_cta">View details</string>
 </resources>

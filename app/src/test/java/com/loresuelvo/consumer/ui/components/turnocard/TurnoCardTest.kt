@@ -50,7 +50,7 @@ class TurnoCardTest {
                 Surface(modifier = Modifier.testTag("host")) {
                     TurnoCard(
                         turno = sampleTurno(id = "1"),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -84,7 +84,7 @@ class TurnoCardTest {
                 Surface(modifier = Modifier.testTag("host")) {
                     TurnoCard(
                         turno = sampleTurno(id = "1"),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -107,7 +107,7 @@ class TurnoCardTest {
                             status = TurnoStatus.Confirmed,
                             scheduledOnEpochMillis = today,
                         ),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -135,7 +135,7 @@ class TurnoCardTest {
                             status = TurnoStatus.Confirmed,
                             scheduledOnEpochMillis = notToday,
                         ),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -158,7 +158,7 @@ class TurnoCardTest {
                             status = TurnoStatus.Pending,
                             scheduledOnEpochMillis = today,
                         ),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -182,7 +182,7 @@ class TurnoCardTest {
                 Surface(modifier = Modifier.testTag("host")) {
                     TurnoCard(
                         turno = sampleTurno(id = "1", status = TurnoStatus.Pending),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -200,7 +200,7 @@ class TurnoCardTest {
                 Surface(modifier = Modifier.testTag("host")) {
                     TurnoCard(
                         turno = sampleTurno(id = "1", status = TurnoStatus.Finished),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }
@@ -218,7 +218,7 @@ class TurnoCardTest {
                 Surface(modifier = Modifier.testTag("host")) {
                     TurnoCard(
                         turno = sampleTurno(id = "1", status = TurnoStatus.Cancelled),
-                        onCardClicked = {},
+                        onDetailsClick = {},
                     )
                 }
             }

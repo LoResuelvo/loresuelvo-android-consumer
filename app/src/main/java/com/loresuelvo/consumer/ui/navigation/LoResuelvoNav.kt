@@ -512,6 +512,12 @@ private fun HomeRoute(
         onSeeAllTurnosClick = {
             navController.navigate(Route.Turnos.path)
         },
+        // US-27 `visualize-turns-detail` scenario 01-VTD: tapping
+        // the "Ver detalles" CTA on a Home preview card opens the
+        // dedicated work-order detail screen.
+        onTurnoCardClick = { turnoId ->
+            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId))
+        },
         // US-54 bug fix: every "Ver Solicitud" tap from the home
         // row feeds the Hilt-scoped ProposalDetailViewModel so the
         // bottom sheet surfaces the full proposal.
@@ -850,6 +856,12 @@ private fun TurnosRoute(
     TurnosScreen(
         state = state,
         onRetryClick = viewModel::load,
+        // US-27 `visualize-turns-detail` scenario 01-VTD: tapping
+        // the "Ver detalles" CTA on a Mis Turnos card opens the
+        // dedicated work-order detail screen.
+        onTurnoCardClick = { turnoId ->
+            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId))
+        },
     )
     // `onBackClick` is intentionally not wired today — the
     // top app bar does not expose a back button yet (post-MVP).

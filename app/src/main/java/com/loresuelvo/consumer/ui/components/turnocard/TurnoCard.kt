@@ -1,7 +1,6 @@
 package com.loresuelvo.consumer.ui.components.turnocard
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,9 +36,10 @@ import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
  *  - Row 2: description + amount + scheduled date, left-aligned.
  *
  * The whole card is clickable so the consumer can tap anywhere
- * on it; tapping fires [onCardClicked]. The detail screen and
- * the "Contactar" CTA land with their own scenarios (post-MVP
- * today).
+ * on it; the card body is non-clickable (avoids accidental
+ * taps while scrolling) and the only action surface is the
+ * trailing "Ver detalles" / "View details" TextButton at the
+ * bottom of the card. Tapping the CTA fires [onDetailsClick].
  *
  * Status labels are pulled from `R.string.turno_status_*` so the
  * i18n contract is honoured (unlike `ProposalCard.StatusBadge`
@@ -48,7 +48,7 @@ import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 @Composable
 fun TurnoCard(
     turno: Turno,
-    onCardClicked: () -> Unit,
+    onDetailsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -56,7 +56,6 @@ fun TurnoCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(20.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onCardClicked)
             .padding(8.dp)
             .testTag(TURNO_CARD_TAG_PREFIX + turno.id),
         verticalArrangement = Arrangement.spacedBy(5.dp),
@@ -113,6 +112,17 @@ fun TurnoCard(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.testTag(TURNO_CARD_DATE_TAG + turno.id),
             )
+        }
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            androidx.compose.material3.TextButton(
+                onClick = onDetailsClick,
+                modifier = Modifier.testTag(TURNO_CARD_DETAILS_CTA_TAG + turno.id),
+            ) {
+                Text(text = stringResource(R.string.turno_details_cta))
+            }
         }
     }
 }
@@ -205,3 +215,4 @@ const val TURNO_CARD_AVATAR_TAG_PREFIX: String = "turno-card-avatar-"
 const val TURNO_CARD_DESCRIPTION_TAG: String = "turno-card-description-"
 const val TURNO_CARD_AMOUNT_TAG: String = "turno-card-amount-"
 const val TURNO_CARD_DATE_TAG: String = "turno-card-date-"
+const val TURNO_CARD_DETAILS_CTA_TAG: String = "turno-card-details-"

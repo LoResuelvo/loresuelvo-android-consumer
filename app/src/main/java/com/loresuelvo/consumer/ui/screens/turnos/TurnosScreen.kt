@@ -46,6 +46,7 @@ import com.loresuelvo.consumer.ui.components.turnocard.TurnoCard
 fun TurnosScreen(
     state: TurnosUiState,
     onRetryClick: () -> Unit,
+    onTurnoCardClick: (turnoId: String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -72,7 +73,7 @@ fun TurnosScreen(
             when (state) {
                 is TurnosUiState.Loading -> LoadingState()
                 is TurnosUiState.Ready ->
-                    if (state.turnos.isEmpty()) EmptyState() else ReadyList(state.turnos)
+                    if (state.turnos.isEmpty()) EmptyState() else ReadyList(state.turnos, onTurnoCardClick)
                 is TurnosUiState.Error -> ErrorState(
                     failure = state.failure,
                     onRetryClick = onRetryClick,
@@ -158,7 +159,10 @@ private fun ErrorState(
 }
 
 @Composable
-private fun ReadyList(turnos: List<Turno>) {
+private fun ReadyList(
+    turnos: List<Turno>,
+    onTurnoCardClick: (turnoId: String) -> Unit,
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -169,7 +173,7 @@ private fun ReadyList(turnos: List<Turno>) {
         items(items = turnos, key = { it.id }) { turno ->
             TurnoCard(
                 turno = turno,
-                onCardClicked = { /* post-MVP detail (12-VT) */ },
+                onDetailsClick = { onTurnoCardClick(turno.id) },
                 modifier = Modifier.padding(horizontal = 20.dp),
             )
         }

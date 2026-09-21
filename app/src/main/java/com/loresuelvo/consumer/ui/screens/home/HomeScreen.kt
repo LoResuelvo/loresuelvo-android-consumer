@@ -76,6 +76,7 @@ fun HomeScreen(
     onSeeAllCategoriesClick: () -> Unit,
     onSeeAllMisServiciosClick: () -> Unit = {},
     onSeeAllTurnosClick: () -> Unit = {},
+    onTurnoCardClick: (turnoId: String) -> Unit = {},
     onProposalClicked: (proposalId: String) -> Unit = {},
     onNotificationsClick: () -> Unit,
     onAiSendClick: () -> Unit,
@@ -155,7 +156,10 @@ fun HomeScreen(
                         onCtaClick = onSeeAllCategoriesClick,
                     )
                 } else {
-                    TurnosRow(turnos = t.items)
+                    TurnosRow(
+                        turnos = t.items,
+                        onTurnoCardClick = onTurnoCardClick,
+                    )
                 }
             }
             // Loading and Error silently fall back to the empty
@@ -464,6 +468,7 @@ const val HOME_MIS_SERVICIOS_ROW_TAG: String = "home-mis-servicios-row"
 @Composable
 private fun TurnosRow(
     turnos: List<com.loresuelvo.consumer.domain.turno.Turno>,
+    onTurnoCardClick: (turnoId: String) -> Unit,
 ) {
     androidx.compose.foundation.layout.Row(
         modifier = Modifier
@@ -475,7 +480,7 @@ private fun TurnosRow(
         turnos.forEach { turno ->
             com.loresuelvo.consumer.ui.components.turnocard.TurnoCard(
                 turno = turno,
-                onCardClicked = { /* post-MVP detail (12-VT) */ },
+                onDetailsClick = { onTurnoCardClick(turno.id) },
                 modifier = Modifier.width(370.dp),
             )
         }
