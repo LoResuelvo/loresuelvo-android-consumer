@@ -298,4 +298,5 @@
     <string name="turnos_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="turnos_error_server">We couldn\'t load your appointments. Try again.</string>
     <string name="turnos_error_retry">Retry</string>
+    <string name="turno_today_label">(today)</string>
 </resources>

@@ -10,7 +10,9 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
 import com.loresuelvo.consumer.ui.screens.home.HomeUiState
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -51,6 +53,7 @@ class VisualizeServiceProposalWorld : AutoCloseable {
 
     private val categoryRepo = FakeCategoryRepository()
     private val serviceProposalRepo = FakeServiceProposalRepository()
+    private lateinit var turnosRepo: FakeTurnosRepository
     private lateinit var viewModel: HomeViewModel
 
     private val observedUiStates: MutableList<HomeUiState> = mutableListOf()
@@ -74,6 +77,7 @@ class VisualizeServiceProposalWorld : AutoCloseable {
             getCategories = GetCategoriesUseCase(categoryRepo),
             getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
             getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
+            getTurnos = GetTurnosUseCase(turnosRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -84,6 +88,7 @@ class VisualizeServiceProposalWorld : AutoCloseable {
         // so the VM's `init { loadCategories(); loadPendingServiceProposals() }`
         // resolves against them rather than the empty defaults.
         categoryRepo.set(listOf(Category(id = 1, name = "Plomería")))
+        turnosRepo = FakeTurnosRepository()
         serviceProposalRepo.set(seedProposals.toList())
 
         scheduler.advanceUntilIdle()
@@ -184,5 +189,12 @@ class VisualizeServiceProposalWorld : AutoCloseable {
         fun set(items: List<ServiceProposal>) { current = items }
         override suspend fun getServiceProposals(): ServiceProposalsOutcome =
             ServiceProposalsOutcome.Success(current)
+    }
+
+    private class FakeTurnosRepository : com.loresuelvo.consumer.domain.turno.TurnosRepository {
+        private var current: List<com.loresuelvo.consumer.domain.turno.Turno> = emptyList()
+        fun set(items: List<com.loresuelvo.consumer.domain.turno.Turno>) { current = items }
+        override suspend fun getTurnos(): com.loresuelvo.consumer.domain.turno.TurnosOutcome =
+            com.loresuelvo.consumer.domain.turno.TurnosOutcome.Success(current)
     }
 }

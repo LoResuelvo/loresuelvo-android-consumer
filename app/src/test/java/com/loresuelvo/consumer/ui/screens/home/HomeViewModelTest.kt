@@ -9,8 +9,14 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.turno.Turno
+import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.domain.turno.TurnosOutcome
+import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.io.IOException
@@ -52,10 +58,18 @@ class HomeViewModelTest {
 
     private val categoryRepository = mockk<CategoryRepository>()
     private val serviceProposalRepository = mockk<ServiceProposalRepository>()
+    private val turnosRepository = mockk<TurnosRepository>()
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        // Default stub: every US-54 test sees an empty list of
+        // turnos unless it explicitly overrides (no test does
+        // today — the new sub-state is exercised by the
+        // dedicated `loadTurnos_*` tests below). Mirrors the
+        // service-proposals stub pattern.
+        coEvery { turnosRepository.getTurnos() } returns
+            TurnosOutcome.Success(emptyList())
     }
 
     @After
@@ -67,6 +81,7 @@ class HomeViewModelTest {
         getCategories = GetCategoriesUseCase(categoryRepository),
         getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepository),
         getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepository),
+        getTurnos = GetTurnosUseCase(turnosRepository),
     )
 
     private fun pendingProposal(
@@ -309,4 +324,109 @@ class HomeViewModelTest {
         assertEquals(ServiceProposalsState.Error, ready.pendingServiceProposals)
         assertEquals(ServiceProposalsState.Error, ready.upcomingServiceProposals)
     }
+
+    // ---- Mis Turnos section (visualize-turns.feature) ----
+
+    @Test
+    fun loadTurnos_returns_Ready_with_up_to_2_turnos_ordered_by_scheduled_date_ascending() = runTest {
+        // Seed 3 turnos out of order. `take(MAX_TURNOS_ON_HOME)`
+        // must keep only the 2 closest-to-now ones (today + tomorrow),
+        // and they must be sorted ascending (closest first).
+        val today = startOfTodayUtcMillis()
+        val tomorrow = today + 24 * 60 * 60 * 1000L
+        val nextMonth = today + 30 * 24 * 60 * 60 * 1000L
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { turnosRepository.getTurnos() } returns TurnosOutcome.Success(
+            listOf(
+                sampleTurno(id = "1", scheduledOnEpochMillis = nextMonth),
+                sampleTurno(id = "2", scheduledOnEpochMillis = today),
+                sampleTurno(id = "3", scheduledOnEpochMillis = tomorrow),
+            )
+        )
+
+        val viewModel = buildViewModel()
+
+        val state = viewModel.uiState.value
+        assertTrue("expected Ready, got ${state::class.simpleName}", state is HomeUiState.Ready)
+        val ready = state as HomeUiState.Ready
+        val turnosState = ready.turnos
+        assertTrue(
+            "expected Ready with items, got $turnosState",
+            turnosState is TurnosState.Ready,
+        )
+        val items = (turnosState as TurnosState.Ready).items
+        assertEquals(2, items.size)
+        assertEquals(listOf("2", "3"), items.map { it.id })
+    }
+
+    @Test
+    fun loadTurnos_returns_Ready_empty_when_backend_returns_empty_list() = runTest {
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { turnosRepository.getTurnos() } returns
+            TurnosOutcome.Success(emptyList())
+
+        val viewModel = buildViewModel()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is HomeUiState.Ready)
+        val ready = state as HomeUiState.Ready
+        assertTrue(ready.turnos is TurnosState.Ready)
+        assertTrue((ready.turnos as TurnosState.Ready).items.isEmpty())
+    }
+
+    @Test
+    fun loadTurnos_failure_does_not_break_categories() = runTest {
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { turnosRepository.getTurnos() } returns
+            TurnosOutcome.Failure.Network(IOException("dns"))
+
+        val viewModel = buildViewModel()
+
+        val state = viewModel.uiState.value
+        assertTrue(state is HomeUiState.Ready)
+        val ready = state as HomeUiState.Ready
+        assertEquals(TurnosState.Error, ready.turnos)
+    }
 }
+
+/**
+ * Returns the epoch-millis instant at 00:00:00 UTC of the
+ * current day. Used by the loadTurnos test to seed a `Turno` that
+ * falls on "today" without hard-coding a date that would drift.
+ */
+private fun startOfTodayUtcMillis(): Long {
+    val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("UTC"))
+    cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+    cal.set(java.util.Calendar.MINUTE, 0)
+    cal.set(java.util.Calendar.SECOND, 0)
+    cal.set(java.util.Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
+}
+
+private fun sampleTurno(
+    id: String,
+    scheduledOnEpochMillis: Long,
+): Turno = Turno(
+    id = id,
+    serviceProposalId = "p-$id",
+    status = TurnoStatus.Confirmed,
+    counterpart = TurnoCounterpart(
+        id = "$id-c",
+        name = "Juan",
+        surname = "Gómez",
+        categoryName = "Plomería",
+        profilePhotoUrl = null,
+    ),
+    description = "Reparación",
+    amountCents = 1_500_000L,
+    scheduledOnEpochMillis = scheduledOnEpochMillis,
+)

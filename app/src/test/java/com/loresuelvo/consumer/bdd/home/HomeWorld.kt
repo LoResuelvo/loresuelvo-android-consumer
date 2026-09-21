@@ -8,7 +8,9 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
+import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
 import com.loresuelvo.consumer.ui.screens.home.CategoriesState
 import com.loresuelvo.consumer.ui.screens.home.HomeUiState
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
@@ -41,6 +43,7 @@ class HomeWorld : AutoCloseable {
 
     private lateinit var categoryRepo: FakeCategoryRepository
     private lateinit var serviceProposalRepo: FakeServiceProposalRepository
+    private lateinit var turnosRepo: FakeTurnosRepository
     private lateinit var viewModel: HomeViewModel
 
     private val observedUiStates: MutableList<HomeUiState> = mutableListOf()
@@ -64,11 +67,13 @@ class HomeWorld : AutoCloseable {
         // "home shows the first 6 categories" scenario keeps
         // passing; the US-54 dedicated world overrides this seed.
         serviceProposalRepo = FakeServiceProposalRepository(emptyList())
+        turnosRepo = FakeTurnosRepository(emptyList())
 
         viewModel = HomeViewModel(
             getCategories = GetCategoriesUseCase(categoryRepo),
             getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
             getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
+            getTurnos = GetTurnosUseCase(turnosRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -132,6 +137,17 @@ class HomeWorld : AutoCloseable {
             ServiceProposalsOutcome.Success(current)
         fun set(proposals: List<ServiceProposal>) {
             current = proposals
+        }
+    }
+
+    private class FakeTurnosRepository(
+        initial: List<com.loresuelvo.consumer.domain.turno.Turno>,
+    ) : com.loresuelvo.consumer.domain.turno.TurnosRepository {
+        private var current = initial
+        override suspend fun getTurnos(): com.loresuelvo.consumer.domain.turno.TurnosOutcome =
+            com.loresuelvo.consumer.domain.turno.TurnosOutcome.Success(current)
+        fun set(turnos: List<com.loresuelvo.consumer.domain.turno.Turno>) {
+            current = turnos
         }
     }
 }

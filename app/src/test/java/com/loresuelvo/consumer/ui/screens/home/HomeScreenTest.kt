@@ -19,7 +19,13 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.Turno
+import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.ui.components.proposalcard.PROPOSAL_CARD_TAG_PREFIX
+import com.loresuelvo.consumer.ui.components.turnocard.TURNO_CARD_TAG_PREFIX
+import com.loresuelvo.consumer.ui.screens.home.HOME_TURNOS_LINK_TAG
+import com.loresuelvo.consumer.ui.screens.home.TurnosState
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -134,6 +140,161 @@ class HomeScreenTest {
         composeTestRule.onAllNodesWithText("Ver Solicitud").assertCountEquals(1)
     }
 
+        @Test
+    fun home_turnos_section_renders_one_TurnoCard_per_turno_when_two_or_fewer() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithTurnos(
+                            listOf(
+                                sampleTurno(id = "1"),
+                                sampleTurno(id = "2"),
+                            ),
+                        ),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = {},
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        // Both cards are in the semantics tree (the preview row
+        // does not need scroll-into-view; both fit on a tall
+        // CI emulator viewport).
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "1")
+            .assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "2")
+            .assertCountEquals(1)
+    }
+
+    @Test
+    fun home_turnos_section_renders_one_TurnoCard_per_seeded_turno_when_three_or_fewer() {
+        // The cap at MAX_TURNOS_ON_HOME is enforced by
+        // HomeViewModel.loadTurnos, NOT by the row composable.
+        // The row's contract is "render exactly the items it
+        // receives"; this test pins that contract with 3 items so
+        // a future regression that adds implicit truncation would
+        // surface here (and the VM-level cap test surfaces the
+        // upstream guarantee).
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithTurnos(
+                            listOf(
+                                sampleTurno(id = "1"),
+                                sampleTurno(id = "2"),
+                                sampleTurno(id = "3"),
+                            ),
+                        ),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = {},
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "1")
+            .assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "2")
+            .assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "3")
+            .assertCountEquals(1)
+    }
+
+    @Test
+    fun home_turnos_link_is_clickable_when_section_has_data() {
+        var clicked = false
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithTurnos(listOf(sampleTurno(id = "1"))),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = { clicked = true },
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        // The link sits below the dashboard's initial viewport
+        // once the row is rendered, so we scroll to it first to
+        // make sure hit-testing targets the live bounds.
+        composeTestRule
+            .onNodeWithTag(HOME_TURNOS_LINK_TAG)
+            .performScrollTo()
+            .assertHasClickAction()
+            .performClick()
+        org.junit.Assert.assertTrue(clicked)
+    }
+
+    private fun homeUiStateWithTurnos(
+        turnos: List<Turno>,
+    ): HomeUiState = HomeUiState.Ready(
+        categories = CategoriesState.Ready(emptyList()),
+        pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+        upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+        turnos = TurnosState.Ready(turnos),
+    )
+
+    private fun sampleTurno(id: String): Turno = Turno(
+        id = id,
+        serviceProposalId = "p-$id",
+        status = TurnoStatus.Confirmed,
+        counterpart = TurnoCounterpart(
+            id = "$id-c",
+            name = "Juan",
+            surname = "Gómez",
+            categoryName = "Plomería",
+            profilePhotoUrl = null,
+        ),
+        description = "Reparación",
+        amountCents = 1_500_000L,
+        scheduledOnEpochMillis = 1_792_074_600_000L,
+    )
+
     private fun homeUiStateWithSinglePendingProposal(): HomeUiState =
         HomeUiState.Ready(
             categories = com.loresuelvo.consumer.ui.screens.home.CategoriesState.Ready(
@@ -160,5 +321,6 @@ class HomeScreenTest {
                 ),
             ),
             upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+            turnos = TurnosState.Ready(emptyList()),
         )
 }
