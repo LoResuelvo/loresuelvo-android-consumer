@@ -24,6 +24,7 @@ import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.ui.components.proposalcard.PROPOSAL_CARD_TAG_PREFIX
 import com.loresuelvo.consumer.ui.components.turnocard.TURNO_CARD_TAG_PREFIX
+import com.loresuelvo.consumer.ui.screens.home.HOME_PENDING_PAYMENTS_ROW_TAG
 import com.loresuelvo.consumer.ui.screens.home.HOME_TURNOS_LINK_TAG
 import com.loresuelvo.consumer.ui.screens.home.TurnosState
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
@@ -279,6 +280,181 @@ class HomeScreenTest {
         awaitingPaymentTurnos = TurnosState.Ready(emptyList()),
         turnos = TurnosState.Ready(turnos),
     )
+
+    /**
+     * Builds a `HomeUiState.Ready` with the given awaiting-payment
+     * sub-state alongside the default categories / proposals /
+     * upcoming-preview slices. Each test pins a single surface so
+     * the failure message points at the right section.
+     */
+    private fun homeUiStateWithAwaitingPayment(
+        awaitingPaymentTurnos: TurnosState,
+    ): HomeUiState = HomeUiState.Ready(
+        categories = CategoriesState.Ready(emptyList()),
+        pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+        upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+        awaitingPaymentTurnos = awaitingPaymentTurnos,
+        turnos = TurnosState.Ready(emptyList()),
+    )
+
+    private fun sampleAwaitingPaymentTurno(id: String): Turno = Turno(
+        id = id,
+        serviceProposalId = "p-$id",
+        status = TurnoStatus.AwaitingPayment,
+        counterpart = TurnoCounterpart(
+            id = "$id-c",
+            name = "Diego",
+            surname = "Fernández",
+            categoryName = "Electricidad",
+            profilePhotoUrl = null,
+        ),
+        description = "Instalación de aire acondicionado split",
+        amountCents = 1_800_000L,
+        scheduledOnEpochMillis = 1_788_000_000_000L,
+    )
+
+    /**
+     * US-27 follow-up: the "Pagos pendientes" section renders
+     * when the awaiting-payment sub-state has at least one item.
+     * The row carries `HOME_PENDING_PAYMENTS_ROW_TAG` so the
+     * instrumented suite can target each card.
+     */
+    @Test
+    fun pending_payments_section_renders_when_at_least_one_awaiting_turno() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithAwaitingPayment(
+                            TurnosState.Ready(
+                                listOf(sampleAwaitingPaymentTurno("5")),
+                            ),
+                        ),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = {},
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(HOME_PENDING_PAYMENTS_ROW_TAG)
+            .assertCountEquals(1)
+        composeTestRule
+            .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + "5")
+            .assertCountEquals(1)
+    }
+
+    /**
+     * US-27 follow-up: the section is HIDDEN entirely (no
+     * title, no row, no placeholder) when the awaiting-payment
+     * sub-state is empty / loading / errored. The dashboard
+     * should never render an empty "Pending payments" block.
+     */
+    @Test
+    fun pending_payments_section_hidden_when_awaiting_turnos_empty() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithAwaitingPayment(TurnosState.Ready(emptyList())),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = {},
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(HOME_PENDING_PAYMENTS_ROW_TAG)
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun pending_payments_section_hidden_when_awaiting_turnos_loading() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithAwaitingPayment(TurnosState.Loading),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = {},
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(HOME_PENDING_PAYMENTS_ROW_TAG)
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun pending_payments_section_hidden_when_awaiting_turnos_error() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    HomeScreen(
+                        state = homeUiStateWithAwaitingPayment(TurnosState.Error),
+                        displayName = "Andres",
+                        onCategoryClick = { _, _ -> },
+                        onSeeAllCategoriesClick = {},
+                        onProposalClicked = {},
+                        onSeeAllTurnosClick = {},
+                        onNotificationsClick = {},
+                        onAiSendClick = {},
+                        onRetryClick = {},
+                        onLogoutClick = {},
+                        detailState = ProposalDetailUiState.Loading,
+                        onDetailRetry = {},
+                        onViewConversation = {},
+                        onPayNow = {},
+                        onDetailDismiss = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(HOME_PENDING_PAYMENTS_ROW_TAG)
+            .assertCountEquals(0)
+    }
 
     private fun sampleTurno(id: String): Turno = Turno(
         id = id,
