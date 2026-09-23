@@ -7,9 +7,14 @@ import com.loresuelvo.consumer.domain.turno.Turno
 /**
  * UDF state for the consumer Home screen.
  *
- * Four surfaces are rendered in parallel:
+ * Five surfaces are rendered in parallel:
  *
  *  - The category grid (the primary conversion action; pre-US-54).
+ *  - The "Pagos pendientes" section (US-27, post-visualize-
+ *    turns-detail follow-up) — turnos in
+ *    [com.loresuelvo.consumer.domain.turno.TurnoStatus.AwaitingPayment].
+ *    Hidden when the list is empty so the dashboard does not
+ *    surface an empty / placeholder block.
  *  - The "Propuestas que requieren atención" section (US-54,
  *    scenario 01-VSP) — proposals in
  *    [com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus.Pending].
@@ -25,13 +30,14 @@ import com.loresuelvo.consumer.domain.turno.Turno
  * failure flips the global to [Error] and the screen surfaces the
  * retry CTA. The proposals and turnos round trips land inside
  * whatever global state is current, exposed through
- * [pendingServiceProposals], [upcomingServiceProposals] and
- * [turnos]:
+ * [pendingServiceProposals], [upcomingServiceProposals],
+ * [awaitingPaymentTurnos] and [turnos]:
  *
  *  - Loading: round trip in flight; section renders a spinner.
  *  - Ready(items): round trip succeeded; `items` may be empty
  *    (no proposals / turnos in that status → section renders its
- *    own empty copy, scenarios 17-VSP / 03-VT).
+ *    own empty copy, scenarios 17-VSP / 03-VT; the "Pagos
+ *    pendientes" section hides entirely on empty).
  *  - Error: round trip failed; section renders its own error
  *    copy while the categories grid keeps working.
  */
@@ -40,12 +46,14 @@ sealed interface HomeUiState {
     val categories: CategoriesState
     val pendingServiceProposals: ServiceProposalsState
     val upcomingServiceProposals: ServiceProposalsState
+    val awaitingPaymentTurnos: TurnosState
     val turnos: TurnosState
 
     data class Loading(
         override val categories: CategoriesState = CategoriesState.Loading,
         override val pendingServiceProposals: ServiceProposalsState = ServiceProposalsState.Loading,
         override val upcomingServiceProposals: ServiceProposalsState = ServiceProposalsState.Loading,
+        override val awaitingPaymentTurnos: TurnosState = TurnosState.Loading,
         override val turnos: TurnosState = TurnosState.Loading,
     ) : HomeUiState
 
@@ -53,6 +61,7 @@ sealed interface HomeUiState {
         override val categories: CategoriesState,
         override val pendingServiceProposals: ServiceProposalsState,
         override val upcomingServiceProposals: ServiceProposalsState,
+        override val awaitingPaymentTurnos: TurnosState,
         override val turnos: TurnosState,
     ) : HomeUiState
 
@@ -61,6 +70,7 @@ sealed interface HomeUiState {
         val messageResId: Int,
         override val pendingServiceProposals: ServiceProposalsState = ServiceProposalsState.Error,
         override val upcomingServiceProposals: ServiceProposalsState = ServiceProposalsState.Error,
+        override val awaitingPaymentTurnos: TurnosState = TurnosState.Error,
         override val turnos: TurnosState = TurnosState.Error,
     ) : HomeUiState
 }

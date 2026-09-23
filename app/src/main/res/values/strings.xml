@@ -294,6 +294,7 @@
     <!-- Mis Turnos screen (visualize-turns.feature, scenario 01-VT) -->
     <string name="home_section_mis_turnos">Mis Turnos</string>
     <string name="home_section_mis_turnos_link">Ver todas</string>
+    <string name="home_section_pending_payments">Pagos pendientes</string>
     <string name="home_turnos_empty_title">Todavía no tenés turnos.</string>
     <string name="home_turnos_empty_body">Cuando confirmes una solicitud de servicio, vas a ver el turno acá.</string>
     <string name="home_turnos_empty_cta">Buscar profesionales</string>

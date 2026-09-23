@@ -276,6 +276,7 @@ class HomeScreenTest {
         categories = CategoriesState.Ready(emptyList()),
         pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
         upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+        awaitingPaymentTurnos = TurnosState.Ready(emptyList()),
         turnos = TurnosState.Ready(turnos),
     )
 
@@ -321,6 +322,7 @@ class HomeScreenTest {
                 ),
             ),
             upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+            awaitingPaymentTurnos = TurnosState.Ready(emptyList()),
             turnos = TurnosState.Ready(emptyList()),
         )
 }

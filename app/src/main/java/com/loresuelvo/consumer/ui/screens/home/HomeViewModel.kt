@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
@@ -18,7 +19,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * UDF ViewModel for the consumer Home screen. Loads three
+ * UDF ViewModel for the consumer Home screen. Loads four
  * parallel surfaces on first composition:
  *
  *  - The category grid, via [GetCategoriesUseCase] (pre-US-54).
@@ -26,16 +27,23 @@ import kotlinx.coroutines.launch
  *    scenario 01-VSP), via [GetPendingServiceProposalsUseCase].
  *  - The "Trabajos próximos" section (US-54, scenario 02-VSP),
  *    via [GetAcceptedServiceProposalsUseCase].
+ *  - The "Pagos pendientes" + "Mis Turnos" preview sections, via
+ *    [GetTurnosUseCase] (visualize-turns.feature scenario 01-VT
+ *    + the awaiting-payment follow-up). The same `GET /work-orders`
+ *    response feeds both sections; the VM derives one filter for
+ *    the upcoming preview (`[ScheduledDateComparator] closest-to-
+ *    now` + take `MAX_TURNOS_ON_HOME`) and one for the
+ *    awaiting-payment block (`TurnoStatus.AwaitingPayment`).
  *
- * The three round trips are launched in parallel coroutines on
+ * The four round trips are launched in parallel coroutines on
  * `viewModelScope`. The global [HomeUiState] (Loading / Ready /
  * Error) is driven by the categories round trip only: that is
  * the action without which the Home dashboard is not usable, so
  * a categories failure flips the global to [HomeUiState.Error]
- * and the screen surfaces the retry CTA. Each proposals round
- * trip only mutates its own sub-state, preserving whatever global
- * branch the categories round trip landed in. This split keeps
- * the state machine deadlock-free when the coroutines race:
+ * and the screen surfaces the retry CTA. Each proposals / turnos
+ * round trip only mutates its own sub-state, preserving whatever
+ * global branch the categories round trip landed in. This split
+ * keeps the state machine deadlock-free when the coroutines race:
  * whichever lands first only mutates its slice, never stuck on
  * Loading because the other round trip was slow.
  */
@@ -87,6 +95,7 @@ class HomeViewModel @Inject constructor(
                             categories = CategoriesState.Ready(visible),
                             pendingServiceProposals = current.pendingServiceProposals,
                             upcomingServiceProposals = current.upcomingServiceProposals,
+                            awaitingPaymentTurnos = current.awaitingPaymentTurnos,
                             turnos = current.turnos,
                         )
                     }
@@ -97,6 +106,7 @@ class HomeViewModel @Inject constructor(
                             messageResId = com.loresuelvo.consumer.R.string.welcome_categories_error,
                             pendingServiceProposals = current.pendingServiceProposals,
                             upcomingServiceProposals = current.upcomingServiceProposals,
+                            awaitingPaymentTurnos = current.awaitingPaymentTurnos,
                             turnos = current.turnos,
                         )
                     }
@@ -166,40 +176,80 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Loads the consumer's scheduled appointments for the Home
-     * "Mis Turnos" preview row. Surfaces the closest-to-now
-     * `MAX_TURNOS_ON_HOME` turnos sorted ascending by
-     * `scheduledOnEpochMillis` (closest first → furthest in the
-     * future last). Failures land in [TurnosState.Error] so the
-     * dedicated Mis Turnos screen can render the typed retry CTA
-     * while the rest of the dashboard keeps working.
+     * "Mis Turnos" preview row + the "Pagos pendientes" section.
+     * The same `GET /work-orders` response feeds both:
+     *  - the upcoming preview filters + sorts by closest
+     *    `scheduledOnEpochMillis` and takes `MAX_TURNOS_ON_HOME`.
+     *  - the awaiting-payment block filters by
+     *    [TurnoStatus.AwaitingPayment] (no MAX cap; in practice
+     *    the count is tiny — 0..1 — so showing them all is fine
+     *    and keeps the "clear your pending balance" signal
+     *    loud).
+     *
+     * Failures land in [TurnosState.Error] so the dedicated Mis
+     * Turnos screen can render the typed retry CTA while the
+     * rest of the dashboard keeps working.
      */
     fun loadTurnos() {
         viewModelScope.launch {
-            _uiState.update { current -> withTurnos(current, TurnosState.Loading) }
+            _uiState.update { current ->
+                withTurnosState(
+                    current,
+                    awaitingPayment = TurnosState.Loading,
+                    turnos = TurnosState.Loading,
+                )
+            }
             when (val outcome = getTurnos()) {
-                is TurnosOutcome.Success ->
+                is TurnosOutcome.Success -> {
+                    val all = outcome.turnos
+                    val awaiting = all
+                        .filter { it.status == TurnoStatus.AwaitingPayment }
+                        .sortedBy { it.scheduledOnEpochMillis }
+                    val upcoming = all
+                        .sortedBy { it.scheduledOnEpochMillis }
+                        .take(MAX_TURNOS_ON_HOME)
                     _uiState.update { current ->
-                        withTurnos(
+                        withTurnosState(
                             current,
-                            TurnosState.Ready(
-                                outcome.turnos
-                                    .sortedBy { it.scheduledOnEpochMillis }
-                                    .take(MAX_TURNOS_ON_HOME),
-                            ),
+                            awaitingPayment = TurnosState.Ready(awaiting),
+                            turnos = TurnosState.Ready(upcoming),
                         )
                     }
+                }
                 is TurnosOutcome.Failure ->
-                    _uiState.update { current -> withTurnos(current, TurnosState.Error) }
+                    _uiState.update { current ->
+                        withTurnosState(
+                            current,
+                            awaitingPayment = TurnosState.Error,
+                            turnos = TurnosState.Error,
+                        )
+                    }
             }
         }
     }
 
-    private fun withTurnos(
+    /**
+     * Atomic write to the two turnos sub-states (awaiting-payment
+     * + upcoming preview). Both slots flip together so the screen
+     * never renders a partial update where the awaiting-payment
+     * block landed but the upcoming preview is still `Loading`.
+     */
+    private fun withTurnosState(
         current: HomeUiState,
-        new: TurnosState,
+        awaitingPayment: TurnosState,
+        turnos: TurnosState,
     ): HomeUiState = when (current) {
-        is HomeUiState.Loading -> current.copy(turnos = new)
-        is HomeUiState.Ready -> current.copy(turnos = new)
-        is HomeUiState.Error -> current.copy(turnos = new)
+        is HomeUiState.Loading -> current.copy(
+            awaitingPaymentTurnos = awaitingPayment,
+            turnos = turnos,
+        )
+        is HomeUiState.Ready -> current.copy(
+            awaitingPaymentTurnos = awaitingPayment,
+            turnos = turnos,
+        )
+        is HomeUiState.Error -> current.copy(
+            awaitingPaymentTurnos = awaitingPayment,
+            turnos = turnos,
+        )
     }
 }

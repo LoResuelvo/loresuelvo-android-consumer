@@ -118,6 +118,35 @@ fun HomeScreen(
 
         AiSearchBar(onSendClick = onAiSendClick)
 
+        // US-27 follow-up: "Pagos pendientes" section surfaces the
+        // consumer's [TurnoStatus.AwaitingPayment] turnos directly
+        // above the category grid so the balance-clearance CTA is
+        // the first actionable thing the user sees after the AI
+        // search. The section is hidden entirely when the list is
+        // empty (no placeholder / "nothing pending" copy) — the
+        // "you have something to pay" signal should be loud, not
+        // diluted with a permanent empty state.
+        when (val ap = state.awaitingPaymentTurnos) {
+            is TurnosState.Ready -> {
+                if (ap.items.isNotEmpty()) {
+                    SectionTitle(
+                        text = stringResource(R.string.home_section_pending_payments),
+                    )
+                    AwaitingPaymentRow(
+                        turnos = ap.items,
+                        onTurnoCardClick = onTurnoCardClick,
+                    )
+                }
+                // Loading / Error / empty: no fallback block — the
+                // section is simply absent. The dedicated Mis
+                // Turnos screen renders the typed retry / empty
+                // copy for the full list.
+            }
+            TurnosState.Loading,
+            TurnosState.Error,
+            -> Unit
+        }
+
         SectionTitle(
             text = stringResource(R.string.home_section_categories),
             link = stringResource(R.string.home_section_categories_link),
@@ -352,6 +381,7 @@ private fun HomeScreenReadyPreview() {
                 ),
                 pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
                 upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+                awaitingPaymentTurnos = TurnosState.Ready(emptyList()),
                 turnos = TurnosState.Ready(emptyList()),
             ),
             displayName = "Matias",
@@ -487,7 +517,41 @@ private fun TurnosRow(
     }
 }
 
+/**
+ * Horizontal row of every [TurnoStatus.AwaitingPayment] [Turno]
+ * for the Home "Pagos pendientes" section. The section itself
+ * is hidden by the caller when the list is empty; this row
+ * assumes at least one item is present.
+ *
+ * The row reuses [TurnoCard] (same data shape, same testTag
+ * layout for the inner CTA). The width is the same as
+ * [TurnosRow] so the visual density matches the "Mis Turnos"
+ * preview below.
+ */
+@Composable
+private fun AwaitingPaymentRow(
+    turnos: List<com.loresuelvo.consumer.domain.turno.Turno>,
+    onTurnoCardClick: (turnoId: String) -> Unit,
+) {
+    androidx.compose.foundation.layout.Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .testTag(HOME_PENDING_PAYMENTS_ROW_TAG),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        turnos.forEach { turno ->
+            com.loresuelvo.consumer.ui.components.turnocard.TurnoCard(
+                turno = turno,
+                onDetailsClick = { onTurnoCardClick(turno.id) },
+                modifier = Modifier.width(370.dp),
+            )
+        }
+    }
+}
+
 const val HOME_TURNOS_ROW_TAG: String = "home-turnos-row"
+const val HOME_PENDING_PAYMENTS_ROW_TAG: String = "home-pending-payments-row"
 
 const val HOME_MIS_SERVICIOS_EMPTY_CARD_TAG: String = "home-mis-servicios-empty-card"
 const val HOME_TURNOS_LINK_TAG: String = "home-turnos-link"

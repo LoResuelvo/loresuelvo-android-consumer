@@ -292,6 +292,7 @@
     <!-- Mis Turnos screen (visualize-turns.feature, scenario 01-VT) -->
     <string name="home_section_mis_turnos">My Appointments</string>
     <string name="home_section_mis_turnos_link">See all</string>
+    <string name="home_section_pending_payments">Pending payments</string>
     <string name="home_turnos_empty_title">You don\'t have any appointments yet.</string>
     <string name="home_turnos_empty_body">When a provider confirms a visit, you\'ll see it here.</string>
     <string name="home_turnos_empty_cta">Find professionals</string>
