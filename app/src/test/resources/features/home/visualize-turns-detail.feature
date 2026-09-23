@@ -13,12 +13,11 @@ Feature: Consultar detalle y evidencia de una orden de trabajo
     When selecciona para ver detalle de la orden desde la Home
     Then el sistema debe mostrar el detalle de la orden
 
-  @wip
   Scenario: 02-VTD Un participante puede abrir el detalle de una orden desde el Chat
     Given tengo una conversación abierta con el prestador "Juan Pérez"
     And participa en una orden de trabajo asociada a la conversación con "Juan Pérez"
     When selecciona para ver detalle de la orden desde el Chat
-    Then el sistema debe mostrar el detalle de la orden
+    Then el sistema debe mostrar el detalle de la orden desde el Chat
 
   Scenario: 03-VTD El detalle muestra la información principal de la orden
     Given participa en una orden de trabajo

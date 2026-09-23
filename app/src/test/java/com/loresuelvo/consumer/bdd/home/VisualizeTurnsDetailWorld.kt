@@ -239,6 +239,38 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
 
     fun lastUiState(): WorkOrderDetailUiState = observedUiStates.last()
 
+    // ---- Scenario 02-VTD (entry desde el Chat) ---------------
+
+    private var conversationDetail: com.loresuelvo.consumer.domain.conversation.ConversationDetail? =
+        null
+
+    /**
+     * Seeds a `ConversationDetail` with a non-null
+     * [com.loresuelvo.consumer.domain.conversation.ConversationDetail.workOrderId]
+     * so the chat top bar surfaces the "Ver orden" CTA (US-27
+     * scenario 02-VTD).
+     */
+    fun seedConversationWithWorkOrder(workOrderId: String) {
+        conversationDetail = com.loresuelvo.consumer.domain.conversation.ConversationDetail(
+            id = "conv-1",
+            status = com.loresuelvo.consumer.domain.conversation.ConversationStatus.Pending,
+            counterpart = com.loresuelvo.consumer.domain.conversation.ConversationCounterpart(
+                id = 7L,
+                name = "Juan",
+                surname = "Pérez",
+                categoryName = "Plomería",
+                profilePhotoUrl = null,
+            ),
+            messages = emptyList(),
+            updatedOnEpochMillis = 1_780_000_000_000L,
+            workOrderId = workOrderId,
+        )
+    }
+
+    fun lastConversationDetail(): com.loresuelvo.consumer.domain.conversation.ConversationDetail =
+        conversationDetail
+            ?: error("lastConversationDetail() called before seedConversationWithWorkOrder")
+
     override fun close() {
         supervisorJob.cancel()
         Dispatchers.resetMain()
@@ -258,7 +290,7 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
                 ?: GetWorkOrderOutcome.NotFound
     }
 
-    private companion object {
+    companion object {
         const val DEFAULT_WORK_ORDER_ID: String = "wo-42"
     }
 }

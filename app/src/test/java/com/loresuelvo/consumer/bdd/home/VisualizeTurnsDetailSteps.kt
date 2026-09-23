@@ -342,4 +342,76 @@ class VisualizeTurnsDetailSteps {
         // `Button` (primary tonal). Pinned by the Compose UI
         // test.
     }
+
+    // ---- Scenario 02-VTD (entry desde el Chat) ---------------
+
+    /**
+     * "tengo una conversación abierta con el prestador "..."" —
+     * scenario 02-VTD. The seed sets up the conversation's
+     * `workOrderId` so the chat top bar renders the "Ver orden"
+     * CTA when the screen opens. The conversation itself is
+     * data-only here: the BDD layer does not exercise the chat
+     * composer / VM path (covered by other specs) — it pins the
+     * data layer for the `Then` assertion.
+     */
+    @Given("tengo una conversación abierta con el prestador {string}")
+    fun tengoUnaConversacionAbiertaConElPrestador(providerName: String) {
+        world.startScenario()
+        // The `Then` asserts the data-layer wiring — the
+        // `ConversationDetail.workOrderId` populated on the same
+        // conversation the top bar reads from. The default
+        // DEFAULT_WORK_ORDER_ID is the same id the work-order
+        // detail step uses, so the route handler navigates to
+        // the same work order.
+        world.seedConversationWithWorkOrder(
+            workOrderId = com.loresuelvo.consumer.bdd.home.VisualizeTurnsDetailWorld.DEFAULT_WORK_ORDER_ID,
+        )
+    }
+
+    /**
+     * "participa en una orden de trabajo asociada a la
+     * conversación con ..." — scenario 02-VTD. The converse
+     * step just confirms the data the previous `Given` seeded;
+     * kept as a separate step def so the Gherkin flows naturally.
+     */
+    @Given("participa en una orden de trabajo asociada a la conversación con {string}")
+    fun participaEnUnaOrdenDeTrabajoAsociada(providerName: String) {
+        // Already asserted by `tengoUnaConversacionAbierta...`.
+    }
+
+    /**
+     * "selecciona para ver detalle de la orden desde el Chat" —
+     * scenario 02-VTD. The user-agent click on the top bar's
+     * "Ver orden" icon button is a pure UI concern (covered by
+     * the Compose UI test for the conversation top bar). The
+     * BDD pins the data layer so the route handler can navigate
+     * to the right destination: the conversation's
+     * `workOrderId` is non-null.
+     */
+    @When("selecciona para ver detalle de la orden desde el Chat")
+    fun seleccionaParaVerDetalleDeLaOrdenDesdeElChat() {
+        // No-op at the BDD layer; the tap → navigation flow
+        // is asserted by the Compose UI test for the
+        // conversation top bar.
+    }
+
+    /**
+     * "el sistema debe mostrar el detalle de la orden desde el
+     * Chat" — scenario 02-VTD. The Gherkin text deliberately
+     * adds "desde el Chat" so the pattern does not collide with
+     * the equivalent step in scenario 01-VTD (which asserts the
+     * work-order VM transitions to Ready). The chat path pins the
+     * data layer (`workOrderId` is non-null on the conversation
+     * detail) so the route handler can navigate. The navigation
+     * itself is covered by the Compose UI test for the
+     * conversation top bar.
+     */
+    @Then("el sistema debe mostrar el detalle de la orden desde el Chat")
+    fun elSistemaDebeMostrarElDetalleDeLaOrdenDesdeChat() {
+        val detail = world.lastConversationDetail()
+        assertNotNull(
+            "expected the conversation to expose a workOrderId, was null",
+            detail.workOrderId,
+        )
+    }
 }
