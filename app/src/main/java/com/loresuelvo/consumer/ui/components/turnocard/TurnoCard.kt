@@ -18,6 +18,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
@@ -105,23 +107,27 @@ fun TurnoCard(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.testTag(TURNO_CARD_AMOUNT_TAG + turno.id),
             )
-            Text(
-                text = ScheduledDateFormatter.formatScheduled(turno.scheduledOnEpochMillis),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.testTag(TURNO_CARD_DATE_TAG + turno.id),
-            )
-        }
-        androidx.compose.foundation.layout.Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            androidx.compose.material3.TextButton(
-                onClick = onDetailsClick,
-                modifier = Modifier.testTag(TURNO_CARD_DETAILS_CTA_TAG + turno.id),
+            // Date on the left + "Ver detalles" CTA aligned to the
+            // right — `Arrangement.SpaceBetween` parks the CTA in the
+            // bottom-right corner of the card without forcing a
+            // full-width button row (matches the
+            // [ProposalCard] bottom row pattern).
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text(text = stringResource(R.string.turno_details_cta))
+                Text(
+                    text = ScheduledDateFormatter.formatScheduled(turno.scheduledOnEpochMillis),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.testTag(TURNO_CARD_DATE_TAG + turno.id),
+                )
+                ViewRequestCta(
+                    onClick = onDetailsClick,
+                    turnId = turno.id,
+                )
             }
         }
     }
@@ -203,6 +209,40 @@ private fun TurnoStatusBadge(
         )
     }
 }
+
+// turno_details_cta
+@Composable
+private fun ViewRequestCta(
+    onClick: () -> Unit,
+    turnId: String,
+) {
+    val shape = RoundedCornerShape(percent = 50)
+
+    Surface(
+        shape = shape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(
+            width = 1.dp,
+            color = MaterialTheme.colorScheme.primary,
+        ),
+        modifier = Modifier
+            .clip(shape)
+            .clickable(onClick = onClick)
+            .testTag(TURNO_CARD_DETAILS_CTA_TAG + turnId),
+    ) {
+        Text(
+            text = stringResource(R.string.turno_details_cta),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(
+                horizontal = 18.dp,
+                vertical = 8.dp,
+            ),
+        )
+    }
+}
+
 
 /**
  * Compose testTags for [TurnoCard]. Exported with the

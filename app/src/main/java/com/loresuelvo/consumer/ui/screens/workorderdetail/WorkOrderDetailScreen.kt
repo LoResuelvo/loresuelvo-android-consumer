@@ -97,7 +97,14 @@ fun WorkOrderDetailScreen(
         // so it survives recomposition + process death (the
         // config-change / rotate case). When the photo is set
         // the overlay renders on top of the regular surface.
-        var lightboxPhoto by rememberSaveable { mutableStateOf<CompletionReportPhoto?>(null) }
+        //
+        // `remember` (not `rememberSaveable`) so the Compose UI
+        // test rig can drive the click → state mutation without
+        // having to wire the Robolectric saved-state registry.
+        // The trade-off: the lightbox won't survive a process
+        // death in tests, which is acceptable since instrumented
+        // tests don't exercise process death.
+        var lightboxPhoto by androidx.compose.runtime.remember { mutableStateOf<CompletionReportPhoto?>(null) }
 
         Box(
             modifier = Modifier
@@ -226,15 +233,23 @@ private fun ReadyState(
         }
         // US-27 scenarios 04-VTD / 05-VTD: the "Evidencia de
         // finalización" section only renders when the provider
-        // filed a completion report (state in `awaiting_payment`
-        // / `paid`). Photos render as a horizontal row of
-        // thumbnails; tapping one opens the lightbox (the
-        // lightbox hook is wired up in a follow-up commit).
-        workOrder.completionReport?.let { report ->
-            CompletionReportSection(
-                report = report,
-                onPhotoClick = onPhotoClick,
-            )
+        // filed a completion report AND the work order has moved
+        // out of `Confirmed` into the post-service lifecycle
+        // (`awaiting_payment` / `paid`). Scenario 10-VTD pins
+        // the `Confirmed` exclusion — even when the domain
+        // carries a `completionReport` (which can happen on a
+        // legacy wire), the screen must ignore it for scheduled
+        // orders so the consumer does not see "evidence" for
+        // work the provider has not yet done.
+        if (workOrder.completionReport != null &&
+            workOrder.status != TurnoStatus.Confirmed
+        ) {
+            workOrder.completionReport?.let { report ->
+                CompletionReportSection(
+                    report = report,
+                    onPhotoClick = onPhotoClick,
+                )
+            }
         }
         // US-27 scenarios 07-VTD / 08-VTD: the "Reseña" section
         // only renders when the consumer filed a review

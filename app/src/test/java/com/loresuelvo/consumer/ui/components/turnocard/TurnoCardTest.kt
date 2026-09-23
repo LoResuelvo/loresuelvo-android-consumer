@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -75,6 +76,46 @@ class TurnoCardTest {
         composeTestRule
             .onAllNodesWithText("15/10/2026 - 14:30 hs")
             .assertCountEquals(1)
+    }
+
+    /**
+     * US-27 follow-up: the "Ver detalles" CTA renders in the
+     * bottom-right corner of the card, on the same row as the
+     * scheduled date. `Arrangement.SpaceBetween` parks the CTA
+     * past the date; the assertion below verifies the layout
+     * invariant so a future refactor that re-stacks the column
+     * breaks this test instead of silently moving the CTA.
+     */
+    @Test
+    fun details_cta_renders_in_bottom_right_next_to_the_date() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    TurnoCard(
+                        turno = sampleTurno(id = "1"),
+                        onDetailsClick = {},
+                    )
+                }
+            }
+        }
+
+        val cta = composeTestRule.onNodeWithTag(TURNO_CARD_DETAILS_CTA_TAG + "1")
+        cta.assertIsDisplayed()
+        composeTestRule
+            .onAllNodesWithText(localizedString(R.string.turno_details_cta))
+            .assertCountEquals(1)
+
+        // The CTA sits in the same row as the date, on the
+        // bottom-right side: its right edge must be at (or past)
+        // the date's right edge — `SpaceBetween` parks the
+        // narrower child on the trailing edge of the row.
+        val ctaRight = cta.getBoundsInRoot().right
+        val dateNode = composeTestRule
+            .onNodeWithTag(TURNO_CARD_DATE_TAG + "1")
+            .getBoundsInRoot()
+        assert(ctaRight > dateNode.right) {
+            "expected the CTA (right=$ctaRight) to render past the date (right=${dateNode.right})"
+        }
     }
 
     @Test
