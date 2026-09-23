@@ -363,6 +363,86 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun loadTurnos_splits_awaiting_payment_from_upcoming_preview() = runTest {
+        // The same `GET /work-orders` response feeds two Home
+        // sub-states: `awaitingPaymentTurnos` (filtered by status)
+        // and `turnos` (closest-to-now N). Verify both pipelines
+        // are populated from one round trip and that the awaiting
+        // branch ignores non-awaiting statuses.
+        val today = startOfTodayUtcMillis()
+        val tomorrow = today + 24 * 60 * 60 * 1000L
+        val dayAfterTomorrow = today + 2 * 24 * 60 * 60 * 1000L
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { turnosRepository.getTurnos() } returns TurnosOutcome.Success(
+            listOf(
+                sampleTurno(id = "1", scheduledOnEpochMillis = tomorrow),
+                sampleAwaitingPaymentTurno(id = "5", scheduledOnEpochMillis = today),
+                sampleTurno(id = "2", scheduledOnEpochMillis = dayAfterTomorrow),
+            )
+        )
+
+        val viewModel = buildViewModel()
+        val state = viewModel.uiState.value as HomeUiState.Ready
+
+        // Awaiting-payment sub-state: only the entry with
+        // `TurnoStatus.AwaitingPayment` lands here.
+        val awaiting = state.awaitingPaymentTurnos as TurnosState.Ready
+        assertEquals(1, awaiting.items.size)
+        assertEquals("5", awaiting.items[0].id)
+        assertEquals(TurnoStatus.AwaitingPayment, awaiting.items[0].status)
+
+        // Upcoming preview: takes the two closest-to-now entries
+        // (today + tomorrow, both `Confirmed`) and sorts ascending.
+        // The awaiting_payment entry (today) is excluded — the
+        // dashboard surfaces it via the dedicated section above.
+        val upcoming = state.turnos as TurnosState.Ready
+        assertEquals(2, upcoming.items.size)
+        assertEquals(listOf("5", "1"), upcoming.items.map { it.id })
+    }
+
+    @Test
+    fun loadTurnos_awaiting_payment_state_is_empty_when_no_awaiting_in_response() = runTest {
+        // Only `Confirmed` + `Cancelled` in the response — the
+        // awaiting-payment sub-state must surface `Ready(empty)`.
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { turnosRepository.getTurnos() } returns TurnosOutcome.Success(
+            listOf(
+                sampleTurno(id = "1", scheduledOnEpochMillis = 1_788_000_000_000L),
+            )
+        )
+
+        val viewModel = buildViewModel()
+        val state = viewModel.uiState.value as HomeUiState.Ready
+        assertTrue(state.awaitingPaymentTurnos is TurnosState.Ready)
+        assertEquals(0, (state.awaitingPaymentTurnos as TurnosState.Ready).items.size)
+    }
+
+    private fun sampleAwaitingPaymentTurno(
+        id: String,
+        scheduledOnEpochMillis: Long,
+    ): Turno = Turno(
+        id = id,
+        serviceProposalId = "p-$id",
+        status = TurnoStatus.AwaitingPayment,
+        counterpart = TurnoCounterpart(
+            id = "$id-c",
+            name = "Diego",
+            surname = "Fernández",
+            categoryName = "Electricidad",
+            profilePhotoUrl = null,
+        ),
+        description = "Instalación de aire acondicionado split",
+        amountCents = 1_800_000L,
+        scheduledOnEpochMillis = scheduledOnEpochMillis,
+    )
+
+    @Test
     fun loadTurnos_returns_Ready_empty_when_backend_returns_empty_list() = runTest {
         coEvery { categoryRepository.getCategories() } returns
             CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
