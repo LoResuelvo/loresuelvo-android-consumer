@@ -42,5 +42,8 @@ interface WorkOrderDetailRepository {
      * matches, [GetWorkOrderOutcome.Failure] when the round trip
      * failed. Implementations never throw.
      */
-    suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome
+    suspend fun getWorkOrderDetail(
+        workOrderId: String,
+        provider: WorkOrderDetailCounterpart? = null,
+    ): GetWorkOrderOutcome
 }

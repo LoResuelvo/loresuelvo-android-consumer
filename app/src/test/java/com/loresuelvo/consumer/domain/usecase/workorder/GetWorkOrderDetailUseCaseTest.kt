@@ -134,7 +134,10 @@ class GetWorkOrderDetailUseCaseTest {
         private val detail: WorkOrderDetail? = null,
         private val failure: ServiceProposalsOutcome.Failure? = null,
     ) : WorkOrderDetailRepository {
-        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome {
+        override suspend fun getWorkOrderDetail(
+            workOrderId: String,
+            provider: WorkOrderDetailCounterpart?,
+        ): GetWorkOrderOutcome {
             failure?.let { return GetWorkOrderOutcome.Failure(it) }
             return detail
                 ?.takeIf { it.proposalId == workOrderId }

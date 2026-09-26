@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -38,10 +39,13 @@ class ApiWorkOrderDetailRepository @Inject constructor(
     private val backendApi: BackendApi,
 ) : WorkOrderDetailRepository {
 
-    override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
+    override suspend fun getWorkOrderDetail(
+        workOrderId: String,
+        provider: WorkOrderDetailCounterpart?,
+    ): GetWorkOrderOutcome =
         try {
             val dto = backendApi.getWorkOrder(workOrderId)
-            val detail = dto.toDomain()
+            val detail = dto.toDomain(provider)
             if (detail == null) {
                 // The mapper returns null for unknown statuses;
                 // today that's a contract violation on the

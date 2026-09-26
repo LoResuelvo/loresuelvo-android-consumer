@@ -260,7 +260,10 @@ class WorkOrderDetailViewModelTest {
     private class FakeRepository(
         private val outcome: GetWorkOrderOutcome,
     ) : WorkOrderDetailRepository {
-        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome = outcome
+        override suspend fun getWorkOrderDetail(
+            workOrderId: String,
+            provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
+        ): GetWorkOrderOutcome = outcome
     }
 
     private class FakeCheckoutRepository(

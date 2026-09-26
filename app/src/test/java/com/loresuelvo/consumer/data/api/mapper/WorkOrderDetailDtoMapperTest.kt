@@ -3,8 +3,8 @@ package com.loresuelvo.consumer.data.api.mapper
 import com.loresuelvo.consumer.data.api.dto.CompletionReportDto
 import com.loresuelvo.consumer.data.api.dto.CompletionReportPhotoDto
 import com.loresuelvo.consumer.data.api.dto.ReviewDto
-import com.loresuelvo.consumer.data.api.dto.WorkOrderDetailCounterpartDto
 import com.loresuelvo.consumer.data.api.dto.WorkOrderDetailDto
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -22,6 +22,14 @@ import org.junit.Test
  */
 class WorkOrderDetailDtoMapperTest {
 
+    private fun provider(): WorkOrderDetailCounterpart = WorkOrderDetailCounterpart(
+        id = "7",
+        name = "Ana",
+        surname = "Gómez",
+        categoryName = "Electricidad",
+        profilePhotoUrl = "https://example.com/ana.jpg",
+    )
+
     private fun dto(
         id: Long = 42L,
         serviceProposalId: Long = 10L,
@@ -35,12 +43,6 @@ class WorkOrderDetailDtoMapperTest {
         paidOn: String? = null,
         completionReport: CompletionReportDto? = null,
         review: ReviewDto? = null,
-        counterpartRole: String = "provider",
-        counterpartId: Long = 7L,
-        counterpartName: String = "Juan",
-        counterpartSurname: String = "Pérez",
-        counterpartCategoryName: String = "Plomería",
-        counterpartProfilePhotoUrl: String? = null,
     ): WorkOrderDetailDto = WorkOrderDetailDto(
         id = id,
         serviceProposalId = serviceProposalId,
@@ -54,18 +56,11 @@ class WorkOrderDetailDtoMapperTest {
         paidOn = paidOn,
         completionReport = completionReport,
         review = review,
-        provider = WorkOrderDetailCounterpartDto(
-            id = counterpartId,
-            name = counterpartName,
-            surname = counterpartSurname,
-            categoryName = counterpartCategoryName,
-            profilePhotoUrl = counterpartProfilePhotoUrl,
-        ),
     )
 
     @Test
     fun maps_scheduled_work_order_to_confirmed_status() {
-        val detail = dto(status = "scheduled").toDomain()
+        val detail = dto(status = "scheduled").toDomain(provider())
         assertNotNull(detail)
         assertEquals(com.loresuelvo.consumer.domain.turno.TurnoStatus.Confirmed, detail!!.status)
     }
@@ -81,7 +76,7 @@ class WorkOrderDetailDtoMapperTest {
                 images = emptyList(),
             ),
             paidOn = null,
-        ).toDomain()
+        ).toDomain(provider())
         assertNotNull(detail)
         assertEquals(
             com.loresuelvo.consumer.domain.turno.TurnoStatus.AwaitingPayment,
@@ -109,7 +104,7 @@ class WorkOrderDetailDtoMapperTest {
                 ),
             ),
             review = ReviewDto(rating = 5, description = "Excelente atención"),
-        ).toDomain()
+        ).toDomain(provider())
         assertNotNull(detail)
         assertEquals(com.loresuelvo.consumer.domain.turno.TurnoStatus.Paid, detail!!.status)
         assertNotNull(detail.paidOnEpochMillis)
@@ -128,13 +123,16 @@ class WorkOrderDetailDtoMapperTest {
     }
 
     @Test
-    fun maps_provider_into_provider_block() {
-        val detail = dto(
-            counterpartName = "Ana",
-            counterpartSurname = "Gómez",
-            counterpartCategoryName = "Electricidad",
-            counterpartProfilePhotoUrl = "https://example.com/ana.jpg",
-        ).toDomain()
+    fun maps_provider_from_existing_counterpart_when_detail_payload_has_none() {
+        val fallbackProvider = WorkOrderDetailCounterpart(
+            id = "7",
+            name = "Ana",
+            surname = "Gómez",
+            categoryName = "Electricidad",
+            profilePhotoUrl = "https://example.com/ana.jpg",
+        )
+
+        val detail = dto().toDomain(fallbackProvider)
         assertNotNull(detail)
         assertEquals("Ana", detail!!.provider.name)
         assertEquals("Gómez", detail.provider.surname)
@@ -144,7 +142,7 @@ class WorkOrderDetailDtoMapperTest {
 
     @Test
     fun long_ids_become_strings() {
-        val detail = dto(id = 99L, serviceProposalId = 7L).toDomain()
+        val detail = dto(id = 99L, serviceProposalId = 7L).toDomain(provider())
         assertNotNull(detail)
         // proposalId is the join key — we surface the
         // serviceProposalId rather than the work-order id since
@@ -159,7 +157,7 @@ class WorkOrderDetailDtoMapperTest {
         val detail = dto(
             scheduledOn = "not-a-date",
             acceptedOn = "not-a-date",
-        ).toDomain()
+        ).toDomain(provider())
         assertNotNull(detail)
         assertEquals(0L, detail!!.scheduledOnEpochMillis)
         assertEquals(0L, detail.acceptedOnEpochMillis)

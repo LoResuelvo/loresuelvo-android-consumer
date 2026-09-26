@@ -107,24 +107,36 @@ sealed class Route(val path: String) {
     data object Turnos : Route("turnos")
 
     /**
-     * Work-order detail screen. Originally landed for US-54
-     * scenario 16-VSP keyed on the originating service-proposal
-     * id (the work-order surface was a flat view over the
-     * proposal until the backend exposed a dedicated endpoint).
+     * Work-order detail screen. The route keeps the dedicated
+     * work-order id and, when the consumer enters from a list
+     * already loaded by `GET /work-orders`, also carries the
+     * provider metadata the detail endpoint does not repeat.
      *
-     * Renamed for US-56 (`visualize-work-order-detail`) so the
-     * route arg matches the new dedicated endpoint
-     * `GET /work-orders/{workOrderID}`. The screen + VM still
-     * read `proposalId` semantics for now (the dedicated
-     * endpoint has not been wired yet) — the rename is purely
-     * the navigation surface so callers stop coupling to the
-     * service-proposal id. The downstream rename of the
-     * `WorkOrderDetail` domain type, repository and screen
-     * lands in commits #2-#6.
+     * The provider block is encoded as optional query params, not
+     * added to the backend contract, so the app can reuse the
+     * `counterpart` already on the list screen and avoid a second
+     * fetch just to render the header.
      */
-    data object WorkOrderDetail : Route("work-order-detail/{workOrderId}") {
+    data object WorkOrderDetail : Route("work-order-detail/{workOrderId}?providerId={providerId}&providerName={providerName}&providerSurname={providerSurname}&providerCategoryName={providerCategoryName}&providerProfilePhotoUrl={providerProfilePhotoUrl}") {
         const val ARG_WORK_ORDER_ID: String = "workOrderId"
-        fun buildPath(workOrderId: String): String = "work-order-detail/$workOrderId"
+        const val ARG_PROVIDER_ID: String = "providerId"
+        const val ARG_PROVIDER_NAME: String = "providerName"
+        const val ARG_PROVIDER_SURNAME: String = "providerSurname"
+        const val ARG_PROVIDER_CATEGORY_NAME: String = "providerCategoryName"
+        const val ARG_PROVIDER_PROFILE_PHOTO_URL: String = "providerProfilePhotoUrl"
+
+        fun buildPath(
+            workOrderId: String,
+            provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart? = null,
+        ): String = buildString {
+            append("work-order-detail/$workOrderId")
+            if (provider == null) return@buildString
+            append("?providerId=${Uri.encode(provider.id)}")
+            append("&providerName=${Uri.encode(provider.name)}")
+            append("&providerSurname=${Uri.encode(provider.surname)}")
+            append("&providerCategoryName=${Uri.encode(provider.categoryName)}")
+            append("&providerProfilePhotoUrl=${Uri.encode(provider.profilePhotoUrl.orEmpty())}")
+        }
     }
     /**
      * US-21 service-agreement confirmation screen. Reached when

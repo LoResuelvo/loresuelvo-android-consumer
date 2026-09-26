@@ -42,7 +42,9 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
  * the provider identity. A future US can surface them if the
  * consumer starts querying work-orders they didn't author.
  */
-internal fun WorkOrderDetailDto.toDomain(): WorkOrderDetail? {
+internal fun WorkOrderDetailDto.toDomain(
+    fallbackProvider: WorkOrderDetailCounterpart? = null,
+): WorkOrderDetail? {
     val status = when (status.lowercase()) {
         "scheduled" -> TurnoStatus.Confirmed
         "awaiting_payment" -> TurnoStatus.AwaitingPayment
@@ -51,9 +53,10 @@ internal fun WorkOrderDetailDto.toDomain(): WorkOrderDetail? {
         // once the dedicated endpoint widens to surface them.
         else -> return null
     }
+    val provider = fallbackProvider ?: return null
     return WorkOrderDetail(
         proposalId = serviceProposalId.toString(),
-        provider = provider.toDomain(),
+        provider = provider,
         description = description,
         amountCents = amountCents,
         scheduledOnEpochMillis = parseIsoTimestampMillisOrZero(scheduledOn) ?: 0L,

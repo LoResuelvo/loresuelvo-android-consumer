@@ -41,7 +41,7 @@ fun LoResuelvoNavHost(
     assistant: @Composable () -> Unit,
     misServicios: @Composable () -> Unit,
     turnos: @Composable () -> Unit = {},
-    workOrderDetail: @Composable (workOrderId: String) -> Unit,
+    workOrderDetail: @Composable (workOrderId: String, provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?) -> Unit,
     serviceAgreement: @Composable (NavHostController) -> Unit = {},
     paymentResult: @Composable (NavHostController, androidx.navigation.NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
@@ -118,11 +118,45 @@ fun LoResuelvoNavHost(
                     androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_WORK_ORDER_ID) {
                         type = androidx.navigation.NavType.StringType
                     },
+                    androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_PROVIDER_ID) {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_PROVIDER_NAME) {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_PROVIDER_SURNAME) {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_PROVIDER_CATEGORY_NAME) {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    androidx.navigation.navArgument(Route.WorkOrderDetail.ARG_PROVIDER_PROFILE_PHOTO_URL) {
+                        type = androidx.navigation.NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
                 ),
             ) { entry ->
                 val workOrderId = entry.arguments
                     ?.getString(Route.WorkOrderDetail.ARG_WORK_ORDER_ID).orEmpty()
-                workOrderDetail(workOrderId)
+                val provider = entry.arguments?.getString(Route.WorkOrderDetail.ARG_PROVIDER_ID)?.takeIf { it.isNotBlank() }?.let { id ->
+                    com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
+                        id = id,
+                        name = entry.arguments?.getString(Route.WorkOrderDetail.ARG_PROVIDER_NAME).orEmpty(),
+                        surname = entry.arguments?.getString(Route.WorkOrderDetail.ARG_PROVIDER_SURNAME).orEmpty(),
+                        categoryName = entry.arguments?.getString(Route.WorkOrderDetail.ARG_PROVIDER_CATEGORY_NAME).orEmpty(),
+                        profilePhotoUrl = entry.arguments?.getString(Route.WorkOrderDetail.ARG_PROVIDER_PROFILE_PHOTO_URL),
+                    )
+                }
+                workOrderDetail(workOrderId, provider)
             }
 
             // US-21: Service-agreement confirmation. The host is

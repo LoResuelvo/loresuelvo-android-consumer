@@ -258,10 +258,11 @@ fun LoResuelvoNav() {
                     TurnosRoute(navController)
                 },
 
-                workOrderDetail = { workOrderId ->
+                workOrderDetail = { workOrderId, provider ->
                     WorkOrderDetailRoute(
                         navController = navController,
                         workOrderId = workOrderId,
+                        provider = provider,
                     )
                 },
 
@@ -480,6 +481,12 @@ private fun HomeRoute(
     val homeState by homeViewModel.uiState.collectAsState()
     val detailState by detailViewModel.uiState.collectAsState()
 
+    val findTurnoById: (String) -> com.loresuelvo.consumer.domain.turno.Turno? = { id ->
+        val fromUpcoming = (homeState.turnos as? com.loresuelvo.consumer.ui.screens.home.TurnosState.Ready)?.items
+        val fromAwaiting = (homeState.awaitingPaymentTurnos as? com.loresuelvo.consumer.ui.screens.home.TurnosState.Ready)?.items
+        (fromUpcoming.orEmpty() + fromAwaiting.orEmpty()).firstOrNull { it.id == id }
+    }
+
     LaunchedEffect(detailViewModel) {
         detailViewModel.checkoutUrl.collect { url ->
             CustomTabsIntent.Builder()
@@ -516,7 +523,17 @@ private fun HomeRoute(
         // the "Ver detalles" CTA on a Home preview card opens the
         // dedicated work-order detail screen.
         onTurnoCardClick = { turnoId ->
-            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId))
+            val turno = findTurnoById(turnoId)
+            val provider = turno?.counterpart?.let { counterpart ->
+                com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
+                    id = counterpart.id,
+                    name = counterpart.name,
+                    surname = counterpart.surname,
+                    categoryName = counterpart.categoryName,
+                    profilePhotoUrl = counterpart.profilePhotoUrl,
+                )
+            }
+            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
         },
         // US-54 bug fix: every "Ver Solicitud" tap from the home
         // row feeds the Hilt-scoped ProposalDetailViewModel so the
@@ -869,7 +886,19 @@ private fun TurnosRoute(
         // the "Ver detalles" CTA on a Mis Turnos card opens the
         // dedicated work-order detail screen.
         onTurnoCardClick = { turnoId ->
-            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId))
+            val turno = (state as? com.loresuelvo.consumer.ui.screens.turnos.TurnosUiState.Ready)
+                ?.turnos
+                ?.firstOrNull { it.id == turnoId }
+            val provider = turno?.counterpart?.let { counterpart ->
+                com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
+                    id = counterpart.id,
+                    name = counterpart.name,
+                    surname = counterpart.surname,
+                    categoryName = counterpart.categoryName,
+                    profilePhotoUrl = counterpart.profilePhotoUrl,
+                )
+            }
+            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
         },
     )
     // `onBackClick` is intentionally not wired today — the
@@ -892,14 +921,15 @@ private fun TurnosRoute(
 private fun WorkOrderDetailRoute(
     navController: androidx.navigation.NavHostController,
     workOrderId: String,
+    provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
 ) {
     val viewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
         hiltViewModel()
     val state by viewModel.uiState.collectAsState()
     val context = androidx.compose.ui.platform.LocalContext.current
 
-    androidx.compose.runtime.LaunchedEffect(workOrderId) {
-        viewModel.load(workOrderId)
+    androidx.compose.runtime.LaunchedEffect(workOrderId, provider) {
+        viewModel.load(workOrderId, provider)
     }
     // US-27 scenario 09-VTD: when the VM emits a checkout URL
     // (the "Pagar saldo restante" CTA), open it in a Custom Tab
@@ -915,7 +945,7 @@ private fun WorkOrderDetailRoute(
     }
     com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
         state = state,
-        onRetry = { viewModel.load(workOrderId) },
+        onRetry = { viewModel.load(workOrderId, provider) },
         onBackClick = { navController.popBackStack() },
         onPayNow = { viewModel.payNow(workOrderId) },
     )

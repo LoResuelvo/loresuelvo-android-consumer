@@ -45,7 +45,6 @@ data class WorkOrderDetailDto(
     @SerialName("paid_on") val paidOn: String? = null,
     @SerialName("completion_report") val completionReport: CompletionReportDto? = null,
     @SerialName("review") val review: ReviewDto? = null,
-    @SerialName("provider") val provider: WorkOrderDetailCounterpartDto,
 )
 
 @Serializable

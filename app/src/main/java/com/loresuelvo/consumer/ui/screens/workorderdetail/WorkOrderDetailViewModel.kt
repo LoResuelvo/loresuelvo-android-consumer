@@ -68,12 +68,15 @@ class WorkOrderDetailViewModel @Inject constructor(
      * Loads the work order for [workOrderId]. Re-entrant so the
      * host can re-fire on retry (mirrors the
      * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel.load]
-     * contract).
+     * contract). If the consumer entered from a list that already
+     * carried the provider metadata, that fallback is forwarded to
+     * the repository so we do not attempt to deserialize a
+     * non-existent provider field from the dedicated detail JSON.
      */
-    fun load(workOrderId: String) {
+    fun load(workOrderId: String, provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart? = null) {
         viewModelScope.launch {
             _uiState.update { WorkOrderDetailUiState.Loading }
-            val outcome = getWorkOrderDetail(workOrderId)
+            val outcome = getWorkOrderDetail(workOrderId, provider)
             val next = when (outcome) {
                 is GetWorkOrderOutcome.Found -> WorkOrderDetailUiState.Ready(outcome.workOrder)
                 is GetWorkOrderOutcome.NotFound -> WorkOrderDetailUiState.NotFound

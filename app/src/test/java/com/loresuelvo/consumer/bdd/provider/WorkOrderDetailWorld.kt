@@ -132,7 +132,10 @@ class WorkOrderDetailWorld : AutoCloseable {
             current = item
         }
 
-        override suspend fun getWorkOrderDetail(workOrderId: String): GetWorkOrderOutcome =
+        override suspend fun getWorkOrderDetail(
+            workOrderId: String,
+            provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
+        ): GetWorkOrderOutcome =
             current
                 ?.takeIf { it.proposalId == workOrderId }
                 ?.let { GetWorkOrderOutcome.Found(it) }

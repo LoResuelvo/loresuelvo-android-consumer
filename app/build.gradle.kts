@@ -128,7 +128,7 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
-            buildConfigField("boolean", "MOCK_TURNOS", "true")
+            buildConfigField("boolean", "MOCK_TURNOS", "false")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
