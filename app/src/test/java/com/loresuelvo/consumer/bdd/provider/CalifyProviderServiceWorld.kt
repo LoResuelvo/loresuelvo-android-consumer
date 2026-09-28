@@ -200,6 +200,15 @@ class CalifyProviderServiceWorld : AutoCloseable {
     }
 
     /**
+     * Returns the last submission the VM forwarded to the
+     * rate-provider port, or `null` if no submit call has
+     * landed yet. Step defs use this to assert that the typed
+     * rating + description match what the screen collected
+     * (US-30 scenarios 05-CT / 06-CT).
+     */
+    fun recordedSubmission(): Submission? = fakeRepo.lastSubmission
+
+    /**
      * Taps "Cancelar" inside the composer. Delegates to
      * [WorkOrderDetailViewModel.cancelReviewComposer].
      */
@@ -267,12 +276,6 @@ class CalifyProviderServiceWorld : AutoCloseable {
         var lastSubmission: Submission? = null
             private set
 
-        data class Submission(
-            val workOrderId: String,
-            val rating: Int,
-            val description: String,
-        )
-
         fun seed(workOrder: WorkOrderDetail) {
             seeded = workOrder
         }
@@ -305,6 +308,16 @@ class CalifyProviderServiceWorld : AutoCloseable {
             )
         }
     }
+
+    /**
+     * Snapshot of a single `submitReview` call. Step defs
+     * read it via [CalifyProviderServiceWorld.recordedSubmission].
+     */
+    data class Submission(
+        val workOrderId: String,
+        val rating: Int,
+        val description: String,
+    )
 
     /**
      * Stand-in for the `StartWorkOrderCheckoutUseCase` port.

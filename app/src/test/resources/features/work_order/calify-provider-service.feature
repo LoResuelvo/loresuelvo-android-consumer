@@ -20,7 +20,6 @@ Feature: Calificar trabajo terminado
     And veo un campo opcional para ingresar un comentario
     And veo el contador de caracteres "0/500"
 
-  @wip
   Scenario: 03-CT Seleccionar una calificación
     Given tengo abierto el formulario de calificación
     When selecciono 4 estrellas
