@@ -33,7 +33,6 @@ Feature: Calificar trabajo terminado
     Then veo el contador actualizado con la cantidad de caracteres ingresados
     And puedo enviar la calificación sin completar el comentario
 
-  @wip
   Scenario: 05-CT Enviar calificación exitosamente
     Given tengo una orden de trabajo completamente pagada
     And seleccioné 5 estrellas

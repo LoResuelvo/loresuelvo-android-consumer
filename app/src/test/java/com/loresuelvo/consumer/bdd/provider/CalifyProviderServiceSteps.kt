@@ -249,10 +249,17 @@ class CalifyProviderServiceSteps {
      * Past-tense variant of [seleccionoNEstrellas] used by
      * scenarios that compose Given/And steps that already
      * had a value (US-30 scenarios 04-CT, 05-CT, 06-CT,
-     * 11-CT).
+     * 11-CT). Auto-opens the composer if it is still collapsed
+     * so the rating draft lands on the Editing state — the
+     * Gherkin for these scenarios is implicit about the form
+     * being open ("And seleccioné…").
      */
     @Given("seleccioné {int} estrellas")
     fun seleccioneNEstrellas(n: Int) {
+        val current = world.lastReadyState()?.composer
+        if (current !is ReviewComposerState.Editing) {
+            world.tapCalificar()
+        }
         world.selectStars(n)
     }
 
@@ -287,6 +294,16 @@ class CalifyProviderServiceSteps {
      */
     @When("ingreso el comentario {string}")
     fun ingresoElComentario(texto: String) {
+        world.typeComment(texto)
+    }
+
+    /**
+     * Past-tense variant of [ingresoElComentario] used by
+     * scenarios that compose Given/And steps that already
+     * have a value (US-30 scenario 05-CT).
+     */
+    @Given("ingresé el comentario {string}")
+    fun ingreseElComentario(texto: String) {
         world.typeComment(texto)
     }
 
@@ -392,6 +409,7 @@ class CalifyProviderServiceSteps {
     fun seRegistraLaCalificacionCorrectamente() {
         val recordedRaw = world.recordedSubmission()
         if (recordedRaw == null) {
+            println("DEBUG: observed=${world.observedStates().map { it::class.simpleName + "-" + (it as? WorkOrderDetailUiState.Ready)?.composer?.javaClass?.simpleName }}")
             fail("expected the VM to have called submitReview, but the fake repo recorded no submission")
             return
         }
