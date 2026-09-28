@@ -12,7 +12,6 @@ Feature: Calificar trabajo terminado
     When accedo al detalle de la orden
     Then veo la opción "Calificar servicio"
 
-  @wip
   Scenario: 02-CT Abrir formulario de calificación
     Given tengo una orden de trabajo completamente pagada
     When selecciono la opción "Calificar servicio"

@@ -90,29 +90,39 @@ class CalifyProviderServiceWorld : AutoCloseable {
     /**
      * Seeds a paid work order without a review so the screen
      * surfaces the "Calificar servicio" CTA (scenarios 01-CT /
-     * 02-CT / 05-CT / 06-CT / 11-CT).
+     * 02-CT / 05-CT / 06-CT / 11-CT). Mirrors the real consumer
+     * flow: "tengo una orden completamente pagada" implies
+     * the work-order detail is already on screen, so we
+     * pre-load it through [openWorkOrder]. Scenarios that need
+     * the VM state to NOT have been touched yet can opt out by
+     * calling [seedPaidWorkOrderWithoutReviewData] (placeholder,
+     * not currently needed) instead.
      */
     fun seedPaidWorkOrderWithoutReview(id: String = "wo-100") {
         fakeRepo.seed(paidWorkOrder(id, review = null))
         lastWorkOrderId = id
+        openWorkOrder()
     }
 
     /**
      * Seeds a paid work order with a review already on file so
      * the screen renders the read-only review and HIDES the
-     * composer CTA (scenario 07-CT).
+     * composer CTA (scenario 07-CT). Pre-loads the detail so
+     * the subsequent `When` step lands on a Ready state.
      */
     fun seedPaidWorkOrderWithReview(id: String = "wo-101") {
         val review = WorkOrderReview(rating = 5, description = "Excelente trabajo")
         fakeRepo.seed(paidWorkOrder(id, review = review))
         lastWorkOrderId = id
+        openWorkOrder()
     }
 
     /**
      * Seeds an `awaiting_payment` work order so the screen
      * surfaces the "Pagar saldo restante" CTA only (scenario
      * 10-CT — the "Calificar servicio" CTA must stay hidden
-     * because the order is not fully paid).
+     * because the order is not fully paid). Pre-loads the
+     * detail.
      */
     fun seedAwaitingPaymentWorkOrder(id: String = "wo-102") {
         fakeRepo.seed(
@@ -122,6 +132,7 @@ class CalifyProviderServiceWorld : AutoCloseable {
             ),
         )
         lastWorkOrderId = id
+        openWorkOrder()
     }
 
     /**
