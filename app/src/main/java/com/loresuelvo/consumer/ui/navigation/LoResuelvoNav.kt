@@ -934,7 +934,7 @@ private fun TurnosRoute(
  * the screen-level retry from the `Error` state).
  */
 @Composable
-private fun WorkOrderDetailRoute(
+internal fun WorkOrderDetailRoute(
     navController: androidx.navigation.NavHostController,
     workOrderId: String,
     provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
