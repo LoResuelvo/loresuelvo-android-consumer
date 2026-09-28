@@ -44,7 +44,6 @@ Feature: Calificar trabajo terminado
     And veo el comentario "Excelente trabajo"
     And ya no puedo volver a calificar la orden
 
-  @wip
   Scenario: 06-CT Calificar sin comentario
     Given tengo una orden de trabajo completamente pagada
     And seleccioné 4 estrellas

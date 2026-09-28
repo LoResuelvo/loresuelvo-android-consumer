@@ -300,10 +300,16 @@ class CalifyProviderServiceSteps {
     /**
      * Past-tense variant of [ingresoElComentario] used by
      * scenarios that compose Given/And steps that already
-     * have a value (US-30 scenario 05-CT).
+     * have a value (US-30 scenarios 05-CT, 06-CT, 11-CT).
+     * Auto-opens the composer if it is still collapsed so the
+     * description draft lands on the Editing state.
      */
     @Given("ingresé el comentario {string}")
     fun ingreseElComentario(texto: String) {
+        val current = world.lastReadyState()?.composer
+        if (current !is ReviewComposerState.Editing) {
+            world.tapCalificar()
+        }
         world.typeComment(texto)
     }
 
