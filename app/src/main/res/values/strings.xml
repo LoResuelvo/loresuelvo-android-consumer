@@ -329,4 +329,20 @@
     <string name="turnos_error_retry">Reintentar</string>
     <string name="turno_today_label">(hoy)</string>
     <string name="turno_details_cta">Ver detalles</string>
+    <!-- US-16: public provider profile, reputation and work history -->
+    <string name="provider_profile_title">Perfil del prestador</string>
+    <string name="provider_profile_back_content_description">Volver</string>
+    <string name="provider_profile_loading">Cargando perfil…</string>
+    <string name="provider_profile_reputation_title">Reputación</string>
+    <string name="provider_profile_review_count">%1$d reseñas</string>
+    <string name="provider_profile_history_title">Trabajos realizados</string>
+    <string name="provider_profile_history_empty">Todavía no tiene trabajos completados.</string>
+    <string name="provider_profile_scheduled_date">Fecha programada: %1$s</string>
+    <string name="provider_profile_work_description">Descripción del trabajo</string>
+    <string name="provider_profile_completion_report">Reporte de entrega</string>
+    <string name="provider_profile_review_title">Reseña</string>
+    <string name="provider_profile_error_network">No pudimos conectar. Revisá tu conexión.</string>
+    <string name="provider_profile_error_server">No pudimos cargar el perfil. Intentá nuevamente.</string>
+    <string name="provider_profile_retry">Reintentar</string>
+    <string name="provider_profile_view_button">Ver perfil</string>
 </resources>

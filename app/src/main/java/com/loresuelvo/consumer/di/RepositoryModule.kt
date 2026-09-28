@@ -6,7 +6,6 @@ import com.loresuelvo.consumer.data.api.ApiDiagnosisRepository
 import com.loresuelvo.consumer.data.api.ApiFileRepository
 import com.loresuelvo.consumer.data.api.ApiJobRequestRepository
 import com.loresuelvo.consumer.data.api.ApiProviderRepository
-import com.loresuelvo.consumer.data.api.ApiProviderProfileRepository
 import com.loresuelvo.consumer.data.api.ApiServiceProposalRepository
 import com.loresuelvo.consumer.data.api.ApiTurnosRepository
 import com.loresuelvo.consumer.data.api.ApiUserRepository
@@ -20,7 +19,6 @@ import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.file.FileRepository
 import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
-import com.loresuelvo.consumer.domain.provider.ProviderProfileRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
@@ -58,12 +56,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindProviderRepository(impl: ApiProviderRepository): ProviderRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindProviderProfileRepository(
-        impl: ApiProviderProfileRepository,
-    ): ProviderProfileRepository
 
     @Binds
     @Singleton

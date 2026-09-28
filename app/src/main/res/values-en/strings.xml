@@ -327,4 +327,20 @@
     <string name="turnos_error_retry">Retry</string>
     <string name="turno_today_label">(today)</string>
     <string name="turno_details_cta">View details</string>
+    <!-- US-16: public provider profile, reputation and work history -->
+    <string name="provider_profile_title">Provider profile</string>
+    <string name="provider_profile_back_content_description">Back</string>
+    <string name="provider_profile_loading">Loading profile…</string>
+    <string name="provider_profile_reputation_title">Reputation</string>
+    <string name="provider_profile_review_count">%1$d reviews</string>
+    <string name="provider_profile_history_title">Completed work</string>
+    <string name="provider_profile_history_empty">This provider has no completed work yet.</string>
+    <string name="provider_profile_scheduled_date">Scheduled date: %1$s</string>
+    <string name="provider_profile_work_description">Work description</string>
+    <string name="provider_profile_completion_report">Completion report</string>
+    <string name="provider_profile_review_title">Review</string>
+    <string name="provider_profile_error_network">We couldn’t connect. Check your connection.</string>
+    <string name="provider_profile_error_server">We couldn’t load the profile. Try again.</string>
+    <string name="provider_profile_retry">Retry</string>
+    <string name="provider_profile_view_button">View profile</string>
 </resources>
