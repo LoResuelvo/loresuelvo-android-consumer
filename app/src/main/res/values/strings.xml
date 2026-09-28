@@ -250,6 +250,22 @@
     <string name="work_order_error_server">No pudimos cargar la orden de trabajo. Reintentá.</string>
     <string name="work_order_error_retry">Reintentar</string>
 
+    <!-- US-30: Calificar servicio (calificar al prestador tras pagar). -->
+    <string name="work_order_rate_cta">Calificar servicio</string>
+    <string name="work_order_rate_title">¿Cómo fue tu experiencia?</string>
+    <string name="work_order_rate_stars_label">Seleccioná una calificación</string>
+    <string name="work_order_rate_comment_label">Comentario (opcional)</string>
+    <string name="work_order_rate_comment_hint">Contanos cómo te fue con el prestador</string>
+    <string name="work_order_rate_submit">Enviar</string>
+    <string name="work_order_rate_char_counter">%1$d/%2$d</string>
+    <string name="work_order_rate_success_toast">¡Gracias por tu calificación!</string>
+    <string name="work_order_rate_error_server">No pudimos registrar la calificación. Reintentá.</string>
+    <string name="work_order_rate_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
+    <string name="work_order_rate_error_unauthorized">Tu sesión expiró. Iniciá sesión de nuevo.</string>
+    <string name="work_order_rate_error_already_reviewed">Ya habías calificado esta orden.</string>
+    <string name="work_order_rate_error_unpaid">Solo podés calificar después de pagar la orden.</string>
+    <string name="work_order_rate_rating_required">Seleccioná una calificación antes de enviar.</string>
+
     <!-- US-21: Confirmar acuerdo de servicio (seña). -->
     <string name="service_agreement_loading">Cargando acuerdo…</string>
     <string name="service_agreement_description">Descripción del servicio</string>

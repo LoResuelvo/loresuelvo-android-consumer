@@ -248,6 +248,22 @@
     <string name="work_order_error_server">We couldn\'t load the work order. Try again.</string>
     <string name="work_order_error_retry">Retry</string>
 
+    <!-- US-30: Calificar servicio (rate the provider after payment). -->
+    <string name="work_order_rate_cta">Rate service</string>
+    <string name="work_order_rate_title">How was your experience?</string>
+    <string name="work_order_rate_stars_label">Select a rating</string>
+    <string name="work_order_rate_comment_label">Comment (optional)</string>
+    <string name="work_order_rate_comment_hint">Tell us about your experience with the provider</string>
+    <string name="work_order_rate_submit">Submit</string>
+    <string name="work_order_rate_char_counter">%1$d/%2$d</string>
+    <string name="work_order_rate_success_toast">Thanks for your rating!</string>
+    <string name="work_order_rate_error_server">We couldn\'t submit your rating. Try again.</string>
+    <string name="work_order_rate_error_network">We couldn\'t connect. Check your connection.</string>
+    <string name="work_order_rate_error_unauthorized">Your session expired. Sign in again.</string>
+    <string name="work_order_rate_error_already_reviewed">You\'ve already rated this work order.</string>
+    <string name="work_order_rate_error_unpaid">You can only rate the work order after paying.</string>
+    <string name="work_order_rate_rating_required">Select a rating before submitting.</string>
+
     <!-- US-21: Confirm service agreement (deposit). -->
     <string name="service_agreement_loading">Loading agreement…</string>
     <string name="service_agreement_description">Service description</string>
