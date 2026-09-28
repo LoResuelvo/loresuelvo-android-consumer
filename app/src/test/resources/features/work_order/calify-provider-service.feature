@@ -66,7 +66,6 @@ Feature: Calificar trabajo terminado
     Then el sistema no permite superar los 500 caracteres
     And el contador muestra en rojo "600/500"
 
-  @wip
   Scenario: 09-CT Impedir envío sin calificación
     Given tengo abierto el formulario de calificación
     And no seleccioné ninguna estrella
