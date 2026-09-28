@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.payment.PaymentIntentStatus
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
+import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
@@ -71,6 +72,7 @@ class WorkOrderDetailViewModelTest {
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
                 NoOpCheckoutRepository,
             ),
+            rateProvider = noOpRateProvider,
         )
 
         viewModel.load("wo-1")
@@ -87,6 +89,7 @@ class WorkOrderDetailViewModelTest {
                 FakeRepository(GetWorkOrderOutcome.NotFound),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
+            rateProvider = noOpRateProvider,
         )
 
         viewModel.load("missing")
@@ -108,6 +111,7 @@ class WorkOrderDetailViewModelTest {
                 ),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
+            rateProvider = noOpRateProvider,
         )
 
         viewModel.load("wo-1")
@@ -126,6 +130,7 @@ class WorkOrderDetailViewModelTest {
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
                 FakeCheckoutRepository(checkout),
             ),
+            rateProvider = noOpRateProvider,
         )
 
         // `backgroundScope` outlives the test body so the
@@ -156,6 +161,7 @@ class WorkOrderDetailViewModelTest {
                     CheckoutSessionOutcome.AlreadyPaid("Esta orden ya fue pagada."),
                 ),
             ),
+            rateProvider = noOpRateProvider,
         )
 
         val emissions = mutableListOf<String>()
@@ -180,6 +186,7 @@ class WorkOrderDetailViewModelTest {
                     CheckoutSessionOutcome.Network(java.io.IOException("dns")),
                 ),
             ),
+            rateProvider = noOpRateProvider,
         )
 
         val emissions = mutableListOf<String>()
@@ -209,6 +216,7 @@ class WorkOrderDetailViewModelTest {
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
                 ThrowingCheckoutRepository,
             ),
+            rateProvider = noOpRateProvider,
         )
 
         val urlEmissions = mutableListOf<String>()
@@ -240,6 +248,7 @@ class WorkOrderDetailViewModelTest {
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
                 FakeCheckoutRepository(brokenCheckout),
             ),
+            rateProvider = noOpRateProvider,
         )
 
         val emissions = mutableListOf<String>()
@@ -327,6 +336,32 @@ class WorkOrderDetailViewModelTest {
             message = "no-op",
         )
     }
+
+    /**
+     * Stand-in repo for the rate-provider port — every test that
+     * does not exercise [WorkOrderDetailViewModel.submitReview]
+     * passes this in so the VM constructor stays non-null. Tests
+     * that DO exercise the submit path (commit W) inject a
+     * dedicated recording fake.
+     */
+    private object NoOpRateProviderRepository : WorkOrderDetailRepository {
+        override suspend fun getWorkOrderDetail(
+            workOrderId: String,
+            provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
+        ): GetWorkOrderOutcome = GetWorkOrderOutcome.NotFound
+
+        override suspend fun submitReview(
+            workOrderId: String,
+            rating: Int,
+            description: String,
+        ): SubmitWorkOrderReviewOutcome = SubmitWorkOrderReviewOutcome.Server(
+            code = 0,
+            message = "no-op rate provider",
+        )
+    }
+
+    private val noOpRateProvider: RateProviderUseCase =
+        RateProviderUseCase(NoOpRateProviderRepository)
 
     private fun createdCheckout(url: String?): CheckoutSessionOutcome.Created =
         CheckoutSessionOutcome.Created(

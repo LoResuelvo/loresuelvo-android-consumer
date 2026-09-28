@@ -5,16 +5,24 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -78,6 +86,11 @@ fun WorkOrderDetailScreen(
     onRetry: () -> Unit,
     onBackClick: () -> Unit,
     onPayNow: () -> Unit = {},
+    onOpenReviewForm: () -> Unit = {},
+    onRatingChange: (Int) -> Unit = {},
+    onDescriptionChange: (String) -> Unit = {},
+    onSubmitReview: () -> Unit = {},
+    onCancelReview: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -116,8 +129,14 @@ fun WorkOrderDetailScreen(
                 is WorkOrderDetailUiState.Loading -> LoadingState()
                 is WorkOrderDetailUiState.Ready -> ReadyState(
                     workOrder = state.workOrder,
+                    composer = state.composer,
                     onPayNow = onPayNow,
                     onPhotoClick = { lightboxPhoto = it },
+                    onOpenReviewForm = onOpenReviewForm,
+                    onRatingChange = onRatingChange,
+                    onDescriptionChange = onDescriptionChange,
+                    onSubmitReview = onSubmitReview,
+                    onCancelReview = onCancelReview,
                 )
                 is WorkOrderDetailUiState.NotFound -> NotFoundState()
                 is WorkOrderDetailUiState.Error -> ErrorState(state.failure, onRetry)
@@ -154,8 +173,14 @@ private fun LoadingState() {
 @Composable
 private fun ReadyState(
     workOrder: WorkOrderDetail,
+    composer: ReviewComposerState,
     onPayNow: () -> Unit,
     onPhotoClick: (CompletionReportPhoto) -> Unit,
+    onOpenReviewForm: () -> Unit,
+    onRatingChange: (Int) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onSubmitReview: () -> Unit,
+    onCancelReview: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -180,6 +205,37 @@ private fun ReadyState(
             ) {
                 Text(stringResource(R.string.work_order_pay_now_cta))
             }
+        }
+        // US-30 scenario 01-CT: the "Calificar servicio" CTA
+        // is the primary action when the work order is `paid`
+        // and the consumer has not yet filed a review. The
+        // composer is collapsed by default; tapping the CTA
+        // flips the VM state to [ReviewComposerState.Editing].
+        if (workOrder.status == TurnoStatus.Paid &&
+            workOrder.review == null &&
+            composer is ReviewComposerState.Hidden
+        ) {
+            OutlinedButton(
+                onClick = onOpenReviewForm,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(WORK_ORDER_RATE_CTA_TAG),
+            ) {
+                Text(stringResource(R.string.work_order_rate_cta))
+            }
+        }
+        // US-30 scenarios 02-CT → 09-CT: when the consumer
+        // taps the CTA, the composer expands inline (between
+        // the pay-now CTA and the detail rows) so they can rate
+        // the provider without leaving the work-order surface.
+        if (composer is ReviewComposerState.Editing) {
+            ReviewComposerSection(
+                composer = composer,
+                onRatingChange = onRatingChange,
+                onDescriptionChange = onDescriptionChange,
+                onSubmitReview = onSubmitReview,
+                onCancelReview = onCancelReview,
+            )
         }
         DetailRow(
             label = stringResource(R.string.work_order_provider),
@@ -339,6 +395,146 @@ private fun ReviewSection(review: WorkOrderReview) {
     }
 }
 
+/**
+ * In-place composer for the consumer's review (US-30
+ * `calify-provider-service`, scenarios 02-CT → 09-CT). Renders
+ * a 5-star selector, a multiline comment field capped at 500
+ * characters, a live character counter, the inline error row
+ * when the most recent submission surfaced a typed failure, and
+ * the "Enviar" / "Cancelar" CTA pair.
+ *
+ * State flows down (the host owns [ReviewComposerState.Editing]
+ * via the VM) and events flow up through the [onRatingChange],
+ * [onDescriptionChange], [onSubmitReview], and [onCancelReview]
+ * callbacks — every visible value is sourced from [composer]
+ * so the surface stays stateless across recomposition.
+ *
+ * The submit CTA stays disabled while `ratingDraft == null ||
+ * submitting` so the consumer cannot ship an empty rating (US-30
+ * scenario 09-CT). The "Enviar" button also blocks while
+ * [REVIEW_DESCRIPTION_MAX_LENGTH] is exceeded (scenario 08-CT) —
+ * the host already truncate the input upstream so the visual
+ * counter never paints the over-limit copy in red.
+ */
+@Composable
+private fun ReviewComposerSection(
+    composer: ReviewComposerState.Editing,
+    onRatingChange: (Int) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onSubmitReview: () -> Unit,
+    onCancelReview: () -> Unit,
+) {
+    val overflow = composer.descriptionDraft.length > REVIEW_DESCRIPTION_MAX_LENGTH
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(WORK_ORDER_RATE_COMPOSER_TAG),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.work_order_rate_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.testTag(WORK_ORDER_RATE_TITLE_TAG),
+        )
+        Text(
+            text = stringResource(R.string.work_order_rate_stars_label),
+            style = MaterialTheme.typography.labelMedium,
+            color = SubtitleGray,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            (1..5).forEach { star ->
+                val filled = composer.ratingDraft != null && star <= (composer.ratingDraft ?: 0)
+                IconButton(
+                    onClick = { onRatingChange(star) },
+                    modifier = Modifier.testTag(WORK_ORDER_RATE_STAR_TAG_PREFIX + star),
+                ) {
+                    Icon(
+                        imageVector = if (filled) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = star.toString(),
+                        tint = if (filled) {
+                            MaterialTheme.colorScheme.tertiary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
+            }
+        }
+        OutlinedTextField(
+            value = composer.descriptionDraft,
+            onValueChange = { new -> onDescriptionChange(new) },
+            label = { Text(stringResource(R.string.work_order_rate_comment_label)) },
+            placeholder = { Text(stringResource(R.string.work_order_rate_comment_hint)) },
+            singleLine = false,
+            minLines = 3,
+            maxLines = 6,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(WORK_ORDER_RATE_COMMENT_TAG),
+        )
+        Text(
+            text = stringResource(
+                R.string.work_order_rate_char_counter,
+                composer.descriptionDraft.length,
+                REVIEW_DESCRIPTION_MAX_LENGTH,
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (overflow) MaterialTheme.colorScheme.error else SubtitleGray,
+            modifier = Modifier.testTag(WORK_ORDER_RATE_CHAR_COUNTER_TAG),
+        )
+        if (composer.error != null) {
+            val message = stringResource(
+                when (composer.error) {
+                    is com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.Network ->
+                        R.string.work_order_rate_error_network
+                    is com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.Server ->
+                        R.string.work_order_rate_error_server
+                    is com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.AlreadyReviewed ->
+                        R.string.work_order_rate_error_already_reviewed
+                    is com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.Submitted ->
+                        // The composer never renders in this branch
+                        // (success flips the state to Hidden), but
+                        // the `when` must be exhaustive.
+                        R.string.work_order_rate_error_server
+                },
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.testTag(WORK_ORDER_RATE_ERROR_TAG),
+            )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedButton(
+                onClick = onCancelReview,
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(WORK_ORDER_RATE_CANCEL_TAG),
+                enabled = !composer.submitting,
+            ) {
+                Text(stringResource(android.R.string.cancel))
+            }
+            Button(
+                onClick = onSubmitReview,
+                modifier = Modifier
+                    .weight(1f)
+                    .testTag(WORK_ORDER_RATE_SUBMIT_TAG),
+                enabled = composer.canSubmit && !overflow,
+            ) {
+                Text(stringResource(R.string.work_order_rate_submit))
+            }
+        }
+    }
+}
+
 @Composable
 private fun NotFoundState() {
     Column(
@@ -449,3 +645,13 @@ const val WORK_ORDER_EVIDENCE_PHOTO_TAG_PREFIX: String = "work-order-evidence-ph
 const val WORK_ORDER_REVIEW_SECTION_TAG: String = "work-order-review-section"
 const val WORK_ORDER_REVIEW_RATING_TAG: String = "work-order-review-rating"
 const val WORK_ORDER_REVIEW_DESCRIPTION_TAG: String = "work-order-review-description"
+const val WORK_ORDER_RATE_CTA_TAG: String = "work-order-rate-cta"
+const val WORK_ORDER_RATE_COMPOSER_TAG: String = "work-order-rate-composer"
+const val WORK_ORDER_RATE_TITLE_TAG: String = "work-order-rate-title"
+const val WORK_ORDER_RATE_STAR_TAG_PREFIX: String = "work-order-rate-star-"
+const val WORK_ORDER_RATE_COMMENT_TAG: String = "work-order-rate-comment"
+const val WORK_ORDER_RATE_CHAR_COUNTER_TAG: String = "work-order-rate-char-counter"
+const val WORK_ORDER_RATE_SUBMIT_TAG: String = "work-order-rate-submit"
+const val WORK_ORDER_RATE_CANCEL_TAG: String = "work-order-rate-cancel"
+const val WORK_ORDER_RATE_ERROR_TAG: String = "work-order-rate-error"
+const val REVIEW_DESCRIPTION_MAX_LENGTH: Int = 500

@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
+import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
@@ -58,6 +59,7 @@ class WorkOrderDetailWorld : AutoCloseable {
         viewModel = WorkOrderDetailViewModel(
             getWorkOrderDetail = GetWorkOrderDetailUseCase(repository),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpWorkOrderCheckoutRepository),
+            rateProvider = RateProviderUseCase(repository),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

@@ -68,6 +68,9 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
                 NoOpWorkOrderCheckoutRepository,
             ),
+            rateProvider = com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase(
+                repository,
+            ),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

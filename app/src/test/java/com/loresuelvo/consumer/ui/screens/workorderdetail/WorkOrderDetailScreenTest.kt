@@ -6,14 +6,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.R
+import org.junit.Assert.assertEquals
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.CompletionReport
@@ -516,5 +520,188 @@ class WorkOrderDetailScreenTest {
 
         composeTestRule.onAllNodesWithTag(WORK_ORDER_EVIDENCE_SECTION_TAG).assertCountEquals(0)
         composeTestRule.onAllNodesWithTag(WORK_ORDER_PAY_NOW_TAG).assertCountEquals(0)
+    }
+
+    // ---- US-30 render assertions (calify-provider-service) -----
+
+    /**
+     * Scenario 01-CT: a paid work order without a review
+     * surfaces the "Calificar servicio" CTA. The CTA renders
+     * between the pay-now CTA (absent because the order is
+     * already paid) and the detail rows.
+     */
+    @Test
+    fun ready_state_with_paid_and_no_review_renders_rate_cta() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(
+                            workOrderForRender(
+                                status = TurnoStatus.Paid,
+                                paidOnEpochMillis = 1_788_500_000_000L,
+                                completionReport = sampleCompletionReport(),
+                                review = null,
+                            ),
+                        ),
+                        onRetry = {},
+                        onBackClick = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).assertIsDisplayed()
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_COMPOSER_TAG).assertCountEquals(0)
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_REVIEW_SECTION_TAG).assertCountEquals(0)
+    }
+
+    /**
+     * Scenarios 10-CT / no-balance-pending: an `awaiting_payment`
+     * work order does NOT render the rating CTA nor the
+     * composer. The CTA only surfaces when the consumer paid
+     * the full balance.
+     */
+    @Test
+    fun ready_state_with_awaiting_payment_hides_rate_cta_and_composer() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(
+                            workOrderForRender(
+                                status = TurnoStatus.AwaitingPayment,
+                                completionReport = sampleCompletionReport(),
+                            ),
+                        ),
+                        onRetry = {},
+                        onBackClick = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_CTA_TAG).assertCountEquals(0)
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_COMPOSER_TAG).assertCountEquals(0)
+    }
+
+    /**
+     * Scenario 07-CT: when the consumer already filed a review,
+     * the CTA is hidden (the read-only ReviewSection takes its
+     * place). The composer also stays collapsed.
+     */
+    @Test
+    fun ready_state_with_existing_review_hides_rate_cta_and_composer() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(
+                            workOrderForRender(
+                                status = TurnoStatus.Paid,
+                                paidOnEpochMillis = 1_788_500_000_000L,
+                                completionReport = sampleCompletionReport(),
+                                review = sampleReview(),
+                            ),
+                        ),
+                        onRetry = {},
+                        onBackClick = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_CTA_TAG).assertCountEquals(0)
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_COMPOSER_TAG).assertCountEquals(0)
+        // The read-only review section lands below the visible
+        // viewport in the Ready column. `assertCountEquals`
+        // pins the render without forcing the test rig to
+        // scroll — same pattern as `ready_state_with_paid_*`.
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_REVIEW_SECTION_TAG).assertCountEquals(1)
+    }
+
+    /**
+     * Scenario 02-CT: the host flips `composer` to `Editing`
+     * after the consumer taps the CTA. The composer renders
+     * inline with the title, the 1-5 star row, a multiline
+     * comment field, the counter ("0/500"), and the submit /
+     * cancel CTA pair. The submit button stays disabled while
+     * no rating is selected (scenario 09-CT).
+     */
+    @Test
+    fun ready_state_with_composer_editing_renders_composer_with_submit_disabled() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(
+                            workOrderForRender(
+                                status = TurnoStatus.Paid,
+                                paidOnEpochMillis = 1_788_500_000_000L,
+                                completionReport = sampleCompletionReport(),
+                                review = null,
+                            ),
+                            composer = ReviewComposerState.Editing(),
+                        ),
+                        onRetry = {},
+                        onBackClick = {},
+                    )
+                }
+            }
+        }
+
+        // CTA hidden now that the composer took over.
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_CTA_TAG).assertCountEquals(0)
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_COMPOSER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_TITLE_TAG).assertIsDisplayed()
+        // 1..5 star buttons render.
+        (1..5).forEach { star ->
+            composeTestRule
+                .onNodeWithTag(WORK_ORDER_RATE_STAR_TAG_PREFIX + star)
+                .assertIsDisplayed()
+        }
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_COMMENT_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CHAR_COUNTER_TAG).assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("0/500").assertCountEquals(1)
+        // Submit disabled while no rating is selected.
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_SUBMIT_TAG).assertIsNotEnabled()
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CANCEL_TAG).assertIsEnabled()
+    }
+
+    /**
+     * Pin the host-wiring contract: tapping the "Calificar
+     * servicio" CTA dispatches the [onOpenReviewForm] callback
+     * exactly once. The screen does not mutate its own state.
+     */
+    @Test
+    fun ready_state_rate_cta_invokes_on_open_review_form() {
+        var invocations = 0
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Ready(
+                            workOrderForRender(
+                                status = TurnoStatus.Paid,
+                                paidOnEpochMillis = 1_788_500_000_000L,
+                                completionReport = sampleCompletionReport(),
+                                review = null,
+                            ),
+                        ),
+                        onRetry = {},
+                        onBackClick = {},
+                        onOpenReviewForm = { invocations += 1 },
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).performClick()
+
+        assertEquals(1, invocations)
+        // Tapping the CTA does not mutate the screen — it
+        // still shows the CTA (the state stays Hidden until
+        // the VM flips it).
+        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).assertIsDisplayed()
     }
 }
