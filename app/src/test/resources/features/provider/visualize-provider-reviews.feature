@@ -55,7 +55,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     And veo la calificación y el comentario en los trabajos que tienen una reseña
 
     # tal vez sea mejor que no muestre nada directamente
-  @wip
   Scenario: 07-CT Visualizar prestador sin calificaciones
     Given estoy visualizando el perfil de un prestador
     And el prestador no tiene calificaciones recibidas
@@ -63,14 +62,12 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     Then veo una calificación promedio de 0
     And veo que tiene 0 reseñas
 
-  @wip
   Scenario: 08-CT Visualizar prestador sin trabajos completados
     Given estoy visualizando el perfil de un prestador
     And el prestador no tiene trabajos completados
     When consulto su historial de trabajos
     Then veo un estado vacío indicando que todavía no tiene trabajos completados
 
-  @wip
   Scenario: 09-CT Visualizar trabajo completado sin reseña
     Given estoy visualizando el historial de un prestador
     And el prestador tiene un trabajo completado sin reseña

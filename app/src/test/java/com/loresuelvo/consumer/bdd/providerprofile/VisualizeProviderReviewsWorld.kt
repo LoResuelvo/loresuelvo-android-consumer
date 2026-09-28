@@ -76,6 +76,22 @@ class VisualizeProviderReviewsWorld {
         )
     }
 
+    fun markProviderWithoutReviews() {
+        profile = profile.copy(ratingAverage = 0.0, ratingCount = 0)
+    }
+
+    fun markProviderWithoutCompletedWork() {
+        profile = profile.copy(workOrders = emptyList())
+    }
+
+    fun markProviderAsUnreviewedWork() {
+        profile = profile.copy(
+            workOrders = listOf(
+                reviewedWorkOrder().copy(review = null),
+            ),
+        )
+    }
+
     fun openProviderProfile() {
         scope.runTest {
             viewModel.load(profile.id)

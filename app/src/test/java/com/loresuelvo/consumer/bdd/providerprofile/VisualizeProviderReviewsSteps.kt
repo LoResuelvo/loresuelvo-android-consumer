@@ -65,6 +65,21 @@ class VisualizeProviderReviewsSteps {
         world.markSomeWorkAsReviewed()
     }
 
+    @Given("el prestador no tiene calificaciones recibidas")
+    fun elPrestadorNoTieneCalificacionesRecibidas() {
+        world.markProviderWithoutReviews()
+    }
+
+    @Given("el prestador no tiene trabajos completados")
+    fun elPrestadorNoTieneTrabajosCompletados() {
+        world.markProviderWithoutCompletedWork()
+    }
+
+    @Given("el prestador tiene un trabajo completado sin reseña")
+    fun elPrestadorTieneUnTrabajoCompletadoSinResena() {
+        world.markProviderAsUnreviewedWork()
+    }
+
     @When("accedo al perfil del prestador recomendado")
     fun accedoAlPerfilDelPrestadorRecomendado() {
         world.openProviderProfile()
@@ -82,6 +97,11 @@ class VisualizeProviderReviewsSteps {
 
     @When("visualizo el trabajo en el historial")
     fun visualizoElTrabajoEnElHistorial() {
+        world.openProviderProfile()
+    }
+
+    @When("visualizo su resumen de reputación")
+    fun visualizoSuResumenDeReputacion() {
         world.openProviderProfile()
     }
 
@@ -157,6 +177,39 @@ class VisualizeProviderReviewsSteps {
         assertEquals(1, reviewed.size)
         assertEquals(5, reviewed.single().review?.rating)
         assertEquals("Trabajo prolijo y excelente atención.", reviewed.single().review?.description)
+    }
+
+    @Then("veo una calificación promedio de 0")
+    fun veoUnaCalificacionPromedioDeCero() {
+        assertEquals(0.0, world.readyProfile().ratingAverage, 0.0)
+    }
+
+    @Then("veo que tiene 0 reseñas")
+    fun veoQueTieneCeroResenas() {
+        assertEquals(0, world.readyProfile().ratingCount)
+    }
+
+    @Then("veo un estado vacío indicando que todavía no tiene trabajos completados")
+    fun veoUnEstadoVacioDeTrabajosCompletados() {
+        assertTrue(world.readyProfile().workOrders.isEmpty())
+    }
+
+    @Then("veo la información del trabajo realizado")
+    fun veoLaInformacionDelTrabajoRealizado() {
+        assertEquals(
+            "Reparación de pérdida de agua en cocina.",
+            world.readyProfile().workOrders.first().description,
+        )
+    }
+
+    @Then("no veo una calificación asociada al trabajo")
+    fun noVeoUnaCalificacionAsociadaAlTrabajo() {
+        assertTrue(world.readyProfile().workOrders.first().review == null)
+    }
+
+    @Then("no veo un comentario de reseña asociado al trabajo")
+    fun noVeoUnComentarioDeResenaAsociadoAlTrabajo() {
+        assertTrue(world.readyProfile().workOrders.first().review?.description == null)
     }
 
     private fun com.loresuelvo.consumer.domain.provider.ProviderWorkOrder.isCompleted(): Boolean =

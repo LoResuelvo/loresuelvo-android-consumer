@@ -72,6 +72,49 @@ class ProviderProfileScreenTest {
     }
 
     @Test
+    fun ready_state_with_no_reviews_renders_zero_reputation() {
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                ProviderProfileScreen(
+                    state = ProviderProfileUiState.Ready(
+                        sampleProfile().copy(ratingAverage = 0.0, ratingCount = 0),
+                    ),
+                    onRetryClick = {},
+                    onBackClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithText("0,0").assertIsDisplayed()
+        composeTestRule.onNodeWithText(
+            ApplicationProvider.getApplicationContext<android.content.Context>()
+                .getString(R.string.provider_profile_review_count, 0),
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun completed_work_without_review_hides_review_block() {
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                ProviderProfileScreen(
+                    state = ProviderProfileUiState.Ready(
+                        sampleProfile().copy(
+                            workOrders = listOf(sampleProfile().workOrders.first().copy(review = null)),
+                        ),
+                    ),
+                    onRetryClick = {},
+                    onBackClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("provider-profile-work-order-84")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag("provider-profile-review-84").assertDoesNotExist()
+    }
+
+    @Test
     fun public_history_has_no_private_data_slots() {
         composeTestRule.setContent {
             LoresuelvoTheme {
