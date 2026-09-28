@@ -23,7 +23,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     And veo el valor numérico de su calificación promedio
     And veo la cantidad total de reseñas recibidas
 
-  @wip
   Scenario: 03-CT Visualizar historial de trabajos completados de un prestador
     Given estoy visualizando el perfil de un prestador
     And el prestador tiene trabajos completados
@@ -31,7 +30,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     Then veo los trabajos completados del prestador
     And los trabajos están ordenados desde el más reciente al más antiguo
 
-  @wip
   Scenario: 04-CT Visualizar información de un trabajo completado
     Given estoy visualizando el historial de un prestador
     And el prestador tiene un trabajo completado
@@ -40,7 +38,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     And veo la descripción del trabajo realizado
     And veo el reporte de entrega redactado por el prestador
 
-  @wip
   Scenario: 05-CT Visualizar reseña asociada a un trabajo completado
     Given estoy visualizando el historial de un prestador
     And el prestador tiene un trabajo completado con una reseña
@@ -48,7 +45,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     Then veo la calificación recibida representada con estrellas
     And veo el comentario de la reseña
 
-  @wip
   Scenario: 06-CT Visualizar múltiples trabajos y sus reseñas
     Given estoy visualizando el perfil de un prestador
     And el prestador tiene múltiples trabajos completados

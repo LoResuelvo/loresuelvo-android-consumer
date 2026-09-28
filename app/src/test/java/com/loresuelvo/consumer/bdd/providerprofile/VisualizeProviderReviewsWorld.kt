@@ -1,9 +1,11 @@
 package com.loresuelvo.consumer.bdd.providerprofile
 
 import com.loresuelvo.consumer.domain.provider.ProviderCategory
+import com.loresuelvo.consumer.domain.provider.ProviderCompletionReport
 import com.loresuelvo.consumer.domain.provider.ProviderProfile
 import com.loresuelvo.consumer.domain.provider.ProviderProfileOutcome
 import com.loresuelvo.consumer.domain.provider.ProviderProfileRepository
+import com.loresuelvo.consumer.domain.provider.ProviderReview
 import com.loresuelvo.consumer.domain.provider.ProviderWorkOrder
 import com.loresuelvo.consumer.domain.provider.ProviderWorkOrderStatus
 import com.loresuelvo.consumer.domain.usecase.provider.GetProviderProfileUseCase
@@ -42,8 +44,36 @@ class VisualizeProviderReviewsWorld {
         profile = sampleProfile()
     }
 
+    fun showProviderProfile() {
+        profile = sampleProfile()
+    }
+
     fun markProviderAsRated() {
         profile = profile.copy(ratingAverage = 4.5, ratingCount = 2)
+    }
+
+    fun markProviderAsCompletedWork() {
+        profile = profile.copy(workOrders = completedWorkOrders())
+    }
+
+    fun markProviderAsSingleCompletedWork() {
+        profile = profile.copy(workOrders = listOf(completedWorkOrders().first()))
+    }
+
+    fun markProviderAsReviewedWork() {
+        profile = profile.copy(workOrders = listOf(reviewedWorkOrder()))
+    }
+
+    fun markProviderAsMultipleCompletedWork() {
+        profile = profile.copy(workOrders = completedWorkOrders())
+    }
+
+    fun markSomeWorkAsReviewed() {
+        profile = profile.copy(
+            workOrders = completedWorkOrders().mapIndexed { index, workOrder ->
+                if (index == 0) reviewedWorkOrder().copy(id = workOrder.id) else workOrder
+            },
+        )
     }
 
     fun openProviderProfile() {
@@ -73,12 +103,48 @@ class VisualizeProviderReviewsWorld {
         workOrders = listOf(
             ProviderWorkOrder(
                 id = "84",
-                scheduledOnEpochMillis = 1_755_270_000_000,
-                description = "Reparación de pérdida",
+                scheduledOnEpochMillis = 1_755_273_600_000,
+                description = "Reparación de pérdida de agua en cocina.",
                 status = ProviderWorkOrderStatus.Paid,
-                completionReport = null,
-                review = null,
+                completionReport = ProviderCompletionReport(
+                    description = "Trabajo finalizado y funcionamiento verificado.",
+                    reportedOnEpochMillis = 1_755_277_200_000,
+                ),
+                review = ProviderReview(
+                    rating = 5,
+                    description = "Trabajo prolijo y excelente atención.",
+                ),
             ),
+        ),
+    )
+
+    private fun completedWorkOrders() = listOf(
+        reviewedWorkOrder().copy(id = "newest", scheduledOnEpochMillis = 1_755_273_600_000),
+        ProviderWorkOrder(
+            id = "oldest",
+            scheduledOnEpochMillis = 1_755_187_200_000,
+            description = "Instalación de artefacto.",
+            status = ProviderWorkOrderStatus.Finished,
+            completionReport = ProviderCompletionReport(
+                description = "Instalación probada y entregada.",
+                reportedOnEpochMillis = 1_755_190_800_000,
+            ),
+            review = null,
+        ),
+    )
+
+    private fun reviewedWorkOrder() = ProviderWorkOrder(
+        id = "reviewed",
+        scheduledOnEpochMillis = 1_755_273_600_000,
+        description = "Reparación de pérdida de agua en cocina.",
+        status = ProviderWorkOrderStatus.Paid,
+        completionReport = ProviderCompletionReport(
+            description = "Trabajo finalizado y funcionamiento verificado.",
+            reportedOnEpochMillis = 1_755_277_200_000,
+        ),
+        review = ProviderReview(
+            rating = 5,
+            description = "Trabajo prolijo y excelente atención.",
         ),
     )
 
