@@ -7,7 +7,6 @@ Feature: Calificar trabajo terminado
   Background:
     Given estoy autenticado como consumidor
 
-  @wip
   Scenario: 01-CT Visualizar opción para calificar una orden pagada
     Given tengo una orden de trabajo completamente pagada
     When accedo al detalle de la orden
