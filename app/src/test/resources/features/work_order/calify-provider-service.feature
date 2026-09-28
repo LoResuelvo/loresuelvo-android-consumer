@@ -76,7 +76,6 @@ Feature: Calificar trabajo terminado
     When accedo al detalle de la orden
     Then veo un mensaje indicando que la orden debe estar completamente pagada para poder calificarla
 
-  @wip
   Scenario: 11-CT Informar error de servicio al enviar la calificación
     Given tengo una orden de trabajo completamente pagada
     And seleccioné 5 estrellas

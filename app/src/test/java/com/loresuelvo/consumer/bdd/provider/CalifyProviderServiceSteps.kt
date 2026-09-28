@@ -744,15 +744,44 @@ class CalifyProviderServiceSteps {
 
     /**
      * US-30 scenario 11-CT: the rate-provider port returns a
-     * typed `Server` failure. The step is overloaded to
-     * enqueue the failure BEFORE [seleccionoLabel] fires,
-     * because the [Submit] handler reads the queued outcome
-     * at submit-time.
+     * typed `Server` failure. Overloaded to enqueue a 503
+     * `Server` outcome on the fake repo *before* the
+     * `selecciono "Enviar"` step fires — the [Submit] handler
+     * reads the queued outcome at submit-time, so the order
+     * matters.
      */
     @When("envío la calificación y el servicio no está disponible")
     fun envioLaCalificacionYElServicioNoEstaDisponible() {
-        // No-op: the actual enqueue happens in [whenEnvioFallido].
-        // Kept as a marker so the Gherkin reads naturally.
+        world.enqueueServerFailure()
+    }
+
+    @Then("veo un mensaje de error indicando que no se pudo registrar la calificación")
+    fun veoUnMensajeDeErrorIndicandoQueNoSePudoRegistrarLaCalificacion() {
+        val readyRaw = world.lastReadyState()
+        if (readyRaw == null) {
+            fail("expected Ready state, got ${world.observedStates()}")
+            return
+        }
+        val composerRaw = readyRaw.composer
+        if (composerRaw !is ReviewComposerState.Editing) {
+            fail("expected composer=Editing with the typed error stamp, got $composerRaw")
+            return
+        }
+        val error = composerRaw.error
+        if (error !is SubmitWorkOrderReviewOutcome.Server) {
+            fail("expected Server error stamp on the composer, got $error")
+            return
+        }
+        assertEquals(
+            "scenario 11-CT: a 5xx backend failure shows the typed server-error copy",
+            503,
+            error.code,
+        )
+        assertEquals(
+            "scenario 11-CT: submitting resets the in-flight flag so the consumer can retry",
+            false,
+            composerRaw.submitting,
+        )
     }
 }
 
