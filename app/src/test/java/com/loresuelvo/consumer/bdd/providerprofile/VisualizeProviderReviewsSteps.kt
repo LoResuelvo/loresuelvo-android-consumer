@@ -80,6 +80,11 @@ class VisualizeProviderReviewsSteps {
         world.markProviderAsUnreviewedWork()
     }
 
+    @Given("un trabajo completado tiene fotografías de evidencia")
+    fun unTrabajoCompletadoTieneFotografiasDeEvidencia() {
+        world.markProviderAsPrivateEvidenceWork()
+    }
+
     @When("accedo al perfil del prestador recomendado")
     fun accedoAlPerfilDelPrestadorRecomendado() {
         world.openProviderProfile()
@@ -102,6 +107,16 @@ class VisualizeProviderReviewsSteps {
 
     @When("visualizo su resumen de reputación")
     fun visualizoSuResumenDeReputacion() {
+        world.openProviderProfile()
+    }
+
+    @When("visualizo la información de los trabajos")
+    fun visualizoLaInformacionDeLosTrabajos() {
+        world.openProviderProfile()
+    }
+
+    @When("visualizo ese trabajo en el historial")
+    fun visualizoEseTrabajoEnElHistorial() {
         world.openProviderProfile()
     }
 
@@ -210,6 +225,31 @@ class VisualizeProviderReviewsSteps {
     @Then("no veo un comentario de reseña asociado al trabajo")
     fun noVeoUnComentarioDeResenaAsociadoAlTrabajo() {
         assertTrue(world.readyProfile().workOrders.first().review?.description == null)
+    }
+
+    @Then("no veo los importes acordados")
+    fun noVeoLosImportesAcordados() {
+        assertTrue(world.publicHistoryRepresentation().none { it.contains("amount", ignoreCase = true) })
+    }
+
+    @Then("no veo los precios abonados")
+    fun noVeoLosPreciosAbonados() {
+        assertTrue(world.publicHistoryRepresentation().none { it.contains("price", ignoreCase = true) })
+    }
+
+    @Then("no veo nombres de los clientes")
+    fun noVeoNombresDeLosClientes() {
+        assertTrue(world.publicHistoryRepresentation().none { it.contains("client", ignoreCase = true) })
+    }
+
+    @Then("no veo datos personales de los clientes")
+    fun noVeoDatosPersonalesDeLosClientes() {
+        assertTrue(world.publicHistoryRepresentation().none { it.contains("customer", ignoreCase = true) })
+    }
+
+    @Then("no veo las fotografías privadas de evidencia")
+    fun noVeoLasFotografiasPrivadasDeEvidencia() {
+        assertTrue(world.publicHistoryRepresentation().none { it.contains("photo", ignoreCase = true) })
     }
 
     private fun com.loresuelvo.consumer.domain.provider.ProviderWorkOrder.isCompleted(): Boolean =

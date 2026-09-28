@@ -92,6 +92,10 @@ class VisualizeProviderReviewsWorld {
         )
     }
 
+    fun markProviderAsPrivateEvidenceWork() {
+        profile = profile.copy(workOrders = completedWorkOrders().take(1))
+    }
+
     fun openProviderProfile() {
         scope.runTest {
             viewModel.load(profile.id)
@@ -101,6 +105,16 @@ class VisualizeProviderReviewsWorld {
 
     fun readyProfile(): ProviderProfile =
         (viewModel.uiState.value as ProviderProfileUiState.Ready).profile
+
+    fun publicHistoryRepresentation(): List<String> =
+        readyProfile().workOrders.map { workOrder ->
+            listOf(
+                workOrder.id,
+                workOrder.description,
+                workOrder.completionReport?.description,
+                workOrder.review?.description,
+            ).filterNotNull().joinToString(" ")
+        }
 
     @After
     fun close() {

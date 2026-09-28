@@ -76,7 +76,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     And no veo una calificación asociada al trabajo
     And no veo un comentario de reseña asociado al trabajo
 
-  @wip
   Scenario: 10-CT No visualizar información económica en el historial público
     Given estoy visualizando el historial de un prestador
     And el prestador tiene trabajos completados
@@ -84,7 +83,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     Then no veo los importes acordados
     And no veo los precios abonados
 
-  @wip
   Scenario: 11-CT No visualizar datos personales de clientes en el historial público
     Given estoy visualizando el historial de un prestador
     And el prestador tiene trabajos completados
@@ -92,7 +90,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     Then no veo nombres de los clientes
     And no veo datos personales de los clientes
 
-  @wip
   Scenario: 12-CT No visualizar fotografías privadas de evidencia
     Given estoy visualizando el historial de un prestador
     And un trabajo completado tiene fotografías de evidencia
