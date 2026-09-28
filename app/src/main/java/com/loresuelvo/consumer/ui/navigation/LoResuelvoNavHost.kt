@@ -35,6 +35,7 @@ fun LoResuelvoNavHost(
     home: @Composable () -> Unit,
     categories: @Composable () -> Unit,
     professionals: @Composable (categoryId: Int, categoryName: String) -> Unit,
+    providerProfile: @Composable (providerId: Int) -> Unit,
     chat: @Composable (conversationId: String?) -> Unit,
     conversation: @Composable (conversationId: String) -> Unit,
     messages: @Composable () -> Unit,
@@ -70,6 +71,15 @@ fun LoResuelvoNavHost(
                 val categoryId = entry.arguments?.getInt("categoryId") ?: -1
                 val categoryName = entry.arguments?.getString("categoryName").orEmpty()
                 professionals(categoryId, categoryName)
+            }
+            composable(
+                route = Route.ProviderProfile(providerId = -1).path,
+                arguments = listOf(
+                    navArgument("providerId") { type = NavType.IntType },
+                ),
+            ) { entry ->
+                val providerId = entry.arguments?.getInt("providerId") ?: -1
+                providerProfile(providerId)
             }
             composable(
                 route = Route.Chat(conversationId = null).path,

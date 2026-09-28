@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.ui.screens.chat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +18,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
@@ -70,6 +72,7 @@ const val CHAT_DIAGNOSIS_PROVIDER_NAME_TAG: String = "chat-diagnosis-provider-na
  * targeter can resolve the row without `findAllNodes` filtering.
  */
 const val CHAT_DIAGNOSIS_PROVIDER_CONTACT_TAG_PREFIX: String = "chat-diagnosis-provider-contact"
+const val CHAT_DIAGNOSIS_PROVIDER_PROFILE_TAG_PREFIX: String = "chat-diagnosis-provider-profile"
 
 /**
  * Fixed width of each carousel tile (168dp). Sized so on the
@@ -126,6 +129,7 @@ fun DiagnosisSummaryCard(
     providers: List<Provider>,
     modifier: Modifier = Modifier,
     onContactClick: (Provider) -> Unit = {},
+    onViewProfileClick: (Provider) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -155,6 +159,7 @@ fun DiagnosisSummaryCard(
             ProvidersCarousel(
                 providers = providers,
                 onContactClick = onContactClick,
+                onViewProfileClick = onViewProfileClick,
             )
         }
     }
@@ -175,6 +180,7 @@ fun DiagnosisSummaryCard(
 private fun ProvidersCarousel(
     providers: List<Provider>,
     onContactClick: (Provider) -> Unit,
+    onViewProfileClick: (Provider) -> Unit,
 ) {
     LazyRow(
         modifier = Modifier
@@ -187,6 +193,7 @@ private fun ProvidersCarousel(
             RecommendedProviderCard(
                 provider = provider,
                 onContactClick = onContactClick,
+                onViewProfileClick = onViewProfileClick,
             )
         }
     }
@@ -205,6 +212,7 @@ private fun ProvidersCarousel(
 private fun RecommendedProviderCard(
     provider: Provider,
     onContactClick: (Provider) -> Unit,
+    onViewProfileClick: (Provider) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -241,27 +249,45 @@ private fun RecommendedProviderCard(
                 ),
             )
             Spacer(Modifier.height(2.dp))
-            Button(
-                onClick = { onContactClick(provider) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(
-                        "$CHAT_DIAGNOSIS_PROVIDER_CONTACT_TAG_PREFIX-${provider.id}",
-                    ),
-                contentPadding = PaddingValues(
-                    horizontal = 12.dp,
-                    vertical = 6.dp,
-                ),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = stringResource(R.string.contact_provider_button_contactar),
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                )
+                TextButton(
+                    onClick = { onViewProfileClick(provider) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(
+                            "$CHAT_DIAGNOSIS_PROVIDER_PROFILE_TAG_PREFIX-${provider.id}",
+                        ),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.provider_profile_view_button),
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                }
+                Button(
+                    onClick = { onContactClick(provider) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(
+                            "$CHAT_DIAGNOSIS_PROVIDER_CONTACT_TAG_PREFIX-${provider.id}",
+                        ),
+                    contentPadding = PaddingValues(horizontal = 4.dp, vertical = 6.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.contact_provider_button_contactar),
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                }
             }
         }
     }

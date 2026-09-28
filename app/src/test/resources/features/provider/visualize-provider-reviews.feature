@@ -7,7 +7,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
   Background:
     Given estoy autenticado como consumidor
 
-  @wip
   Scenario: 01-CT Visualizar reputación de un prestador recomendado por el chat con IA
     Given estoy visualizando prestadores recomendados por el chat con IA
     And uno de los prestadores tiene calificaciones recibidas
@@ -16,7 +15,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     And veo el valor numérico de su calificación promedio
     And veo la cantidad total de reseñas recibidas
 
-  @wip
   Scenario: 02-CT Visualizar reputación de un prestador encontrado desde una categoría
     Given estoy visualizando prestadores de una categoría
     And uno de los prestadores tiene calificaciones recibidas

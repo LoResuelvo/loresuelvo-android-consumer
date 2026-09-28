@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToLog
@@ -18,6 +19,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.data.auth.SessionStoreModule
+import com.loresuelvo.consumer.di.ProviderProfileRepositoryModule
 import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
@@ -31,7 +33,15 @@ import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.domain.provider.ProviderCategory
+import com.loresuelvo.consumer.domain.provider.ProviderCompletionReport
+import com.loresuelvo.consumer.domain.provider.ProviderProfile
+import com.loresuelvo.consumer.domain.provider.ProviderProfileOutcome
+import com.loresuelvo.consumer.domain.provider.ProviderProfileRepository
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.provider.ProviderReview
+import com.loresuelvo.consumer.domain.provider.ProviderWorkOrder
+import com.loresuelvo.consumer.domain.provider.ProviderWorkOrderStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.provider.ProvidersOutcome
 import dagger.Binds
@@ -76,6 +86,7 @@ import org.junit.runner.RunWith
 @UninstallModules(
     RepositoryModule::class,
     SessionStoreModule::class,
+    ProviderProfileRepositoryModule::class,
 )
 @RunWith(AndroidJUnit4::class)
 class ProfessionalsInstrumentedTest {
@@ -222,6 +233,45 @@ class ProfessionalsInstrumentedTest {
             .assertIsDisplayed()
     }
 
+    @Test
+    fun tapping_provider_profile_navigates_to_public_profile() {
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule
+                .onAllNodesWithText("Plomería")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule
+            .onAllNodesWithText("Plomería")[0]
+            .performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule
+                .onAllNodesWithTag("provider-card-profile-1")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule
+            .onNodeWithTag("provider-card-profile-1")
+            .performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 10_000) {
+            composeTestRule
+                .onAllNodesWithText(localizedString(R.string.provider_profile_title))
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.provider_profile_title))
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("Juan Pérez").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("provider-profile-rating-stars").assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.provider_profile_review_count, 2))
+            .assertIsDisplayed()
+    }
+
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     interface SessionStoreEntryPoint {
@@ -314,6 +364,39 @@ class ProfessionalsInstrumentedTest {
         }
     }
 
+    @Singleton
+    class StubProviderProfileRepository @Inject constructor() : ProviderProfileRepository {
+        override suspend fun getProviderProfile(providerId: Int): ProviderProfileOutcome =
+            ProviderProfileOutcome.Success(
+                ProviderProfile(
+                    id = providerId,
+                    name = "Juan",
+                    surname = "Pérez",
+                    profilePhotoUrl = null,
+                    category = ProviderCategory(1, "Plomería"),
+                    ratingAverage = 4.5,
+                    ratingCount = 2,
+                    identityVerified = true,
+                    workOrders = listOf(
+                        ProviderWorkOrder(
+                            id = "84",
+                            scheduledOnEpochMillis = 1_755_270_000_000,
+                            description = "Reparación de pérdida de agua en cocina.",
+                            status = ProviderWorkOrderStatus.Paid,
+                            completionReport = ProviderCompletionReport(
+                                description = "Trabajo finalizado y funcionamiento verificado.",
+                                reportedOnEpochMillis = 1_755_273_600_000,
+                            ),
+                            review = ProviderReview(
+                                rating = 5,
+                                description = "Trabajo prolijo y excelente atención.",
+                            ),
+                        ),
+                    ),
+                ),
+            )
+    }
+
     @Module
     @InstallIn(SingletonComponent::class)
     object TestSessionPrefsModule {
@@ -335,6 +418,12 @@ class ProfessionalsInstrumentedTest {
         @Binds
         @Singleton
         abstract fun bindProviderRepository(impl: StubProviderRepository): ProviderRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindProviderProfileRepository(
+            impl: StubProviderProfileRepository,
+        ): ProviderProfileRepository
 
         @Binds
         @Singleton

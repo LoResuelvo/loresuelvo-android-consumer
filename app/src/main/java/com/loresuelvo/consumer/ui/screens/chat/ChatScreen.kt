@@ -66,6 +66,7 @@ fun ChatScreen(
     onRetryClick: () -> Unit,
     onErrorDismiss: () -> Unit,
     onContactClick: (Provider) -> Unit,
+    onViewProfileClick: (Provider) -> Unit = {},
     onBackClick: () -> Unit,
     onAttachClick: () -> Unit = {},
     onAttachImageFromGallery: () -> Unit = {},
@@ -187,6 +188,7 @@ fun ChatScreen(
                         categoryName = assessment.problemCategory?.name,
                         providers = recommendedProviders.orEmpty(),
                         onContactClick = onContactClick,
+                        onViewProfileClick = onViewProfileClick,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),

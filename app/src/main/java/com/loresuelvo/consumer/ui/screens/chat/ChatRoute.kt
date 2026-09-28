@@ -137,6 +137,9 @@ fun ChatRoute(
                 state.conversationId,
             )
         },
+        onViewProfileClick = { provider ->
+            navController.navigate(Route.ProviderProfile.buildPath(provider.id))
+        },
         onBackClick = { navController.popBackStack() },
         onAttachClick = { sheetVisible = true },
         onAttachImageFromGallery = {

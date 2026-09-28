@@ -77,6 +77,7 @@ fun ProfessionalsScreen(
     contactFormState: ContactProviderUiState,
     onRetryClick: () -> Unit,
     onContactarClick: (Provider) -> Unit,
+    onViewProfileClick: (Provider) -> Unit = {},
     onContactTitleChange: (String) -> Unit,
     onContactDescriptionChange: (String) -> Unit,
     onContactAttachImagesClick: () -> Unit,
@@ -111,6 +112,7 @@ fun ProfessionalsScreen(
                 ReadyList(
                     providers = state.providers,
                     onContactarClick = onContactarClick,
+                    onViewProfileClick = onViewProfileClick,
                 )
             is ProfessionalsUiState.Empty -> EmptyView(state.categoryName)
             is ProfessionalsUiState.Error -> ErrorView(onRetryClick)
@@ -167,6 +169,7 @@ private fun LoadingView(modifier: Modifier = Modifier) {
 private fun ReadyList(
     providers: List<Provider>,
     onContactarClick: (Provider) -> Unit,
+    onViewProfileClick: (Provider) -> Unit,
 ) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -176,6 +179,7 @@ private fun ReadyList(
             ProviderCard(
                 provider = provider,
                 onContactarClick = { onContactarClick(provider) },
+                onViewProfileClick = { onViewProfileClick(provider) },
             )
         }
     }
@@ -235,6 +239,7 @@ private fun ErrorView(onRetryClick: () -> Unit) {
 private fun ProviderCard(
     provider: Provider,
     onContactarClick: () -> Unit,
+    onViewProfileClick: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -266,16 +271,19 @@ private fun ProviderCard(
                     color = SubtitleGray,
                 )
             }
-            TextButton(
-                onClick = onContactarClick,
-                modifier = Modifier.testTag(CONTACT_PROVIDER_CARD_BUTTON_TAG),
-            ) {
-                Text(
-                    text = stringResource(R.string.contact_provider_button_contactar),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold,
-                )
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton(
+                    onClick = onViewProfileClick,
+                    modifier = Modifier.testTag("provider-card-profile-${provider.id}"),
+                ) {
+                    Text(text = stringResource(R.string.provider_profile_view_button))
+                }
+                TextButton(
+                    onClick = onContactarClick,
+                    modifier = Modifier.testTag(CONTACT_PROVIDER_CARD_BUTTON_TAG),
+                ) {
+                    Text(text = stringResource(R.string.contact_provider_button_contactar))
+                }
             }
         }
     }

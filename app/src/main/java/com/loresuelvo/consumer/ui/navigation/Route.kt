@@ -67,6 +67,14 @@ sealed class Route(val path: String) {
         }
     }
 
+    /** Public provider profile with reputation and completed work history. */
+    data class ProviderProfile(val providerId: Int) :
+        Route("provider-profile/{providerId}") {
+        companion object {
+            fun buildPath(providerId: Int): String = "provider-profile/$providerId"
+        }
+    }
+
     // ---- Bottom-bar destinations (US-18) ----------------------
     //
     // The path strings here are duplicated in

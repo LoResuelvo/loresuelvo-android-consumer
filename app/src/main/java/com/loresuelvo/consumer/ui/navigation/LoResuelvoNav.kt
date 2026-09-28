@@ -228,6 +228,13 @@ fun LoResuelvoNav() {
                     )
                 },
 
+                providerProfile = { providerId ->
+                    ProviderProfileRoute(
+                        navController = navController,
+                        providerId = providerId,
+                    )
+                },
+
                 chat = { conversationId ->
                     ChatRoute(
                         navController = navController,
@@ -439,6 +446,9 @@ private fun ProfessionalsRoute(
         contactFormState = contactState,
         onRetryClick = { viewModel.loadProviders(categoryId, categoryName) },
         onContactarClick = contactViewModel::onOpenContact,
+        onViewProfileClick = { provider ->
+            navController.navigate(Route.ProviderProfile.buildPath(provider.id))
+        },
         onContactTitleChange = contactViewModel::onTitleChange,
         onContactDescriptionChange = contactViewModel::onDescriptionChange,
         // 03-UXUI: the picker is local to the route so the
@@ -453,6 +463,26 @@ private fun ProfessionalsRoute(
         onContactRemoveImage = contactViewModel::onRemoveImage,
         onContactSubmit = contactViewModel::onSubmit,
         onContactCancel = contactViewModel::onCancel,
+    )
+}
+
+@Composable
+private fun ProviderProfileRoute(
+    navController: androidx.navigation.NavHostController,
+    providerId: Int,
+) {
+    val viewModel: com.loresuelvo.consumer.ui.screens.providerprofile.ProviderProfileViewModel =
+        hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    androidx.compose.runtime.LaunchedEffect(providerId) {
+        viewModel.load(providerId)
+    }
+
+    com.loresuelvo.consumer.ui.screens.providerprofile.ProviderProfileScreen(
+        state = state,
+        onRetryClick = { viewModel.load(providerId) },
+        onBackClick = { navController.popBackStack() },
     )
 }
 

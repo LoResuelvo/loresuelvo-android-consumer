@@ -155,4 +155,27 @@ class DiagnosisSummaryCardCarouselTest {
             .performClick()
         assertEquals(suppliedProviders[0], contacted)
     }
+
+    @Test
+    fun profile_button_invokes_callback_with_the_corresponding_provider() {
+        var selected: Provider? = null
+        val suppliedProviders = providers()
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                Box {
+                    DiagnosisSummaryCard(
+                        categoryName = "Plomería",
+                        providers = suppliedProviders,
+                        onViewProfileClick = { selected = it },
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onNodeWithTag("$CHAT_DIAGNOSIS_PROVIDER_PROFILE_TAG_PREFIX-1")
+            .performClick()
+
+        assertEquals(suppliedProviders[0], selected)
+    }
 }
