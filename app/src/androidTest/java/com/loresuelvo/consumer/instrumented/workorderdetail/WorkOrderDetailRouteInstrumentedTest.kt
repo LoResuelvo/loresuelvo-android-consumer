@@ -4,26 +4,22 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.activity.compose.setContent
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.runtime.remember
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
+import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import com.loresuelvo.consumer.data.auth.SessionStoreModule
 import com.loresuelvo.consumer.di.RepositoryModule
-import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
-import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
-import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
-import com.loresuelvo.consumer.domain.auth.User
-import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
@@ -37,8 +33,9 @@ import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
-import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository
+import com.loresuelvo.consumer.instrumented.support.WirePinHarness
+import com.loresuelvo.consumer.testdi.FakeConversationRepository
 import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
 import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
 import com.loresuelvo.consumer.testdi.FakeTurnosRepository
@@ -51,16 +48,13 @@ import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_RATE_STAR_T
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_RATE_SUBMIT_TAG
 import dagger.Binds
 import dagger.Module
-import dagger.Provides
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
-import javax.inject.Inject
 import javax.inject.Singleton
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -71,11 +65,11 @@ import org.junit.runner.RunWith
 
 /**
  * Integration coverage for the US-30 `calify-provider-service`
- * **route wiring** — the contract that
- * [WorkOrderDetailRoute] (in `LoResuelvoNav.kt`) forwards every
- * composer callback to the Hilt-injected `WorkOrderDetailViewModel`.
+ * **route wiring** — the contract that [WorkOrderDetailRoute]
+ * (in `LoResuelvoNav.kt`) forwards every composer callback to
+ * the Hilt-injected `WorkOrderDetailViewModel`.
  *
- * Why this test exists (post-mortem on US-30 commit `b1cc0eb`):
+ * Why this test exists (post-mortem on commit `b1cc0eb`)
  *
  *  - The initial drop of US-30 left `WorkOrderDetailRoute`
  *    untouched on the composer-button change set, so every new
@@ -85,14 +79,14 @@ import org.junit.runner.RunWith
  *    screen-level Compose UI tests still passed because they
  *    drive the screen with explicit lambdas; the JVM BDD suite
  *    passed because it talks to the VM through a hand-rolled
- *    World that bypasses the route entirely. The bug only
+ *    `World` that bypasses the route entirely. The bug only
  *    surfaced in manual testing on a real device.
  *
  *  - This instrumented test pins the route→VM wire contract
  *    end-to-end: Hilt provides the same `@HiltViewModel`
  *    instance the production route resolves; the screen
  *    receives the production-route-issued callbacks (not the
- *    `{}` defaults); and the [FakeWorkOrderDetailRepository]
+ *    `{}` defaults); and [FakeWorkOrderDetailRepository]
  *    records the call the VM hands off. A future regression
  *    that omits one of the production wire callbacks from the
  *    route would fail this test with a clear assertion —
@@ -153,12 +147,11 @@ class WorkOrderDetailRouteInstrumentedTest {
 
     @Before
     fun setUp() {
-        hiltRule.inject()
-        sessionStore.clearSession()
+        WirePinHarness.harnessSetup(hiltRule, composeTestRule)
         workOrderDetailRepo.set(paidWorkOrder())
+        WirePinHarness.persistAuthSession(composeTestRule)
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()
-        persistCompletedAuthenticatedUser()
     }
 
     /**
@@ -183,13 +176,7 @@ class WorkOrderDetailRouteInstrumentedTest {
         // runs on Dispatchers.Main. Poll with a deadline so the
         // assertion races against recomposition instead of failing
         // immediately on a fixed wait.
-        val deadline = System.currentTimeMillis() + 5_000L
-        while (System.currentTimeMillis() < deadline &&
-            composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_CTA_TAG)
-                .fetchSemanticsNodes().isEmpty()
-        ) {
-            Thread.sleep(50)
-        }
+        WirePinHarness.waitForTag(composeTestRule, WORK_ORDER_RATE_CTA_TAG)
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).assertIsDisplayed()
 
         // The actual regression pin: this tap MUST reach the VM.
@@ -227,13 +214,7 @@ class WorkOrderDetailRouteInstrumentedTest {
         composeTestRule.waitForIdle()
 
         // Same poll pattern as the CTA test.
-        val ctaDeadline = System.currentTimeMillis() + 5_000L
-        while (System.currentTimeMillis() < ctaDeadline &&
-            composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_CTA_TAG)
-                .fetchSemanticsNodes().isEmpty()
-        ) {
-            Thread.sleep(50)
-        }
+        WirePinHarness.waitForTag(composeTestRule, WORK_ORDER_RATE_CTA_TAG)
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).performClick()
 
         // Tap the 5-star button. The composer rating row carries
@@ -280,30 +261,6 @@ class WorkOrderDetailRouteInstrumentedTest {
         )
     }
 
-    private fun persistCompletedAuthenticatedUser() {
-        composeTestRule.runOnUiThread {
-            sessionStore.saveSession(
-                AuthSession(
-                    user = User(
-                        displayName = "Andres",
-                        firstName = "Andres",
-                        lastName = "Colina",
-                        email = "andy@pro.com",
-                        address = RegisterConsumerAddress(
-                            street = "Calle Falsa",
-                            streetNumber = "123",
-                            floor = "2",
-                            unit = "A",
-                        ),
-                    ),
-                    accessToken = "fake-token",
-                ),
-            )
-        }
-        composeTestRule.activityRule.scenario.recreate()
-        composeTestRule.waitForIdle()
-    }
-
     private fun paidWorkOrder(): WorkOrderDetail = WorkOrderDetail(
         proposalId = "wo-100",
         provider = provider,
@@ -318,34 +275,20 @@ class WorkOrderDetailRouteInstrumentedTest {
         estimatedDurationMinutes = 90,
     )
 
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface AuthSessionStoreEntryPoint {
-        fun authSessionStore(): AuthSessionStore
-    }
+    // ---------------------------------------------------------------
+    // Route-specific bindings + EntryPoints. Most of the boilerplate
+    // lives in [WirePinHarness] / its `testdi/` siblings; this
+    // section is only what this test needs beyond the defaults.
+    // ---------------------------------------------------------------
 
-    @EntryPoint
-    @InstallIn(SingletonComponent::class)
-    interface WorkOrderDetailRepositoryEntryPoint {
-        fun workOrderDetailRepository(): FakeWorkOrderDetailRepository
-    }
-
-    /**
-     * Production-style module that re-binds every port the
-     * WorkOrderDetailViewModel transitively depends on, using a
-     * fake / production stub so the test never touches the
-     * network. Every test class that uninstalls `RepositoryModule`
-     * must rebind these — including any future tests that
-     * exercise the chat / Mis Servicios / Home flows.
-     */
     @Module
     @InstallIn(SingletonComponent::class)
-    abstract class TestRepositoryBindings {
+    abstract class WorkOrderDetailRouteTestBindings {
 
         @Binds
         @Singleton
         abstract fun bindUserRepository(
-            repository: SuccessfulUserRepository,
+            repository: WirePinHarness.SuccessfulFakeUserRepository,
         ): UserRepository
 
         @Binds
@@ -357,13 +300,13 @@ class WorkOrderDetailRouteInstrumentedTest {
         @Binds
         @Singleton
         abstract fun bindCategoryRepository(
-            repository: StubCategoryRepository,
+            repository: WirePinHarness.StubCategoryRepository,
         ): CategoryRepository
 
         @Binds
         @Singleton
         abstract fun bindProviderRepository(
-            repository: StubProviderRepository,
+            repository: WirePinHarness.StubProviderRepository,
         ): ProviderRepository
 
         @Binds
@@ -396,7 +339,7 @@ class WorkOrderDetailRouteInstrumentedTest {
             repository: FakeTurnosRepository,
         ): TurnosRepository
 
-        @Binds
+@Binds
         @Singleton
         abstract fun bindWorkOrderDetailRepository(
             repository: FakeWorkOrderDetailRepository,
@@ -405,7 +348,7 @@ class WorkOrderDetailRouteInstrumentedTest {
 
     @Module
     @InstallIn(SingletonComponent::class)
-    object TestSessionPrefsModule {
+    object WorkOrderDetailRouteTestSessionPrefsModule {
         @Provides
         @Singleton
         fun provideSessionPrefs(
@@ -417,56 +360,15 @@ class WorkOrderDetailRouteInstrumentedTest {
             )
     }
 
-    @Singleton
-    class SuccessfulUserRepository @Inject constructor() : UserRepository {
-        override suspend fun registerConsumer(
-            data: com.loresuelvo.consumer.domain.auth.RegisterConsumerData,
-        ): UserRegistrationOutcome =
-            UserRegistrationOutcome.Failure.Network(IllegalStateException("not used in this test"))
-
-        override suspend fun getCurrentUser(): CurrentUserOutcome =
-            CurrentUserOutcome.Success(
-                User(
-                    displayName = "Andres",
-                    firstName = "Andres",
-                    lastName = "Colina",
-                    email = "andy@pro.com",
-                    address = RegisterConsumerAddress(
-                        street = "Calle Falsa",
-                        streetNumber = "123",
-                        floor = "2",
-                        unit = "A",
-                    ),
-                ),
-            )
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface AuthSessionStoreEntryPoint {
+        fun authSessionStore(): AuthSessionStore
     }
 
-    /**
-     * Minimal in-memory [CategoryRepository]. The
-     * `WorkOrderDetailRoute` does not exercise categories; this
-     * is bound only to satisfy Hilt's transitive dependencies
-     * for the `SingletonComponent` graph (other `@HiltViewModel`s
-     * referenced through `LoResuelvoNav` pull in
-     * `GetProvidersByCategoryUseCase` etc., which require this
-     * port to be resolvable). Tests that exercise category UI
-     * should override this with the project's `StubCategoryRepository`
-     * used in [WelcomeCategoriesInstrumentedTest].
-     */
-    @Singleton
-    class StubCategoryRepository @Inject constructor() : CategoryRepository {
-        override suspend fun getCategories() =
-            com.loresuelvo.consumer.domain.category.CategoriesOutcome.Success(emptyList())
-    }
-
-    /**
-     * Mirror of [StubCategoryRepository] for the provider port.
-     * `ProfessionalsViewModel` is the only `@HiltViewModel` we
-     * transitively pull in (via `Providers` tab in `LoResuelvoNav`).
-     * The route under test never drills into it.
-     */
-    @Singleton
-    class StubProviderRepository @Inject constructor() : ProviderRepository {
-        override suspend fun getProvidersByCategory(categoryId: Int) =
-            com.loresuelvo.consumer.domain.provider.ProvidersOutcome.Success(emptyList())
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface WorkOrderDetailRepositoryEntryPoint {
+        fun workOrderDetailRepository(): FakeWorkOrderDetailRepository
     }
 }
