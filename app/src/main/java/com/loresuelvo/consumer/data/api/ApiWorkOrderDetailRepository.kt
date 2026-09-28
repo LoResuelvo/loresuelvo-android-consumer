@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
@@ -92,4 +93,17 @@ class ApiWorkOrderDetailRepository @Inject constructor(
                     )
             }
         }
+
+    // TODO(US-30 phase 2): wire to BackendApi.submitWorkOrderReview
+    //  (DTO + endpoint land in the next commit). Today's stub keeps
+    //  the interface honest — any path that lands here is a wiring
+    //  gap and crashes loudly so the missing Phase 2 work is
+    //  caught before the screens start calling it.
+    override suspend fun submitReview(
+        workOrderId: String,
+        rating: Int,
+        description: String,
+    ): SubmitWorkOrderReviewOutcome {
+        TODO("Phase 2: call BackendApi.submitWorkOrderReview and map to SubmitWorkOrderReviewOutcome")
+    }
 }

@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.domain.usecase.workorder
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
@@ -128,7 +129,10 @@ class GetWorkOrderDetailUseCaseTest {
     /**
      * Port-level fake. Holds a single `WorkOrderDetail` or a
      * failure to assert the typed outcomes the use case passes
-     * through unchanged.
+     * through unchanged. The US-30 `submitReview` surface is
+     * stubbed here because this test only exercises the GET
+     * flow; the dedicated `RateProviderUseCaseTest` (commit 3)
+     * owns the real submission fake.
      */
     private class FakeWorkOrderDetailRepository(
         private val detail: WorkOrderDetail? = null,
@@ -144,5 +148,15 @@ class GetWorkOrderDetailUseCaseTest {
                 ?.let { GetWorkOrderOutcome.Found(it) }
                 ?: GetWorkOrderOutcome.NotFound
         }
+
+        override suspend fun submitReview(
+            workOrderId: String,
+            rating: Int,
+            description: String,
+        ): SubmitWorkOrderReviewOutcome =
+            SubmitWorkOrderReviewOutcome.Server(
+                code = 0,
+                message = "submitReview not exercised by this test",
+            )
     }
 }

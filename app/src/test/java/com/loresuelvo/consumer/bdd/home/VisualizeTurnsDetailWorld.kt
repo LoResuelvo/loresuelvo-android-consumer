@@ -6,6 +6,7 @@ import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseC
 import com.loresuelvo.consumer.domain.workorder.CompletionReport
 import com.loresuelvo.consumer.domain.workorder.CompletionReportPhoto
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
@@ -291,6 +292,20 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
                 ?.takeIf { it.proposalId == workOrderId }
                 ?.let { GetWorkOrderOutcome.Found(it) }
                 ?: GetWorkOrderOutcome.NotFound
+
+        // US-30 stub: this world only exercises the read-only
+        //  `getWorkOrderDetail` path. The calify-provider-service
+        //  BDD suite wires its own dedicated fake that queues the
+        //  success / failure outcomes.
+        override suspend fun submitReview(
+            workOrderId: String,
+            rating: Int,
+            description: String,
+        ): SubmitWorkOrderReviewOutcome =
+            SubmitWorkOrderReviewOutcome.Server(
+                code = 0,
+                message = "submitReview not configured for the visualize-turns-detail world",
+            )
     }
 
     companion object {

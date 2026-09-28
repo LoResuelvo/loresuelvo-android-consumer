@@ -46,4 +46,29 @@ interface WorkOrderDetailRepository {
         workOrderId: String,
         provider: WorkOrderDetailCounterpart? = null,
     ): GetWorkOrderOutcome
+
+    /**
+     * Submits the consumer's rating and optional comment for the
+     * work order identified by [workOrderId] (US-30
+     * `calify-provider-service`). Backs
+     * `POST /work-orders/{workOrderID}/review`.
+     *
+     * The backend returns the updated [WorkOrderDetail] on a 2xx;
+     * the `409 Conflict` response (the consumer already filed a
+     * review for this work order) maps to
+     * [SubmitWorkOrderReviewOutcome.AlreadyReviewed] so the VM can
+     * re-render the read-only Review section without guessing the
+     * HTTP code. Implementations never throw on HTTP / network
+     * failures.
+     *
+     * @param rating integer in `1..5`. Validation lives in the UI
+     *   composer (the wire layer trusts the caller).
+     * @param description free-form comment. Empty / blank is
+     *   permitted (the consumer can rate without commenting).
+     */
+    suspend fun submitReview(
+        workOrderId: String,
+        rating: Int,
+        description: String,
+    ): SubmitWorkOrderReviewOutcome
 }

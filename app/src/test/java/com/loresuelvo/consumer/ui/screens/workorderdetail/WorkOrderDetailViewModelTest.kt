@@ -10,6 +10,7 @@ import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
@@ -264,6 +265,19 @@ class WorkOrderDetailViewModelTest {
             workOrderId: String,
             provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
         ): GetWorkOrderOutcome = outcome
+
+        // US-30 stub: this VM test only covers the read flow.
+        //  The calify-provider VM tests (commit 12) get a dedicated
+        //  fake that records submissions and queues outcomes.
+        override suspend fun submitReview(
+            workOrderId: String,
+            rating: Int,
+            description: String,
+        ): SubmitWorkOrderReviewOutcome =
+            SubmitWorkOrderReviewOutcome.Server(
+                code = 0,
+                message = "submitReview not configured for this view-model test",
+            )
     }
 
     private class FakeCheckoutRepository(
