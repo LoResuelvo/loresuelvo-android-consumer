@@ -217,22 +217,6 @@ class CalifyProviderServiceWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Enqueues a typed `Server(503, …)` failure on the fake
-     * rate-provider repo so the next [submitRating] surfaces
-     * it on [ReviewComposerState.Editing.error]. Used by
-     * scenario 11-CT to assert the inline error copy after a
-     * backend-down response.
-     */
-    fun enqueueServerFailure() {
-        fakeRepo.enqueue(
-            SubmitWorkOrderReviewOutcome.Server(
-                code = 503,
-                message = "service unavailable",
-            ),
-        )
-    }
-
     /** Recorded VM emissions of [WorkOrderDetailUiState]. */
     fun observedStates(): List<WorkOrderDetailUiState> = observedStates.toList()
 
