@@ -71,7 +71,6 @@ Feature: Calificar trabajo terminado
     And no seleccioné ninguna estrella
     Then el botón "Enviar" está deshabilitado
 
-  @wip
   Scenario: 10-CT Deshabilitar calificación con saldo pendiente
     Given tengo una orden de trabajo con saldo pendiente
     When accedo al detalle de la orden
