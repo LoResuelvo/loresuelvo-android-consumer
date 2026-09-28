@@ -53,7 +53,6 @@ Feature: Calificar trabajo terminado
     And veo las 4 estrellas doradas en el detalle de la orden
     And no veo ningún comentario asociado
 
-  @wip
   Scenario: 07-CT Impedir calificar una orden ya reseñada
     Given tengo una orden de trabajo completamente pagada
     And la orden ya tiene una calificación realizada por el consumidor
