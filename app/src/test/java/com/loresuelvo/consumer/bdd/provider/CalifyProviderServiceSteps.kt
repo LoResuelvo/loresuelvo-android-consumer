@@ -377,31 +377,16 @@ class CalifyProviderServiceSteps {
     // ---- Scenario 05-CT ---------------------------------------
 
     /**
-     * Submitting the rating. The next
-     * [SubmitWorkOrderReviewOutcome] to enqueue defaults to a
-     * `Submitted` carrying the typed rating — callers can
-     * override via [withNextSubmitOutcome].
+     * Submitting the rating. The world pulls the next
+     * [SubmitWorkOrderReviewOutcome] from its queue (set
+     * via [enqueueServerFailure] in scenario 11-CT) or, when
+     * nothing is queued, defaults to a happy-path
+     * `Submitted` carrying the typed rating / description.
      */
     @When("selecciono {string}")
     fun seleccionoLabel(label: String) {
         when (label) {
-            "Enviar" -> {
-                // Default to a happy-path submission so the
-                // scenario can pin only the post-submit
-                // observable. Failure-path scenarios
-                // (11-CT) override via [withNextSubmitOutcome]
-                // before the step fires.
-                world.submitRating(
-                    SubmitWorkOrderReviewOutcome.Submitted(
-                        WorkOrderReview(
-                            rating = (world.lastReadyState()?.composer as? ReviewComposerState.Editing)
-                                ?.ratingDraft ?: 5,
-                            description = (world.lastReadyState()?.composer as? ReviewComposerState.Editing)
-                                ?.descriptionDraft ?: "",
-                        ),
-                    ),
-                )
-            }
+            "Enviar" -> world.submitRating()
             else -> fail("label '$label' has no submit handler yet")
         }
     }
@@ -740,22 +725,57 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 11-CT ---------------------------------------
+// ---- Scenario 11-CT ---------------------------------------
 
     /**
-     * US-30 scenario 11-CT: the rate-provider port returns a
-     * typed `Server` failure. The step is overloaded to
-     * enqueue the failure BEFORE [seleccionoLabel] fires,
-     * because the [Submit] handler reads the queued outcome
-     * at submit-time.
+     * US-30 scenario 11-CT packs the failure injection AND
+     * the submit into a single Gherkin step
+     * ("envío la calificación y el servicio no está
+     * disponible"). Enqueues a 503 `Server` outcome on the
+     * fake repo and immediately drives the VM through
+     * [CalifyProviderServiceWorld.submitRating] — the next
+     * observation carries the typed error stamp on the
+     * composer.
      */
     @When("envío la calificación y el servicio no está disponible")
     fun envioLaCalificacionYElServicioNoEstaDisponible() {
-        // No-op: the actual enqueue happens in [whenEnvioFallido].
-        // Kept as a marker so the Gherkin reads naturally.
+        world.enqueueServerFailure()
+        world.submitRating()
+    }
+
+    /**
+     * Asserts the inline server-error copy landed on the
+     * composer after the submit hit a 5xx backend.
+     */
+    @Then("veo un mensaje de error indicando que no se pudo registrar la calificación")
+    fun veoUnMensajeDeErrorIndicandoQueNoSePudoRegistrarLaCalificacion() {
+        val readyRaw = world.lastReadyState()
+        if (readyRaw == null) {
+            fail("expected Ready state, got ${world.observedStates()}")
+            return
+        }
+        val composerRaw = readyRaw.composer
+        if (composerRaw !is ReviewComposerState.Editing) {
+            fail("expected composer=Editing with the typed error stamp, got $composerRaw")
+            return
+        }
+        val error = composerRaw.error
+        if (error !is SubmitWorkOrderReviewOutcome.Server) {
+            fail("expected Server error stamp on the composer, got $error")
+            return
+        }
+        assertEquals(
+            "scenario 11-CT: a 5xx backend failure shows the typed server-error copy",
+            503,
+            error.code,
+        )
+        assertEquals(
+            "scenario 11-CT: submitting resets the in-flight flag so the consumer can retry",
+            false,
+            composerRaw.submitting,
+        )
     }
 }
-
     // ---- Helpers used by later commits ------------------------
     //
     // The world helpers `tapCalificar`, `selectStars`,

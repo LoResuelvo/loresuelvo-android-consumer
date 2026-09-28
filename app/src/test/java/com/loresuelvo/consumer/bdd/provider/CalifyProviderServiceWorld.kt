@@ -177,14 +177,23 @@ class CalifyProviderServiceWorld : AutoCloseable {
     }
 
     /**
-     * Taps "Enviar". Enqueues the next [SubmitWorkOrderReviewOutcome]
-     * the VM will receive back from the use case so the test
-     * can drive each failure / success branch deterministically.
+     * Taps "Enviar". The next [SubmitWorkOrderReviewOutcome]
+     * the VM receives is whatever was queued on the fake
+     * repo (enqueued via [enqueueServerFailure] in the
+     * failure-path scenario 11-CT) or, when nothing is
+     * queued, a happy-path `Submitted` carrying the typed
+     * rating / description (scenarios 05-CT / 06-CT).
      */
-    fun submitRating(next: SubmitWorkOrderReviewOutcome = SubmitWorkOrderReviewOutcome.Server(
-        code = 0,
-        message = "no outcome queued",
-    )) {
+    fun submitRating() {
+        val next = fakeRepo.queued
+            ?: SubmitWorkOrderReviewOutcome.Submitted(
+                WorkOrderReview(
+                    rating = (lastReadyState()?.composer as? ReviewComposerState.Editing)
+                        ?.ratingDraft ?: 5,
+                    description = (lastReadyState()?.composer as? ReviewComposerState.Editing)
+                        ?.descriptionDraft ?: "",
+                ),
+            )
         fakeRepo.enqueue(next)
         // Capture the error stamp the VM will surface post-submit
         // (Network / Server variants). For Submitted /
@@ -207,6 +216,23 @@ class CalifyProviderServiceWorld : AutoCloseable {
      * (US-30 scenarios 05-CT / 06-CT).
      */
     fun recordedSubmission(): Submission? = fakeRepo.lastSubmission
+
+    /**
+     * Enqueues a typed `Server(503, …)` failure on the fake
+     * rate-provider repo so the next call to
+     * [WorkOrderDetailViewModel.submitReview] returns it.
+     * The "envío la calificación y el servicio no está
+     * disponible" step uses this so the failing path
+     * arrives before the "selecciono Enviar" step fires.
+     */
+    fun enqueueServerFailure() {
+        fakeRepo.enqueue(
+            SubmitWorkOrderReviewOutcome.Server(
+                code = 503,
+                message = "service unavailable",
+            ),
+        )
+    }
 
     /**
      * Taps "Cancelar" inside the composer. Delegates to
@@ -272,7 +298,13 @@ class CalifyProviderServiceWorld : AutoCloseable {
      */
     private class FakeRepo : WorkOrderDetailRepository {
         private var seeded: WorkOrderDetail? = null
-        private var queued: SubmitWorkOrderReviewOutcome? = null
+        /**
+         * The next [SubmitWorkOrderReviewOutcome] the fake
+         * hands back on a [submitReview] call. Defaults to a
+         * happy-path `Submitted` so misuse trips a clear
+         * assertion rather than a silent default.
+         */
+        var queued: SubmitWorkOrderReviewOutcome? = null
         var lastSubmission: Submission? = null
             private set
 
