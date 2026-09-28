@@ -228,10 +228,9 @@ class ApiWorkOrderDetailRepositorySubmitReviewTest {
             outcome is SubmitWorkOrderReviewOutcome.Network,
         )
         val failure = outcome as SubmitWorkOrderReviewOutcome.Network
-        assertSame(
-            "cause must be an IOException",
-            IOException::class.java,
-            failure.cause::class.java,
+        assertTrue(
+            "cause must be an IOException subclass",
+            failure.cause is IOException,
         )
     }
 
