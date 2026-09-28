@@ -425,7 +425,7 @@ interface BackendApi {
     ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
 
     /**
-     * `POST /work-orders/{workOrderID}/review` — file the
+     * `POST /work-orders/{workOrderID}/reviews` — file the
      * consumer's rating and optional comment for a paid work
      * order (US-30 `calify-provider-service`). The backend
      * validates:
@@ -446,9 +446,16 @@ interface BackendApi {
      * domain type so the VM merges it into the cached
      * `WorkOrderDetail` via `copy(review = …)`.
      *
+     * Note: the path segment is plural (`reviews`) to match
+     * the backend REST convention — sub-resources under a
+     * parent resource are exposed as collections. This
+     * diverges from the early draft in US-30 which used the
+     * singular form; the route keeps the singular ID
+     * (`workOrderID`) inside the curly braces.
+     *
      * Requires Auth0 bearer auth.
      */
-    @POST("work-orders/{workOrderID}/review")
+    @POST("work-orders/{workOrderID}/reviews")
     suspend fun submitWorkOrderReview(
         @Path("workOrderID") workOrderID: String,
         @Body body: com.loresuelvo.consumer.data.api.dto.SubmitReviewRequestDto,

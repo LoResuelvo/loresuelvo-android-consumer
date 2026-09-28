@@ -98,7 +98,7 @@ class ApiWorkOrderDetailRepositorySubmitReviewTest {
 
         val recorded = server.takeRequest()
         assertEquals("POST", recorded.method)
-        assertEquals("/work-orders/wo-100/review", recorded.path)
+        assertEquals("/work-orders/wo-100/reviews", recorded.path)
         val sent = json.decodeFromString(
             SubmitReviewRequestDto.serializer(),
             recorded.body.readUtf8(),
@@ -284,7 +284,7 @@ class ApiWorkOrderDetailRepositorySubmitReviewTest {
 
         assertEquals(1, server.requestCount)
         val recorded = server.takeRequest()
-        assertEquals("/work-orders/wo-100/review", recorded.path)
+        assertEquals("/work-orders/wo-100/reviews", recorded.path)
         // And nothing is left queued.
         assertNull(server.takeRequest(100, TimeUnit.MILLISECONDS))
     }
