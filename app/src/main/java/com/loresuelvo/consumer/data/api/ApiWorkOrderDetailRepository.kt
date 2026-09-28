@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.data.api
 
+import com.loresuelvo.consumer.data.api.dto.SubmitReviewRequestDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
@@ -94,16 +95,60 @@ class ApiWorkOrderDetailRepository @Inject constructor(
             }
         }
 
-    // TODO(US-30 phase 2): wire to BackendApi.submitWorkOrderReview
-    //  (DTO + endpoint land in the next commit). Today's stub keeps
-    //  the interface honest — any path that lands here is a wiring
-    //  gap and crashes loudly so the missing Phase 2 work is
-    //  caught before the screens start calling it.
+    // Wires `POST /work-orders/{workOrderID}/review` (US-30
+    //  `calify-provider-service`). The 2xx response carries the
+    //  freshly stored [com.loresuelvo.consumer.data.api.dto.ReviewDto],
+    //  which mirrors the `review` block of `GET /work-orders/{id}`.
+    //  The VM merges it into the cached `WorkOrderDetail` so the
+    //  composer hands off to the read-only [ReviewSection].
+    //
+    //  Error mapping mirrors `getWorkOrderDetail`:
+    //   - `409 Conflict` ("already reviewed") → [AlreadyReviewed]
+    //     so the UI can swap directly to the read-only surface
+    //     without branching on a magic HTTP code.
+    //   - other non-2xx → [Server] (the screen surfaces the
+    //     server-error copy).
+    //   - `IOException` → [Network] via [toApiError].
+    //   - `401 Unauthorized` → [Server(code = 401, …)]; the
+    //     session layer observes the auth event out of band.
+    //
+    //  Never throws.
     override suspend fun submitReview(
         workOrderId: String,
         rating: Int,
         description: String,
-    ): SubmitWorkOrderReviewOutcome {
-        TODO("Phase 2: call BackendApi.submitWorkOrderReview and map to SubmitWorkOrderReviewOutcome")
+    ): SubmitWorkOrderReviewOutcome = try {
+        val dto = backendApi.submitWorkOrderReview(
+            workOrderID = workOrderId,
+            body = SubmitReviewRequestDto(
+                rating = rating,
+                description = description,
+            ),
+        )
+        SubmitWorkOrderReviewOutcome.Submitted(dto.toDomain())
+    } catch (e: Throwable) {
+        when (val error = e.toApiError()) {
+            is ApiError.Server -> when (error.code) {
+                409 ->
+                    SubmitWorkOrderReviewOutcome.AlreadyReviewed(error.errorMessage)
+                else ->
+                    SubmitWorkOrderReviewOutcome.Server(
+                        code = error.code,
+                        message = error.errorMessage,
+                    )
+            }
+            is ApiError.Network ->
+                SubmitWorkOrderReviewOutcome.Network(error.networkCause)
+            is ApiError.Unauthorized ->
+                SubmitWorkOrderReviewOutcome.Server(
+                    code = 401,
+                    message = error.errorMessage,
+                )
+            is ApiError.Unknown ->
+                SubmitWorkOrderReviewOutcome.Server(
+                    code = 0,
+                    message = error.message ?: "Unknown error",
+                )
+        }
     }
 }

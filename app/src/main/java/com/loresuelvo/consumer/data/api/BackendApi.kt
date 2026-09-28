@@ -425,6 +425,36 @@ interface BackendApi {
     ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
 
     /**
+     * `POST /work-orders/{workOrderID}/review` — file the
+     * consumer's rating and optional comment for a paid work
+     * order (US-30 `calify-provider-service`). The backend
+     * validates:
+     *
+     *  - work order exists and is in `paid` state;
+     *  - `rating` is in `1..5`;
+     *  - `description` is ≤500 chars;
+     *  - the consumer has not already filed a review (a second
+     *    submission for the same work order returns
+     *    `409 Conflict` and the adapter maps it to
+     *    [com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.AlreadyReviewed]).
+     *
+     * On a 2xx the endpoint echoes back the freshly stored
+     * [com.loresuelvo.consumer.data.api.dto.ReviewDto] (same
+     * shape as the `review` block of
+     * `GET /work-orders/{workOrderID}`). The adapter maps it
+     * 1:1 into the [com.loresuelvo.consumer.domain.workorder.WorkOrderReview]
+     * domain type so the VM merges it into the cached
+     * `WorkOrderDetail` via `copy(review = …)`.
+     *
+     * Requires Auth0 bearer auth.
+     */
+    @POST("work-orders/{workOrderID}/review")
+    suspend fun submitWorkOrderReview(
+        @Path("workOrderID") workOrderID: String,
+        @Body body: com.loresuelvo.consumer.data.api.dto.SubmitReviewRequestDto,
+    ): com.loresuelvo.consumer.data.api.dto.ReviewDto
+
+    /**
      * `GET /payment-intents/{paymentIntentID}` — read the current
      * status of a payment intent. Used by the post-redirect
      * polling loop (US-21 confirmation flow + US-28 service-balance
