@@ -75,6 +75,15 @@ interface BackendApi {
     @GET("providers")
     suspend fun getProviders(@Query("category_id") categoryId: Int): List<ProviderDto>
 
+    /**
+     * `GET /providers/{providerID}` — public provider profile,
+     * reputation summary and completed work history.
+     */
+    @GET("providers/{providerID}")
+    suspend fun getProviderProfile(
+        @Path("providerID") providerID: Int,
+    ): com.loresuelvo.consumer.data.api.dto.ProviderProfileDto
+
     // ---- AI diagnostic chat (added in commit 02-DIA) ---------------
 
     /**
