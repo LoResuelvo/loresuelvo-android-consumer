@@ -26,7 +26,6 @@ Feature: Calificar trabajo terminado
     Then veo 4 estrellas seleccionadas
     And el botón "Enviar" queda habilitado
 
-  @wip
   Scenario: 04-CT Ingresar comentario de la calificación
     Given tengo abierto el formulario de calificación
     And seleccioné 5 estrellas

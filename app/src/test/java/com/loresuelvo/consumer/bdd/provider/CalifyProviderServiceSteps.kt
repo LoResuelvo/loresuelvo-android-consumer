@@ -246,6 +246,17 @@ class CalifyProviderServiceSteps {
     }
 
     /**
+     * Past-tense variant of [seleccionoNEstrellas] used by
+     * scenarios that compose Given/And steps that already
+     * had a value (US-30 scenarios 04-CT, 05-CT, 06-CT,
+     * 11-CT).
+     */
+    @Given("seleccioné {int} estrellas")
+    fun seleccioneNEstrellas(n: Int) {
+        world.selectStars(n)
+    }
+
+    /**
      * After tapping the `n`-th star, the typed rating draft
      * matches.
      */
