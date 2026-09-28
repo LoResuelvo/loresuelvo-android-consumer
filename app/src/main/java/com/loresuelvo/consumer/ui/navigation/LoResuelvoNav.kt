@@ -964,6 +964,17 @@ private fun WorkOrderDetailRoute(
         onRetry = { viewModel.load(workOrderId, provider) },
         onBackClick = { navController.popBackStack() },
         onPayNow = { viewModel.payNow(workOrderId) },
+        // US-30 `calify-provider-service` — wire every composer
+        // callback into the VM. Without these the
+        // "Calificar servicio" CTA and the in-place
+        // `ReviewComposerSection` are dead weight — the
+        // screen's default `{}` callbacks silently swallow
+        // every tap.
+        onOpenReviewForm = { viewModel.openReviewComposer() },
+        onRatingChange = { viewModel.onRatingChange(it) },
+        onDescriptionChange = { viewModel.onDescriptionChange(it) },
+        onSubmitReview = { viewModel.submitReview() },
+        onCancelReview = { viewModel.cancelReviewComposer() },
     )
 }
 
