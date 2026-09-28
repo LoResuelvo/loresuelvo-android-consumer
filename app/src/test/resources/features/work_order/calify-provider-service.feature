@@ -60,7 +60,6 @@ Feature: Calificar trabajo terminado
     Then veo la calificación realizada
     And no veo la opción "Calificar servicio"
 
-  @wip
   Scenario: 08-CT Limitar comentario a 500 caracteres
     Given tengo abierto el formulario de calificación
     When ingreso un comentario de 600 caracteres
