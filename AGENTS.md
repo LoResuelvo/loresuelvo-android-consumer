@@ -1,6 +1,6 @@
 # AGENTS.md — LoResuelvo Android Consumer
 
-Última actualización: 2026-09-21 (US-27 `visualize-turns-detail` completa: 9 escenarios destageados — 02-VTD deferido a otra US; dominio `WorkOrderDetail`/`WorkOrderDetailCounterpart`/`CompletionReport`/`CompletionReportPhoto`/`WorkOrderReview`; `TurnoStatus` extendido con `AwaitingPayment` + `Paid`; ruta `Route.WorkOrderDetail`; screen `WorkOrderDetailScreen` con pay CTA + lightbox de fotos; `CheckoutSessionRepository.startWorkOrderCheckout`; `StartWorkOrderCheckoutUseCase`; `FullScreenImageViewer` extraído a `ui/components/images/`)
+Última actualización: 2026-09-29 (US-27 `visualize-turns-detail` completa: 9 escenarios destageados — 02-VTD deferido a otra US; dominio `WorkOrderDetail`/`WorkOrderDetailCounterpart`/`CompletionReport`/`CompletionReportPhoto`/`WorkOrderReview`; `TurnoStatus` extendido con `AwaitingPayment` + `Paid`; ruta `Route.WorkOrderDetail`; screen `WorkOrderDetailScreen` con pay CTA + lightbox de fotos; `CheckoutSessionRepository.startWorkOrderCheckout`; `StartWorkOrderCheckoutUseCase`; `FullScreenImageViewer` extraído a `ui/components/images/`)
 
 Fuente canónica para agentes. Leer este archivo primero y cargar skills locales solo cuando apliquen. La documentación para humanos vive en `README.md` (setup y comandos).
 
@@ -158,6 +158,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - `skills/android-api-client-governance` — DTOs, mappers, `ApiClient`, `AuthInterceptor`, `ApiError`.
 - `skills/android-hilt-governance` — Módulos, scopes, `@HiltViewModel`, `hiltViewModel()`, tests con Hilt.
 - `skills/android-doc-governance` — Mantenimiento de `AGENTS.md`, `CLAUDE.md`, `README.md`, skills.
+- `skills/firebase-app-distribution` — Configuración y troubleshooting de distribución APK staging mediante Firebase App Distribution y GitHub Actions.
 - `skills/android-commit-governance` — Commit format `<type>[<us_number>]: <message>`, in English, with atomic PRs.
 - `skills/android-image-upload-flow` — Patrón de upload (FilePurpose → presign/upload/confirm → use case → ViewModel).
 
@@ -171,6 +172,7 @@ README.md                                    # Setup + comandos + troubleshootin
 - "Voy a tocar el cliente HTTP, DTOs, mappers, interceptors": `android-api-client-governance`.
 - "Voy a agregar un módulo Hilt, un `@HiltViewModel`, o un test con Hilt": `android-hilt-governance`.
 - "Voy a tocar `AGENTS.md`, `CLAUDE.md`, skills o `README.md`": `android-doc-governance`.
+- "Voy a distribuir el APK Android por Firebase App Distribution": `firebase-app-distribution`.
 - "Voy a hacer commit o PR": `android-commit-governance`.
 - "Voy a agregar o modificar un flujo que sube archivos (imagen/audio/video)": `android-image-upload-flow`.
 

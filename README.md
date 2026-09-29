@@ -200,6 +200,47 @@ Pixel 2 API 35 prewarming con el snapshot `ci-clean`, restaurado desde cache,
 para reducir el tiempo de arranque. Si se cambia la configuración del AVD, hay
 que ejecutar manualmente `Bootstrap CI AVD` e incrementar `cache_version`.
 
+### Distribución de staging en Firebase App Distribution
+
+El workflow [`release.yml`](.github/workflows/release.yml) se ejecuta al
+pushear un tag `v*.*.*`. En un mismo flujo:
+
+1. Ejecuta los tests JVM de staging y construye el APK
+   `com.loresuelvo.consumer.staging`.
+2. Publica automáticamente el APK en Firebase App Distribution para el grupo
+   de testers configurado.
+3. Deja el job de producción detrás del Environment `production`, que conserva
+   la aprobación manual actual y descarga el AAB generado.
+
+Configuración requerida en GitHub, dentro del Environment `staging`:
+
+- Secret `FIREBASE_SERVICE_ACCOUNT_JSON`: JSON completo de una cuenta de
+  servicio con rol **Firebase App Distribution Admin**.
+- Variable `FIREBASE_APP_ID_STAGING`: App ID de la aplicación Android de
+  Firebase, no el package name.
+- Variable `FIREBASE_TESTERS_STAGING`: alias del grupo de testers, por ejemplo
+  `facultad-staging`.
+- Variables `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING` y
+  `AUTH0_SCHEME_ANDROID_CONSUMER_STAGING` para la aplicación nativa de Auth0.
+
+El JSON de la cuenta de servicio no se commitea y no hace falta
+`google-services.json` para subir APKs mediante la CLI de Firebase. El
+workflow lo escribe temporalmente en el runner usando
+`GOOGLE_APPLICATION_CREDENTIALS`.
+
+Para publicar una versión:
+
+```bash
+git push origin main
+git tag -a v0.22.2 -m "Release v0.22.2"
+git push origin v0.22.2
+```
+
+La invitación y el enlace de instalación llegan a los testers configurados en
+Firebase App Distribution. Consultá la skill
+[`firebase-app-distribution`](skills/firebase-app-distribution/SKILL.md) para
+diagnóstico de permisos, App ID, grupos y credenciales.
+
 ---
 
 ## Licencia
