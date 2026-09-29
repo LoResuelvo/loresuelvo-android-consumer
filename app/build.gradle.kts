@@ -144,8 +144,11 @@ android {
             versionNameSuffix = "-staging"
 
             val auth0Domain = envVar("AUTH0_DOMAIN_STAGING")
-            val auth0ClientId = envVar("AUTH0_CLIENT_ID_STAGING")
-            val auth0Scheme = envVar("AUTH0_SCHEME_STAGING", "com.loresuelvo.consumer.staging")
+            val auth0ClientId = envVar("AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING")
+            val auth0Scheme = envVar(
+                "AUTH0_SCHEME_ANDROID_CONSUMER_STAGING",
+                "com.loresuelvo.consumer.staging",
+            )
             val auth0Audience = envVar("AUTH0_AUDIENCE_STAGING")
             val apiUrl = envVar("API_URL_STAGING")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_STAGING")
@@ -201,8 +204,8 @@ gradle.taskGraph.whenReady {
     val runningTasks = allTasks.map { it.name }
 
     val requiredForStaging = listOf(
-        "AUTH0_DOMAIN_STAGING", "AUTH0_CLIENT_ID_STAGING",
-        "AUTH0_SCHEME_STAGING", "AUTH0_AUDIENCE_STAGING", "API_URL_STAGING"
+        "AUTH0_DOMAIN_STAGING", "AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING",
+        "AUTH0_SCHEME_ANDROID_CONSUMER_STAGING", "AUTH0_AUDIENCE_STAGING", "API_URL_STAGING"
     )
     val requiredForProd = listOf(
         "AUTH0_DOMAIN_PROD", "AUTH0_CLIENT_ID_PROD",

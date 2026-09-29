@@ -11,6 +11,7 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: staging
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,10 +39,10 @@ jobs:
           # STAGING
           # ==========================================
           AUTH0_DOMAIN_STAGING=${{ secrets.AUTH0_DOMAIN_STAGING }}
-          AUTH0_CLIENT_ID_STAGING=${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING=${{ vars.AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING }}
           AUTH0_CLIENT_SECRET_STAGING=${{ secrets.AUTH0_CLIENT_SECRET_STAGING }}
           AUTH0_AUDIENCE_STAGING=${{ secrets.AUTH0_AUDIENCE_STAGING }}
-          AUTH0_SCHEME_STAGING=com.loresuelvo.consumer.staging
+          AUTH0_SCHEME_ANDROID_CONSUMER_STAGING=${{ vars.AUTH0_SCHEME_ANDROID_CONSUMER_STAGING }}
           API_URL_STAGING=${{ secrets.API_URL_STAGING }}
           PUBLIC_MEDIA_BASE_URL_STAGING=${{ secrets.NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_STAGING }}
 

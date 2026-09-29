@@ -47,7 +47,7 @@ sdkmanager --version
    ```
    `AUTH0_AUDIENCE` es el identificador lógico de la API registrado en Auth0; no tiene que ser una URL alcanzable. En un teléfono físico, `API_URL` sí debe apuntar a una dirección alcanzable de la PC, por ejemplo `http://192.168.1.41:8080`.
 
-   Para `staging` y `prod`, usar `AUTH0_DOMAIN_STAGING`, `AUTH0_CLIENT_ID_STAGING`, `AUTH0_SCHEME_STAGING`, `AUTH0_AUDIENCE_STAGING`, `API_URL_STAGING`, etc.
+   Para `staging`, la app Android nativa usa `AUTH0_DOMAIN_STAGING`, `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING`, `AUTH0_SCHEME_ANDROID_CONSUMER_STAGING`, `AUTH0_AUDIENCE_STAGING`, `API_URL_STAGING`, etc. Para `prod`, usar los equivalentes con sufijo `_PROD`.
 3. `./gradlew :app:assembleDevDebug` para verificar que compila.
 
 ---
