@@ -220,8 +220,12 @@ Configuración requerida en GitHub, dentro del Environment `staging`:
   Firebase, no el package name.
 - Variable `FIREBASE_TESTERS_STAGING`: alias del grupo de testers, por ejemplo
   `facultad-staging`.
-- Variables `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING` y
-  `AUTH0_SCHEME_ANDROID_CONSUMER_STAGING` para la aplicación nativa de Auth0.
+
+Además, en **Settings → Secrets and variables → Actions → Variables** del
+repositorio, configurar `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING` y
+`AUTH0_SCHEME_ANDROID_CONSUMER_STAGING` para la aplicación nativa de Auth0.
+No deben quedar solamente dentro del Environment `staging`, porque el
+workflow de CI no usa ese Environment.
 
 El JSON de la cuenta de servicio no se commitea y no hace falta
 `google-services.json` para subir APKs mediante la CLI de Firebase. El

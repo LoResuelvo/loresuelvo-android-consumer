@@ -25,13 +25,21 @@ pipeline.
 
 ## Required GitHub configuration
 
-Configure these in the `staging` Environment:
+Configure the Firebase entries in the `staging` Environment:
 
 - Secret: `FIREBASE_SERVICE_ACCOUNT_JSON`, containing the complete downloaded
   service-account JSON.
 - Variables: `FIREBASE_APP_ID_STAGING` and `FIREBASE_TESTERS_STAGING`.
-- Android Auth0 variables: `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING` and
-  `AUTH0_SCHEME_ANDROID_CONSUMER_STAGING`.
+
+Configure the Android Auth0 values as repository-level Actions Variables:
+
+- `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING`
+- `AUTH0_SCHEME_ANDROID_CONSUMER_STAGING`
+
+They are public app configuration, not secrets. Repository scope is required
+because the normal CI workflow builds staging without selecting an Environment;
+the release workflow can read the same variables while using the `staging`
+Environment for Firebase credentials.
 
 The service account needs the Firebase App Distribution Admin role. The
 workflow writes the JSON only to `$RUNNER_TEMP`, exposes it through

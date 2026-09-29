@@ -62,10 +62,10 @@ jobs:
       - name: Ejecutar Lint y Unit Tests
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
-          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
+          AUTH0_SCHEME_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_SCHEME_ANDROID_CONSUMER_STAGING }}
         run: |
           make lint FLAVOR=Staging
           make test FLAVOR=Staging
@@ -145,10 +145,10 @@ jobs:
       - name: Build instrumented artifacts
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
-          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
+          AUTH0_SCHEME_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_SCHEME_ANDROID_CONSUMER_STAGING }}
         run: ./gradlew assembleStagingDebug assembleStagingDebugAndroidTest
 
       - name: Timing instrumented build end
@@ -159,10 +159,10 @@ jobs:
           AVD_CACHE_HIT: ${{ steps.avd-cache.outputs.cache-hit || 'false' }}
           GRADLE_OPTS: -Dorg.gradle.logging.level=info
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
-          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
+          AUTH0_SCHEME_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_SCHEME_ANDROID_CONSUMER_STAGING }}
         uses: ReactiveCircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -207,8 +207,8 @@ jobs:
       - name: Build APK
         env:
           AUTH0_DOMAIN_STAGING: ${{ secrets.AUTH0_DOMAIN_STAGING }}
-          AUTH0_CLIENT_ID_STAGING: ${{ secrets.AUTH0_CLIENT_ID_STAGING }}
+          AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING }}
           AUTH0_AUDIENCE_STAGING: ${{ secrets.AUTH0_AUDIENCE_STAGING }}
           API_URL_STAGING: ${{ secrets.API_URL_STAGING }}
-          AUTH0_SCHEME_STAGING: "com.loresuelvo.consumer.staging"
+          AUTH0_SCHEME_ANDROID_CONSUMER_STAGING: ${{ vars.AUTH0_SCHEME_ANDROID_CONSUMER_STAGING }}
         run: make build FLAVOR=Staging
