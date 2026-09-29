@@ -14,3 +14,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Local Firebase service-account private keys (never commit)
+**/*service-account*.json
+/loresuelvo-staging-*.json

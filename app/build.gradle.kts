@@ -37,6 +37,9 @@ fun envVar(name: String, default: String = ""): String {
         ?: default
 }
 
+val configuredVersionCode = envVar("VERSION_CODE", "20").toInt()
+val configuredVersionName = envVar("VERSION_NAME", "0.22.1")
+
 android {
     flavorDimensions += "environment"
     namespace = "com.loresuelvo.consumer"
@@ -46,8 +49,8 @@ android {
         applicationId = "com.loresuelvo.consumer"
         minSdk = 24
         targetSdk = 35
-        versionCode = 20
-        versionName = "0.20.0"
+        versionCode = configuredVersionCode
+        versionName = configuredVersionName
 
         // Added in Fase 1: HiltTestRunner for instrumented tests with Hilt
         testInstrumentationRunner = "com.loresuelvo.consumer.HiltTestRunner"

@@ -24,6 +24,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Set build version
+        shell: bash
+        run: |
+          echo "VERSION_CODE=$((200000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
       - name: Create Gradle Properties
         run: |
           mkdir -p ~/.gradle
@@ -51,17 +57,14 @@ jobs:
           PUBLIC_MEDIA_BASE_URL_PROD=${{ secrets.NEXT_PUBLIC_PUBLIC_MEDIA_BASE_URL_PROD }}
           EOF
 
-      - name: Build Staging APK
-        run: ./gradlew assembleStagingRelease
-
-      - name: Build Production Bundle
-        run: ./gradlew bundleProdRelease
+      - name: Run staging JVM tests and build artifacts
+        run: ./gradlew :app:testStagingDebugUnitTest :app:assembleStagingDebug :app:bundleProdRelease --no-daemon
 
       - name: Upload Staging APK
         uses: actions/upload-artifact@v4
         with:
           name: staging-apk
-          path: app/build/outputs/apk/staging/release/*.apk
+          path: app/build/outputs/apk/staging/debug/*.apk
 
       - name: Upload Production Bundle
         uses: actions/upload-artifact@v4
@@ -80,10 +83,40 @@ jobs:
           name: staging-apk
           path: artifacts
 
-      - name: Show generated artifact
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools
+
+      - name: Configure Firebase credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        shell: bash
         run: |
-          echo "Staging release generated successfully"
-          ls -la artifacts
+          credentials_file="$RUNNER_TEMP/firebase-service-account.json"
+          umask 077
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$credentials_file"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$credentials_file" >> "$GITHUB_ENV"
+
+      - name: Upload staging APK to Firebase App Distribution
+        env:
+          FIREBASE_APP_ID_STAGING: ${{ vars.FIREBASE_APP_ID_STAGING }}
+          FIREBASE_TESTERS_STAGING: ${{ vars.FIREBASE_TESTERS_STAGING }}
+        shell: bash
+        run: |
+          test -n "$FIREBASE_APP_ID_STAGING"
+          test -n "$FIREBASE_TESTERS_STAGING"
+
+          apk_path="$(find artifacts -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$apk_path"
+
+          firebase appdistribution:distribute "$apk_path" \
+            --app "$FIREBASE_APP_ID_STAGING" \
+            --groups "$FIREBASE_TESTERS_STAGING" \
+            --release-notes "Staging ${GITHUB_REF_NAME} (${GITHUB_SHA::7})"
 
   release-prod:
     needs: release-staging
