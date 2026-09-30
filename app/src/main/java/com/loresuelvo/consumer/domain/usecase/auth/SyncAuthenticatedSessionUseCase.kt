@@ -16,8 +16,9 @@ class SyncAuthenticatedSessionUseCase @Inject constructor(
     suspend operator fun invoke(
         authenticatedSession: AuthSession,
     ): SessionSynchronizationOutcome {
-        // The interceptor needs the new token before it can resolve /me.
-        sessionStore.saveSession(authenticatedSession)
+        // The interceptor needs the new token before it can resolve /me,
+        // but navigation must wait until synchronization has completed.
+        sessionStore.persistSession(authenticatedSession)
 
         return when (val outcome = userRepository.getCurrentUser()) {
             is CurrentUserOutcome.Success -> {
@@ -25,8 +26,10 @@ class SyncAuthenticatedSessionUseCase @Inject constructor(
                 sessionStore.saveSession(synchronized)
                 SessionSynchronizationOutcome.Success(synchronized)
             }
-            CurrentUserOutcome.NotFound ->
+            CurrentUserOutcome.NotFound -> {
+                sessionStore.saveSession(authenticatedSession)
                 SessionSynchronizationOutcome.Success(authenticatedSession)
+            }
             is CurrentUserOutcome.Failure.Network -> {
                 sessionStore.clearSession()
                 SessionSynchronizationOutcome.Failure.Network(outcome.cause)

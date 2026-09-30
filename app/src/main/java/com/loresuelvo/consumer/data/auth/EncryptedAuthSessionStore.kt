@@ -46,7 +46,7 @@ class EncryptedAuthSessionStore @Inject constructor(
 
     override fun getSession(): AuthSession? = readSession()
 
-    override fun saveSession(session: AuthSession) {
+    override fun persistSession(session: AuthSession) {
         preferences
             .edit()
             .putString(KEY_DISPLAY_NAME, session.user.displayName)
@@ -59,7 +59,10 @@ class EncryptedAuthSessionStore @Inject constructor(
             .putString(KEY_ADDRESS_FLOOR, session.user.address?.floor)
             .putString(KEY_ADDRESS_UNIT, session.user.address?.unit)
             .commit()
+    }
 
+    override fun saveSession(session: AuthSession) {
+        persistSession(session)
         _sessionFlow.value = session
     }
 

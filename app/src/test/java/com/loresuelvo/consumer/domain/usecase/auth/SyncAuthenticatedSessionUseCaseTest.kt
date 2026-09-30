@@ -11,6 +11,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,7 +51,8 @@ class SyncAuthenticatedSessionUseCaseTest {
 
         assertTrue(outcome is SessionSynchronizationOutcome.Success)
         val savedSessions = mutableListOf<AuthSession>()
-        verify(exactly = 2) { sessionStore.saveSession(capture(savedSessions)) }
+        verify { sessionStore.persistSession(auth0Session) }
+        verify(exactly = 1) { sessionStore.saveSession(capture(savedSessions)) }
         assertEquals(persistedUser, savedSessions.last().user)
         assertTrue(savedSessions.last().user.isProfileComplete())
     }
@@ -61,6 +64,7 @@ class SyncAuthenticatedSessionUseCaseTest {
         val outcome = useCase(auth0Session)
 
         assertTrue(outcome is SessionSynchronizationOutcome.Success)
+        verify { sessionStore.persistSession(auth0Session) }
         val saved = slot<AuthSession>()
         verify(exactly = 1) { sessionStore.saveSession(capture(saved)) }
         assertEquals(auth0Session, saved.captured)
@@ -75,7 +79,33 @@ class SyncAuthenticatedSessionUseCaseTest {
         val outcome = useCase(auth0Session)
 
         assertTrue(outcome is SessionSynchronizationOutcome.Failure.Network)
-        verify { sessionStore.saveSession(auth0Session) }
+        verify { sessionStore.persistSession(auth0Session) }
         verify { sessionStore.clearSession() }
+    }
+
+    @Test
+    fun keeps_session_hidden_until_backend_sync_finishes() = runTest {
+        val flow = kotlinx.coroutines.flow.MutableStateFlow<AuthSession?>(null)
+        every { sessionStore.sessionFlow } returns flow
+        every { sessionStore.persistSession(any()) } answers { }
+        every { sessionStore.saveSession(any()) } answers {
+            flow.value = auth0Session
+        }
+
+        val started = CompletableDeferred<Unit>()
+        val response = CompletableDeferred<CurrentUserOutcome>()
+        coEvery { repository.getCurrentUser() } coAnswers {
+            started.complete(Unit)
+            response.await()
+        }
+
+        val job = launch { useCase(auth0Session) }
+        started.await()
+        assertEquals(null, flow.value)
+
+        response.complete(CurrentUserOutcome.NotFound)
+        job.join()
+
+        assertEquals(auth0Session, flow.value)
     }
 }

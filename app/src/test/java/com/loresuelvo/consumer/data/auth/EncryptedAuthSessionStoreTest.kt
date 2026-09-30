@@ -92,6 +92,27 @@ class EncryptedAuthSessionStoreTest {
     }
 
     @Test
+    fun persists_session_without_publishing_it_until_sync_finishes() {
+        val store = EncryptedAuthSessionStore(plainSharedPrefs())
+        val session = AuthSession(
+            user = User(
+                displayName = "Andres",
+                email = "andy@pro.com",
+            ),
+            accessToken = "fake-token",
+        )
+
+        store.persistSession(session)
+
+        assertNull(store.sessionFlow.value)
+        assertEquals(session, store.getSession())
+
+        store.saveSession(session)
+
+        assertEquals(session, store.sessionFlow.value)
+    }
+
+    @Test
     fun second_store_sees_the_session_written_by_the_first() {
         // Persistence contract: a fresh store instance, reading from
         // the same SharedPreferences file, sees the session written

@@ -17,7 +17,6 @@ import javax.inject.Named
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -59,17 +58,6 @@ object NetworkModule {
         .callTimeout(ApiConfig.CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .addInterceptor(authInterceptor)
         .also {
-            // Body-level logging in debug builds. Without this interceptor
-            // we'd have no visibility into what /consumers actually sent or
-            // got back when debugging Auth0 + JWT issues in the welcome
-            // flow. Throttled to debug builds (BuildConfig.DEBUG is
-            // generated; missing here would be a compile error).
-            if (BuildConfig.DEBUG) {
-                val logger = HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
-                }
-                it.addInterceptor(logger)
-            }
             // Mock the "Mis Turnos" surface so it can be exercised
             // manually on a real device / emulator without a live
             // backend. Gated by the flavor-specific
@@ -132,14 +120,6 @@ object NetworkModule {
         .readTimeout(ApiConfig.READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .writeTimeout(ApiConfig.WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .callTimeout(ApiConfig.CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .also {
-            if (BuildConfig.DEBUG) {
-                val logger = HttpLoggingInterceptor().apply {
-                    level = HttpLoggingInterceptor.Level.BODY
-                }
-                it.addInterceptor(logger)
-            }
-        }
         .build()
 
     @Provides
