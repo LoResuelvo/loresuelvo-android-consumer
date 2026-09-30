@@ -372,9 +372,18 @@ class CompleteProfileScreenInstrumentedTest {
     }
 
     @Singleton
-    class SuccessfulUserRepository @Inject constructor() : UserRepository {
+    class SuccessfulUserRepository @Inject constructor(
+        private val sessionStore: AuthSessionStore,
+    ) : UserRepository {
         override suspend fun getCurrentUser(): com.loresuelvo.consumer.domain.auth.CurrentUserOutcome =
-            com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.NotFound
+            sessionStore.sessionFlow.value
+                ?.takeIf { it.user.isProfileComplete() }
+                ?.let { session ->
+                    com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.Success(
+                        session.user,
+                    )
+                }
+                ?: com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.NotFound
 
         override suspend fun registerConsumer(
             data: RegisterConsumerData,
