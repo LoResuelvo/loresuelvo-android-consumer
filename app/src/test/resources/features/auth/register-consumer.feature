@@ -51,6 +51,16 @@ Feature: Complete consumer profile on first login
     And the "Continuar" button is enabled again
     And the app signals "Navigate to Home"
 
+  @wip
+  Scenario: Complete profile keeps its observable flow through the action dispatcher
+    Given the backend will accept the registration
+    When I type "Juan" in the first name field
+    And I type "Pérez" in the last name field
+    And I tap the "Continuar" button
+    Then a POST is sent to "/consumers" with first name "Juan" and last name "Pérez"
+    And the "Continuar" button is enabled again
+    And the app signals "Navigate to Home"
+
   # --- Backend failures: visible errors, no navigation ----------------
 
   Scenario: A 401 from the backend clears the session and shows a "session expired" error
