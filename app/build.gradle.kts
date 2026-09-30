@@ -37,6 +37,15 @@ fun envVar(name: String, default: String = ""): String {
         ?: default
 }
 
+// Auth0 Android needs the bare host for both the SDK and its manifest intent
+// filter. Shared web configuration may include the URL scheme, so normalize
+// it only at the Android build boundary.
+fun auth0Domain(name: String, default: String = ""): String =
+    envVar(name, default)
+        .trim()
+        .replaceFirst(Regex("^https?://"), "")
+        .trimEnd('/')
+
 val configuredVersionCode = envVar("VERSION_CODE", "20").toInt()
 val configuredVersionName = envVar("VERSION_NAME", "0.22.1")
 
@@ -116,7 +125,7 @@ android {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
 
-            val auth0Domain = envVar("AUTH0_DOMAIN", "loresuelvo-dev.auth0.com")
+            val auth0Domain = auth0Domain("AUTH0_DOMAIN", "loresuelvo-dev.auth0.com")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID")
             val auth0Scheme = envVar("AUTH0_SCHEME", "com.loresuelvo.consumer")
             val auth0Audience = envVar("AUTH0_AUDIENCE", "http://localhost:8080")
@@ -143,7 +152,7 @@ android {
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
 
-            val auth0Domain = envVar("AUTH0_DOMAIN_STAGING")
+            val auth0Domain = auth0Domain("AUTH0_DOMAIN_STAGING")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING")
             val auth0Scheme = envVar(
                 "AUTH0_SCHEME_ANDROID_CONSUMER_STAGING",
@@ -172,7 +181,7 @@ android {
             dimension = "environment"
             // sin suffix: este va a Play Store
 
-            val auth0Domain = envVar("AUTH0_DOMAIN_PROD")
+            val auth0Domain = auth0Domain("AUTH0_DOMAIN_PROD")
             val auth0ClientId = envVar("AUTH0_CLIENT_ID_PROD")
             val auth0Scheme = envVar("AUTH0_SCHEME_PROD", "com.loresuelvo.consumer.prod")
             val auth0Audience = envVar("AUTH0_AUDIENCE_PROD")
