@@ -16,6 +16,18 @@ class Auth0SdkWebAuthLauncherTest {
     )
 
     @Test
+    fun login_requires_authentication_instead_of_reusing_browser_session() {
+        val builder = mockk<WebAuthProvider.Builder>(relaxed = true)
+        every { builder.withScheme(any()) } returns builder
+        every { builder.withAudience(any()) } returns builder
+        every { builder.withParameters(any()) } returns builder
+
+        builder.configureLogin(config)
+
+        io.mockk.verify { builder.withParameters(mapOf("prompt" to "login")) }
+    }
+
+    @Test
     fun should_request_access_token_for_configured_api_audience() {
         val builder = mockk<WebAuthProvider.Builder>()
         every { builder.withScheme(any()) } returns builder
@@ -36,6 +48,7 @@ class Auth0SdkWebAuthLauncherTest {
         val builder = mockk<WebAuthProvider.Builder>()
         every { builder.withScheme(any()) } returns builder
         every { builder.withAudience(any()) } returns builder
+        every { builder.withParameters(any()) } returns builder
 
         builder.configureLogin(config)
 
@@ -51,6 +64,7 @@ class Auth0SdkWebAuthLauncherTest {
         every { builder.withScheme(any()) } returns builder
         every { builder.withAudience(any()) } returns builder
         every { builder.withConnection(any()) } returns builder
+        every { builder.withParameters(any()) } returns builder
 
         builder.configureGoogleLogin(config)
 

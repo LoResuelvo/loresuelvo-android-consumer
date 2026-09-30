@@ -108,6 +108,7 @@ internal fun WebAuthProvider.Builder.configureLogin(
 ): WebAuthProvider.Builder =
     withScheme(config.scheme)
         .withAudience(config.audience)
+        .withParameters(mapOf("prompt" to "login"))
 
 internal fun WebAuthProvider.Builder.configureSignup(
     config: Auth0Config,

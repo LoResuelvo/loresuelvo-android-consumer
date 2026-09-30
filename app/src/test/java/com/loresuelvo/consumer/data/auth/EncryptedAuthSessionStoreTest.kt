@@ -121,6 +121,19 @@ class EncryptedAuthSessionStoreTest {
         assertEquals("Andres", reader.getSession()?.user?.displayName)
     }
 
+    @Test
+    fun restores_complete_address_after_process_restart_and_removes_stale_address() {
+        val prefs = plainSharedPrefs()
+        val address = com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress("Street", "123", "2", "B")
+        val session = AuthSession(User("Ana", "Ana", "Perez", address = address), "token")
+        EncryptedAuthSessionStore(prefs).saveSession(session)
+        val reader = EncryptedAuthSessionStore(prefs)
+        assertEquals(session, reader.getSession())
+        assertEquals(true, reader.sessionFlow.value?.user?.isProfileComplete())
+        reader.saveSession(session.copy(user = session.user.copy(address = null)))
+        assertNull(EncryptedAuthSessionStore(prefs).getSession()?.user?.address)
+    }
+
     private fun plainSharedPrefs() =
         context.getSharedPreferences(
             "test_session_prefs_${System.nanoTime()}",

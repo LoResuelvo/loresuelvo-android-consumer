@@ -1,15 +1,14 @@
 package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
-import com.loresuelvo.consumer.data.api.mapper.parseIsoTimestampMillisOrZero
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
 import com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository
-import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
+import retrofit2.HttpException
 
 /**
  * Adapter for [CheckoutSessionRepository]. Translates the
@@ -18,10 +17,8 @@ import javax.inject.Singleton
  *
  * Transport errors never throw: every [IOException] is wrapped
  * as [CheckoutSessionOutcome.Network] and every non-2xx response
- * is decoded as [CheckoutSessionOutcome.Server]. A `409 Conflict`
- * is mapped to [CheckoutSessionOutcome.AlreadyPaid] so the UI
- * can show a specific "este acuerdo ya fue confirmado" copy
- * without guessing.
+ * is decoded as [CheckoutSessionOutcome.Server]. Only an explicit
+ * already-paid response for a work order maps to [CheckoutSessionOutcome.AlreadyPaid].
  */
 @Singleton
 class ApiCheckoutSessionRepository @Inject constructor(
@@ -60,14 +57,12 @@ class ApiCheckoutSessionRepository @Inject constructor(
             )
             CheckoutSessionOutcome.Created(intent = intent, pricing = pricing)
         } catch (e: HttpException) {
-            when (e.code()) {
-                409 -> CheckoutSessionOutcome.AlreadyPaid(
-                    message = decodeMessage(e) ?: "Este pago ya fue confirmado.",
-                )
-                else -> CheckoutSessionOutcome.Server(
-                    code = e.code(),
-                    message = decodeMessage(e) ?: "Could not start checkout",
-                )
+            val error = e.toApiError()
+            val message = (error as? ApiError.Server)?.errorMessage ?: "Could not start checkout"
+            if (workOrderId != null && e.code() == HTTP_CONFLICT && message == WORK_ORDER_ALREADY_PAID_MESSAGE) {
+                CheckoutSessionOutcome.AlreadyPaid(message)
+            } else {
+                CheckoutSessionOutcome.Server(code = e.code(), message = message)
             }
         } catch (e: IOException) {
             CheckoutSessionOutcome.Network(e)
@@ -78,9 +73,8 @@ class ApiCheckoutSessionRepository @Inject constructor(
             )
         }
 
-    private fun decodeMessage(e: HttpException): String? = try {
-        e.response()?.errorBody()?.string()
-    } catch (_: Throwable) {
-        null
-    }.takeIf { !it.isNullOrBlank() }
+    private companion object {
+        const val HTTP_CONFLICT = 409
+        const val WORK_ORDER_ALREADY_PAID_MESSAGE = "Work order is already fully paid"
+    }
 }

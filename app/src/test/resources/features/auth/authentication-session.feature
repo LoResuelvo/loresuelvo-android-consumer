@@ -28,3 +28,10 @@ Característica: Autenticación y restauración de sesión del consumidor
     Dado que tengo una sesión local autenticada
     Cuando cierro sesión correctamente en Auth0
     Entonces se elimina la sesión local
+
+  Escenario: 05-AUT Restaurar una sesión antigua recupera la dirección
+    Dado que tengo una sesión local autenticada
+    Y la API devuelve el perfil completo del consumidor
+    Cuando vuelvo a abrir la aplicación
+    Entonces la sesión usa el perfil persistido por la API
+    Y el consumidor puede entrar al inicio sin completar su perfil otra vez

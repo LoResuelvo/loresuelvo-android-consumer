@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.auth
 import android.content.SharedPreferences
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.User
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -53,6 +54,10 @@ class EncryptedAuthSessionStore @Inject constructor(
             .putString(KEY_LAST_NAME, session.user.lastName)
             .putString(KEY_EMAIL, session.user.email)
             .putString(KEY_ACCESS_TOKEN, session.accessToken)
+            .putString(KEY_ADDRESS_STREET, session.user.address?.street)
+            .putString(KEY_ADDRESS_NUMBER, session.user.address?.streetNumber)
+            .putString(KEY_ADDRESS_FLOOR, session.user.address?.floor)
+            .putString(KEY_ADDRESS_UNIT, session.user.address?.unit)
             .commit()
 
         _sessionFlow.value = session
@@ -82,8 +87,20 @@ class EncryptedAuthSessionStore @Inject constructor(
                 firstName = preferences.getString(KEY_FIRST_NAME, null),
                 lastName = preferences.getString(KEY_LAST_NAME, null),
                 email = preferences.getString(KEY_EMAIL, null),
+                address = readAddress(),
             ),
             accessToken = accessToken,
+        )
+    }
+
+    private fun readAddress(): RegisterConsumerAddress? {
+        val street = preferences.getString(KEY_ADDRESS_STREET, null) ?: return null
+        val streetNumber = preferences.getString(KEY_ADDRESS_NUMBER, null) ?: return null
+        return RegisterConsumerAddress(
+            street = street,
+            streetNumber = streetNumber,
+            floor = preferences.getString(KEY_ADDRESS_FLOOR, "").orEmpty(),
+            unit = preferences.getString(KEY_ADDRESS_UNIT, "").orEmpty(),
         )
     }
 
@@ -93,5 +110,9 @@ class EncryptedAuthSessionStore @Inject constructor(
         const val KEY_LAST_NAME = "last_name"
         const val KEY_EMAIL = "email"
         const val KEY_ACCESS_TOKEN = "access_token"
+        const val KEY_ADDRESS_STREET = "address_street"
+        const val KEY_ADDRESS_NUMBER = "address_number"
+        const val KEY_ADDRESS_FLOOR = "address_floor"
+        const val KEY_ADDRESS_UNIT = "address_unit"
     }
 }

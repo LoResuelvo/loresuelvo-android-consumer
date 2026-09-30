@@ -68,6 +68,9 @@ class AuthenticationSessionSteps {
     @Cuando("cierro sesión correctamente en Auth0")
     fun logout_successfully() = world.logoutSuccessfully()
 
+    @Cuando("vuelvo a abrir la aplicación")
+    fun reopen() = world.reopen()
+
     @Entonces("se elimina la sesión local")
     fun local_session_is_removed() = assertNull(world.session())
 }

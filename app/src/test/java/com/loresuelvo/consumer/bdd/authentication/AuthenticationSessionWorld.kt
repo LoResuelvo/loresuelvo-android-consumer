@@ -50,7 +50,7 @@ class AuthenticationSessionWorld : AutoCloseable {
 
     fun seedAuthenticatedSession() {
         sessionStore.saveSession(auth0Session())
-        sessionViewModel = SessionViewModel(sessionStore, authProvider)
+        sessionViewModel = SessionViewModel(sessionStore, authProvider, com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase(userRepository, sessionStore))
     }
 
     fun configureExistingAccount() {
@@ -93,6 +93,11 @@ class AuthenticationSessionWorld : AutoCloseable {
     fun logoutSuccessfully() {
         authProvider.logoutOutcome = LogoutOutcome.Success
         sessionViewModel.signOut(context)
+        scheduler.advanceUntilIdle()
+    }
+
+    fun reopen() {
+        sessionViewModel = SessionViewModel(sessionStore, authProvider, com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase(userRepository, sessionStore))
         scheduler.advanceUntilIdle()
     }
 

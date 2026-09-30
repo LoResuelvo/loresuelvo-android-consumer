@@ -343,4 +343,6 @@
     <string name="provider_profile_error_server">We couldn’t load the profile. Try again.</string>
     <string name="provider_profile_retry">Retry</string>
     <string name="provider_profile_view_button">View profile</string>
+    <string name="session_restore_error">We could not restore your account. Check your connection and try again.</string>
+    <string name="session_restore_retry">Retry</string>
 </resources>

@@ -7,42 +7,61 @@ import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.LogoutOutcome
+import com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UDF ViewModel that mirrors the [AuthSessionStore]'s flow into a
- * Compose-friendly [SessionUiState]. Replaces the old
- * `SessionStateHolder`-based implementation (Fase 8 of the master
- * plan): the VM is now injected via Hilt and observes the
- * `sessionFlow` exposed by the production-ready
- * `EncryptedAuthSessionStore`.
- *
- * `SessionUiState.loading` is always `false` once the first
- * `sessionFlow.value` has been read at construction — auth is a
- * synchronous read, not an asynchronous one. `WelcomeViewModel`
- * owns its own loading flag for the IdP signup itself.
- */
 @HiltViewModel
 class SessionViewModel @Inject constructor(
     private val sessionStore: AuthSessionStore,
     private val authProvider: AuthProvider,
+    private val restoreSession: RestoreAuthenticatedSessionUseCase,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(computeState(sessionStore.sessionFlow.value))
+    private val _uiState = MutableStateFlow(
+        SessionUiState(
+            loading = sessionStore.sessionFlow.value != null,
+            session = sessionStore.sessionFlow.value,
+        ),
+    )
     val uiState: StateFlow<SessionUiState> = _uiState.asStateFlow()
+    private var restorationJob: Job? = null
 
     init {
+        retryRestoration()
         viewModelScope.launch {
             sessionStore.sessionFlow.collect { session ->
-                _uiState.update { current -> computeState(session) }
+                val currentState = _uiState.value
+                val canUpdateSession = restorationJob?.isActive != true &&
+                    (currentState.error == null || currentState.session != session)
+                if (session == null || canUpdateSession) {
+                    _uiState.value = computeState(session)
+                }
             }
+        }
+    }
+
+    fun retryRestoration() {
+        if (restorationJob?.isActive == true) return
+        val session = sessionStore.sessionFlow.value ?: return
+        _uiState.value = SessionUiState(loading = true, session = session)
+        restorationJob = viewModelScope.launch {
+            val outcome = restoreSession(session)
+            val current = sessionStore.sessionFlow.value
+            val failure = outcome is CurrentUserOutcome.Failure.Network ||
+                outcome is CurrentUserOutcome.Failure.Server
+            _uiState.value = SessionUiState(
+                loading = false,
+                session = current,
+                error = if (failure && current == session) SessionError.Restoration else null,
+            )
         }
     }
 
@@ -68,6 +87,7 @@ class SessionViewModel @Inject constructor(
     fun signOut(activityContext: Context) {
         // 1. Clear the local session BEFORE returning so the
         // smart-router re-routes to Welcome synchronously.
+        restorationJob?.cancel()
         sessionStore.clearSession()
         // 2. Dispatch the Auth0 SSO logout in the background.
         // Its result is fire-and-forget; we log it for diagnostics

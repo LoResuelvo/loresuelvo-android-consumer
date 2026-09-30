@@ -47,6 +47,8 @@ import com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
+import com.loresuelvo.consumer.ui.screens.auth.SessionRestorationScreen
+import com.loresuelvo.consumer.ui.session.SessionError
 import com.loresuelvo.consumer.ui.session.SessionViewModel
 import com.loresuelvo.consumer.ui.payment.PaymentResultRoute
 import com.loresuelvo.consumer.ui.payment.ServiceAgreementRoute
@@ -144,6 +146,14 @@ fun LoResuelvoNav() {
      */
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val sessionState by sessionViewModel.uiState.collectAsState()
+
+    if (sessionState.loading || sessionState.error == SessionError.Restoration) {
+        SessionRestorationScreen(
+            loading = sessionState.loading,
+            onRetryClick = sessionViewModel::retryRestoration,
+        )
+        return
+    }
 
     val sessionRoute = when {
         !sessionState.authenticated -> Route.Welcome.path

@@ -345,4 +345,6 @@
     <string name="provider_profile_error_server">No pudimos cargar el perfil. Intentá nuevamente.</string>
     <string name="provider_profile_retry">Reintentar</string>
     <string name="provider_profile_view_button">Ver perfil</string>
+    <string name="session_restore_error">No pudimos recuperar tu cuenta. Revisá la conexión y volvé a intentar.</string>
+    <string name="session_restore_retry">Reintentar</string>
 </resources>

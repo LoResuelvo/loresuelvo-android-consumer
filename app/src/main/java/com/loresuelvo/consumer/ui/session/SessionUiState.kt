@@ -24,5 +24,6 @@ data class SessionUiState(
 }
 
 sealed interface SessionError {
+    data object Restoration : SessionError
     data object Logout : SessionError
 }
