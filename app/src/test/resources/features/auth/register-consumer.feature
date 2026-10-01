@@ -60,6 +60,17 @@ Feature: Complete consumer profile on first login
     And the "Continuar" button is enabled again
     And the app signals "Navigate to Home"
 
+  @wip
+  Scenario: A valid profile photo is confirmed and attached to the registration
+    Given the backend will accept the registration
+    When I select a valid profile photo named "avatar.webp"
+    And I type "Juan" in the first name field
+    And I type "Pérez" in the last name field
+    And I tap the "Continuar" button
+    Then the profile photo upload is confirmed before registration
+    And a POST is sent to "/consumers" with profile photo file id "profile-file-1"
+    And the profile photo URL "https://cdn.loresuelvo.test/avatar.webp" is saved in the session
+
   # --- Backend failures: visible errors, no navigation ----------------
 
   Scenario: A 401 from the backend clears the session and shows a "session expired" error
