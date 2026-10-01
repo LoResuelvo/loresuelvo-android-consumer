@@ -8,9 +8,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,15 +17,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * UI tests for [CompleteProfileScreen]. Run on the JVM via
- * Robolectric so the suite stays in `src/test/` and executes in
- * the standard `make test` flow (no emulator). The old suite that
- * lived in `androidTest/unit/auth/` was renamed to
- * `androidTest/.../instrumented/auth/` territory by mistake; this
- * is the canonical location per AGENTS.md.
- *
- * The test resource set (default = `values/strings.xml`, es-AR)
- * is what the screen reads, so the asserted strings are in Spanish.
+ * UI tests for [CompleteProfileScreen]. The screen boundary is intentionally
+ * exercised through one state object and one action dispatcher, matching the
+ * production contract used by [CompleteProfileViewModel].
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
@@ -37,30 +30,13 @@ class CompleteProfileScreenTest {
 
     @Test
     fun displays_complete_profile_form() {
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "",
-                lastName = "",
+        setProfileContent(
+            state = CompleteProfileUiState(
                 street = "Tucuman",
                 streetNumber = "123",
-                floor = "",
-                unit = "",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onContinueClick = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onEvent = {},
-            )
-        }
+            ),
+        )
 
-        // assertExists (not assertIsDisplayed) so the assertion does
-        // not depend on the small Robolectric viewport; we only care
-        // that the labels are present in the tree.
         composeTestRule.onNodeWithText("Ya casi estamos.").assertExists()
         composeTestRule.onNodeWithText("Nombre").assertExists()
         composeTestRule.onNodeWithText("Apellido").assertExists()
@@ -72,206 +48,85 @@ class CompleteProfileScreenTest {
 
     @Test
     fun shows_typed_MissingFirstName_error_message() {
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "",
-                lastName = "Colina",
-                street = "Tucuman",
-                streetNumber = "123",
-                floor = "1",
-                unit = "A",
-                loading = false,
-                error = CompleteProfileError.MissingFirstName,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onContinueClick = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onEvent = {},
-            )
-        }
+        setProfileContent(
+            state = completeState(error = CompleteProfileError.MissingFirstName),
+        )
 
-        composeTestRule
-            .onNodeWithText("El nombre es obligatorio")
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("El nombre es obligatorio").assertIsDisplayed()
     }
 
     @Test
     fun shows_typed_MissingLastName_error_message() {
-        composeTestRule.setContent {
-            CompleteProfileScreen(
+        setProfileContent(
+            state = completeState(
                 firstName = "Andres",
-                lastName = "",
-                street = "Tucuman",
-                streetNumber = "123",
-                floor = "1",
-                unit = "A",
-                loading = false,
                 error = CompleteProfileError.MissingLastName,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onContinueClick = {},
-                onEvent = {},
-            )
-        }
+            ),
+        )
 
-        composeTestRule
-            .onNodeWithText("El apellido es obligatorio")
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("El apellido es obligatorio").assertIsDisplayed()
     }
 
     @Test
     fun shows_typed_Server_error_message_with_code_and_text() {
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "Andres",
-                lastName = "Colina",
-                street = "Tucuman",
-                streetNumber = "123",
-                floor = "1",
-                unit = "A",
-                loading = false,
+        setProfileContent(
+            state = completeState(
                 error = CompleteProfileError.Server(
                     code = 409,
                     message = "Email is already registered",
                 ),
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onContinueClick = {},
-                onEvent = {},
-            )
-        }
+            ),
+        )
 
         composeTestRule
             .onNodeWithText(
-                "No pudimos completar el registro (409). Email is already registered"
+                "No pudimos completar el registro (409). Email is already registered",
             )
             .assertIsDisplayed()
     }
 
     @Test
     fun disable_continue_button_while_loading() {
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "Andres",
-                lastName = "Colina",
-                street = "Tucuman",
-                streetNumber = "123",
-                floor = "1",
-                unit = "A",
-                loading = true,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onContinueClick = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onEvent = {},
-            )
-        }
+        setProfileContent(state = completeState(loading = true))
 
-        composeTestRule
-            .onNodeWithText("Continuar")
+        composeTestRule.onNodeWithText("Continuar")
             .assertExists()
             .assertIsNotEnabled()
     }
 
     @Test
-    fun click_on_continue_invokes_callback() {
-        var clicked = 0
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "Andres",
-                lastName = "Colina",
-                street = "Tucuman",
-                streetNumber = "123",
-                floor = "1",
-                unit = "A",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onContinueClick = { clicked += 1 },
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onEvent = {},
-            )
-        }
+    fun click_on_continue_dispatches_action() {
+        var action: CompleteProfileAction? = null
+        setProfileContent(
+            state = completeState(),
+            onAction = { action = it },
+        )
 
-        composeTestRule
-            .onNodeWithText("Continuar")
-            .performClick()
+        composeTestRule.onNodeWithText("Continuar").performClick()
 
-        org.junit.Assert.assertEquals(1, clicked)
+        assertEquals(CompleteProfileAction.ContinueClicked, action)
     }
 
     @Test
-    fun typing_in_first_name_invokes_callback() {
-        var captured = ""
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "",
-                lastName = "",
-                street = "Tucuman",
-                streetNumber = "123",
-                floor = "1",
-                unit = "A",
-                loading = false,
-                error = null,
-                onFirstNameChange = { captured = it },
-                onLastNameChange = {},
-                onContinueClick = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onEvent = {},
-            )
-        }
+    fun typing_in_first_name_dispatches_action() {
+        var action: CompleteProfileAction? = null
+        setProfileContent(onAction = { action = it })
 
-        composeTestRule
-            .onNodeWithTag("first-name")
-            .performTextInput("Andres")
+        composeTestRule.onNodeWithTag("first-name").performTextInput("Andres")
 
-        assert(captured == "Andres")
+        assertEquals(CompleteProfileAction.FirstNameChanged("Andres"), action)
     }
 
     @Test
     fun displays_address_fields() {
-        composeTestRule.setContent {
-            CompleteProfileScreen(
+        setProfileContent(
+            state = completeState(
                 firstName = "Andres",
                 lastName = "Colina",
-                street = "Tucuman",
-                streetNumber = "123",
                 floor = "",
                 unit = "",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onContinueClick = {},
-                onEvent = {},
-            )
-        }
+            ),
+        )
 
         composeTestRule.onNodeWithText("Calle").assertExists()
         composeTestRule.onNodeWithText("Número").assertExists()
@@ -280,131 +135,86 @@ class CompleteProfileScreenTest {
     }
 
     @Test
-    fun typing_in_street_invokes_callback() {
-        var captured = ""
+    fun typing_in_street_dispatches_action() {
+        var action: CompleteProfileAction? = null
+        setProfileContent(
+            state = completeState(street = ""),
+            onAction = { action = it },
+        )
 
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "",
-                lastName = "",
-                street = "",
-                streetNumber = "",
-                floor = "",
-                unit = "",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = { captured = it },
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = {},
-                onContinueClick = {},
-                onEvent = {},
-            )
-        }
+        composeTestRule.onNodeWithTag("street").performTextInput("Avellaneda")
 
-        composeTestRule
-            .onNodeWithTag("street")
-            .performTextInput("Avellaneda")
-
-        assert(captured == "Avellaneda")
+        assertEquals(CompleteProfileAction.StreetChanged("Avellaneda"), action)
     }
 
     @Test
-    fun typing_in_street_number_invokes_callback() {
-        var captured = ""
+    fun typing_in_street_number_dispatches_action() {
+        var action: CompleteProfileAction? = null
+        setProfileContent(
+            state = completeState(street = "", streetNumber = ""),
+            onAction = { action = it },
+        )
 
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "",
-                lastName = "",
-                street = "",
-                streetNumber = "",
-                floor = "",
-                unit = "",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = {},
-                onStreetNumberChange = { captured = it },
-                onFloorChange = {},
-                onUnitChange = {},
-                onContinueClick = {},
-                onEvent = {},
-            )
-        }
+        composeTestRule.onNodeWithTag("street-number").performTextInput("456")
 
-        composeTestRule
-            .onNodeWithTag("street-number")
-            .performTextInput("456")
-
-        assert(captured == "456")
-    }
-
-    @Test   
-    fun typing_in_floor_invokes_callback() {
-        var captured = ""
-
-        composeTestRule.setContent {
-            CompleteProfileScreen(
-                firstName = "",
-                lastName = "",
-                street = "",
-                streetNumber = "",
-                floor = "",
-                unit = "",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = { captured = it },
-                onUnitChange = {},
-                onContinueClick = {},
-                onEvent = {},
-            )
-        }
-
-        composeTestRule
-            .onNodeWithTag("floor")
-            .performTextInput("2")
-
-        assert(captured == "2")
+        assertEquals(CompleteProfileAction.StreetNumberChanged("456"), action)
     }
 
     @Test
-    fun typing_in_unit_invokes_callback() {
-        var captured = ""
+    fun typing_in_floor_dispatches_action() {
+        var action: CompleteProfileAction? = null
+        setProfileContent(
+            state = completeState(street = "", streetNumber = "", floor = ""),
+            onAction = { action = it },
+        )
 
+        composeTestRule.onNodeWithTag("floor").performTextInput("2")
+
+        assertEquals(CompleteProfileAction.FloorChanged("2"), action)
+    }
+
+    @Test
+    fun typing_in_unit_dispatches_action() {
+        var action: CompleteProfileAction? = null
+        setProfileContent(
+            state = completeState(street = "", streetNumber = "", floor = "", unit = ""),
+            onAction = { action = it },
+        )
+
+        composeTestRule.onNodeWithTag("unit").performTextInput("B")
+
+        assertEquals(CompleteProfileAction.UnitChanged("B"), action)
+    }
+
+    private fun setProfileContent(
+        state: CompleteProfileUiState = completeState(),
+        onAction: (CompleteProfileAction) -> Unit = {},
+    ) {
         composeTestRule.setContent {
             CompleteProfileScreen(
-                firstName = "",
-                lastName = "",
-                street = "",
-                streetNumber = "",
-                floor = "",
-                unit = "",
-                loading = false,
-                error = null,
-                onFirstNameChange = {},
-                onLastNameChange = {},
-                onStreetChange = {},
-                onStreetNumberChange = {},
-                onFloorChange = {},
-                onUnitChange = { captured = it },
-                onContinueClick = {},
-                onEvent = {},
+                state = state,
+                onAction = onAction,
             )
         }
-
-        composeTestRule
-            .onNodeWithTag("unit")
-            .performTextInput("B")
-
-     
-            assert(captured == "B")
     }
+
+    private fun completeState(
+        firstName: String = "",
+        lastName: String = "",
+        street: String = "Tucuman",
+        streetNumber: String = "123",
+        floor: String = "1",
+        unit: String = "A",
+        loading: Boolean = false,
+        error: CompleteProfileError? = null,
+    ): CompleteProfileUiState = CompleteProfileUiState(
+        firstName = firstName,
+        lastName = lastName,
+        street = street,
+        streetNumber = streetNumber,
+        floor = floor,
+        unit = unit,
+        loading = loading,
+        error = error,
+    )
 }

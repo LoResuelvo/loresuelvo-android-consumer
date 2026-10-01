@@ -51,7 +51,6 @@ Feature: Complete consumer profile on first login
     And the "Continuar" button is enabled again
     And the app signals "Navigate to Home"
 
-  @wip
   Scenario: Complete profile keeps its observable flow through the action dispatcher
     Given the backend will accept the registration
     When I type "Juan" in the first name field

@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerUseCase
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileUiState
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
@@ -87,10 +88,10 @@ class CucumberWorld : AutoCloseable {
             RegisterConsumerUseCase(userRepo, sessionStore),
             sessionStore,
         )
-        viewModel.onStreetChange("Calle Falsa")
-        viewModel.onStreetNumberChange("123")
-        viewModel.onFloorChange("1")
-        viewModel.onUnitChange("A")
+        viewModel.onAction(CompleteProfileAction.StreetChanged("Calle Falsa"))
+        viewModel.onAction(CompleteProfileAction.StreetNumberChanged("123"))
+        viewModel.onAction(CompleteProfileAction.FloorChanged("1"))
+        viewModel.onAction(CompleteProfileAction.UnitChanged("A"))
 
         // UNDISPATCHED so the collector receives the initial state
         // synchronously on `startScenario`'s call stack.
@@ -112,20 +113,20 @@ class CucumberWorld : AutoCloseable {
 
     fun setFirstName(value: String) {
         require(started) { "startScenario() must be called before setFirstName()" }
-        viewModel.onFirstNameChange(value)
+        viewModel.onAction(CompleteProfileAction.FirstNameChanged(value))
         scheduler.advanceUntilIdle()
     }
 
     fun setLastName(value: String) {
         require(started) { "startScenario() must be called before setLastName()" }
-        viewModel.onLastNameChange(value)
+        viewModel.onAction(CompleteProfileAction.LastNameChanged(value))
         scheduler.advanceUntilIdle()
     }
 
     fun tapContinue(times: Int = 1) {
         require(started) { "startScenario() must be called before tapContinue()" }
         require(times >= 1) { "times must be >= 1" }
-        repeat(times) { viewModel.onContinueClick() }
+        repeat(times) { viewModel.onAction(CompleteProfileAction.ContinueClicked) }
         scheduler.advanceUntilIdle()
     }
 

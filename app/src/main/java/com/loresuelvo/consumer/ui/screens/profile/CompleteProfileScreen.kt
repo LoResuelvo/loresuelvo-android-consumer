@@ -29,10 +29,10 @@ import com.loresuelvo.consumer.ui.screens.profile.components.ProfileHeader
 import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
 
 /**
- * Composable for the `CompleteProfile` screen. Stateless: every
- * value the screen renders is passed in. The host
- * ([com.loresuelvo.consumer.MainActivity]) collects the
- * [CompleteProfileViewModel] state and forwards user input back.
+ * Composable for the `CompleteProfile` screen. Stateless: the host passes
+ * one immutable state object and receives user intent through one action
+ * dispatcher. The host ([com.loresuelvo.consumer.MainActivity]) collects
+ * the [CompleteProfileViewModel] state and forwards actions back.
  *
  * Layout uses [Scaffold] so the "Continuar" button and the
  * privacy note can pin to the bottom of the viewport via
@@ -43,24 +43,10 @@ import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
  */
 @Composable
 fun CompleteProfileScreen(
-    firstName: String,
-    lastName: String,
-    street: String,
-    streetNumber: String,
-    floor: String,
-    unit: String,
-    loading: Boolean,
-    error: CompleteProfileError?,
-    onFirstNameChange: (String) -> Unit,
-    onLastNameChange: (String) -> Unit,
-    onStreetChange: (String) -> Unit,
-    onStreetNumberChange: (String) -> Unit,
-    onFloorChange: (String) -> Unit,
-    onUnitChange: (String) -> Unit,
-    onContinueClick: () -> Unit,
-    onEvent: (CompleteProfileEvent) -> Unit,
+    state: CompleteProfileUiState,
+    onAction: (CompleteProfileAction) -> Unit,
 ) {
-    val errorMessage = error?.let { errorToMessage(it) }
+    val errorMessage = state.error?.let { errorToMessage(it) }
     val scrollState = rememberScrollState()
 
     LaunchedEffect(errorMessage) {
@@ -83,8 +69,8 @@ fun CompleteProfileScreen(
             ) {
                 PrimaryButton(
                     text = stringResource(R.string.complete_profile_button_continue),
-                    onClick = onContinueClick,
-                    enabled = !loading,
+                    onClick = { onAction(CompleteProfileAction.ContinueClicked) },
+                    enabled = !state.loading,
                 )
                 Text(
                     text = stringResource(R.string.complete_profile_footer),
@@ -111,19 +97,9 @@ fun CompleteProfileScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileForm(
-                firstName = firstName,
-                lastName = lastName,
-                street = street,
-                streetNumber = streetNumber,
-                floor = floor,
-                unit = unit,
+                state = state,
                 errorMessage = errorMessage,
-                onFirstNameChange = onFirstNameChange,
-                onLastNameChange = onLastNameChange,
-                onStreetChange = onStreetChange,
-                onStreetNumberChange = onStreetNumberChange,
-                onFloorChange = onFloorChange,
-                onUnitChange = onUnitChange,
+                onAction = onAction,
             )
         }
     }

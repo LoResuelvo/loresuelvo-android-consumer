@@ -16,7 +16,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.components.inputs.PrimaryTextField
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileUiState
 
 /**
  * Form block for the CompleteProfile screen: optional error
@@ -26,24 +28,14 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
  * the viewport, mirroring the "Continuar" pattern of the Welcome
  * screen.
  *
- * Stateless: every value the user types and every callback the
- * parent invokes is passed in.
+ * Stateless: the current form values arrive in one state object and
+ * field changes are emitted through one action dispatcher.
  */
 @Composable
 fun ProfileForm(
-    firstName: String,
-    lastName: String,
-    street: String,
-    streetNumber: String,
-    floor: String,
-    unit: String,
+    state: CompleteProfileUiState,
     errorMessage: String?,
-    onFirstNameChange: (String) -> Unit,
-    onLastNameChange: (String) -> Unit,
-    onStreetChange: (String) -> Unit,
-    onStreetNumberChange: (String) -> Unit,
-    onFloorChange: (String) -> Unit,
-    onUnitChange: (String) -> Unit,
+    onAction: (CompleteProfileAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -65,54 +57,54 @@ fun ProfileForm(
             }
 
             PrimaryTextField(
-                value = firstName,
+                value = state.firstName,
                 label = stringResource(R.string.complete_profile_field_first_name),
-                onValueChange = onFirstNameChange,
+                onValueChange = { onAction(CompleteProfileAction.FirstNameChanged(it)) },
                 testTag = "first-name",
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             PrimaryTextField(
-                value = lastName,
+                value = state.lastName,
                 label = stringResource(R.string.complete_profile_field_last_name),
-                onValueChange = onLastNameChange,
+                onValueChange = { onAction(CompleteProfileAction.LastNameChanged(it)) },
                 testTag = "last-name",
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             PrimaryTextField(
-                value = street,
+                value = state.street,
                 label = stringResource(R.string.complete_profile_field_street),
-                onValueChange = onStreetChange,
+                onValueChange = { onAction(CompleteProfileAction.StreetChanged(it)) },
                 testTag = "street",
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             PrimaryTextField(
-                value = streetNumber,
+                value = state.streetNumber,
                 label = stringResource(R.string.complete_profile_field_street_number),
-                onValueChange = onStreetNumberChange,
+                onValueChange = { onAction(CompleteProfileAction.StreetNumberChanged(it)) },
                 testTag = "street-number",
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             PrimaryTextField(
-                value = floor,
+                value = state.floor,
                 label = stringResource(R.string.complete_profile_field_floor),
-                onValueChange = onFloorChange,
+                onValueChange = { onAction(CompleteProfileAction.FloorChanged(it)) },
                 testTag = "floor",
             )
 
             Spacer(modifier = Modifier.height(12.dp))
 
             PrimaryTextField(
-                value = unit,
+                value = state.unit,
                 label = stringResource(R.string.complete_profile_field_unit),
-                onValueChange = onUnitChange,
+                onValueChange = { onAction(CompleteProfileAction.UnitChanged(it)) },
                 testTag = "unit",
             )
         }

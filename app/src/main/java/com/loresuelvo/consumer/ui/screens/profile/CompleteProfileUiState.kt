@@ -25,6 +25,22 @@ data class CompleteProfileUiState(
 )
 
 /**
+ * User intent dispatched by the complete-profile UI.
+ *
+ * Keeping the screen contract event-based prevents every new form field
+ * from adding another value/callback pair to each composable boundary.
+ */
+sealed interface CompleteProfileAction {
+    data class FirstNameChanged(val value: String) : CompleteProfileAction
+    data class LastNameChanged(val value: String) : CompleteProfileAction
+    data class StreetChanged(val value: String) : CompleteProfileAction
+    data class StreetNumberChanged(val value: String) : CompleteProfileAction
+    data class FloorChanged(val value: String) : CompleteProfileAction
+    data class UnitChanged(val value: String) : CompleteProfileAction
+    data object ContinueClicked : CompleteProfileAction
+}
+
+/**
  * Typed error state for `CompleteProfile`. Sealed so the screen
  * exhaustively matches the variants when mapping to localized
  * messages. Mirrors the failures documented in

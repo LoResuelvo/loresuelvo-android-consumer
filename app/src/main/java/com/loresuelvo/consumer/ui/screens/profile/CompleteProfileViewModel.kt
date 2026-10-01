@@ -52,6 +52,18 @@ class CompleteProfileViewModel @Inject constructor(
     )
     val events: Flow<CompleteProfileEvent> = _events.receiveAsFlow()
 
+    fun onAction(action: CompleteProfileAction) {
+        when (action) {
+            is CompleteProfileAction.FirstNameChanged -> onFirstNameChange(action.value)
+            is CompleteProfileAction.LastNameChanged -> onLastNameChange(action.value)
+            is CompleteProfileAction.StreetChanged -> onStreetChange(action.value)
+            is CompleteProfileAction.StreetNumberChanged -> onStreetNumberChange(action.value)
+            is CompleteProfileAction.FloorChanged -> onFloorChange(action.value)
+            is CompleteProfileAction.UnitChanged -> onUnitChange(action.value)
+            CompleteProfileAction.ContinueClicked -> onContinueClick()
+        }
+    }
+
     fun onFirstNameChange(value: String) {
         _uiState.update { it.copy(firstName = value, error = null) }
     }
