@@ -10,14 +10,17 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.R
+import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.ui.components.turnocard.TURNO_CARD_TAG_PREFIX
 import org.junit.Rule
 import org.junit.Test
+import org.junit.Assert.assertTrue
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -113,6 +116,29 @@ class TurnosScreenTest {
         composeTestRule
             .onAllNodesWithText(localizedString(R.string.turnos_empty_body))
             .assertCountEquals(1)
+    }
+
+    @Test
+    fun disconnected_calendar_status_exposes_profile_connection_action() {
+        var clicked = false
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface {
+                    TurnosScreen(
+                        state = TurnosUiState.Ready(
+                            turnos = listOf(sampleTurno("1")),
+                            calendarConnectionStatus = CalendarConnectionStatus.DISCONNECTED,
+                        ),
+                        onRetryClick = {},
+                        onCalendarConnectionClick = { clicked = true },
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag(CALENDAR_SYNC_BANNER_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(CALENDAR_SYNC_ACTION_TAG).performClick()
+        assertTrue(clicked)
     }
 
     private fun sampleTurno(id: String): Turno = Turno(

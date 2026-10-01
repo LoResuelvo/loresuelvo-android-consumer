@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
+import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.ui.components.turnocard.TurnoCard
 
 /**
@@ -47,6 +48,7 @@ fun TurnosScreen(
     state: TurnosUiState,
     onRetryClick: () -> Unit,
     onTurnoCardClick: (turnoId: String) -> Unit = {},
+    onCalendarConnectionClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -73,10 +75,73 @@ fun TurnosScreen(
             when (state) {
                 is TurnosUiState.Loading -> LoadingState()
                 is TurnosUiState.Ready ->
-                    if (state.turnos.isEmpty()) EmptyState() else ReadyList(state.turnos, onTurnoCardClick)
+                    ReadyState(
+                        turnos = state.turnos,
+                        calendarConnectionStatus = state.calendarConnectionStatus,
+                        onTurnoCardClick = onTurnoCardClick,
+                        onCalendarConnectionClick = onCalendarConnectionClick,
+                    )
                 is TurnosUiState.Error -> ErrorState(
                     failure = state.failure,
                     onRetryClick = onRetryClick,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReadyState(
+    turnos: List<Turno>,
+    calendarConnectionStatus: CalendarConnectionStatus,
+    onTurnoCardClick: (turnoId: String) -> Unit,
+    onCalendarConnectionClick: () -> Unit,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        CalendarSyncBanner(
+            status = calendarConnectionStatus,
+            onConnectionClick = onCalendarConnectionClick,
+        )
+        if (turnos.isEmpty()) EmptyState() else ReadyList(turnos, onTurnoCardClick)
+    }
+}
+
+@Composable
+private fun CalendarSyncBanner(
+    status: CalendarConnectionStatus,
+    onConnectionClick: () -> Unit,
+) {
+    if (status == CalendarConnectionStatus.UNKNOWN) return
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .testTag(CALENDAR_SYNC_BANNER_TAG),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = when (status) {
+                CalendarConnectionStatus.CONNECTED -> stringResource(R.string.turnos_calendar_connected)
+                CalendarConnectionStatus.DISCONNECTED -> stringResource(R.string.turnos_calendar_disconnected)
+                CalendarConnectionStatus.ACTION_REQUIRED -> stringResource(R.string.turnos_calendar_action_required)
+                CalendarConnectionStatus.UNKNOWN -> return@Column
+            },
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if (status != CalendarConnectionStatus.CONNECTED) {
+            Button(
+                onClick = onConnectionClick,
+                modifier = Modifier.testTag(CALENDAR_SYNC_ACTION_TAG),
+            ) {
+                Text(
+                    stringResource(
+                        if (status == CalendarConnectionStatus.ACTION_REQUIRED) {
+                            R.string.turnos_calendar_reauthorize
+                        } else {
+                            R.string.turnos_calendar_connect
+                        },
+                    ),
                 )
             }
         }
@@ -187,3 +252,5 @@ const val TURNOS_LIST_TAG: String = "turnos-list"
 const val TURNOS_EMPTY_TAG: String = "turnos-empty"
 const val TURNOS_ERROR_TAG: String = "turnos-error"
 const val TURNOS_ERROR_RETRY_TAG: String = "turnos-error-retry"
+const val CALENDAR_SYNC_BANNER_TAG: String = "turnos-calendar-sync-banner"
+const val CALENDAR_SYNC_ACTION_TAG: String = "turnos-calendar-sync-action"

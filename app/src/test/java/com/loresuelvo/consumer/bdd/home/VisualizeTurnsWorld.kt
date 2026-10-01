@@ -5,6 +5,10 @@ import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
+import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
+import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
+import com.loresuelvo.consumer.domain.auth.User
+import com.loresuelvo.consumer.domain.usecase.auth.GetConsumerProfileUseCase
 import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosUiState
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel
@@ -16,6 +20,8 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import io.mockk.coEvery
+import io.mockk.mockk
 
 /**
  * Per-scenario world for the "Mis Turnos" BDD specs
@@ -40,6 +46,7 @@ class VisualizeTurnsWorld : AutoCloseable {
 
     private lateinit var repository: FakeTurnosRepository
     private lateinit var viewModel: TurnosViewModel
+    private val getConsumerProfile = mockk<GetConsumerProfileUseCase>()
 
     private var started: Boolean = false
 
@@ -50,7 +57,18 @@ class VisualizeTurnsWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         repository = FakeTurnosRepository(items = emptyList())
-        viewModel = TurnosViewModel(getTurnos = GetTurnosUseCase(repository))
+        coEvery { getConsumerProfile() } returns CurrentUserOutcome.Success(
+            User(
+                displayName = "Ana Perez",
+                firstName = "Ana",
+                lastName = "Perez",
+                calendarConnectionStatus = CalendarConnectionStatus.UNKNOWN,
+            ),
+        )
+        viewModel = TurnosViewModel(
+            getTurnos = GetTurnosUseCase(repository),
+            getConsumerProfile = getConsumerProfile,
+        )
     }
 
     fun seedTurnos(items: List<Turno>) {

@@ -357,6 +357,11 @@
     <string name="turnos_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="turnos_error_server">We couldn\'t load your appointments. Try again.</string>
     <string name="turnos_error_retry">Retry</string>
+    <string name="turnos_calendar_connected">Your future turns sync with Google Calendar when the API confirms the connection.</string>
+    <string name="turnos_calendar_disconnected">Connect Google Calendar from My profile to sync your future turns.</string>
+    <string name="turnos_calendar_action_required">Google Calendar needs authorization again to sync your turns.</string>
+    <string name="turnos_calendar_connect">Connect calendar</string>
+    <string name="turnos_calendar_reauthorize">Reauthorize</string>
     <string name="turno_today_label">(today)</string>
     <string name="turno_details_cta">View details</string>
     <!-- US-16: public provider profile, reputation and work history -->

@@ -1,9 +1,13 @@
 package com.loresuelvo.consumer.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
@@ -18,10 +22,22 @@ internal fun TurnosRoute(
 ) {
     val viewModel: TurnosViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) viewModel.load()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     TurnosScreen(
         state = state,
         onRetryClick = viewModel::load,
+        onCalendarConnectionClick = {
+            navController.navigate(Route.MyProfile.path) { launchSingleTop = true }
+        },
         onTurnoCardClick = { turnoId ->
             val turno = (state as? com.loresuelvo.consumer.ui.screens.turnos.TurnosUiState.Ready)
                 ?.turnos

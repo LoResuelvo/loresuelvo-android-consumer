@@ -2,10 +2,14 @@ package com.loresuelvo.consumer.ui.screens.turnos
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
+import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
+import com.loresuelvo.consumer.domain.usecase.auth.GetConsumerProfileUseCase
 import com.loresuelvo.consumer.domain.usecase.turno.GetTurnosUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,6 +38,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class TurnosViewModel @Inject constructor(
     private val getTurnos: GetTurnosUseCase,
+    private val getConsumerProfile: GetConsumerProfileUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TurnosUiState>(TurnosUiState.Loading)
@@ -48,8 +53,17 @@ class TurnosViewModel @Inject constructor(
             _uiState.update { TurnosUiState.Loading }
             _uiState.update {
                 when (val outcome = getTurnos()) {
-                    is TurnosOutcome.Success ->
-                        TurnosUiState.Ready(outcome.turnos)
+                    is TurnosOutcome.Success -> {
+                        val profileOutcome = try {
+                            getConsumerProfile()
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (_: Throwable) {
+                            null
+                        }
+                        val calendarStatus = profileOutcome.calendarConnectionStatusOrUnknown()
+                        TurnosUiState.Ready(outcome.turnos, calendarStatus)
+                    }
                     is TurnosOutcome.Failure ->
                         TurnosUiState.Error(outcome)
                 }
@@ -57,3 +71,7 @@ class TurnosViewModel @Inject constructor(
         }
     }
 }
+
+private fun CurrentUserOutcome?.calendarConnectionStatusOrUnknown(): CalendarConnectionStatus =
+    (this as? CurrentUserOutcome.Success)?.user?.calendarConnectionStatus
+        ?: CalendarConnectionStatus.UNKNOWN

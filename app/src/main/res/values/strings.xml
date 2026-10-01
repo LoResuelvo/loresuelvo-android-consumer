@@ -359,6 +359,11 @@
     <string name="turnos_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="turnos_error_server">No pudimos cargar tus turnos. Reintentá.</string>
     <string name="turnos_error_retry">Reintentar</string>
+    <string name="turnos_calendar_connected">Tus turnos futuros se sincronizan con Google Calendar cuando la API confirma la conexión.</string>
+    <string name="turnos_calendar_disconnected">Vinculá Google Calendar desde Mi perfil para sincronizar tus turnos futuros.</string>
+    <string name="turnos_calendar_action_required">Google Calendar requiere autorización nuevamente para sincronizar tus turnos.</string>
+    <string name="turnos_calendar_connect">Vincular calendario</string>
+    <string name="turnos_calendar_reauthorize">Volver a autorizar</string>
     <string name="turno_today_label">(hoy)</string>
     <string name="turno_details_cta">Ver detalles</string>
     <!-- US-16: public provider profile, reputation and work history -->
