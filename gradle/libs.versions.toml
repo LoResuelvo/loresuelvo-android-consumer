@@ -34,6 +34,8 @@ androidx-browser = "1.8.0"
 # memory + disk cache. Used by `ProviderAvatar` to render provider
 # profile photos from `Provider.profilePhotoUrl`.
 coil = "3.0.4"
+# Google Sign-In server auth code for Calendar connection (US-57)
+playServicesAuth = "21.3.0"
 
 [libraries]
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
@@ -80,6 +82,8 @@ cucumber-junit = { group = "io.cucumber", name = "cucumber-junit", version.ref =
 # Image loading (added for provider photos)
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+# Google OAuth authorization (the server client ID is supplied by BuildConfig)
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 # Chrome Custom Tabs (US-21 deposit flow)
 androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "androidx-browser" }
 [plugins]

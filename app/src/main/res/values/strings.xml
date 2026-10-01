@@ -93,6 +93,17 @@
     <string name="consumer_profile_error_server">No pudimos cargar tu perfil. Intentá nuevamente.</string>
     <string name="consumer_profile_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <string name="consumer_profile_retry">Reintentar</string>
+    <string name="consumer_profile_calendar_title">Google Calendar</string>
+    <string name="consumer_profile_calendar_connected">Google Calendar está vinculado.</string>
+    <string name="consumer_profile_calendar_disconnected">Vinculá Google Calendar para usarlo con tus turnos.</string>
+    <string name="consumer_profile_calendar_action_required">Hay que volver a autorizar Google Calendar.</string>
+    <string name="consumer_profile_calendar_connect">Vincular Google Calendar</string>
+    <string name="consumer_profile_calendar_reconnect">Volver a vincular Google Calendar</string>
+    <string name="consumer_profile_calendar_cancelled">No se vinculó Google Calendar.</string>
+    <string name="consumer_profile_calendar_configuration_error">La vinculación de Google Calendar no está disponible en esta versión.</string>
+    <string name="consumer_profile_calendar_error_network">No pudimos vincular Google Calendar. Revisá tu conexión.</string>
+    <string name="consumer_profile_calendar_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="consumer_profile_calendar_error_server">No pudimos validar la cuenta de Google Calendar. Intentá nuevamente.</string>
     <!-- Bottom-bar placeholder screens -->
     <string name="messages_screen_placeholder_title">Mensajes</string>
     <string name="messages_screen_placeholder_body">Tus conversaciones con prestadores aparecerán acá.</string>

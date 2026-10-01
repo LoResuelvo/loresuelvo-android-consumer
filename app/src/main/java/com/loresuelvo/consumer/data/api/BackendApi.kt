@@ -43,6 +43,12 @@ interface BackendApi {
     @GET("me")
     suspend fun getCurrentUser(): CurrentUserDto
 
+    /** `POST /me/calendar-connection` exchanges a mobile server auth code. */
+    @POST("me/calendar-connection")
+    suspend fun connectCalendar(
+        @Body body: com.loresuelvo.consumer.data.api.dto.ConnectCalendarRequestDto,
+    ): retrofit2.Response<Unit>
+
     @POST("consumers")
     suspend fun registerConsumer(
         @Body body: RegisterConsumerRequestDto,

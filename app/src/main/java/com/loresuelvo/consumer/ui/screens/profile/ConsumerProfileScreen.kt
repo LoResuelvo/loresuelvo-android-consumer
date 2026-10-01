@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
+import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
@@ -35,6 +36,7 @@ import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 fun ConsumerProfileScreen(
     state: ConsumerProfileUiState,
     onRetryClick: () -> Unit,
+    onCalendarConnectClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -54,6 +56,8 @@ fun ConsumerProfileScreen(
             is ConsumerProfileUiState.Ready -> ReadyState(
                 modifier = Modifier.padding(padding),
                 user = state.user,
+                calendarConnection = state.calendarConnection,
+                onCalendarConnectClick = onCalendarConnectClick,
             )
         }
     }
@@ -73,6 +77,8 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 @Composable
 private fun ReadyState(
     user: User,
+    calendarConnection: CalendarConnectionUiState,
+    onCalendarConnectClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val fullName = listOfNotNull(user.firstName, user.lastName)
@@ -134,6 +140,91 @@ private fun ReadyState(
                     listOf(stringResource(R.string.consumer_profile_address_missing))
                 },
             )
+        }
+        item {
+            CalendarConnectionCard(
+                status = user.calendarConnectionStatus,
+                actionState = calendarConnection,
+                onConnectClick = onCalendarConnectClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CalendarConnectionCard(
+    status: CalendarConnectionStatus,
+    actionState: CalendarConnectionUiState,
+    onConnectClick: () -> Unit,
+) {
+    val title = stringResource(R.string.consumer_profile_calendar_title)
+    val description = when (status) {
+        CalendarConnectionStatus.CONNECTED ->
+            stringResource(R.string.consumer_profile_calendar_connected)
+        CalendarConnectionStatus.ACTION_REQUIRED ->
+            stringResource(R.string.consumer_profile_calendar_action_required)
+        CalendarConnectionStatus.DISCONNECTED,
+        CalendarConnectionStatus.UNKNOWN,
+        -> stringResource(R.string.consumer_profile_calendar_disconnected)
+    }
+    Card(modifier = Modifier.fillMaxWidth().testTag("consumer-profile-calendar")) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(description, style = MaterialTheme.typography.bodyLarge)
+            when (actionState) {
+                CalendarConnectionUiState.Connecting -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .testTag("consumer-profile-calendar-loading"),
+                    )
+                }
+                else -> {
+                    if (status != CalendarConnectionStatus.CONNECTED) {
+                        Button(
+                            onClick = onConnectClick,
+                            modifier = Modifier.testTag("consumer-profile-calendar-connect"),
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (status == CalendarConnectionStatus.ACTION_REQUIRED) {
+                                        R.string.consumer_profile_calendar_reconnect
+                                    } else {
+                                        R.string.consumer_profile_calendar_connect
+                                    },
+                                ),
+                            )
+                        }
+                    }
+                    val actionMessage = when (actionState) {
+                        CalendarConnectionUiState.Cancelled ->
+                            stringResource(R.string.consumer_profile_calendar_cancelled)
+                        CalendarConnectionUiState.ConfigurationError ->
+                            stringResource(R.string.consumer_profile_calendar_configuration_error)
+                        is CalendarConnectionUiState.Failed -> when (actionState.failure) {
+                            is CalendarConnectionFailure.Network ->
+                                stringResource(R.string.consumer_profile_calendar_error_network)
+                            is CalendarConnectionFailure.Unauthorized ->
+                                stringResource(R.string.consumer_profile_calendar_error_unauthorized)
+                            is CalendarConnectionFailure.Server ->
+                                stringResource(R.string.consumer_profile_calendar_error_server)
+                        }
+                        CalendarConnectionUiState.Idle,
+                        CalendarConnectionUiState.Connecting,
+                        -> null
+                    }
+                    actionMessage?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.testTag("consumer-profile-calendar-message"),
+                        )
+                    }
+                }
+            }
         }
     }
 }

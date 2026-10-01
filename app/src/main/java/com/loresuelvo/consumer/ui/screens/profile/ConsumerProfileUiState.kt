@@ -5,8 +5,25 @@ import com.loresuelvo.consumer.domain.auth.User
 
 sealed interface ConsumerProfileUiState {
     data object Loading : ConsumerProfileUiState
-    data class Ready(val user: User) : ConsumerProfileUiState
+    data class Ready(
+        val user: User,
+        val calendarConnection: CalendarConnectionUiState = CalendarConnectionUiState.Idle,
+    ) : ConsumerProfileUiState
     data class Error(val failure: ConsumerProfileFailure) : ConsumerProfileUiState
+}
+
+sealed interface CalendarConnectionUiState {
+    data object Idle : CalendarConnectionUiState
+    data object Connecting : CalendarConnectionUiState
+    data object Cancelled : CalendarConnectionUiState
+    data object ConfigurationError : CalendarConnectionUiState
+    data class Failed(val failure: CalendarConnectionFailure) : CalendarConnectionUiState
+}
+
+sealed interface CalendarConnectionFailure {
+    data class Network(val cause: Throwable) : CalendarConnectionFailure
+    data class Unauthorized(val message: String) : CalendarConnectionFailure
+    data class Server(val code: Int, val message: String) : CalendarConnectionFailure
 }
 
 sealed interface ConsumerProfileFailure {

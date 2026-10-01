@@ -3,6 +3,8 @@ package com.loresuelvo.consumer.ui.screens.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
+import com.loresuelvo.consumer.domain.calendar.CalendarConnectionOutcome
+import com.loresuelvo.consumer.domain.usecase.calendar.ConnectGoogleCalendarUseCase
 import com.loresuelvo.consumer.domain.usecase.auth.GetConsumerProfileUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -14,6 +16,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class ConsumerProfileViewModel @Inject constructor(
     private val getConsumerProfile: GetConsumerProfileUseCase,
+    private val connectGoogleCalendar: ConnectGoogleCalendarUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ConsumerProfileUiState>(ConsumerProfileUiState.Loading)
@@ -36,4 +39,42 @@ class ConsumerProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun onCalendarAuthorizationCancelled() {
+        updateReadyState { copy(calendarConnection = CalendarConnectionUiState.Cancelled) }
+    }
+
+    fun onCalendarAuthorizationUnavailable() {
+        updateReadyState { copy(calendarConnection = CalendarConnectionUiState.ConfigurationError) }
+    }
+
+    fun connectCalendar(serverAuthCode: String) {
+        val current = _uiState.value as? ConsumerProfileUiState.Ready ?: return
+        _uiState.value = current.copy(calendarConnection = CalendarConnectionUiState.Connecting)
+        viewModelScope.launch {
+            when (val outcome = connectGoogleCalendar(serverAuthCode)) {
+                CalendarConnectionOutcome.Success -> load()
+                is CalendarConnectionOutcome.Failure -> updateReadyState {
+                    copy(calendarConnection = outcome.toUiState())
+                }
+            }
+        }
+    }
+
+    private fun updateReadyState(transform: ConsumerProfileUiState.Ready.() -> ConsumerProfileUiState.Ready) {
+        val current = _uiState.value as? ConsumerProfileUiState.Ready ?: return
+        _uiState.value = current.transform()
+    }
 }
+
+private fun CalendarConnectionOutcome.Failure.toUiState(): CalendarConnectionUiState.Failed =
+    CalendarConnectionUiState.Failed(
+        when (this) {
+            is CalendarConnectionOutcome.Failure.Network ->
+                CalendarConnectionFailure.Network(cause)
+            is CalendarConnectionOutcome.Failure.Unauthorized ->
+                CalendarConnectionFailure.Unauthorized(message)
+            is CalendarConnectionOutcome.Failure.Server ->
+                CalendarConnectionFailure.Server(code, message)
+        },
+    )

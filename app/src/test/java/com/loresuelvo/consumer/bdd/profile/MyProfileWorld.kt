@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.bdd.profile
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.usecase.auth.GetConsumerProfileUseCase
+import com.loresuelvo.consumer.domain.usecase.calendar.ConnectGoogleCalendarUseCase
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileUiState
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileViewModel
 import io.mockk.coEvery
@@ -20,6 +21,7 @@ class MyProfileWorld : AutoCloseable {
     private val scheduler = TestCoroutineScheduler()
     private val dispatcher = StandardTestDispatcher(scheduler)
     private val getConsumerProfile = mockk<GetConsumerProfileUseCase>()
+    private val connectGoogleCalendar = mockk<ConnectGoogleCalendarUseCase>()
     private lateinit var viewModel: ConsumerProfileViewModel
     private val responses = ArrayDeque<CurrentUserOutcome>()
     private var requests = 0
@@ -54,7 +56,7 @@ class MyProfileWorld : AutoCloseable {
             requests += 1
             responses.removeFirst()
         }
-        viewModel = ConsumerProfileViewModel(getConsumerProfile)
+        viewModel = ConsumerProfileViewModel(getConsumerProfile, connectGoogleCalendar)
         scheduler.advanceUntilIdle()
     }
 

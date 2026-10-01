@@ -251,6 +251,12 @@ class SendMediaInstrumentedTest {
 
         @Binds
         @Singleton
+        abstract fun bindCalendarConnectionRepository(
+            repository: com.loresuelvo.consumer.testdi.FakeCalendarConnectionRepository,
+        ): com.loresuelvo.consumer.domain.calendar.CalendarConnectionRepository
+
+        @Binds
+        @Singleton
         abstract fun bindUserRepository(
             repository: SuccessfulUserRepository,
         ): UserRepository

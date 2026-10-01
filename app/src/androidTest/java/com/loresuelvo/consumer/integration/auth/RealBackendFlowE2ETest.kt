@@ -122,6 +122,12 @@ class RealBackendFlowE2ETest {
 
         @Binds
         @Singleton
+        abstract fun bindCalendarConnectionRepository(
+            impl: com.loresuelvo.consumer.testdi.FakeCalendarConnectionRepository,
+        ): com.loresuelvo.consumer.domain.calendar.CalendarConnectionRepository
+
+        @Binds
+        @Singleton
         abstract fun bindUserRepository(impl: com.loresuelvo.consumer.data.api.ApiUserRepository): com.loresuelvo.consumer.domain.auth.UserRepository
 
         @Binds

@@ -413,6 +413,12 @@ class ProfessionalsInstrumentedTest {
     abstract class TestRepoModule {
         @Binds
         @Singleton
+        abstract fun bindCalendarConnectionRepository(
+            impl: com.loresuelvo.consumer.testdi.FakeCalendarConnectionRepository,
+        ): com.loresuelvo.consumer.domain.calendar.CalendarConnectionRepository
+
+        @Binds
+        @Singleton
         abstract fun bindCategoryRepository(impl: StubCategoryRepository): CategoryRepository
 
         @Binds

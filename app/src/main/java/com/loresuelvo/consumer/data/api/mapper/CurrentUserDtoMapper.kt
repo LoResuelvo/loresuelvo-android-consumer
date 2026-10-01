@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.data.api.mapper
 
 import com.loresuelvo.consumer.data.api.dto.CurrentUserDto
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
+import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.domain.auth.User
 
 internal fun CurrentUserDto.toDomain(): User = User(
@@ -12,6 +13,7 @@ internal fun CurrentUserDto.toDomain(): User = User(
     firstName = firstName,
     lastName = lastName,
     email = email,
+    calendarConnectionStatus = CalendarConnectionStatus.fromWire(calendarConnectionStatus),
     profilePhotoUrl = profilePhoto?.url,
     address = address?.let {
         RegisterConsumerAddress(

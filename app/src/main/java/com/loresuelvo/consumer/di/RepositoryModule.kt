@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.di
 
 import com.loresuelvo.consumer.data.api.ApiCategoryRepository
+import com.loresuelvo.consumer.data.api.ApiCalendarConnectionRepository
 import com.loresuelvo.consumer.data.api.ApiConversationRepository
 import com.loresuelvo.consumer.data.api.ApiDiagnosisRepository
 import com.loresuelvo.consumer.data.api.ApiFileRepository
@@ -14,6 +15,7 @@ import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.calendar.CalendarConnectionRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.file.FileRepository
@@ -52,6 +54,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(impl: ApiCategoryRepository): CategoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCalendarConnectionRepository(
+        impl: ApiCalendarConnectionRepository,
+    ): CalendarConnectionRepository
 
     @Binds
     @Singleton

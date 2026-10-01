@@ -93,6 +93,17 @@
     <string name="consumer_profile_error_server">We could not load your profile. Try again.</string>
     <string name="consumer_profile_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="consumer_profile_retry">Retry</string>
+    <string name="consumer_profile_calendar_title">Google Calendar</string>
+    <string name="consumer_profile_calendar_connected">Google Calendar is connected.</string>
+    <string name="consumer_profile_calendar_disconnected">Connect Google Calendar to use it with your appointments.</string>
+    <string name="consumer_profile_calendar_action_required">Google Calendar needs to be authorized again.</string>
+    <string name="consumer_profile_calendar_connect">Connect Google Calendar</string>
+    <string name="consumer_profile_calendar_reconnect">Reconnect Google Calendar</string>
+    <string name="consumer_profile_calendar_cancelled">Google Calendar was not connected.</string>
+    <string name="consumer_profile_calendar_configuration_error">Google Calendar connection is not available in this build.</string>
+    <string name="consumer_profile_calendar_error_network">We could not connect Google Calendar. Check your connection.</string>
+    <string name="consumer_profile_calendar_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="consumer_profile_calendar_error_server">We could not validate the Google Calendar account. Try again.</string>
     <!-- Bottom-bar placeholder screens -->
     <string name="messages_screen_placeholder_title">Messages</string>
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>

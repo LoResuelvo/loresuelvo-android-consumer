@@ -132,6 +132,7 @@ android {
             val apiUrl = envVar("API_URL", "http://10.0.2.2:8080")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL")
             val paymentReturnHost = envVar("PAYMENT_RETURN_HOST", "")
+            val googleCalendarServerClientId = envVar("GOOGLE_CALENDAR_SERVER_CLIENT_ID", "")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
@@ -140,6 +141,7 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
+            buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
@@ -162,6 +164,7 @@ android {
             val apiUrl = envVar("API_URL_STAGING")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_STAGING")
             val paymentReturnHost = envVar("PAYMENT_RETURN_HOST_STAGING", "test.loresuelvo.com.ar")
+            val googleCalendarServerClientId = envVar("GOOGLE_CALENDAR_SERVER_CLIENT_ID_STAGING", "")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
@@ -171,6 +174,7 @@ android {
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
+            buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -188,6 +192,7 @@ android {
             val apiUrl = envVar("API_URL_PROD")
             val publicMediaBaseUrl = envVar("PUBLIC_MEDIA_BASE_URL_PROD")
             val paymentReturnHost = envVar("PAYMENT_RETURN_HOST_PROD", "loresuelvo.com.ar")
+            val googleCalendarServerClientId = envVar("GOOGLE_CALENDAR_SERVER_CLIENT_ID_PROD", "")
 
             buildConfigField("String", "API_URL", "\"$apiUrl\"")
             buildConfigField("String", "PUBLIC_MEDIA_BASE_URL", "\"$publicMediaBaseUrl\"")
@@ -196,6 +201,7 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
+            buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
@@ -313,5 +319,7 @@ dependencies {
 
     // Auth0
     implementation("com.auth0.android:auth0:2.11.0")
+    // Google Calendar mobile authorization returns a server auth code; the API exchanges it.
+    implementation(libs.play.services.auth)
     testImplementation(kotlin("test"))
 }

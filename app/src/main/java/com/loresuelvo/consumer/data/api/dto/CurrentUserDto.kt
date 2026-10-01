@@ -10,6 +10,7 @@ data class CurrentUserDto(
     @SerialName("surname") val lastName: String,
     @SerialName("email") val email: String,
     @SerialName("role") val role: String,
+    @SerialName("calendar_connection_status") val calendarConnectionStatus: String? = null,
     @SerialName("profile_photo") val profilePhoto: CurrentUserProfilePhotoDto? = null,
     @SerialName("address") val address: CurrentUserAddressDto? = null,
 )

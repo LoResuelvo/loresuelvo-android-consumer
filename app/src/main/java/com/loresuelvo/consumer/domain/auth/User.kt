@@ -7,6 +7,7 @@ data class User(
     val email: String? = null,
     val address: RegisterConsumerAddress? = null,
     val profilePhotoUrl: String? = null,
+    val calendarConnectionStatus: CalendarConnectionStatus = CalendarConnectionStatus.DISCONNECTED,
 ) {
     fun isProfileComplete(): Boolean =
         !firstName.isNullOrBlank() &&
