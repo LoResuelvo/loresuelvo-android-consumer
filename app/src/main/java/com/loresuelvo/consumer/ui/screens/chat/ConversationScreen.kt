@@ -4,22 +4,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -28,26 +19,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
-import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
-import com.loresuelvo.consumer.ui.screens.chat.components.ConversationMessageBubble
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationTopBar
-import com.loresuelvo.consumer.ui.screens.chat.components.NewMessageBanner
-import com.loresuelvo.consumer.ui.screens.chat.components.ProposalSummaryCard
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
@@ -97,34 +78,7 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 @Composable
 fun ConversationScreen(
     state: ConversationUiState,
-    onPromptChange: (String) -> Unit,
-    onSendClick: () -> Unit,
-    onBackClick: () -> Unit,
-    // US-27 scenario 02-VTD: tap "Ver orden" CTA in the top
-    // bar. `onViewWorkOrder` is invoked with the work-order id
-    // already known to the domain; the route handler navigates
-    // to `Route.WorkOrderDetail`. Wired only by the production
-    // route — the default `null` keeps host-free previews
-    // compiling.
-    onViewWorkOrder: ((String) -> Unit)? = null,
-    onRetryClick: () -> Unit,
-    onErrorDismiss: () -> Unit,
-    onPlayAudio: (String) -> Unit = {},
-    onPauseAudio: (String) -> Unit = {},
-    onImageClick: (String) -> Unit = {},
-    onFullscreenImageDismiss: () -> Unit = {},
-    onAttachClick: () -> Unit = {},
-    onGalleryClick: () -> Unit = {},
-    onCameraClick: () -> Unit = {},
-    onStartAudioRecording: () -> Unit = {},
-    onStopAudioRecording: () -> Unit = {},
-    onConfirmMediaSend: () -> Unit = {},
-    onDiscardMedia: () -> Unit = {},
-    onMediaErrorDismiss: () -> Unit = {},
-    onAttachSheetDismiss: () -> Unit = {},
-    showAttachSheet: Boolean = false,
-    onScrollPositionChanged: (Boolean) -> Unit = {},
-    onUnreadBannerTapped: () -> Unit = {},
+    actions: ConversationScreenActions = ConversationScreenActions(),
     proposalSummaryState: ConversationProposalSummaryUiState =
         ConversationProposalSummaryUiState.Empty,
     modifier: Modifier = Modifier,
@@ -148,7 +102,7 @@ fun ConversationScreen(
             is ConversationUiState.Loading -> LoadingState()
             is ConversationUiState.Error -> ErrorState(
                 failure = state.failure,
-                onRetryClick = onRetryClick,
+                onRetryClick = actions.errors.onRetry,
             )
             is ConversationUiState.Ready -> {
                 Scaffold(
@@ -158,7 +112,7 @@ fun ConversationScreen(
                         ConversationTopBar(
                             counterpart = state.detail.counterpart,
                             status = state.detail.status,
-                            onBackClick = onBackClick,
+                            onBackClick = actions.navigation.onBack,
                             // US-27 scenario 02-VTD: when the
                             // conversation has an associated work
                             // order, the top bar surfaces an icon
@@ -168,7 +122,7 @@ fun ConversationScreen(
                             // hides the button entirely.
                             onViewWorkOrder = state.detail.workOrderId
                                 ?.let { workOrderId ->
-                                    { onViewWorkOrder?.invoke(workOrderId) }
+                                    { actions.navigation.onViewWorkOrder?.invoke(workOrderId) }
                                 },
                         )
                     },
@@ -195,8 +149,8 @@ fun ConversationScreen(
                             if (state.transientError != null) {
                                 TransientErrorCard(
                                     failure = state.transientError,
-                                    onRetryClick = onSendClick,
-                                    onDismiss = onErrorDismiss,
+                                    onRetryClick = actions.composer.onSend,
+                                    onDismiss = actions.errors.onDismiss,
                                 )
                             }
                             if (state.pendingMedia.isNotEmpty()) {
@@ -204,8 +158,8 @@ fun ConversationScreen(
                                     MediaPreviewCard(
                                         pendingMedia = attachment,
                                         sending = state.sendingMedia,
-                                        onSendClick = onConfirmMediaSend,
-                                        onDiscardClick = onDiscardMedia,
+                                        onSendClick = actions.media.onConfirmSend,
+                                        onDiscardClick = actions.media.onDiscard,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .testTag(
@@ -216,8 +170,8 @@ fun ConversationScreen(
                                 if (state.transientMediaError != null) {
                                     MediaTransientErrorCard(
                                         failure = state.transientMediaError,
-                                        onRetryClick = onConfirmMediaSend,
-                                        onDismiss = onMediaErrorDismiss,
+                                        onRetryClick = actions.media.onConfirmSend,
+                                        onDismiss = actions.media.onErrorDismiss,
                                     )
                                 }
                             }
@@ -226,42 +180,35 @@ fun ConversationScreen(
                                 canSend = state.promptInput.isNotBlank() && !state.sending,
                                 sending = state.sending,
                                 recordingAudio = state.recordingAudio,
-                                onPromptChange = onPromptChange,
-                                onSendClick = onSendClick,
-                                onStartAudioRecording = onStartAudioRecording,
-                                onStopAudioRecording = onStopAudioRecording,
-                                onAttachClick = onAttachClick,
+                                onPromptChange = actions.composer.onPromptChange,
+                                onSendClick = actions.composer.onSend,
+                                onStartAudioRecording = actions.composer.onStartAudioRecording,
+                                onStopAudioRecording = actions.composer.onStopAudioRecording,
+                                onAttachClick = actions.composer.onAttach,
                             )
                         }
                     },
                 ) { padding ->
-                    ReadyContent(
+                    ConversationReadyContent(
                         state = state,
                         paddingValues = padding,
-                        onPromptChange = onPromptChange,
-                        onSendClick = onSendClick,
-                        onErrorDismiss = onErrorDismiss,
-                        onPlayAudio = onPlayAudio,
-                        onPauseAudio = onPauseAudio,
-                        onImageClick = onImageClick,
-                        onScrollPositionChanged = onScrollPositionChanged,
-                        onUnreadBannerTapped = onUnreadBannerTapped,
+                        actions = actions,
                         proposalSummaryState = proposalSummaryState,
                     )
                 }
             }
         }
         MediaAttachSheet(
-            show = showAttachSheet,
-            onDismiss = onAttachSheetDismiss,
-            onGalleryClick = onGalleryClick,
-            onCameraClick = onCameraClick,
+            show = actions.media.showAttachSheet,
+            onDismiss = actions.media.onAttachSheetDismiss,
+            onGalleryClick = actions.media.onGallery,
+            onCameraClick = actions.media.onCamera,
         )
 
         (state as? ConversationUiState.Ready)?.fullscreenImage?.let { image ->
             FullScreenImageViewer(
                 image = image,
-                onDismiss = onFullscreenImageDismiss,
+                onDismiss = actions.playback.onFullscreenImageDismiss,
             )
         }
     }
@@ -318,129 +265,6 @@ private fun ErrorState(
             Text(
                 text = stringResource(R.string.conversation_error_retry),
                 style = MaterialTheme.typography.labelLarge,
-            )
-        }
-    }
-}
-
-@Composable
-private fun ReadyContent(
-    state: ConversationUiState.Ready,
-    paddingValues: PaddingValues,
-    onPromptChange: (String) -> Unit,
-    onSendClick: () -> Unit,
-    onErrorDismiss: () -> Unit,
-    onPlayAudio: (String) -> Unit,
-    onPauseAudio: (String) -> Unit,
-    onImageClick: (String) -> Unit,
-    onScrollPositionChanged: (Boolean) -> Unit,
-    onUnreadBannerTapped: () -> Unit,
-    proposalSummaryState: ConversationProposalSummaryUiState,
-) {
-    val listState = rememberLazyListState()
-
-    // Tracks whether the LazyList's last visible item is the
-    // last item of the conversation — i.e. the user is "at the
-    // bottom" (scenarios 09-IC / 10-IC). The screen reports
-    // this back to the VM so it can decide whether to flag a
-    // newly-arrived provider message as "unread" (banner) or
-    // let the auto-scroll show it directly.
-    val isAtBottom by remember {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            info.totalItemsCount == 0 ||
-                info.visibleItemsInfo.lastOrNull()?.index == info.totalItemsCount - 1
-        }
-    }
-    LaunchedEffect(isAtBottom) {
-        onScrollPositionChanged(isAtBottom)
-    }
-
-    // Auto-scroll on every new message so the consumer's just-sent
-    // bubble is always visible. Same `derivedStateOf`-style gate
-    // as `shouldAutoScroll` in `MessagesList` (AI chat): if the
-    // user is scrolled up reading older messages, we skip the
-    // forced scroll so they keep their place — the new bubble
-    // appears below and the unread banner surfaces instead.
-    LaunchedEffect(state.detail.messages.size) {
-        if (state.detail.messages.isEmpty()) return@LaunchedEffect
-        val info = listState.layoutInfo
-        if (!isAtBottom || info.totalItemsCount <= info.visibleItemsInfo.size) return@LaunchedEffect
-        listState.animateScrollToItem(state.detail.messages.size - 1)
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(paddingValues),
-    ) {
-        // US-54 scenario 14-VSP: when the conversation is linked
-        // to a service proposal, render the compact summary card
-        // on top of the message list. The card stays hidden for
-        // `Loading` and `Empty` so the chat composer and messages
-        // render normally even when the proposal round trip is
-        // in flight or has failed.
-        (proposalSummaryState as? ConversationProposalSummaryUiState.Ready)?.let { ready ->
-            ProposalSummaryCard(proposal = ready.proposal)
-        }
-        Box(modifier = Modifier.fillMaxSize()) {
-            MessagesList(
-                messages = state.detail.messages,
-                listState = listState,
-                audioPlayback = state.audioPlayback,
-                onPlayAudio = onPlayAudio,
-                onPauseAudio = onPauseAudio,
-                onImageClick = onImageClick,
-            )
-            // The unread banner overlays the list at the bottom-edge
-            // of the scroll area (anchored to `Alignment.BottomCenter`).
-            if (state.hasUnreadIncoming) {
-                NewMessageBanner(
-                    onTap = {
-                        coroutineScope.launch {
-                            listState.animateScrollToItem(
-                                state.detail.messages.size - 1,
-                            )
-                        }
-                        onUnreadBannerTapped()
-                    },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun MessagesList(
-    messages: List<com.loresuelvo.consumer.domain.conversation.ConversationMessage>,
-    listState: LazyListState,
-    audioPlayback: AudioPlaybackState,
-    onPlayAudio: (String) -> Unit,
-    onPauseAudio: (String) -> Unit,
-    onImageClick: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag(CONVERSATION_LIST_TAG),
-        state = listState,
-        contentPadding = PaddingValues(vertical = 12.dp),
-    ) {
-        items(
-            items = messages,
-            key = { it.id },
-        ) { message ->
-            ConversationMessageBubble(
-                message = message,
-                audioPlayback = audioPlayback,
-                onPlayAudio = onPlayAudio,
-                onPauseAudio = onPauseAudio,
-                onImageClick = onImageClick,
             )
         }
     }

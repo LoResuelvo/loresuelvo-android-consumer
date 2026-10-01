@@ -148,51 +148,63 @@ internal fun ConversationRoute(
     com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
         state = state,
         proposalSummaryState = proposalSummaryState,
-        onPromptChange = viewModel::onPromptChange,
-        onSendClick = viewModel::onSendClick,
-        onBackClick = { navController.popBackStack() },
-        onRetryClick = { viewModel.load(conversationId) },
-        onErrorDismiss = viewModel::onErrorDismiss,
-        onPlayAudio = viewModel::onPlayAudio,
-        onPauseAudio = viewModel::onPauseAudio,
-        onImageClick = viewModel::onImageClick,
-        onFullscreenImageDismiss = viewModel::onFullscreenImageDismiss,
-        onViewWorkOrder = { workOrderId ->
-            navController.navigate(Route.WorkOrderDetail.buildPath(workOrderId))
-        },
-        onAttachClick = { sheetState.value = true },
-        onGalleryClick = {
-            galleryLauncher.launch(
-                androidx.activity.result.PickVisualMediaRequest(
-                    ActivityResultContracts.PickVisualMedia.ImageOnly,
-                ),
-            )
-        },
-        onCameraClick = {
-            val uri = createCameraOutputUri(context)
-            cameraOutputUriState.value = uri
-            cameraLauncher.launch(uri)
-        },
-        onStartAudioRecording = {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO,
-            ) == PackageManager.PERMISSION_GRANTED
+        actions = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions(
+            navigation = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Navigation(
+                onBack = { navController.popBackStack() },
+                onViewWorkOrder = { workOrderId ->
+                    navController.navigate(Route.WorkOrderDetail.buildPath(workOrderId))
+                },
+            ),
+            composer = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Composer(
+                onPromptChange = viewModel::onPromptChange,
+                onSend = viewModel::onSendClick,
+                onAttach = { sheetState.value = true },
+                onStartAudioRecording = {
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO,
+                    ) == PackageManager.PERMISSION_GRANTED
 
-            if (hasPermission) {
-                viewModel.onStartAudioRecording()
-            } else {
-                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-            }
-        },
-        onStopAudioRecording = viewModel::onStopAudioRecording,
-        onConfirmMediaSend = viewModel::onConfirmMediaSend,
-        onDiscardMedia = viewModel::onDiscardMediaPreview,
-        onMediaErrorDismiss = viewModel::onErrorDismiss,
-        onAttachSheetDismiss = { sheetState.value = false },
-        showAttachSheet = showAttachSheet,
-        onScrollPositionChanged = viewModel::onScrollPositionChanged,
-        onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
+                    if (hasPermission) {
+                        viewModel.onStartAudioRecording()
+                    } else {
+                        audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
+                onStopAudioRecording = viewModel::onStopAudioRecording,
+            ),
+            media = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Media(
+                showAttachSheet = showAttachSheet,
+                onGallery = {
+                    galleryLauncher.launch(
+                        androidx.activity.result.PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly,
+                        ),
+                    )
+                },
+                onCamera = {
+                    val uri = createCameraOutputUri(context)
+                    cameraOutputUriState.value = uri
+                    cameraLauncher.launch(uri)
+                },
+                onConfirmSend = viewModel::onConfirmMediaSend,
+                onDiscard = viewModel::onDiscardMediaPreview,
+                onErrorDismiss = viewModel::onErrorDismiss,
+                onAttachSheetDismiss = { sheetState.value = false },
+            ),
+            playback = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Playback(
+                onPlayAudio = viewModel::onPlayAudio,
+                onPauseAudio = viewModel::onPauseAudio,
+                onImageClick = viewModel::onImageClick,
+                onFullscreenImageDismiss = viewModel::onFullscreenImageDismiss,
+            ),
+            errors = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Errors(
+                onRetry = { viewModel.load(conversationId) },
+                onDismiss = viewModel::onErrorDismiss,
+                onScrollPositionChanged = viewModel::onScrollPositionChanged,
+                onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
+            ),
+        ),
     )
 }
 
