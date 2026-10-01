@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -80,9 +81,17 @@ fun MediaPreviewCard(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Image,
+                    imageVector = if (pendingMedia.kind == PendingMediaKind.VIDEO) {
+                        Icons.Filled.VideoLibrary
+                    } else {
+                        Icons.Filled.Image
+                    },
                     contentDescription = stringResource(
-                        R.string.conversation_media_preview_image_content_description,
+                        if (pendingMedia.kind == PendingMediaKind.VIDEO) {
+                            R.string.conversation_media_preview_video_content_description
+                        } else {
+                            R.string.conversation_media_preview_image_content_description
+                        },
                     ),
                     tint = MaterialTheme.colorScheme.onSurface,
                 )
@@ -97,6 +106,19 @@ fun MediaPreviewCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.testTag(MEDIA_PREVIEW_NAME_TAG),
                 )
+                if (pendingMedia.kind == PendingMediaKind.VIDEO) {
+                    Text(
+                        text = stringResource(
+                            R.string.conversation_media_preview_video_metadata,
+                            formatVideoDuration(pendingMedia.durationMillis),
+                            pendingMedia.width,
+                            pendingMedia.height,
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.testTag(MEDIA_PREVIEW_VIDEO_METADATA_TAG),
+                    )
+                }
                 Text(
                     text = stringResource(
                         R.string.conversation_media_preview_file_name_format,
@@ -170,9 +192,15 @@ private fun humanReadableSize(bytes: Long): String {
     return "%.2f MB".format(mb)
 }
 
+private fun formatVideoDuration(durationMillis: Long): String {
+    val totalSeconds = durationMillis / 1000
+    return "%d:%02d".format(totalSeconds / 60, totalSeconds % 60)
+}
+
 const val MEDIA_PREVIEW_CARD_TAG: String = "media-preview-card"
 const val MEDIA_PREVIEW_THUMBNAIL_TAG: String = "media-preview-thumbnail"
 const val MEDIA_PREVIEW_NAME_TAG: String = "media-preview-name"
 const val MEDIA_PREVIEW_SEND_TAG: String = "media-preview-send"
 const val MEDIA_PREVIEW_DISCARD_TAG: String = "media-preview-discard"
 const val MEDIA_PREVIEW_SPINNER_TAG: String = "media-preview-spinner"
+const val MEDIA_PREVIEW_VIDEO_METADATA_TAG: String = "media-preview-video-metadata"

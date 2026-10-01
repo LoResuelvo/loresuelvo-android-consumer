@@ -124,6 +124,15 @@ internal fun ConversationRoute(
         sheetState.value = false
     }
 
+    val videoLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onAttachVideoFromPicker(uri)
+        }
+        sheetState.value = false
+    }
+
     val context = LocalContext.current
     val cameraOutputUriState = remember { mutableStateOf<android.net.Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -175,6 +184,13 @@ internal fun ConversationRoute(
             ),
             media = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Media(
                 showAttachSheet = showAttachSheet,
+                onVideo = {
+                    videoLauncher.launch(
+                        androidx.activity.result.PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.VideoOnly,
+                        ),
+                    )
+                },
                 onGallery = {
                     galleryLauncher.launch(
                         androidx.activity.result.PickVisualMediaRequest(

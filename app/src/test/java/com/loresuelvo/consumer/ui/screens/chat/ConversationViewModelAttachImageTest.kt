@@ -740,6 +740,46 @@ val state = viewModel.uiState.value as ConversationUiState.Ready
         assertEquals("first.jpg", pending[0].originalName)
         assertEquals("second.jpg", pending[1].originalName)
     }
+
+    @Test
+    fun onAttachVideoFromPicker_stages_video_with_metadata_and_exclusivity() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            mediaMetadataRetriever,
+            audioRecorder,
+            audioPlayer,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        val video = MediaUpload.Video(
+            bytes = byteArrayOf(1, 2, 3),
+            mimeType = "video/mp4",
+            originalName = "evidence.mp4",
+            durationMillis = 20_000L,
+            width = 1280,
+            height = 720,
+            videoCodec = "h264",
+        )
+        coEvery { mediaReader.read(uri) } returns video
+
+        viewModel.onAttachVideoFromPicker(uri)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        val pending = state.pendingMedia.single()
+        assertEquals(PendingMediaKind.VIDEO, pending.kind)
+        assertEquals("evidence.mp4", pending.originalName)
+        assertEquals(20_000L, pending.durationMillis)
+        assertEquals(1280, pending.width)
+        assertEquals(720, pending.height)
+    }
 }
 
 /** MockK's `any()` is auto-resolved inside `coVerify { }` /

@@ -366,6 +366,31 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
+    /** Reads and validates a single video selected from the picker. */
+    fun onAttachVideoFromPicker(uri: Uri) {
+        val state = _uiState.value
+        if (state !is ConversationUiState.Ready) return
+        _uiState.update { current ->
+            if (current is ConversationUiState.Ready) {
+                current.copy(attachingMedia = true, transientMediaError = null)
+            } else {
+                current
+            }
+        }
+        viewModelScope.launch {
+            try {
+                val media = mediaReader.read(uri)
+                if (media !is MediaUpload.Video) {
+                    applyAttachFailure(IllegalArgumentException("Selected file is not a video"))
+                } else {
+                    onAttachMedia(media, sourceUri = uri)
+                }
+            } catch (t: Throwable) {
+                applyAttachFailure(t)
+            }
+        }
+    }
+
     /**
      * Reads the audio Uri the system's voice recorder returned
      * (03-MM) via [MediaReader], then extracts the recording's
@@ -626,7 +651,7 @@ class ConversationViewModel @Inject constructor(
                 // in one session; audio overrides the previous
                 // audio (a single recorder per message keeps the
                 // wire payload predictable).
-                val merged = if (pending.kind == PendingMediaKind.AUDIO) {
+                val merged = if (pending.kind != PendingMediaKind.IMAGE) {
                     listOf(pending)
                 } else {
                     current.pendingMedia + pending

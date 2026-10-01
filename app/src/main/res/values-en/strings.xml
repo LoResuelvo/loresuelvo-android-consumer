@@ -154,9 +154,12 @@
     <string name="conversation_attach_gallery">Gallery</string>
     <string name="conversation_attach_camera">Camera</string>
     <string name="conversation_attach_audio">Audio</string>
+    <string name="conversation_attach_video">Video</string>
     <string name="conversation_media_preview_send">Send</string>
     <string name="conversation_media_preview_discard">Discard</string>
     <string name="conversation_media_preview_image_content_description">Image attachment preview</string>
+    <string name="conversation_media_preview_video_content_description">Video attachment preview</string>
+    <string name="conversation_media_preview_video_metadata">%1$s · %2$d×%3$d</string>
     <string name="conversation_media_preview_file_name_format">%1$s · %2$s</string>
     <string name="conversation_record_audio_content_description">Record audio</string>
     <string name="conversation_stop_audio_recording_content_description">Stop recording</string>

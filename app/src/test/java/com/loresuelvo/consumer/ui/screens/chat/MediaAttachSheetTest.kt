@@ -69,6 +69,29 @@ class MediaAttachSheetTest {
     }
 
     @Test
+    fun video_row_is_visible_and_clickable_when_callback_is_provided() {
+        composeTestRule.setContent {
+            MediaAttachSheet(
+                show = true,
+                onDismiss = {},
+                onGalleryClick = {},
+                onCameraClick = {},
+                onVideoClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(MEDIA_ATTACH_VIDEO_ROW_TAG)
+            .assertIsDisplayed()
+            .assertHasClickAction()
+        composeTestRule
+            .onNodeWithText("Video")
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun audio_row_does_not_exist() {
         composeTestRule.setContent {
             MediaAttachSheet(

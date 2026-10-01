@@ -9,21 +9,18 @@ Característica: Seleccionar y previsualizar videos en el chat
   Quiero revisar un video antes de enviarlo
   Para confirmar que es la evidencia correcta
 
-  @wip
   Escenario: Seleccionar un video válido muestra su preview
     Dado que estoy en una conversación abierta
     Cuando selecciono un video MP4 válido desde el menú de adjuntos
     Entonces veo una única tarjeta de preview con nombre, tamaño, duración y dimensiones
     Y el video reemplaza cualquier media pendiente incompatible
 
-  @wip
   Escenario: Cancelar o rechazar un video no bloquea el chat
     Dado que estoy en una conversación abierta
     Cuando cancelo el picker o selecciono un video ilegible
     Entonces no se agrega un video pendiente
     Y puedo continuar enviando texto o media existente
 
-  @wip
   Escenario: Un error de envío conserva el video para reintentar
     Dado que tengo un video válido en la tarjeta de preview
     Cuando falla la operación de envío

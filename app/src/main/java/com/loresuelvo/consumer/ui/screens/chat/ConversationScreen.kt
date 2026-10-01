@@ -203,6 +203,7 @@ fun ConversationScreen(
             onDismiss = actions.media.onAttachSheetDismiss,
             onGalleryClick = actions.media.onGallery,
             onCameraClick = actions.media.onCamera,
+            onVideoClick = actions.media.onVideo,
         )
 
         (state as? ConversationUiState.Ready)?.fullscreenImage?.let { image ->

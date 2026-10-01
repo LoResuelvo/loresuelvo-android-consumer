@@ -122,6 +122,37 @@ class MediaPreviewCardTest {
     }
 
     @Test
+    fun video_preview_renders_duration_and_dimensions() {
+        composeTestRule.setContent {
+            MediaPreviewCard(
+                pendingMedia = PendingMedia(
+                    localUri = null,
+                    mimeType = "video/mp4",
+                    originalName = "evidence.mp4",
+                    sizeBytes = 4_000L,
+                    bytes = ByteArray(4_000),
+                    kind = PendingMediaKind.VIDEO,
+                    durationMillis = 20_000L,
+                    width = 1280,
+                    height = 720,
+                ),
+                sending = false,
+                onSendClick = {},
+                onDiscardClick = {},
+            )
+        }
+
+        composeTestRule.waitForIdle()
+
+        composeTestRule
+            .onNodeWithTag(MEDIA_PREVIEW_VIDEO_METADATA_TAG)
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("0:20 · 1280×720")
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun metadata_line_includes_mime_and_human_readable_size() {
         composeTestRule.setContent {
             MediaPreviewCard(
