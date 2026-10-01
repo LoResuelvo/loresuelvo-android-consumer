@@ -1,11 +1,9 @@
 package com.loresuelvo.consumer.ui.navigation
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -13,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -24,41 +21,24 @@ import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import android.Manifest
-import android.content.pm.PackageManager
-import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination
 import com.loresuelvo.consumer.ui.components.bottomnav.LoResuelvoBottomBar
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
-import com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen
-import com.loresuelvo.consumer.ui.screens.assistant.AssistantViewModel
-import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.categories.CategoriesScreen
 import com.loresuelvo.consumer.ui.screens.categories.CategoriesViewModel
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
-import com.loresuelvo.consumer.ui.screens.messages.MessagesScreen
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreen
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosViewModel
-import com.loresuelvo.consumer.ui.screens.turnos.TurnosScreen
-import com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel
-import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
-import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
-import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 import com.loresuelvo.consumer.ui.screens.auth.SessionRestorationScreen
 import com.loresuelvo.consumer.ui.session.SessionError
 import com.loresuelvo.consumer.ui.session.SessionViewModel
 import com.loresuelvo.consumer.ui.payment.PaymentResultRoute
 import com.loresuelvo.consumer.ui.payment.ServiceAgreementRoute
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import com.loresuelvo.consumer.LoresuelvoApp
-import kotlinx.coroutines.flow.collectLatest
 import android.util.Log
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
@@ -104,16 +84,8 @@ fun LoResuelvoNav() {
         app?.navControllerEvents?.collect { intent ->
             val uri = intent.data ?: return@collect
 
-            val externalReference =
-                uri.getQueryParameter(Route.ARG_EXTERNAL_REFERENCE)
-
-            val isPaymentReturn = uri.path in setOf(
-                Route.PAYMENT_RETURN_SUCCESS_PATH,
-                Route.PAYMENT_RETURN_PENDING_PATH,
-                Route.PAYMENT_RETURN_FAILURE_PATH,
-            )
-
-            if (!isPaymentReturn || externalReference.isNullOrBlank()) {
+            val paymentResultPath = paymentResultPathFor(uri)
+            if (paymentResultPath == null) {
                 Log.d(
                     "APP_LINK",
                     "Ignoring unsupported deep link: $uri",
@@ -125,14 +97,14 @@ fun LoResuelvoNav() {
                 ?: return@collect
 
             navController.navigate(
-                Route.PaymentResult.buildPath(externalReference),
+                paymentResultPath,
             ) {
                 launchSingleTop = true
             }
 
             Log.d(
                 "APP_LINK",
-                "Navigated to payment result: $externalReference",
+                "Navigated to payment result: $paymentResultPath",
             )
         }
     }
@@ -213,101 +185,82 @@ fun LoResuelvoNav() {
                 navController = navController,
                 startDestination = sessionRoute,
                 contentPadding = padding,
-
-                welcome = {
-                    WelcomeRoute()
-                },
-
-                completeProfile = {
-                    CompleteProfileRoute(navController)
-                },
-
-                home = {
-                    HomeRoute(navController)
-                },
-
-                categories = {
-                    CategoriesRoute(navController)
-                },
-
-                professionals = { categoryId, categoryName ->
-                    ProfessionalsRoute(
-                        navController = navController,
-                        categoryId = categoryId,
-                        categoryName = categoryName,
-                    )
-                },
-
-                providerProfile = { providerId ->
-                    ProviderProfileRoute(
-                        navController = navController,
-                        providerId = providerId,
-                    )
-                },
-
-                chat = { conversationId ->
-                    ChatRoute(
-                        navController = navController,
-                        conversationId = conversationId,
-                    )
-                },
-
-                conversation = { conversationId ->
-                    ConversationRoute(
-                        navController = navController,
-                        conversationId = conversationId,
-                    )
-                },
-
-                messages = {
-                    MessagesRoute(navController)
-                },
-
-                assistant = {
-                    AssistantRoute(navController)
-                },
-
-                misServicios = {
-                    MisServiciosRoute(navController)
-                },
-
-                turnos = {
-                    TurnosRoute(navController)
-                },
-
-                workOrderDetail = { workOrderId, provider ->
-                    WorkOrderDetailRoute(
-                        navController = navController,
-                        workOrderId = workOrderId,
-                        provider = provider,
-                    )
-                },
-
-                serviceAgreement = { nav ->
-                    ServiceAgreementRoute.bind(
-                        navController = nav,
-                        serviceAgreementViewModel = hiltViewModel(),
-                        onReturnHome = {
-                            navController.popBackStack(
-                                Route.Home.path,
-                                inclusive = false,
+                content = ConsumerNavContent(
+                    session = SessionNavContent(
+                        welcome = { WelcomeRoute() },
+                        completeProfile = { CompleteProfileRoute(navController) },
+                    ),
+                    discovery = DiscoveryNavContent(
+                        home = { HomeRoute(navController) },
+                        categories = { CategoriesRoute(navController) },
+                        professionals = { categoryId, categoryName ->
+                            ProfessionalsRoute(
+                                navController = navController,
+                                categoryId = categoryId,
+                                categoryName = categoryName,
                             )
                         },
-                    )
-                },
-
-                paymentResult = { nav, entry ->
-                    PaymentResultRoute.bind(
-                        navController = nav,
-                        backStackEntry = entry,
-                        onReturnHome = {
-                            navController.popBackStack(
-                                Route.Home.path,
-                                inclusive = false,
+                        providerProfile = { providerId ->
+                            ProviderProfileRoute(
+                                navController = navController,
+                                providerId = providerId,
                             )
                         },
-                    )
-                },
+                    ),
+                    chat = ChatNavContent(
+                        chat = { conversationId ->
+                            ChatRoute(
+                                navController = navController,
+                                conversationId = conversationId,
+                            )
+                        },
+                        conversation = { conversationId ->
+                            ConversationRoute(
+                                navController = navController,
+                                conversationId = conversationId,
+                            )
+                        },
+                        messages = { MessagesRoute(navController) },
+                        assistant = { AssistantRoute(navController) },
+                    ),
+                    work = WorkNavContent(
+                        misServicios = { MisServiciosRoute(navController) },
+                        turnos = { TurnosRoute(navController) },
+                        workOrderDetail = { workOrderId, provider ->
+                            WorkOrderDetailRoute(
+                                navController = navController,
+                                workOrderId = workOrderId,
+                                provider = provider,
+                            )
+                        },
+                    ),
+                    payment = PaymentNavContent(
+                        serviceAgreement = { nav ->
+                            ServiceAgreementRoute.bind(
+                                navController = nav,
+                                serviceAgreementViewModel = hiltViewModel(),
+                                onReturnHome = {
+                                    navController.popBackStack(
+                                        Route.Home.path,
+                                        inclusive = false,
+                                    )
+                                },
+                            )
+                        },
+                        paymentResult = { nav, entry ->
+                            PaymentResultRoute.bind(
+                                navController = nav,
+                                backStackEntry = entry,
+                                onReturnHome = {
+                                    navController.popBackStack(
+                                        Route.Home.path,
+                                        inclusive = false,
+                                    )
+                                },
+                            )
+                        },
+                    ),
+                ),
             )
         }
 
@@ -330,57 +283,6 @@ fun LoResuelvoNav() {
             )
         }
     }
-}
-
-/**
- * Welcome screen with its Hilt-provided ViewModel. The Composable
- * bridge passes the activity `Context` (`LocalContext.current`) to
- * the selected ViewModel action: Auth0 requires an Activity-bound
- * context to start its browser flow.
- */
-@Composable
-private fun WelcomeRoute() {
-    val viewModel: WelcomeViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
-    WelcomeScreen(
-        error = state.error,
-        categories = state.categories,
-        onRegisterClick = { viewModel.signup(context) },
-        onLoginClick = { viewModel.login(context) },
-        onGoogleClick = { viewModel.loginWithGoogle(context) },
-    )
-}
-
-/**
- * Complete-profile screen + the `NavigateToHome` event listener
- * that owns the success-side navigation. Kept inside `LoResuelvoNav`
- * so the navigation graph is the only place that calls
- * `navController.navigate(Route.Home.path)`.
- */
-@Composable
-private fun CompleteProfileRoute(
-    navController: androidx.navigation.NavHostController,
-) {
-    val viewModel: CompleteProfileViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    androidx.compose.runtime.LaunchedEffect(viewModel) {
-        viewModel.events.collect { event ->
-            when (event) {
-                CompleteProfileEvent.NavigateToHome ->
-                    navController.navigate(Route.Home.path) {
-                        if (navController.currentDestination != null) {
-                            popUpTo(navController.graph.id) { inclusive = true }
-                        }
-                        launchSingleTop = true
-                    }
-            }
-        }
-    }
-    CompleteProfileScreen(
-        state = state,
-        onAction = viewModel::onAction,
-    )
 }
 
 /**
@@ -459,26 +361,6 @@ private fun ProfessionalsRoute(
         onContactRemoveImage = contactViewModel::onRemoveImage,
         onContactSubmit = contactViewModel::onSubmit,
         onContactCancel = contactViewModel::onCancel,
-    )
-}
-
-@Composable
-private fun ProviderProfileRoute(
-    navController: androidx.navigation.NavHostController,
-    providerId: Int,
-) {
-    val viewModel: com.loresuelvo.consumer.ui.screens.providerprofile.ProviderProfileViewModel =
-        hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-
-    androidx.compose.runtime.LaunchedEffect(providerId) {
-        viewModel.load(providerId)
-    }
-
-    com.loresuelvo.consumer.ui.screens.providerprofile.ProviderProfileScreen(
-        state = state,
-        onRetryClick = { viewModel.load(providerId) },
-        onBackClick = { navController.popBackStack() },
     )
 }
 
@@ -630,49 +512,6 @@ private fun CategoriesRoute(
 }
 
 /**
- * Messages list route. Resolves the
- * [com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel]
- * through Hilt and forwards the UDF state to the screen.
- *
- * 05-IC wires the row-tap handler to `navController.navigate` so
- * tapping a conversation opens the detail screen
- * (`Route.Conversation`). The earlier "no-op" placeholder was
- * removed when the detail screen became real.
- */
-@Composable
-private fun MessagesRoute(
-    navController: androidx.navigation.NavHostController,
-) {
-    val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.load()
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
-    com.loresuelvo.consumer.ui.screens.messages.MessagesScreen(
-        state = state,
-        onRetryClick = viewModel::load,
-        onConversationClick = { conversationId ->
-            navController.navigate(
-                Route.Conversation.buildPath(conversationId),
-            )
-        },
-    )
-}
-
-/**
  * "Mis Servicios" route (US-54 scenario 03-VSP). Resolves the
  * [MisServiciosViewModel] through Hilt and forwards the UDF state
  * to [MisServiciosScreen]. The VM's `init { load() }` fires the
@@ -725,288 +564,4 @@ private fun MisServiciosRoute(
         },
         onDetailDismiss = { detailViewModel.reset() },
     )
-}
-
-/**
- * Conversation detail route. Resolves the
- * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel]
- * through Hilt and forwards the UDF state to the screen. The
- * nav argument [conversationId] is fed to the VM's `load(id)`
- * once on first composition (and again on the screen-level
- * retry from the `Error` state).
- */
-@Composable
-private fun AssistantRoute(
-    navController: androidx.navigation.NavHostController,
-) {
-    val viewModel: AssistantViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    val lifecycleOwner = LocalLifecycleOwner.current
-
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                viewModel.retry()
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
-    com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen(
-        state = state,
-        onRetryClick = viewModel::retry,
-        onConversationClick = { conversationId ->
-            navController.navigate(
-                Route.Chat.buildPath(conversationId = conversationId),
-            )
-        },
-    )
-}
-
-@Composable
-private fun ConversationRoute(
-    navController: androidx.navigation.NavHostController,
-    conversationId: String,
-) {
-    val viewModel: com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel =
-        hiltViewModel()
-    // US-54 scenario 14-VSP: a separate Hilt-scoped VM drives the
-    // proposal-summary card. Mounting it next to the conversation
-    // VM keeps the two round trips independent: a slow proposal
-    // fetch never blocks the chat composer, and a chat retry
-    // never re-fires the proposal lookup.
-    val proposalSummaryViewModel: com.loresuelvo.consumer.ui.screens.chat.ConversationProposalSummaryViewModel =
-        hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    val proposalSummaryState by proposalSummaryViewModel.uiState.collectAsState()
-    androidx.compose.runtime.LaunchedEffect(conversationId) {
-        viewModel.load(conversationId)
-    }
-    androidx.compose.runtime.LaunchedEffect(conversationId) {
-        proposalSummaryViewModel.load(conversationId)
-    }
-
-    // The picker is remembered at the route level so the
-    // ActivityResultLauncher survives recompositions. The
-    // `ActivityResultContracts.PickVisualMedia` contract returns
-    // a single `Uri` (or `null` if the user backed out); the
-    // route feeds that `Uri` straight into the VM's
-    // `onAttachImageFromGallery`. 01-MM only wires the gallery
-    // option; camera (02-MM) and audio (03-MM) will add their
-    // own launchers in their respective commits.
-    val sheetState = androidx.compose.runtime.remember {
-        androidx.compose.runtime.mutableStateOf(false)
-    }
-    val showAttachSheet: Boolean = sheetState.value
-    val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
-    ) { uri ->
-        if (uri != null) {
-            viewModel.onAttachImageFromGallery(uri)
-        }
-        sheetState.value = false
-    }
-
-    // The camera launcher writes the captured photo to a
-    // `FileProvider`-backed URI in the app's cache directory. We
-    // hold the URI in a `remember`-backed `MutableState` so the
-    // result callback can pick it up after the camera activity
-    // returns. The `FileProvider` is declared in `AndroidManifest.xml`
-    // with the `${applicationId}.fileprovider` authority and the
-    // `file_paths.xml` resource grants access to `cacheDir/camera/`.
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val cameraOutputUriState = androidx.compose.runtime.remember {
-        androidx.compose.runtime.mutableStateOf<android.net.Uri?>(null)
-    }
-    val cameraLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.TakePicture(),
-    ) { success ->
-        val uri = cameraOutputUriState.value
-        if (success && uri != null) {
-            viewModel.onAttachImageFromGallery(uri)
-        }
-        cameraOutputUriState.value = null
-        sheetState.value = false
-    }
-
-    val audioPermissionLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.RequestPermission(),
-        ) { granted ->
-            if (granted) {
-                viewModel.onStartAudioRecording()
-            }
-        }
-
-    // Audio (03-MM) is wired through `viewModel.startAudioRecording`
-    // driven by the in-process `MediaRecorder`. The route's
-    // `RecordSound()` launcher would replace this once
-    // `androidx.activity:1.9.0+` lands — see the `TODO` next to
-    // the `onRecordAudioClick` wiring below.
-
-    com.loresuelvo.consumer.ui.screens.chat.ConversationScreen(
-        state = state,
-        proposalSummaryState = proposalSummaryState,
-        onPromptChange = viewModel::onPromptChange,
-        onSendClick = viewModel::onSendClick,
-        onBackClick = { navController.popBackStack() },
-        onRetryClick = { viewModel.load(conversationId) },
-        onErrorDismiss = viewModel::onErrorDismiss,
-        onPlayAudio = viewModel::onPlayAudio,
-        onPauseAudio = viewModel::onPauseAudio,
-        onImageClick = viewModel::onImageClick,
-        onFullscreenImageDismiss = viewModel::onFullscreenImageDismiss,
-        // US-27 scenario 02-VTD: tapping the "Ver orden" CTA in
-        // the chat top bar navigates to the work-order detail
-        // screen. The work-order id comes from the conversation
-        // surface (carried on `ConversationDetail.workOrderId`
-        // from the `GET /conversations/{id}` response) so this
-        // single callback is enough — no `state` plumbing here.
-        onViewWorkOrder = { workOrderId ->
-            navController.navigate(Route.WorkOrderDetail.buildPath(workOrderId))
-        },
-        onAttachClick = { sheetState.value = true },
-        onGalleryClick = {
-            galleryLauncher.launch(
-                androidx.activity.result.PickVisualMediaRequest(
-                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
-                ),
-            )
-        },
-        onCameraClick = {
-            val uri = createCameraOutputUri(context)
-            cameraOutputUriState.value = uri
-            cameraLauncher.launch(uri)
-        },
-        onStartAudioRecording = {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.RECORD_AUDIO,
-            ) == PackageManager.PERMISSION_GRANTED
-
-            if (hasPermission) {
-                viewModel.onStartAudioRecording()
-            } else {
-                audioPermissionLauncher.launch(
-                    Manifest.permission.RECORD_AUDIO,
-                )
-            }
-        },
-        onStopAudioRecording = viewModel::onStopAudioRecording,
-        onConfirmMediaSend = viewModel::onConfirmMediaSend,
-        onDiscardMedia = viewModel::onDiscardMediaPreview,
-        onMediaErrorDismiss = viewModel::onErrorDismiss,
-        onAttachSheetDismiss = { sheetState.value = false },
-        showAttachSheet = showAttachSheet,
-        onScrollPositionChanged = viewModel::onScrollPositionChanged,
-        onUnreadBannerTapped = viewModel::onUnreadBannerTapped,
-    )
-}
-
-/**
- * "Mis Turnos" route (visualize-turns.feature scenario 01-VT).
- * Resolves the [TurnosViewModel] through Hilt and forwards the
- * UDF state to [TurnosScreen]. The VM does not yet fetch
- * (scenario 02-VT wires the round trip); today it just holds
- * the Loading state.
- */
-@Composable
-private fun TurnosRoute(
-    navController: androidx.navigation.NavHostController,
-) {
-    val viewModel: TurnosViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    TurnosScreen(
-        state = state,
-        onRetryClick = viewModel::load,
-        // US-27 `visualize-turns-detail` scenario 01-VTD: tapping
-        // the "Ver detalles" CTA on a Mis Turnos card opens the
-        // dedicated work-order detail screen.
-        onTurnoCardClick = { turnoId ->
-            val turno = (state as? com.loresuelvo.consumer.ui.screens.turnos.TurnosUiState.Ready)
-                ?.turnos
-                ?.firstOrNull { it.id == turnoId }
-            val provider = turno?.counterpart?.let { counterpart ->
-                com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
-                    id = counterpart.id,
-                    name = counterpart.name,
-                    surname = counterpart.surname,
-                    categoryName = counterpart.categoryName,
-                    profilePhotoUrl = counterpart.profilePhotoUrl,
-                )
-            }
-            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
-        },
-    )
-    // `onBackClick` is intentionally not wired today — the
-    // top app bar does not expose a back button yet (post-MVP).
-    // When it does, route through `navController.popBackStack()`
-    // here.
-}
-
-/**
- * Work-order detail route (US-54 scenario 16-VSP, US-27
- * `visualize-turns-detail`). Resolves the
- * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
- * through Hilt and forwards the UDF state to
- * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen].
- * The work-order id from the back-stack entry is fed to the VM's
- * `load(workOrderId)` once on first composition (and again on
- * the screen-level retry from the `Error` state).
- */
-@Composable
-internal fun WorkOrderDetailRoute(
-    navController: androidx.navigation.NavHostController,
-    workOrderId: String,
-    provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
-) {
-    val viewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
-        hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    val context = androidx.compose.ui.platform.LocalContext.current
-
-    androidx.compose.runtime.LaunchedEffect(workOrderId, provider) {
-        viewModel.load(workOrderId, provider)
-    }
-    // US-27 scenario 09-VTD: when the VM emits a checkout URL
-    // (the "Pagar saldo restante" CTA), open it in a Custom Tab
-    // so the consumer can complete the payment. The MP redirect
-    // returns the consumer to `Route.PaymentResult` via the
-    // existing deep-link plumbing.
-    androidx.compose.runtime.LaunchedEffect(viewModel) {
-        viewModel.checkoutUrl.collect { url ->
-            androidx.browser.customtabs.CustomTabsIntent.Builder()
-                .build()
-                .launchUrl(context, android.net.Uri.parse(url))
-        }
-    }
-    com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
-        state = state,
-        onRetry = { viewModel.load(workOrderId, provider) },
-        onBackClick = { navController.popBackStack() },
-        onPayNow = { viewModel.payNow(workOrderId) },
-        // US-30 `calify-provider-service` — wire every composer
-        // callback into the VM. Without these the
-        // "Calificar servicio" CTA and the in-place
-        // `ReviewComposerSection` are dead weight — the
-        // screen's default `{}` callbacks silently swallow
-        // every tap.
-        onOpenReviewForm = { viewModel.openReviewComposer() },
-        onRatingChange = { viewModel.onRatingChange(it) },
-        onDescriptionChange = { viewModel.onDescriptionChange(it) },
-        onSubmitReview = { viewModel.submitReview() },
-        onCancelReview = { viewModel.cancelReviewComposer() },
-    )
-}
-
-private fun createCameraOutputUri(context: android.content.Context): android.net.Uri {
-    val cameraDir = java.io.File(context.cacheDir, "camera").apply { mkdirs() }
-    val file = java.io.File(cameraDir, "capture_${System.currentTimeMillis()}.jpg")
-    val authority = "${context.packageName}.fileprovider"
-    return androidx.core.content.FileProvider.getUriForFile(context, authority, file)
 }

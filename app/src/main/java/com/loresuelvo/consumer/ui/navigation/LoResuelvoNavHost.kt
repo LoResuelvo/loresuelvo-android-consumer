@@ -30,34 +30,20 @@ fun LoResuelvoNavHost(
     navController: NavHostController,
     startDestination: String,
     contentPadding: PaddingValues = PaddingValues(0.dp),
-    welcome: @Composable () -> Unit,
-    completeProfile: @Composable () -> Unit,
-    home: @Composable () -> Unit,
-    categories: @Composable () -> Unit,
-    professionals: @Composable (categoryId: Int, categoryName: String) -> Unit,
-    providerProfile: @Composable (providerId: Int) -> Unit,
-    chat: @Composable (conversationId: String?) -> Unit,
-    conversation: @Composable (conversationId: String) -> Unit,
-    messages: @Composable () -> Unit,
-    assistant: @Composable () -> Unit,
-    misServicios: @Composable () -> Unit,
-    turnos: @Composable () -> Unit = {},
-    workOrderDetail: @Composable (workOrderId: String, provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?) -> Unit,
-    serviceAgreement: @Composable (NavHostController) -> Unit = {},
-    paymentResult: @Composable (NavHostController, androidx.navigation.NavBackStackEntry) -> Unit = { _, _ -> },
+    content: ConsumerNavContent,
 ) {
     Box(modifier = Modifier.padding(contentPadding)) {
         NavHost(
             navController = navController,
             startDestination = startDestination,
         ) {
-            composable(Route.Welcome.path) { welcome() }
-            composable(Route.CompleteProfile.path) { completeProfile() }
-            composable(Route.Home.path) { home() }
+            composable(Route.Welcome.path) { content.session.welcome() }
+            composable(Route.CompleteProfile.path) { content.session.completeProfile() }
+            composable(Route.Home.path) { content.discovery.home() }
             // 02-UXUI: dedicated screen for every category published
             // by the platform, reachable from the Home "Ver todas"
             // link. Hidden from the bottom nav.
-            composable(Route.Categories.path) { categories() }
+            composable(Route.Categories.path) { content.discovery.categories() }
             composable(
                 route = Route.Professionals(
                     categoryId = -1,
@@ -70,7 +56,7 @@ fun LoResuelvoNavHost(
             ) { entry ->
                 val categoryId = entry.arguments?.getInt("categoryId") ?: -1
                 val categoryName = entry.arguments?.getString("categoryName").orEmpty()
-                professionals(categoryId, categoryName)
+                content.discovery.professionals(categoryId, categoryName)
             }
             composable(
                 route = Route.ProviderProfile(providerId = -1).path,
@@ -79,7 +65,7 @@ fun LoResuelvoNavHost(
                 ),
             ) { entry ->
                 val providerId = entry.arguments?.getInt("providerId") ?: -1
-                providerProfile(providerId)
+                content.discovery.providerProfile(providerId)
             }
             composable(
                 route = Route.Chat(conversationId = null).path,
@@ -92,7 +78,7 @@ fun LoResuelvoNavHost(
                 ),
             ) { entry ->
                 val conversationId = entry.arguments?.getString("conversationId")
-                chat(conversationId)
+                content.chat.chat(conversationId)
             }
             composable(
                 route = Route.Conversation(conversationId = "_ignored_").path,
@@ -101,18 +87,18 @@ fun LoResuelvoNavHost(
                 ),
             ) { entry ->
                 val conversationId = entry.arguments?.getString("conversationId").orEmpty()
-                conversation(conversationId)
+                content.chat.conversation(conversationId)
             }
             // Bottom-bar destinations (US-18).
-            composable(Route.Messages.path) { messages() }
-            composable(Route.Assistant.path) { assistant() }
+            composable(Route.Messages.path) { content.chat.messages() }
+            composable(Route.Assistant.path) { content.chat.assistant() }
             // US-54 scenario 03-VSP: every proposal regardless of
             // status, reached from the Home "Ver todas" link.
-            composable(Route.MisServicios.path) { misServicios() }
+            composable(Route.MisServicios.path) { content.work.misServicios() }
             // visualize-turns.feature scenario 01-VT: dedicated
             // Mis Turnos screen, reached from the Home "Ver
             // todas" link.
-            composable(Route.Turnos.path) { turnos() }
+            composable(Route.Turnos.path) { content.work.turnos() }
             // US-54 scenario 16-VSP + US-56 (`visualize-turns-detail`):
             // work-order detail. Reached from the "Ver orden de
             // trabajo" CTA on [ProposalDetailScreen] (US-54) and
@@ -166,7 +152,7 @@ fun LoResuelvoNavHost(
                         profilePhotoUrl = entry.arguments?.getString(Route.WorkOrderDetail.ARG_PROVIDER_PROFILE_PHOTO_URL),
                     )
                 }
-                workOrderDetail(workOrderId, provider)
+                content.work.workOrderDetail(workOrderId, provider)
             }
 
             // US-21: Service-agreement confirmation. The host is
@@ -175,7 +161,7 @@ fun LoResuelvoNavHost(
             // sheet). The route has no args: the VM is keyed on a
             // single in-flight proposal.
             composable(Route.ServiceAgreement.path) {
-                serviceAgreement(navController)
+                content.payment.serviceAgreement(navController)
             }
 
             // US-21 / US-28: post-redirect payment result.
@@ -192,7 +178,7 @@ fun LoResuelvoNavHost(
                     }
                 ),
             ) { entry ->
-                paymentResult(navController, entry)
+                content.payment.paymentResult(navController, entry)
             }
         }
     }
