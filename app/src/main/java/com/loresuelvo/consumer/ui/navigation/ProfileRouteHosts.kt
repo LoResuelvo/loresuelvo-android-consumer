@@ -16,6 +16,8 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
+import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileScreen
+import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileViewModel
 
 /** Route hosts for authentication and consumer/provider profiles. */
 
@@ -72,6 +74,17 @@ internal fun CompleteProfileRoute(
                 viewModel.onAction(action)
             }
         },
+    )
+}
+
+@Composable
+internal fun ConsumerProfileRoute() {
+    val viewModel: ConsumerProfileViewModel = hiltViewModel()
+    val state by viewModel.uiState.collectAsState()
+
+    ConsumerProfileScreen(
+        state = state,
+        onRetryClick = viewModel::load,
     )
 }
 

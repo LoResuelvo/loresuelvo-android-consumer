@@ -12,6 +12,7 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
  */
 data class ConsumerNavContent(
     val session: SessionNavContent,
+    val account: AccountNavContent,
     val discovery: DiscoveryNavContent,
     val chat: ChatNavContent,
     val work: WorkNavContent,
@@ -21,6 +22,10 @@ data class ConsumerNavContent(
 data class SessionNavContent(
     val welcome: @Composable () -> Unit,
     val completeProfile: @Composable () -> Unit,
+)
+
+data class AccountNavContent(
+    val myProfile: @Composable () -> Unit,
 )
 
 data class DiscoveryNavContent(

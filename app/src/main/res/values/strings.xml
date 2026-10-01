@@ -80,6 +80,19 @@
     <string name="bottom_nav_mensajes">Mensajes</string>
     <string name="bottom_nav_inicio">Inicio</string>
     <string name="bottom_nav_asistente">Asistente IA</string>
+    <string name="bottom_nav_mi_perfil">Mi perfil</string>
+    <string name="consumer_profile_title">Mi perfil</string>
+    <string name="consumer_profile_account_title">Datos de cuenta</string>
+    <string name="consumer_profile_address_title">Dirección</string>
+    <string name="consumer_profile_first_name">Nombre: %1$s</string>
+    <string name="consumer_profile_last_name">Apellido: %1$s</string>
+    <string name="consumer_profile_email">Email: %1$s</string>
+    <string name="consumer_profile_address_missing">No hay una dirección registrada.</string>
+    <string name="consumer_profile_error_not_found">No encontramos los datos de tu perfil.</string>
+    <string name="consumer_profile_error_network">No pudimos cargar tu perfil. Revisá tu conexión.</string>
+    <string name="consumer_profile_error_server">No pudimos cargar tu perfil. Intentá nuevamente.</string>
+    <string name="consumer_profile_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
+    <string name="consumer_profile_retry">Reintentar</string>
     <!-- Bottom-bar placeholder screens -->
     <string name="messages_screen_placeholder_title">Mensajes</string>
     <string name="messages_screen_placeholder_body">Tus conversaciones con prestadores aparecerán acá.</string>

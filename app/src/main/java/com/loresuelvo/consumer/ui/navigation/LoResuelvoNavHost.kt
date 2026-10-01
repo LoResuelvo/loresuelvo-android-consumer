@@ -40,6 +40,7 @@ fun LoResuelvoNavHost(
             composable(Route.Welcome.path) { content.session.welcome() }
             composable(Route.CompleteProfile.path) { content.session.completeProfile() }
             composable(Route.Home.path) { content.discovery.home() }
+            composable(Route.MyProfile.path) { content.account.myProfile() }
             // 02-UXUI: dedicated screen for every category published
             // by the platform, reachable from the Home "Ver todas"
             // link. Hidden from the bottom nav.

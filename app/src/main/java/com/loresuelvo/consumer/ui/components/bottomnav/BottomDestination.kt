@@ -4,6 +4,7 @@ import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Message
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.loresuelvo.consumer.R
@@ -67,12 +68,19 @@ data class BottomDestination(
                 labelRes = R.string.bottom_nav_asistente,
             )
 
+        val MiPerfil: BottomDestination =
+            BottomDestination(
+                route = "my-profile",
+                icon = Icons.Outlined.Person,
+                labelRes = R.string.bottom_nav_mi_perfil,
+            )
+
         /**
          * Single source of truth for the bottom-bar order. The
          * `NavigationBar` renders the items in the order declared
          * here, so re-ordering the tabs is a one-line edit.
          */
-        val all: List<BottomDestination> = listOf(Mensajes, Inicio, AsistenteIa)
+        val all: List<BottomDestination> = listOf(Mensajes, Inicio, AsistenteIa, MiPerfil)
 
         /**
          * The bar is visible on any route that maps to a
@@ -87,7 +95,7 @@ data class BottomDestination(
          * to a membership test against `all.map { it.route }`.
          */
         fun shouldShow(currentRoute: String?): Boolean = when (currentRoute) {
-            Mensajes.route, Inicio.route, AsistenteIa.route -> true
+            Mensajes.route, Inicio.route, AsistenteIa.route, MiPerfil.route -> true
             else -> false
         }
     }

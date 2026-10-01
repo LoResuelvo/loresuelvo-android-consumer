@@ -80,6 +80,19 @@
     <string name="bottom_nav_mensajes">Messages</string>
     <string name="bottom_nav_inicio">Home</string>
     <string name="bottom_nav_asistente">AI Assistant</string>
+    <string name="bottom_nav_mi_perfil">My profile</string>
+    <string name="consumer_profile_title">My profile</string>
+    <string name="consumer_profile_account_title">Account details</string>
+    <string name="consumer_profile_address_title">Address</string>
+    <string name="consumer_profile_first_name">First name: %1$s</string>
+    <string name="consumer_profile_last_name">Last name: %1$s</string>
+    <string name="consumer_profile_email">Email: %1$s</string>
+    <string name="consumer_profile_address_missing">No address is registered.</string>
+    <string name="consumer_profile_error_not_found">We could not find your profile data.</string>
+    <string name="consumer_profile_error_network">We could not load your profile. Check your connection.</string>
+    <string name="consumer_profile_error_server">We could not load your profile. Try again.</string>
+    <string name="consumer_profile_error_unauthorized">Your session expired. Please sign in again.</string>
+    <string name="consumer_profile_retry">Retry</string>
     <!-- Bottom-bar placeholder screens -->
     <string name="messages_screen_placeholder_title">Messages</string>
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>

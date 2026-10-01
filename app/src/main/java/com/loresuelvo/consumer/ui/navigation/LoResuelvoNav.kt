@@ -190,6 +190,9 @@ fun LoResuelvoNav() {
                         welcome = { WelcomeRoute() },
                         completeProfile = { CompleteProfileRoute(navController) },
                     ),
+                    account = AccountNavContent(
+                        myProfile = { ConsumerProfileRoute() },
+                    ),
                     discovery = DiscoveryNavContent(
                         home = { HomeRoute(navController) },
                         categories = { CategoriesRoute(navController) },
