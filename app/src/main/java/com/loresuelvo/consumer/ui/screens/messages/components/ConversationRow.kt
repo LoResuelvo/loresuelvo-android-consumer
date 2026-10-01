@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
+import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
@@ -54,8 +55,11 @@ fun ConversationRow(
     modifier: Modifier = Modifier,
 ) {
     val counterpartName = "${conversation.counterpart.name} ${conversation.counterpart.surname}"
-    val lastMessageText = conversation.lastMessage?.content
-        ?: stringResource(R.string.messages_screen_no_preview)
+    val lastMessageText = when (val media = conversation.lastMessage?.media) {
+        is MediaReference.Video -> stringResource(R.string.messages_screen_video_preview)
+        else -> conversation.lastMessage?.content
+            ?: stringResource(R.string.messages_screen_no_preview)
+    }
     val isPending = conversation.status is ConversationStatus.Pending
 
     Row(

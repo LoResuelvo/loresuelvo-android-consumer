@@ -47,9 +47,11 @@ import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
 fun ConversationMessageBubble(
     message: ConversationMessage,
     audioPlayback: AudioPlaybackState = AudioPlaybackState(),
+    selectedVideoMessageId: String? = null,
     onPlayAudio: (String) -> Unit = {},
     onPauseAudio: (String) -> Unit = {},
     onImageClick: (String) -> Unit = {},
+    onSelectVideo: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isConsumer = message.sender is ConversationSender.Consumer
@@ -227,6 +229,25 @@ fun ConversationMessageBubble(
                                     .testTag(
                                         CONVERSATION_MESSAGE_AUDIO_FILL_TAG,
                                     ),
+                            )
+                        }
+                    }
+                }
+
+                is MediaReference.Video -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ConversationVideoPlayer(
+                            media = media,
+                            isSelected = selectedVideoMessageId == message.id,
+                            onSelect = { onSelectVideo(message.id) },
+                        )
+                        if (message.content.isNotBlank()) {
+                            Text(
+                                text = message.content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor,
+                                overflow = TextOverflow.Visible,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             )
                         }
                     }

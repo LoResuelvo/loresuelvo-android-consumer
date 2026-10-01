@@ -11,7 +11,10 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -34,6 +37,7 @@ internal fun ConversationReadyContent(
     proposalSummaryState: ConversationProposalSummaryUiState,
 ) {
     val listState = rememberLazyListState()
+    var selectedVideoMessageId by remember { mutableStateOf<String?>(null) }
     val isAtBottom by remember {
         derivedStateOf {
             val info = listState.layoutInfo
@@ -70,6 +74,8 @@ internal fun ConversationReadyContent(
                 onPlayAudio = actions.playback.onPlayAudio,
                 onPauseAudio = actions.playback.onPauseAudio,
                 onImageClick = actions.playback.onImageClick,
+                selectedVideoMessageId = selectedVideoMessageId,
+                onSelectVideo = { selectedVideoMessageId = it },
             )
             if (state.hasUnreadIncoming) {
                 NewMessageBanner(
@@ -96,6 +102,8 @@ private fun ConversationMessagesList(
     onPlayAudio: (String) -> Unit,
     onPauseAudio: (String) -> Unit,
     onImageClick: (String) -> Unit,
+    selectedVideoMessageId: String?,
+    onSelectVideo: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -115,6 +123,8 @@ private fun ConversationMessagesList(
                 onPlayAudio = onPlayAudio,
                 onPauseAudio = onPauseAudio,
                 onImageClick = onImageClick,
+                selectedVideoMessageId = selectedVideoMessageId,
+                onSelectVideo = onSelectVideo,
             )
         }
     }

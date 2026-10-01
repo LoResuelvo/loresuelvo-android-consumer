@@ -58,6 +58,24 @@ class ConversationMessageBubbleTest {
         ),
     )
 
+    private fun videoMessage() = ConversationMessage(
+        id = "video-msg-1",
+        sender = ConversationSender.Provider,
+        content = "Mirá la pérdida",
+        createdOnEpochMillis = 1_700_000_000_000L,
+        media = MediaReference.Video(
+            id = "video-file-id",
+            url = "https://cdn.loresuelvo.test/evidence.mp4",
+            mimeType = "video/mp4",
+            originalName = "evidence.mp4",
+            durationMillis = 20_000L,
+            width = 1280,
+            height = 720,
+            videoCodec = "h264",
+            audioCodec = "aac",
+        ),
+    )
+
     @Test
     fun image_message_renders_image() {
         composeTestRule.setContent {
@@ -112,6 +130,26 @@ class ConversationMessageBubbleTest {
 
         composeTestRule
             .onNodeWithTag(CONVERSATION_MESSAGE_IMAGE_TAG)
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText("Mirá la pérdida")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun video_message_renders_player_metadata_and_caption_without_starting_it() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(message = videoMessage())
+        }
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_TAG)
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_PROGRESS_TAG)
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_DURATION_TAG)
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText("Mirá la pérdida")

@@ -17,6 +17,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_PENDING_TAG
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_TAG
 import org.junit.Assert.assertEquals
@@ -71,6 +72,7 @@ class MessagesScreenTest {
         status: ConversationStatus = ConversationStatus.Pending,
         lastMessageContent: String? = "Hola Juan, necesito una mano",
         lastMessageSender: ConversationSender = ConversationSender.Consumer,
+        lastMessageMedia: MediaReference? = null,
         updatedOn: Long = System.currentTimeMillis(),
     ) = Conversation(
         id = id,
@@ -88,6 +90,7 @@ class MessagesScreenTest {
                 sender = lastMessageSender,
                 content = content,
                 createdOnEpochMillis = updatedOn,
+                media = lastMessageMedia,
             )
         },
         updatedOnEpochMillis = updatedOn,
@@ -225,6 +228,40 @@ class MessagesScreenTest {
         composeTestRule
             .onNodeWithText(localizedString(R.string.messages_screen_no_preview))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun ready_state_renders_video_preview_without_a_player() {
+        val conversations = listOf(
+            conversation(
+                id = "video-1",
+                lastMessageContent = "Mirá la pérdida",
+                lastMessageMedia = MediaReference.Video(
+                    id = "video-file-id",
+                    url = "https://cdn.loresuelvo.test/evidence.mp4",
+                    mimeType = "video/mp4",
+                    originalName = "evidence.mp4",
+                    durationMillis = 20_000L,
+                    width = 1280,
+                    height = 720,
+                    videoCodec = "h264",
+                ),
+            ),
+        )
+
+        composeTestRule.setContent {
+            MessagesScreen(
+                state = MessagesListUiState.Ready(conversations = conversations),
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.messages_screen_video_preview))
+            .assertIsDisplayed()
+        composeTestRule
+            .onAllNodesWithTag("conversation-message-video")
+            .assertCountEquals(0)
     }
 
     @Test
