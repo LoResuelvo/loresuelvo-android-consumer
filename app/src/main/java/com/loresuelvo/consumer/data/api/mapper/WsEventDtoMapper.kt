@@ -1,8 +1,7 @@
 package com.loresuelvo.consumer.data.api.mapper
 
+import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
 import com.loresuelvo.consumer.data.api.dto.WsEventDto
-import com.loresuelvo.consumer.domain.conversation.ConversationMessage
-import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.realtime.WsEvent
 
 /**
@@ -20,21 +19,13 @@ import com.loresuelvo.consumer.domain.realtime.WsEvent
  */
 internal fun WsEventDto.toDomain(): WsEvent? {
     if (type != WsEvent.CONVERSATION_MESSAGE_CREATED) return null
-    val sender = when (message.senderRole.lowercase()) {
-        "consumer" -> ConversationSender.Consumer
-        "provider" -> ConversationSender.Provider
-        // Defensive: a third sender role from a backend revision
-        // renders as a Provider bubble so the user can still read
-        // the message body.
-        else -> ConversationSender.Provider
-    }
-    val createdOnEpochMillis = parseIsoTimestampMillisOrZero(message.createdOn) ?: 0L
-    val domainMessage = ConversationMessage(
-        id = message.id.toString(),
-        sender = sender,
+    val domainMessage = ConversationMessageDto(
+        id = message.id,
+        senderRole = message.senderRole,
         content = message.content,
-        createdOnEpochMillis = createdOnEpochMillis,
-    )
+        createdOn = message.createdOn,
+        video = message.video,
+    ).toDomain()
     return WsEvent(
         type = type,
         conversationId = conversationId,

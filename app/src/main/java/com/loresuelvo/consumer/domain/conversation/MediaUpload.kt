@@ -83,6 +83,47 @@ sealed interface MediaUpload {
             return result
         }
     }
+
+    /**
+     * MP4/H.264 video selected for a conversation message. Metadata is
+     * captured locally so the UI can validate before presign/upload and the
+     * backend can validate the object again during confirmation.
+     */
+    data class Video(
+        override val bytes: ByteArray,
+        override val mimeType: String,
+        override val originalName: String,
+        val durationMillis: Long,
+        val width: Int,
+        val height: Int,
+        val videoCodec: String,
+        val audioCodec: String? = null,
+    ) : MediaUpload {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other !is Video) return false
+            return bytes.contentEquals(other.bytes) &&
+                mimeType == other.mimeType &&
+                originalName == other.originalName &&
+                durationMillis == other.durationMillis &&
+                width == other.width &&
+                height == other.height &&
+                videoCodec == other.videoCodec &&
+                audioCodec == other.audioCodec
+        }
+
+        override fun hashCode(): Int {
+            var result = bytes.contentHashCode()
+            result = 31 * result + mimeType.hashCode()
+            result = 31 * result + originalName.hashCode()
+            result = 31 * result + durationMillis.hashCode()
+            result = 31 * result + width
+            result = 31 * result + height
+            result = 31 * result + videoCodec.hashCode()
+            result = 31 * result + (audioCodec?.hashCode() ?: 0)
+            return result
+        }
+    }
 }
 
 /**
@@ -99,3 +140,7 @@ sealed interface MediaUpload {
  * in the error message and the use case enforces it.
  */
 const val MAX_AUDIO_BYTES: Long = 10L * 1024L * 1024L
+
+const val MAX_CONVERSATION_VIDEO_BYTES: Long = 50L * 1024L * 1024L
+const val MAX_CONVERSATION_VIDEO_DURATION_MILLIS: Long = 120_000L
+const val MAX_CONVERSATION_VIDEO_DIMENSION: Int = 1920

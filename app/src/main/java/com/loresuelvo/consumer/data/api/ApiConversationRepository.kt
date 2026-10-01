@@ -136,6 +136,10 @@ class ApiConversationRepository @Inject constructor(
                     it
                 },
             )
+            is MediaUpload.Video -> SendMessageOutcome.Failure.Server(
+                code = 0,
+                message = "Video message upload is completed by US-50.2 send flow",
+            )
         }
     }
 

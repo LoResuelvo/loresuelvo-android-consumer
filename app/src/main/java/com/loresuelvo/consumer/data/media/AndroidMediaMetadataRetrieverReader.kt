@@ -56,4 +56,38 @@ class AndroidMediaMetadataRetrieverReader @Inject constructor(
             retriever.release()
         }
     }
+
+    override suspend fun extractVideoMetadata(uri: Uri): VideoMetadata? = withContext(Dispatchers.IO) {
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(context, uri)
+            val duration = retriever
+                .extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                ?.toLongOrNull()
+                ?.takeIf { it > 0 }
+            val width = retriever
+                .extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+                ?.toIntOrNull()
+                ?.takeIf { it > 0 }
+            val height = retriever
+                .extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+                ?.toIntOrNull()
+                ?.takeIf { it > 0 }
+            if (duration == null || width == null || height == null) {
+                return@withContext null
+            }
+            VideoMetadata(
+                durationMillis = duration,
+                width = width,
+                height = height,
+                // MediaMetadataRetriever exposes the container MIME but
+                // not a stable codec field on every supported API level.
+                // The upload confirmation remains the authoritative H.264
+                // check; MP4 is represented as the backend's h264 label.
+                videoCodec = "h264",
+            )
+        } finally {
+            retriever.release()
+        }
+    }
 }

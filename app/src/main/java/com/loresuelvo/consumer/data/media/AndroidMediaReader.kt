@@ -37,7 +37,13 @@ import kotlinx.coroutines.withContext
 @Singleton
 class AndroidMediaReader @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val metadataReader: MediaMetadataRetrieverReader,
 ) : MediaReader {
+
+    constructor(context: Context) : this(
+        context,
+        AndroidMediaMetadataRetrieverReader(context),
+    )
 
     private val resolver: ContentResolver get() = context.contentResolver
 
@@ -63,6 +69,20 @@ class AndroidMediaReader @Inject constructor(
                 originalName = displayName,
                 durationMillis = 0L,
             )
+            mimeType.startsWith("video/") -> {
+                val metadata = metadataReader.extractVideoMetadata(uri)
+                    ?: throw VideoMetadataUnavailableException(uri)
+                MediaUpload.Video(
+                    bytes = bytes,
+                    mimeType = mimeType,
+                    originalName = displayName,
+                    durationMillis = metadata.durationMillis,
+                    width = metadata.width,
+                    height = metadata.height,
+                    videoCodec = metadata.videoCodec,
+                    audioCodec = metadata.audioCodec,
+                )
+            }
             else -> MediaUpload.Image(
                 bytes = bytes,
                 mimeType = mimeType,
@@ -136,3 +156,7 @@ class AndroidMediaReader @Inject constructor(
         const val DEFAULT_MIME: String = "application/octet-stream"
     }
 }
+
+class VideoMetadataUnavailableException(uri: Uri) : java.io.IOException(
+    "Could not read video metadata for $uri",
+)

@@ -100,7 +100,7 @@ sealed interface ConversationUiState {
  *  - [AUDIO] — system voice recorder (03-MM). Carries
  *    [PendingMedia.durationMillis] for the player scrubber.
  */
-enum class PendingMediaKind { IMAGE, AUDIO }
+enum class PendingMediaKind { IMAGE, AUDIO, VIDEO }
 
 /**
  * Locally-attached media awaiting the user's confirmation. The
@@ -134,6 +134,10 @@ data class PendingMedia(
     val bytes: ByteArray,
     val kind: PendingMediaKind = PendingMediaKind.IMAGE,
     val durationMillis: Long = 0L,
+    val width: Int = 0,
+    val height: Int = 0,
+    val videoCodec: String = "",
+    val audioCodec: String? = null,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -144,7 +148,11 @@ data class PendingMedia(
             sizeBytes == other.sizeBytes &&
             bytes.contentEquals(other.bytes) &&
             kind == other.kind &&
-            durationMillis == other.durationMillis
+            durationMillis == other.durationMillis &&
+            width == other.width &&
+            height == other.height &&
+            videoCodec == other.videoCodec &&
+            audioCodec == other.audioCodec
     }
 
     override fun hashCode(): Int {
@@ -153,6 +161,12 @@ data class PendingMedia(
         result = 31 * result + originalName.hashCode()
         result = 31 * result + sizeBytes.hashCode()
         result = 31 * result + bytes.contentHashCode()
+        result = 31 * result + kind.hashCode()
+        result = 31 * result + durationMillis.hashCode()
+        result = 31 * result + width
+        result = 31 * result + height
+        result = 31 * result + videoCodec.hashCode()
+        result = 31 * result + (audioCodec?.hashCode() ?: 0)
         return result
     }
 }

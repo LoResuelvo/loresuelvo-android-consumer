@@ -6,6 +6,7 @@ import com.loresuelvo.consumer.data.api.dto.ConversationDto
 import com.loresuelvo.consumer.data.api.dto.ConversationMessageDto
 import com.loresuelvo.consumer.data.api.dto.MessageAudioDto
 import com.loresuelvo.consumer.data.api.dto.MessageImageDto
+import com.loresuelvo.consumer.data.api.dto.MessageVideoDto
 import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
 import com.loresuelvo.consumer.domain.conversation.ConversationDetail
@@ -94,6 +95,7 @@ internal fun ConversationMessageDto.toDomain(): ConversationMessage {
         // branches fall through when the message carries an
         // image-only or video-only attachment.
         media = audio?.toMediaReference()
+            ?: video?.toMediaReference()
             ?: images.firstOrNull()?.toMediaReference(),
     )
 }
@@ -132,6 +134,19 @@ private fun MessageImageDto.toMediaReference(): MediaReference =
         url = url,
         mimeType = mimeType,
         originalName = originalName,
+    )
+
+private fun MessageVideoDto.toMediaReference(): MediaReference =
+    MediaReference.Video(
+        id = id,
+        url = url,
+        mimeType = mimeType,
+        originalName = originalName,
+        durationMillis = durationSeconds.toLong() * 1000L,
+        width = width,
+        height = height,
+        videoCodec = videoCodec,
+        audioCodec = audioCodec,
     )
 
 internal fun String.toConversationStatus(): ConversationStatus =

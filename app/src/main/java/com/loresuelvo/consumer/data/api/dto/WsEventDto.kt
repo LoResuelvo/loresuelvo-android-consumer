@@ -26,7 +26,8 @@ import kotlinx.serialization.Serializable
  * `message` block. `created_on` is optional (matches the schema
  * used elsewhere in this repo); `ignoreUnknownKeys = true`
  * discards extra fields like `images` if the backend ever sends
- * them (the webapp's `WsEventMessage` interface has `images?`).
+ * them. Video is modeled explicitly because the consumer
+ * preserves it in the conversation domain.
  */
 @Serializable
 data class WsEventDto(
@@ -49,4 +50,5 @@ data class WsEventMessageDto(
     @SerialName("sender_role") val senderRole: String,
     @SerialName("content") val content: String,
     @SerialName("created_on") val createdOn: String? = null,
+    @SerialName("video") val video: MessageVideoDto? = null,
 )

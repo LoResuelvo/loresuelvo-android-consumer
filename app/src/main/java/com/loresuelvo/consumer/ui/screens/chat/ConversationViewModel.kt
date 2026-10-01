@@ -17,6 +17,7 @@ import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.data.media.AudioRecorder
 import com.loresuelvo.consumer.data.media.AudioPlayer
 import com.loresuelvo.consumer.domain.conversation.MediaReference
+import com.loresuelvo.consumer.domain.conversation.validationError
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -567,6 +568,25 @@ class ConversationViewModel @Inject constructor(
     fun onAttachMedia(media: MediaUpload, sourceUri: Uri? = null) {
         val state = _uiState.value
         if (state !is ConversationUiState.Ready) return
+        if (media is MediaUpload.Video) {
+            val validationError = media.validationError()
+            if (validationError != null) {
+                _uiState.update { current ->
+                    if (current is ConversationUiState.Ready) {
+                        current.copy(
+                            attachingMedia = false,
+                            transientMediaError = SendMessageOutcome.Failure.Server(
+                                code = 422,
+                                message = validationError.toString(),
+                            ),
+                        )
+                    } else {
+                        current
+                    }
+                }
+                return
+            }
+        }
         val pending = when (media) {
             is MediaUpload.Image -> PendingMedia(
                 localUri = sourceUri,
@@ -585,6 +605,19 @@ class ConversationViewModel @Inject constructor(
                 bytes = media.bytes,
                 kind = PendingMediaKind.AUDIO,
                 durationMillis = media.durationMillis,
+            )
+            is MediaUpload.Video -> PendingMedia(
+                localUri = sourceUri,
+                mimeType = media.mimeType,
+                originalName = media.originalName,
+                sizeBytes = media.bytes.size.toLong(),
+                bytes = media.bytes,
+                kind = PendingMediaKind.VIDEO,
+                durationMillis = media.durationMillis,
+                width = media.width,
+                height = media.height,
+                videoCodec = media.videoCodec,
+                audioCodec = media.audioCodec,
             )
         }
         _uiState.update { current ->
@@ -687,6 +720,17 @@ class ConversationViewModel @Inject constructor(
                         mimeType = entry.mimeType,
                         originalName = entry.originalName,
                         durationMillis = entry.durationMillis,
+                    )
+
+                    PendingMediaKind.VIDEO -> MediaUpload.Video(
+                        bytes = entry.bytes,
+                        mimeType = entry.mimeType,
+                        originalName = entry.originalName,
+                        durationMillis = entry.durationMillis,
+                        width = entry.width,
+                        height = entry.height,
+                        videoCodec = entry.videoCodec,
+                        audioCodec = entry.audioCodec,
                     )
                 }
             }

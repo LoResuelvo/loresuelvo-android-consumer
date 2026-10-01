@@ -63,4 +63,16 @@ sealed interface MediaReference {
         override val originalName: String,
         val durationMillis: Long,
     ) : MediaReference
+
+    data class Video(
+        val id: String,
+        override val url: String,
+        override val mimeType: String,
+        override val originalName: String,
+        val durationMillis: Long,
+        val width: Int,
+        val height: Int,
+        val videoCodec: String,
+        val audioCodec: String? = null,
+    ) : MediaReference
 }

@@ -83,6 +83,12 @@ class CompleteProfileViewModel @Inject constructor(
                             error = CompleteProfileError.ProfilePhotoUnsupportedFormat,
                         )
                     }
+                    is MediaUpload.Video -> _uiState.update {
+                        it.copy(
+                            photoLoading = false,
+                            error = CompleteProfileError.ProfilePhotoUnsupportedFormat,
+                        )
+                    }
                 }
             } catch (_: Throwable) {
                 _uiState.update {

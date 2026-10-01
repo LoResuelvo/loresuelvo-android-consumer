@@ -29,10 +29,9 @@ import kotlinx.serialization.Serializable
  *  - `audio` carries the confirmed audio attachment (scenario
  *    03-MM). Audio is audio-only — no `content`, no `images`,
  *    no `video` on the same message.
- *  - `video` is reserved for a future scenario; the backend
- *    currently sends it for provider replies with a recorded
- *    video. The mapper ignores the field today but deserialises
- *    it so `ignoreUnknownKeys` doesn't drop nested metadata.
+ *  - `video` carries the confirmed video attachment. The mapper
+ *    preserves its metadata as `MediaReference.Video`; playback
+ *    is implemented by the follow-up player issue.
  */
 @Serializable
 data class ConversationMessageDto(

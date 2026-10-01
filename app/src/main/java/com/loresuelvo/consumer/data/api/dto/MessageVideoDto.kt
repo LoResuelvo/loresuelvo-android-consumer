@@ -5,16 +5,9 @@ import kotlinx.serialization.Serializable
 
 /**
  * `video` block nested inside a conversation message (see
- * `openapi/components/schemas/message-video.yaml`). The
- * consumer app doesn't render video bubbles yet — the field
- * exists so the wire deserialises cleanly via
- * `ignoreUnknownKeys` and so the next iteration can surface it
- * on the bubble without a new DTO migration.
- *
- * Not exposed on the domain yet; the mapper in
- * `ConversationDtoMapper` ignores the field. When the
- * consumer-side video flow lands it will gain a
- * `MediaReference.Video` variant and a domain mapper here.
+ * `openapi/components/schemas/message-video.yaml`). The mapper
+ * exposes the block as `MediaReference.Video`; playback remains
+ * in the subsequent video-player issue.
  */
 @Serializable
 data class MessageVideoDto(

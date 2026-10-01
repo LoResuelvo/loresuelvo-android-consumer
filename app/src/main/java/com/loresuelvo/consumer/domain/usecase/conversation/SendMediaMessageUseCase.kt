@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.MAX_AUDIO_BYTES
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
+import com.loresuelvo.consumer.domain.conversation.validationError
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -63,6 +64,15 @@ class SendMediaMessageUseCase @Inject constructor(
                 return SendMessageOutcome.Failure.PayloadTooLarge(
                     maxBytes = MAX_AUDIO_BYTES,
                 )
+            }
+            if (attachment is MediaUpload.Video) {
+                val validationError = attachment.validationError()
+                if (validationError != null) {
+                    return SendMessageOutcome.Failure.Server(
+                        code = 422,
+                        message = validationError.toString(),
+                    )
+                }
             }
         }
         return conversationRepository.sendMediaMessage(conversationId, media)
