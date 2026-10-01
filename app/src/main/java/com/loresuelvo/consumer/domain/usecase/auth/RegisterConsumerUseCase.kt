@@ -5,6 +5,7 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
+import com.loresuelvo.consumer.domain.auth.UploadProfilePhotoOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,6 +27,7 @@ import javax.inject.Singleton
 class RegisterConsumerUseCase @Inject constructor(
     private val userRepository: UserRepository,
     private val authSessionStore: AuthSessionStore,
+    private val uploadProfilePhotoUseCase: UploadProfilePhotoUseCase,
 ) {
     suspend operator fun invoke(
         command: RegisterConsumerCommand,
@@ -39,6 +41,18 @@ class RegisterConsumerUseCase @Inject constructor(
                 message = "Email ausente en la sesión",
             )
 
+        val profilePhotoFileId = command.profilePhoto?.let { photo ->
+            when (val upload = uploadProfilePhotoUseCase(photo)) {
+                is UploadProfilePhotoOutcome.Success -> upload.fileId
+                is UploadProfilePhotoOutcome.Failure.Network ->
+                    return UserRegistrationOutcome.Failure.Network(upload.cause)
+                is UploadProfilePhotoOutcome.Failure.Server ->
+                    return UserRegistrationOutcome.Failure.Server(upload.code, upload.message)
+                is UploadProfilePhotoOutcome.Failure.Unauthorized ->
+                    return UserRegistrationOutcome.Failure.Unauthorized(upload.message)
+            }
+        }
+
         val data = RegisterConsumerData(
             email = email,
             firstName = command.firstName.trim(),
@@ -49,6 +63,7 @@ class RegisterConsumerUseCase @Inject constructor(
                 floor = command.floor.trim(),
                 unit = command.unit.trim(),
             ),
+            profilePhotoFileId = profilePhotoFileId,
         )
 
         val outcome = userRepository.registerConsumer(data)

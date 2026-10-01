@@ -158,13 +158,14 @@ class ApiUserRepositoryIntegrationTest {
             MockResponse()
                 .setResponseCode(201)
                 .setHeader("Content-Type", "application/json")
-                .setBody("""{"id":7,"name":"Ana","surname":"Perez"}"""),
+                .setBody("""{"id":7,"name":"Ana","surname":"Perez","profile_photo_url":"https://cdn.test/avatar.webp"}"""),
         )
         val data = RegisterConsumerData(
             email = "ana@example.com",
             firstName = "Ana",
             lastName = "Perez",
             address = RegisterConsumerAddress("Tucuman", "123", "1", "A"),
+            profilePhotoFileId = "confirmed-photo",
         )
 
         val outcome = repository.registerConsumer(data)
@@ -180,12 +181,14 @@ class ApiUserRepositoryIntegrationTest {
         assertEquals("ana@example.com", sent.email)
         assertEquals("Ana", sent.firstName)
         assertEquals("Perez", sent.surname)
+        assertEquals("confirmed-photo", sent.profilePhotoFileId)
 
         assertTrue("outcome must be Success", outcome is UserRegistrationOutcome.Success)
         val success = outcome as UserRegistrationOutcome.Success
         assertEquals("Ana", success.user.firstName)
         assertEquals("Perez", success.user.lastName)
         assertEquals("ana@example.com", success.user.email)
+        assertEquals("https://cdn.test/avatar.webp", success.user.profilePhotoUrl)
     }
 
     @Test

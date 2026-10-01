@@ -8,6 +8,7 @@ import io.cucumber.java.en.And
 import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
+import io.mockk.coVerify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -82,6 +83,7 @@ class RegisterConsumerSteps {
                     firstName = "Juan",
                     lastName = "Pérez",
                     email = "ana@example.com",
+                    profilePhotoUrl = "https://cdn.loresuelvo.test/avatar.webp",
                 ),
             )
         )
@@ -120,6 +122,11 @@ class RegisterConsumerSteps {
     @When("I type {string} in the last name field")
     fun type_last_name(value: String) {
         world.setLastName(value)
+    }
+
+    @When("I select a valid profile photo named {string}")
+    fun select_valid_profile_photo(name: String) {
+        world.selectValidProfilePhoto(name)
     }
 
     @When("I leave the first name field blank")
@@ -207,6 +214,22 @@ class RegisterConsumerSteps {
             lastName,
             captured.first().lastName,
         )
+    }
+
+    @Then("the profile photo upload is confirmed before registration")
+    fun profile_photo_upload_is_confirmed() {
+        assertEquals(1, world.profilePhotoUploadInvocations())
+    }
+
+    @Then("a POST is sent to {string} with profile photo file id {string}")
+    fun post_sent_with_profile_photo(path: String, fileId: String) {
+        assertEquals("/consumers", path)
+        assertEquals(fileId, world.capturedProfilePhotoFileId())
+    }
+
+    @Then("the profile photo URL {string} is saved in the session")
+    fun profile_photo_url_is_saved(url: String) {
+        assertEquals(url, world.sessionValue()?.user?.profilePhotoUrl)
     }
 
     @Then("only one POST is sent to {string}")

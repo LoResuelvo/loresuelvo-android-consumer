@@ -1,5 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.profile
 
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
+
 /**
  * UDF state for the `CompleteProfile` screen.
  *
@@ -20,6 +22,8 @@ data class CompleteProfileUiState(
     val streetNumber: String = "",
     val floor: String = "",
     val unit: String = "",
+    val profilePhoto: MediaUpload.Image? = null,
+    val photoLoading: Boolean = false,
     val loading: Boolean = false,
     val error: CompleteProfileError? = null,
 )
@@ -37,6 +41,8 @@ sealed interface CompleteProfileAction {
     data class StreetNumberChanged(val value: String) : CompleteProfileAction
     data class FloorChanged(val value: String) : CompleteProfileAction
     data class UnitChanged(val value: String) : CompleteProfileAction
+    data object PickPhotoClicked : CompleteProfileAction
+    data object RemovePhotoClicked : CompleteProfileAction
     data object ContinueClicked : CompleteProfileAction
 }
 
@@ -51,6 +57,10 @@ sealed interface CompleteProfileError {
     data object MissingLastName : CompleteProfileError
     data object MissingStreet : CompleteProfileError
     data object MissingStreetNumber : CompleteProfileError
+    data object ProfilePhotoEmpty : CompleteProfileError
+    data object ProfilePhotoUnsupportedFormat : CompleteProfileError
+    data object ProfilePhotoTooLarge : CompleteProfileError
+    data object ProfilePhotoUnreadable : CompleteProfileError
     data class Network(val message: String) : CompleteProfileError
     data class Server(val code: Int, val message: String) : CompleteProfileError
     data class Unauthorized(val message: String) : CompleteProfileError

@@ -9,4 +9,5 @@ internal fun RegisterConsumerData.toDto(): RegisterConsumerRequestDto =
         firstName = firstName,
         surname = lastName,
         address = address.toDto(),
+        profilePhotoFileId = profilePhotoFileId,
     )

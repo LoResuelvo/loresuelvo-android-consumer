@@ -26,6 +26,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfileForm
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfileHeader
+import com.loresuelvo.consumer.ui.screens.profile.components.ProfilePhotoPicker
 import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
 
 /**
@@ -92,13 +93,29 @@ fun CompleteProfileScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
             ProfileHeader()
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProfilePhotoPicker(
+                state = state,
+                onAction = onAction,
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileForm(
                 state = state,
-                errorMessage = errorMessage,
                 onAction = onAction,
             )
         }

@@ -1,10 +1,13 @@
 package com.loresuelvo.consumer.ui.screens.profile
 
+import android.net.Uri
 import app.cash.turbine.test
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
+import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerCommand
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerUseCase
 import io.mockk.coEvery
@@ -51,6 +54,7 @@ class CompleteProfileViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val useCase = mockk<RegisterConsumerUseCase>()
     private val sessionStore = mockk<AuthSessionStore>(relaxed = true)
+    private val mediaReader = mockk<MediaReader>()
     private lateinit var viewModel: CompleteProfileViewModel
 
     private fun sessionWith(
@@ -71,7 +75,7 @@ class CompleteProfileViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         every { sessionStore.sessionFlow } returns MutableStateFlow(sessionWith())
-        viewModel = CompleteProfileViewModel(useCase, sessionStore)
+        viewModel = CompleteProfileViewModel(useCase, sessionStore, mediaReader)
         viewModel.onStreetChange("Calle Falsa")
         viewModel.onStreetNumberChange("123")
         viewModel.onFloorChange("1")
@@ -117,6 +121,45 @@ class CompleteProfileViewModelTest {
         assertTrue(state.error is CompleteProfileError.MissingLastName)
         assertFalse(state.loading)
         coVerify(exactly = 0) { useCase(any()) }
+    }
+
+    @Test
+    fun selecting_unsupported_profile_photo_sets_validation_error_without_registering() = runTest {
+        coEvery { mediaReader.read(any()) } returns MediaUpload.Image(
+            bytes = byteArrayOf(1, 2, 3),
+            mimeType = "image/gif",
+            originalName = "avatar.gif",
+        )
+
+        viewModel.onProfilePhotoSelected(mockk<Uri>())
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.error is CompleteProfileError.ProfilePhotoUnsupportedFormat)
+        assertNull(viewModel.uiState.value.profilePhoto)
+        coVerify(exactly = 0) { useCase(any()) }
+    }
+
+    @Test
+    fun valid_profile_photo_is_forwarded_in_registration_command() = runTest {
+        val photo = MediaUpload.Image(
+            bytes = byteArrayOf(1, 2, 3),
+            mimeType = "image/png",
+            originalName = "avatar.png",
+        )
+        coEvery { mediaReader.read(any()) } returns photo
+        coEvery { useCase(any()) } returns UserRegistrationOutcome.Success(
+            sessionWith().user,
+        )
+
+        viewModel.onProfilePhotoSelected(mockk<Uri>())
+        advanceUntilIdle()
+        viewModel.onContinueClick()
+        advanceUntilIdle()
+
+        val command = io.mockk.slot<com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerCommand>()
+        coVerify { useCase(capture(command)) }
+        assertEquals(photo, command.captured.profilePhoto)
+        assertNull(viewModel.uiState.value.error)
     }
 
     @Test

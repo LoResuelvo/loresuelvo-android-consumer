@@ -51,12 +51,20 @@
     <string name="complete_profile_field_street_number">Número</string>
     <string name="complete_profile_field_floor">Piso (opcional)</string>
     <string name="complete_profile_field_unit">Unidad (opcional)</string>
+    <string name="complete_profile_photo_preview">Vista previa de la foto de perfil</string>
+    <string name="complete_profile_photo_add">Agregar foto</string>
+    <string name="complete_profile_photo_change">Cambiar foto</string>
+    <string name="complete_profile_photo_remove">Quitar foto</string>
     <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">El nombre es obligatorio</string>
     <string name="complete_profile_error_missing_last_name">El apellido es obligatorio</string>
     <string name="complete_profile_error_network">No pudimos contactar al servidor. Revisá tu conexión e intentá de nuevo.</string>
     <string name="complete_profile_error_missing_street">La calle es obligatoria</string>
     <string name="complete_profile_error_missing_street_number">El número es obligatorio</string>
+    <string name="complete_profile_error_photo_empty">La foto está vacía. Elegí otra imagen.</string>
+    <string name="complete_profile_error_photo_format">Usá una imagen JPEG, PNG o WebP.</string>
+    <string name="complete_profile_error_photo_size">La foto no puede superar los 5 MiB.</string>
+    <string name="complete_profile_error_photo_unreadable">No pudimos leer la foto. Elegí otra o intentá nuevamente.</string>
     <!-- Generic server error: %1$s is the HTTP code, %2$s is the message. -->
     <string name="complete_profile_error_server">No pudimos completar el registro (%1$d). %2$s</string>
     <!-- Unauthorized: %1$s is the message from the server. -->

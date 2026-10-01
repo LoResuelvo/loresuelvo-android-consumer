@@ -17,4 +17,5 @@ data class RegisterConsumerData(
     val firstName: String,
     val lastName: String,
     val address: RegisterConsumerAddress,
+    val profilePhotoFileId: String? = null,
 )

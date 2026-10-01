@@ -56,7 +56,8 @@ class EncryptedAuthSessionStoreTest {
                     displayName = "Andres",
                     firstName = "Andres",
                     lastName = "Colina",
-                    email = "andy@pro.com"
+                    email = "andy@pro.com",
+                    profilePhotoUrl = "https://cdn.test/avatar.webp",
                 ),
                 accessToken = "fake-token"
             )
@@ -68,6 +69,7 @@ class EncryptedAuthSessionStoreTest {
         assertEquals("Andres", restored?.user?.firstName)
         assertEquals("Colina", restored?.user?.lastName)
         assertEquals("andy@pro.com", restored?.user?.email)
+        assertEquals("https://cdn.test/avatar.webp", restored?.user?.profilePhotoUrl)
         assertEquals("fake-token", restored?.accessToken)
     }
 

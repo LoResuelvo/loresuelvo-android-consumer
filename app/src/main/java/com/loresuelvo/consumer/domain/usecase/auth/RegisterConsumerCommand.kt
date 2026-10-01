@@ -1,5 +1,7 @@
 package com.loresuelvo.consumer.domain.usecase.auth
 
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
+
 /**
  * Pure-domain command for [RegisterConsumerUseCase]. Carries the
  * user-entered first and last name; the use case trims whitespace
@@ -14,4 +16,5 @@ data class RegisterConsumerCommand(
     val streetNumber: String,
     val floor: String,
     val unit: String,
+    val profilePhoto: MediaUpload.Image? = null,
 )

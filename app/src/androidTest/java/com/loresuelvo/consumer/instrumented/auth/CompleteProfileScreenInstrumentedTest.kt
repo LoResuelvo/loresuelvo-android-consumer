@@ -99,11 +99,17 @@ class CompleteProfileScreenInstrumentedTest {
 
         composeTestRule
             .onNodeWithText(localizedString(R.string.complete_profile_field_last_name))
+            .performScrollTo()
             .assertIsDisplayed()
 
         composeTestRule
             .onNodeWithText(localizedString(R.string.complete_profile_button_continue))
             .assertIsDisplayed()
+            .assertHasClickAction()
+
+        composeTestRule
+            .onNodeWithTag("profile-photo-picker")
+            .assertExists()
             .assertHasClickAction()
     }
 

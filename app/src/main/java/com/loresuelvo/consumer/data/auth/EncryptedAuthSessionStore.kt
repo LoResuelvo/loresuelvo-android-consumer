@@ -53,6 +53,7 @@ class EncryptedAuthSessionStore @Inject constructor(
             .putString(KEY_FIRST_NAME, session.user.firstName)
             .putString(KEY_LAST_NAME, session.user.lastName)
             .putString(KEY_EMAIL, session.user.email)
+            .putString(KEY_PROFILE_PHOTO_URL, session.user.profilePhotoUrl)
             .putString(KEY_ACCESS_TOKEN, session.accessToken)
             .putString(KEY_ADDRESS_STREET, session.user.address?.street)
             .putString(KEY_ADDRESS_NUMBER, session.user.address?.streetNumber)
@@ -90,6 +91,7 @@ class EncryptedAuthSessionStore @Inject constructor(
                 firstName = preferences.getString(KEY_FIRST_NAME, null),
                 lastName = preferences.getString(KEY_LAST_NAME, null),
                 email = preferences.getString(KEY_EMAIL, null),
+                profilePhotoUrl = preferences.getString(KEY_PROFILE_PHOTO_URL, null),
                 address = readAddress(),
             ),
             accessToken = accessToken,
@@ -112,6 +114,7 @@ class EncryptedAuthSessionStore @Inject constructor(
         const val KEY_FIRST_NAME = "first_name"
         const val KEY_LAST_NAME = "last_name"
         const val KEY_EMAIL = "email"
+        const val KEY_PROFILE_PHOTO_URL = "profile_photo_url"
         const val KEY_ACCESS_TOKEN = "access_token"
         const val KEY_ADDRESS_STREET = "address_street"
         const val KEY_ADDRESS_NUMBER = "address_number"

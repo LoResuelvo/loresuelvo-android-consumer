@@ -51,6 +51,10 @@
     <string name="complete_profile_field_street_number">Street number</string>
     <string name="complete_profile_field_floor">Floor (optional)</string>
     <string name="complete_profile_field_unit">Unit (optional)</string>
+    <string name="complete_profile_photo_preview">Profile photo preview</string>
+    <string name="complete_profile_photo_add">Add photo</string>
+    <string name="complete_profile_photo_change">Change photo</string>
+    <string name="complete_profile_photo_remove">Remove photo</string>
 
     <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">First name is required</string>
@@ -60,6 +64,10 @@
     <string name="complete_profile_error_unauthorized">Your session expired. Please sign in again. (%1$s)</string>
     <string name="complete_profile_error_missing_street">Street is required</string>
     <string name="complete_profile_error_missing_street_number">Street number is required</string>
+    <string name="complete_profile_error_photo_empty">The photo is empty. Choose another image.</string>
+    <string name="complete_profile_error_photo_format">Use a JPEG, PNG, or WebP image.</string>
+    <string name="complete_profile_error_photo_size">The photo cannot be larger than 5 MiB.</string>
+    <string name="complete_profile_error_photo_unreadable">We could not read the photo. Choose another one and try again.</string>
 
     <!-- Providers screen -->
     <string name="professionals_empty_title">No professionals in %1$s</string>

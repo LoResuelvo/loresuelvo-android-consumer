@@ -1,5 +1,8 @@
 package com.loresuelvo.consumer.ui.navigation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -10,6 +13,7 @@ import androidx.navigation.NavHostController
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
+import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 
@@ -37,6 +41,9 @@ internal fun CompleteProfileRoute(
 ) {
     val viewModel: CompleteProfileViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
+    val photoPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri -> uri?.let(viewModel::onProfilePhotoSelected) }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -54,7 +61,17 @@ internal fun CompleteProfileRoute(
 
     CompleteProfileScreen(
         state = state,
-        onAction = viewModel::onAction,
+        onAction = { action ->
+            if (action == CompleteProfileAction.PickPhotoClicked) {
+                photoPicker.launch(
+                    PickVisualMediaRequest(
+                        ActivityResultContracts.PickVisualMedia.ImageOnly,
+                    ),
+                )
+            } else {
+                viewModel.onAction(action)
+            }
+        },
     )
 }
 

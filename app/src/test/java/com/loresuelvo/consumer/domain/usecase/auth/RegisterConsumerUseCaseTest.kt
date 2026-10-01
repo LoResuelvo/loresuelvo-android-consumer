@@ -6,6 +6,8 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
+import com.loresuelvo.consumer.domain.auth.UploadProfilePhotoOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -28,7 +30,12 @@ class RegisterConsumerUseCaseTest {
 
     private val userRepository = mockk<UserRepository>()
     private val sessionStore = mockk<AuthSessionStore>(relaxed = true)
-    private val useCase = RegisterConsumerUseCase(userRepository, sessionStore)
+    private val uploadProfilePhotoUseCase = mockk<UploadProfilePhotoUseCase>()
+    private val useCase = RegisterConsumerUseCase(
+        userRepository,
+        sessionStore,
+        uploadProfilePhotoUseCase,
+    )
 
     private fun sessionWithEmail(email: String? = "ana@example.com"): AuthSession = AuthSession(
         user = User(
@@ -95,6 +102,26 @@ class RegisterConsumerUseCaseTest {
         verify { sessionStore.saveSession(capture(savedSlot)) }
         assertEquals("Andres", savedSlot.captured.user.firstName)
         assertEquals("Colina", savedSlot.captured.user.lastName)
+    }
+
+    @Test
+    fun uploads_profile_photo_before_registering_and_forwards_confirmed_file_id() = runTest {
+        every { sessionStore.getSession() } returns sessionWithEmail()
+        val photo = MediaUpload.Image(byteArrayOf(1, 2), "image/png", "avatar.png")
+        coEvery { uploadProfilePhotoUseCase(photo) } returns
+            UploadProfilePhotoOutcome.Success("confirmed-photo")
+        coEvery { userRepository.registerConsumer(any()) } returns UserRegistrationOutcome.Success(
+            User("Andres", "Andres", "Colina", "ana@example.com"),
+        )
+
+        val outcome = useCase(
+            RegisterConsumerCommand("Andres", "Colina", "Tucuman", "123", "1", "A", photo),
+        )
+
+        assertTrue(outcome is UserRegistrationOutcome.Success)
+        val dataSlot = slot<RegisterConsumerData>()
+        coVerify { userRepository.registerConsumer(capture(dataSlot)) }
+        assertEquals("confirmed-photo", dataSlot.captured.profilePhotoFileId)
     }
 
     @Test

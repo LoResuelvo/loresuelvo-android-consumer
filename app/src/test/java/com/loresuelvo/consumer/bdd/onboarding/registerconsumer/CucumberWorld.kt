@@ -1,10 +1,16 @@
 package com.loresuelvo.consumer.bdd.onboarding.registerconsumer
 
+import android.net.Uri
+import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
+import com.loresuelvo.consumer.domain.auth.UploadProfilePhotoOutcome
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerUseCase
+import com.loresuelvo.consumer.domain.usecase.auth.UploadProfilePhotoUseCase
+import io.mockk.mockk
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileUiState
@@ -50,6 +56,8 @@ class CucumberWorld : AutoCloseable {
     private lateinit var sessionStore: FakeAuthSessionStore
     private lateinit var userRepo: FakeUserRepository
     private lateinit var viewModel: CompleteProfileViewModel
+    private lateinit var mediaReader: MediaReader
+    private lateinit var uploadProfilePhotoUseCase: UploadProfilePhotoUseCase
 
     private val observedStates: MutableList<CompleteProfileUiState> = mutableListOf()
     private val observedEvents: MutableList<CompleteProfileEvent> = mutableListOf()
@@ -83,10 +91,17 @@ class CucumberWorld : AutoCloseable {
 
         sessionStore = FakeAuthSessionStore(seedSession)
         userRepo = FakeUserRepository()
+        mediaReader = mockk()
+        uploadProfilePhotoUseCase = mockk()
 
         viewModel = CompleteProfileViewModel(
-            RegisterConsumerUseCase(userRepo, sessionStore),
+            RegisterConsumerUseCase(
+                userRepo,
+                sessionStore,
+                uploadProfilePhotoUseCase,
+            ),
             sessionStore,
+            mediaReader,
         )
         viewModel.onAction(CompleteProfileAction.StreetChanged("Calle Falsa"))
         viewModel.onAction(CompleteProfileAction.StreetNumberChanged("123"))
@@ -123,6 +138,20 @@ class CucumberWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
+    fun selectValidProfilePhoto(name: String) {
+        require(started) { "startScenario() must be called before selectValidProfilePhoto()" }
+        val photo = MediaUpload.Image(
+            bytes = byteArrayOf(1, 2, 3),
+            mimeType = "image/webp",
+            originalName = name,
+        )
+        io.mockk.coEvery { mediaReader.read(any()) } returns photo
+        io.mockk.coEvery { uploadProfilePhotoUseCase(any()) } returns
+            UploadProfilePhotoOutcome.Success("profile-file-1")
+        viewModel.onProfilePhotoSelected(mockk<Uri>())
+        scheduler.advanceUntilIdle()
+    }
+
     fun tapContinue(times: Int = 1) {
         require(started) { "startScenario() must be called before tapContinue()" }
         require(times >= 1) { "times must be >= 1" }
@@ -139,6 +168,12 @@ class CucumberWorld : AutoCloseable {
     fun capturedPosts(): List<RegisterConsumerData> = userRepo.captured
 
     fun postInvocations(): Int = userRepo.invocations.get()
+
+    fun profilePhotoUploadInvocations(): Int =
+        io.mockk.coVerify { uploadProfilePhotoUseCase(any()) }
+            .let { 1 }
+
+    fun capturedProfilePhotoFileId(): String? = capturedPosts().firstOrNull()?.profilePhotoFileId
 
     override fun close() {
         supervisorJob.cancel()

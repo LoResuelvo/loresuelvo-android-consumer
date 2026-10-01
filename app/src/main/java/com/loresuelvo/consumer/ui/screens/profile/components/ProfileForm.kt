@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.components.inputs.PrimaryTextField
@@ -21,9 +19,9 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileUiState
 
 /**
- * Form block for the CompleteProfile screen: optional error
- * banner and two text fields (first / last name) wrapped in a slim
- * card. The continue button and the privacy note moved to the
+ * Form block for the CompleteProfile screen: the address and name
+ * fields wrapped in a slim card. The validation banner lives above
+ * the picker so it remains visible when the screen scrolls. The continue button and the privacy note moved to the
  * screen-level `bottomBar` so they always sit at the bottom of
  * the viewport, mirroring the "Continuar" pattern of the Welcome
  * screen.
@@ -34,7 +32,6 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileUiState
 @Composable
 fun ProfileForm(
     state: CompleteProfileUiState,
-    errorMessage: String?,
     onAction: (CompleteProfileAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -45,17 +42,6 @@ fun ProfileForm(
         tonalElevation = 0.dp,
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            errorMessage?.let { message ->
-                Text(
-                    text = message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
             PrimaryTextField(
                 value = state.firstName,
                 label = stringResource(R.string.complete_profile_field_first_name),
@@ -133,4 +119,12 @@ internal fun errorToMessage(error: CompleteProfileError): String = when (error) 
         stringResource(R.string.complete_profile_error_missing_street)
     is CompleteProfileError.MissingStreetNumber ->
         stringResource(R.string.complete_profile_error_missing_street_number)
+    is CompleteProfileError.ProfilePhotoEmpty ->
+        stringResource(R.string.complete_profile_error_photo_empty)
+    is CompleteProfileError.ProfilePhotoUnsupportedFormat ->
+        stringResource(R.string.complete_profile_error_photo_format)
+    is CompleteProfileError.ProfilePhotoTooLarge ->
+        stringResource(R.string.complete_profile_error_photo_size)
+    is CompleteProfileError.ProfilePhotoUnreadable ->
+        stringResource(R.string.complete_profile_error_photo_unreadable)
 }

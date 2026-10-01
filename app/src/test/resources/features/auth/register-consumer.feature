@@ -60,7 +60,6 @@ Feature: Complete consumer profile on first login
     And the "Continuar" button is enabled again
     And the app signals "Navigate to Home"
 
-  @wip
   Scenario: A valid profile photo is confirmed and attached to the registration
     Given the backend will accept the registration
     When I select a valid profile photo named "avatar.webp"

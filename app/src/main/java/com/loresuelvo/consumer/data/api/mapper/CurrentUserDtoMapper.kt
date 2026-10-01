@@ -12,6 +12,7 @@ internal fun CurrentUserDto.toDomain(): User = User(
     firstName = firstName,
     lastName = lastName,
     email = email,
+    profilePhotoUrl = profilePhoto?.url,
     address = address?.let {
         RegisterConsumerAddress(
             street = it.street,

@@ -6,6 +6,7 @@ data class User(
     val lastName: String? = null,
     val email: String? = null,
     val address: RegisterConsumerAddress? = null,
+    val profilePhotoUrl: String? = null,
 ) {
     fun isProfileComplete(): Boolean =
         !firstName.isNullOrBlank() &&

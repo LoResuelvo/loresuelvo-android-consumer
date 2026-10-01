@@ -59,11 +59,12 @@ class ApiUserRepository @Inject constructor(
             ?: return UserRegistrationOutcome.Failure.Unauthorized("No active session")
 
         return try {
-            backendApi.registerConsumer(data.toDto())
+            val response = backendApi.registerConsumer(data.toDto())
             UserRegistrationOutcome.Success(
                 session.user.copy(
                     firstName = data.firstName,
                     lastName = data.lastName,
+                    profilePhotoUrl = response.profilePhotoUrl,
                 )
             )
         } catch (e: Throwable) {

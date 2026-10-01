@@ -1,7 +1,10 @@
 package com.loresuelvo.consumer.ui.screens.profile
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerCommand
@@ -36,6 +39,7 @@ import javax.inject.Inject
 class CompleteProfileViewModel @Inject constructor(
     private val registerConsumerUseCase: RegisterConsumerUseCase,
     private val sessionStore: AuthSessionStore,
+    private val mediaReader: MediaReader,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -60,8 +64,53 @@ class CompleteProfileViewModel @Inject constructor(
             is CompleteProfileAction.StreetNumberChanged -> onStreetNumberChange(action.value)
             is CompleteProfileAction.FloorChanged -> onFloorChange(action.value)
             is CompleteProfileAction.UnitChanged -> onUnitChange(action.value)
+            CompleteProfileAction.PickPhotoClicked -> Unit
+            CompleteProfileAction.RemovePhotoClicked -> removeProfilePhoto()
             CompleteProfileAction.ContinueClicked -> onContinueClick()
         }
+    }
+
+    /** Reads and validates the picker result while keeping Android I/O out of the composables. */
+    fun onProfilePhotoSelected(uri: Uri) {
+        _uiState.update { it.copy(photoLoading = true, error = null) }
+        viewModelScope.launch {
+            try {
+                when (val media = mediaReader.read(uri)) {
+                    is MediaUpload.Image -> validateProfilePhoto(media)
+                    is MediaUpload.Audio -> _uiState.update {
+                        it.copy(
+                            photoLoading = false,
+                            error = CompleteProfileError.ProfilePhotoUnsupportedFormat,
+                        )
+                    }
+                }
+            } catch (_: Throwable) {
+                _uiState.update {
+                    it.copy(photoLoading = false, error = CompleteProfileError.ProfilePhotoUnreadable)
+                }
+            }
+        }
+    }
+
+    private fun validateProfilePhoto(photo: MediaUpload.Image) {
+        val error = when {
+            photo.bytes.isEmpty() -> CompleteProfileError.ProfilePhotoEmpty
+            photo.bytes.size > MAX_PROFILE_PHOTO_BYTES -> CompleteProfileError.ProfilePhotoTooLarge
+            photo.mimeType.lowercase() !in ALLOWED_PROFILE_PHOTO_MIME_TYPES ->
+                CompleteProfileError.ProfilePhotoUnsupportedFormat
+            else -> null
+        }
+        _uiState.update {
+            it.copy(
+                profilePhoto = if (error == null) photo else it.profilePhoto,
+                photoLoading = false,
+                error = error,
+            )
+        }
+    }
+
+    private fun removeProfilePhoto() {
+        _uiState.update { it.copy(profilePhoto = null, error = null) }
     }
 
     fun onFirstNameChange(value: String) {
@@ -113,7 +162,14 @@ class CompleteProfileViewModel @Inject constructor(
         // state.loading rather than a separate flag means the
         // protection is automatically released on any completion
         // path (Success, Failure, or an unexpected throw).
-        if (state.loading) return
+        if (state.loading || state.photoLoading) return
+        if (state.error is CompleteProfileError.ProfilePhotoEmpty ||
+            state.error is CompleteProfileError.ProfilePhotoUnsupportedFormat ||
+            state.error is CompleteProfileError.ProfilePhotoTooLarge ||
+            state.error is CompleteProfileError.ProfilePhotoUnreadable
+        ) {
+            return
+        }
         _uiState.update { it.copy(loading = true, error = null) }
 
         viewModelScope.launch {
@@ -125,6 +181,7 @@ class CompleteProfileViewModel @Inject constructor(
                     streetNumber = state.streetNumber,
                     floor = state.floor,
                     unit = state.unit,
+                    profilePhoto = state.profilePhoto,
                 )
             )
             when (outcome) {
@@ -160,5 +217,14 @@ class CompleteProfileViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private companion object {
+        const val MAX_PROFILE_PHOTO_BYTES: Int = 5 * 1024 * 1024
+        val ALLOWED_PROFILE_PHOTO_MIME_TYPES = setOf(
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        )
     }
 }
