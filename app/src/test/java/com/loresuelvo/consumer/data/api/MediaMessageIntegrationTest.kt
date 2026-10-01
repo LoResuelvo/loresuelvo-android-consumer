@@ -559,6 +559,126 @@ class MediaMessageIntegrationTest {
         assertEquals(1, backend.requestCount)
     }
 
+    @Test
+    fun video_with_caption_runs_presign_upload_confirm_and_posts_video_file_id() = runBlocking {
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "file_id": "pending-video",
+                      "key": "files/2026/08/conversation_message_video/evidence.mp4",
+                      "upload_url": "${storage.url("/upload/video")}",
+                      "headers": { "Content-Type": "video/mp4" }
+                    }
+                    """.trimIndent(),
+                ),
+        )
+        storage.enqueue(MockResponse().setResponseCode(200))
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": "pending-video",
+                      "original_name": "evidence.mp4",
+                      "mime_type": "video/mp4",
+                      "type": "video"
+                    }
+                    """.trimIndent(),
+                ),
+        )
+        backend.enqueue(
+            MockResponse()
+                .setResponseCode(201)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 101,
+                      "sender_role": "consumer",
+                      "content": "Mirá la pérdida debajo de la pileta",
+                      "created_on": "2026-08-20T10:00:00Z",
+                      "video": {
+                        "id": "pending-video",
+                        "url": "https://storage.example/private/evidence.mp4?signature=...",
+                        "original_name": "evidence.mp4",
+                        "mime_type": "video/mp4",
+                        "video_codec": "h264",
+                        "audio_codec": "aac",
+                        "duration_seconds": 20,
+                        "width": 1280,
+                        "height": 720
+                      }
+                    }
+                    """.trimIndent(),
+                ),
+        )
+
+        val videoBytes = byteArrayOf(0x01, 0x02, 0x03, 0x04)
+        val outcome = repository.sendMediaMessageWithCaption(
+            conversationId = "1",
+            media = listOf(
+                MediaUpload.Video(
+                    bytes = videoBytes,
+                    mimeType = "video/mp4",
+                    originalName = "evidence.mp4",
+                    durationMillis = 20_000L,
+                    width = 1280,
+                    height = 720,
+                    videoCodec = "h264",
+                    audioCodec = "aac",
+                ),
+            ),
+            content = "Mirá la pérdida debajo de la pileta",
+        )
+
+        val success = outcome as? SendMessageOutcome.Success
+        assertNotNull("expected Success, was $outcome", success)
+        assertEquals("101", success!!.message.id)
+        assertEquals("Mirá la pérdida debajo de la pileta", success.message.content)
+        val media = success.message.media
+        assertTrue("expected MediaReference.Video, was $media", media is MediaReference.Video)
+        val video = media as MediaReference.Video
+        assertEquals("pending-video", video.id)
+        assertEquals("https://storage.example/private/evidence.mp4?signature=...", video.url)
+        assertEquals(20_000L, video.durationMillis)
+        assertEquals(1280, video.width)
+        assertEquals(720, video.height)
+
+        val presignRecorded = backend.takeRequest()
+        assertEquals("POST", presignRecorded.method)
+        assertEquals("/files/presign", presignRecorded.path)
+        val presignBody = presignRecorded.body.readUtf8()
+        assertTrue(
+            presignBody.contains("\"purpose\":\"conversation_message_video\"") &&
+                presignBody.contains("\"mime_type\":\"video/mp4\"") &&
+                presignBody.contains("\"size_bytes\":4"),
+        )
+
+        val uploadRecorded = storage.takeRequest()
+        assertEquals("PUT", uploadRecorded.method)
+        assertEquals("/upload/video", uploadRecorded.path)
+        assertEquals("video/mp4", uploadRecorded.getHeader("Content-Type"))
+        assertEquals(videoBytes.size.toLong(), uploadRecorded.bodySize)
+
+        val confirmRecorded = backend.takeRequest()
+        assertEquals("POST", confirmRecorded.method)
+        assertEquals("/files/pending-video/confirm", confirmRecorded.path)
+
+        val postRecorded = backend.takeRequest()
+        assertEquals("POST", postRecorded.method)
+        assertEquals("/conversations/1/messages", postRecorded.path)
+        val postBody = postRecorded.body.readUtf8()
+        assertTrue(postBody.contains("\"video_file_id\":\"pending-video\""))
+        assertTrue(postBody.contains("\"content\":\"Mirá la pérdida debajo de la pileta\""))
+        assertTrue(!postBody.contains("image_file_ids") && !postBody.contains("audio_file_id"))
+    }
+
     /**
      * Production-shape uploader that points at the storage
      * MockWebServer (mirrors what

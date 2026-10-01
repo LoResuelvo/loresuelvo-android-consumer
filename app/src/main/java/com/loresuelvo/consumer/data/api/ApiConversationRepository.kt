@@ -105,9 +105,10 @@ class ApiConversationRepository @Inject constructor(
      *    `internal/domain/file/upload_policy.go:12`). A future
      *    multi-image iteration fans out to multiple IDs.
      */
-    override suspend fun sendMediaMessage(
+    private suspend fun sendMediaMessageInternal(
         conversationId: String,
         media: List<MediaUpload>,
+        content: String,
     ): SendMessageOutcome {
         if (media.isEmpty()) {
             return SendMessageOutcome.Failure.Server(
@@ -136,12 +137,24 @@ class ApiConversationRepository @Inject constructor(
                     it
                 },
             )
-            is MediaUpload.Video -> SendMessageOutcome.Failure.Server(
-                code = 0,
-                message = "Video message upload is completed by US-50.2 send flow",
+            is MediaUpload.Video -> sendVideo(
+                conversationId = conversationId,
+                video = first,
+                content = content,
             )
         }
     }
+
+    override suspend fun sendMediaMessage(
+        conversationId: String,
+        media: List<MediaUpload>,
+    ): SendMessageOutcome = sendMediaMessageInternal(conversationId, media, "")
+
+    override suspend fun sendMediaMessageWithCaption(
+        conversationId: String,
+        media: List<MediaUpload>,
+        content: String,
+    ): SendMessageOutcome = sendMediaMessageInternal(conversationId, media, content)
 
     private suspend fun sendAudio(
         conversationId: String,
@@ -204,6 +217,32 @@ class ApiConversationRepository @Inject constructor(
             fileIds += fileId
         }
         return postMessageWithImageFileIds(conversationId, fileIds)
+    }
+
+    private suspend fun sendVideo(
+        conversationId: String,
+        video: MediaUpload.Video,
+        content: String,
+    ): SendMessageOutcome {
+        Log.d(
+            TAG,
+            "sendVideo start: conversationId=$conversationId " +
+                "mime=${video.mimeType} size=${video.bytes.size}B " +
+                "duration=${video.durationMillis}ms " +
+                "dimensions=${video.width}x${video.height}",
+        )
+        val fileId = when (
+            val result = runPresignUploadConfirm(
+                originalName = video.originalName,
+                mimeType = video.mimeType,
+                bytes = video.bytes,
+                purpose = FilePurpose.CONVERSATION_MESSAGE_VIDEO,
+            )
+        ) {
+            is UploadFlow.Failure -> return result.failure
+            is UploadFlow.Success -> result.fileId
+        }
+        return postMessageWithVideoFileId(conversationId, fileId, content)
     }
 
     /**
@@ -325,6 +364,23 @@ class ApiConversationRepository @Inject constructor(
             SendMessageRequestDto(
                 content = "",
                 imageFileIds = fileIds,
+            ),
+        )
+        SendMessageOutcome.Success(dto.toDomain())
+    } catch (t: Throwable) {
+        mapSendFailure(t)
+    }
+
+    private suspend fun postMessageWithVideoFileId(
+        conversationId: String,
+        fileId: String,
+        content: String,
+    ): SendMessageOutcome = try {
+        val dto = backendApi.postMessage(
+            conversationId,
+            SendMessageRequestDto(
+                content = content,
+                videoFileId = fileId,
             ),
         )
         SendMessageOutcome.Success(dto.toDomain())

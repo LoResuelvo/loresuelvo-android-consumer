@@ -759,7 +759,12 @@ class ConversationViewModel @Inject constructor(
                     )
                 }
             }
-            when (val outcome = sendMediaMessage(state.detail.id, upload)) {
+            val outcome = if (state.promptInput.isBlank()) {
+                sendMediaMessage(state.detail.id, upload)
+            } else {
+                sendMediaMessage(state.detail.id, upload, state.promptInput)
+            }
+            when (outcome) {
                 is SendMessageOutcome.Success ->
                     applyMediaServerResponse(outcome.message)
                 is SendMessageOutcome.Failure.Network ->
@@ -779,6 +784,7 @@ class ConversationViewModel @Inject constructor(
             if (state is ConversationUiState.Ready) {
                 state.copy(
                     sendingMedia = false,
+                    promptInput = "",
                     pendingMedia = emptyList(),
                     transientMediaError = null,
                     detail = state.detail.copy(

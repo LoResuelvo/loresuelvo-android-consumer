@@ -11,7 +11,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,6 +41,16 @@ class SendMediaMessageUseCaseTest {
         mimeType = "audio/mp4",
         originalName = "nota-voz.webm",
         durationMillis = 5_000L,
+    )
+    private val sampleVideo = MediaUpload.Video(
+        bytes = byteArrayOf(0x21, 0x22, 0x23),
+        mimeType = "video/mp4",
+        originalName = "evidence.mp4",
+        durationMillis = 20_000L,
+        width = 1280,
+        height = 720,
+        videoCodec = "h264",
+        audioCodec = "aac",
     )
 
     @Test
@@ -218,6 +227,87 @@ class SendMediaMessageUseCaseTest {
         assertEquals(expected, outcome)
         coVerify(exactly = 1) {
             conversationRepository.sendMediaMessage(conversationId, listOf(atLimit))
+        }
+    }
+
+    @Test
+    fun video_with_caption_delegates_to_caption_aware_repository_port() = runTest {
+        val expected = SendMessageOutcome.Success(
+            ConversationMessage(
+                id = "103",
+                sender = ConversationSender.Consumer,
+                content = "Mirá la pérdida debajo de la pileta",
+                createdOnEpochMillis = 1_700_000_000_000L,
+                media = MediaReference.Video(
+                    id = "video-file-id",
+                    url = "https://cdn.loresuelvo.test/evidence.mp4",
+                    mimeType = "video/mp4",
+                    originalName = "evidence.mp4",
+                    durationMillis = 20_000L,
+                    width = 1280,
+                    height = 720,
+                    videoCodec = "h264",
+                    audioCodec = "aac",
+                ),
+            ),
+        )
+        coEvery {
+            conversationRepository.sendMediaMessageWithCaption(
+                conversationId,
+                listOf(sampleVideo),
+                "Mirá la pérdida debajo de la pileta",
+            )
+        } returns expected
+
+        val outcome = useCase(
+            conversationId,
+            listOf(sampleVideo),
+            "Mirá la pérdida debajo de la pileta",
+        )
+
+        assertEquals(expected, outcome)
+        coVerify(exactly = 1) {
+            conversationRepository.sendMediaMessageWithCaption(
+                conversationId,
+                listOf(sampleVideo),
+                "Mirá la pérdida debajo de la pileta",
+            )
+        }
+        coVerify(exactly = 0) {
+            conversationRepository.sendMediaMessage(conversationId, listOf(sampleVideo))
+        }
+    }
+
+    @Test
+    fun video_cannot_be_combined_with_images_or_audio() = runTest {
+        val outcome = useCase(conversationId, listOf(sampleVideo, sampleImage))
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Server)
+        assertEquals(422, (outcome as SendMessageOutcome.Failure.Server).code)
+        coVerify(exactly = 0) {
+            conversationRepository.sendMediaMessage(any(), any())
+        }
+        coVerify(exactly = 0) {
+            conversationRepository.sendMediaMessageWithCaption(any(), any(), any())
+        }
+    }
+
+    @Test
+    fun invalid_video_is_rejected_before_repository_upload() = runTest {
+        val invalid = sampleVideo.copy(
+            mimeType = "video/webm",
+            durationMillis = 121_000L,
+        )
+
+        val outcome = useCase(conversationId, listOf(invalid))
+
+        assertTrue(outcome is SendMessageOutcome.Failure.Server)
+        assertEquals(422, (outcome as SendMessageOutcome.Failure.Server).code)
+        coVerify(exactly = 0) {
+            conversationRepository.sendMediaMessage(any(), any())
+        }
+        coVerify(exactly = 0) {
+            conversationRepository.sendMediaMessageWithCaption(any(), any(), any())
         }
     }
 }

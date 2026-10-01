@@ -50,6 +50,7 @@ class SendMediaMessageUseCase @Inject constructor(
     suspend operator fun invoke(
         conversationId: String,
         media: List<MediaUpload>,
+        content: String = "",
     ): SendMessageOutcome {
         if (media.isEmpty() || media.all { it.bytes.isEmpty() }) {
             return SendMessageOutcome.Failure.Server(
@@ -75,6 +76,22 @@ class SendMediaMessageUseCase @Inject constructor(
                 }
             }
         }
-        return conversationRepository.sendMediaMessage(conversationId, media)
+        val hasVideo = media.any { it is MediaUpload.Video }
+        val hasNonVideo = media.any { it !is MediaUpload.Video }
+        if (hasVideo && hasNonVideo || media.count { it is MediaUpload.Video } > 1) {
+            return SendMessageOutcome.Failure.Server(
+                code = 422,
+                message = "Video messages cannot be combined with other media",
+            )
+        }
+        return if (content.isBlank()) {
+            conversationRepository.sendMediaMessage(conversationId, media)
+        } else {
+            conversationRepository.sendMediaMessageWithCaption(
+                conversationId = conversationId,
+                media = media,
+                content = content,
+            )
+        }
     }
 }

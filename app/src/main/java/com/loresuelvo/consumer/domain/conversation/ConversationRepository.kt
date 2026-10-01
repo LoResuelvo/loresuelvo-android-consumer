@@ -93,4 +93,10 @@ interface ConversationRepository {
     ): SendMessageOutcome = throw UnsupportedOperationException(
         "sendMediaMessage is not implemented by this ConversationRepository",
     )
+
+    suspend fun sendMediaMessageWithCaption(
+        conversationId: String,
+        media: List<MediaUpload>,
+        content: String,
+    ): SendMessageOutcome = sendMediaMessage(conversationId, media)
 }

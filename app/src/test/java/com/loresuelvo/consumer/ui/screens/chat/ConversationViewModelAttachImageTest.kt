@@ -780,6 +780,79 @@ val state = viewModel.uiState.value as ConversationUiState.Ready
         assertEquals(1280, pending.width)
         assertEquals(720, pending.height)
     }
+
+    @Test
+    fun onConfirmVideoSend_forwards_caption_and_clears_preview_after_success() = runTest {
+        coEvery { getConversationById("1") } returns
+            ConversationDetailOutcome.Success(detail())
+        viewModel = ConversationViewModel(
+            getConversationById,
+            sendMessage,
+            sendMediaMessage,
+            mediaReader,
+            mediaMetadataRetriever,
+            audioRecorder,
+            audioPlayer,
+            webSocketClient,
+        )
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        val video = MediaUpload.Video(
+            bytes = byteArrayOf(1, 2, 3),
+            mimeType = "video/mp4",
+            originalName = "evidence.mp4",
+            durationMillis = 20_000L,
+            width = 1280,
+            height = 720,
+            videoCodec = "h264",
+            audioCodec = "aac",
+        )
+        coEvery { mediaReader.read(uri) } returns video
+        val serverMessage = ConversationMessage(
+            id = "video-99",
+            sender = ConversationSender.Consumer,
+            content = "Mirá la pérdida",
+            createdOnEpochMillis = 1_700_000_000_000L,
+            media = MediaReference.Video(
+                id = "video-file-id",
+                url = "https://cdn.loresuelvo.test/evidence.mp4",
+                mimeType = "video/mp4",
+                originalName = "evidence.mp4",
+                durationMillis = 20_000L,
+                width = 1280,
+                height = 720,
+                videoCodec = "h264",
+                audioCodec = "aac",
+            ),
+        )
+        coEvery {
+            sendMediaMessage(
+                conversationId = "1",
+                media = match { it == listOf(video) },
+                content = "Mirá la pérdida",
+            )
+        } returns SendMessageOutcome.Success(serverMessage)
+
+        viewModel.onAttachVideoFromPicker(uri)
+        advanceUntilIdle()
+        viewModel.onPromptChange("Mirá la pérdida")
+        viewModel.onConfirmMediaSend()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+        assertTrue(state.pendingMedia.isEmpty())
+        assertEquals("", state.promptInput)
+        assertNull(state.transientMediaError)
+        assertEquals(listOf(serverMessage), state.detail.messages)
+        coVerify(exactly = 1) {
+            sendMediaMessage(
+                conversationId = "1",
+                media = match { it == listOf(video) },
+                content = "Mirá la pérdida",
+            )
+        }
+    }
 }
 
 /** MockK's `any()` is auto-resolved inside `coVerify { }` /
