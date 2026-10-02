@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.bdd.onboarding.registerconsumer
 
 import android.net.Uri
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerData
 import com.loresuelvo.consumer.domain.auth.User

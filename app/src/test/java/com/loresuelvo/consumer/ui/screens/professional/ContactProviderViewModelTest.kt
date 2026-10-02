@@ -39,7 +39,7 @@ class ContactProviderViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val createJobRequest: CreateJobRequestUseCase = mockk()
     private val uploadJobRequestImages: UploadJobRequestImagesUseCase = mockk()
-    private val mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
+    private val mediaReader = io.mockk.mockk<com.loresuelvo.consumer.platform.media.MediaReader>(relaxed = true)
     private lateinit var viewModel: ContactProviderViewModel
 
     @Before

@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.testdi
 
 import android.net.Uri
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import javax.inject.Inject
 import javax.inject.Singleton

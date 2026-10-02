@@ -1,6 +1,6 @@
 package com.loresuelvo.consumer.bdd.fixes
 
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.diagnosis.usecase.LoadAiConversationUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.SendDiagnosisPromptUseCase
 import com.loresuelvo.consumer.domain.diagnosis.usecase.UploadAttachmentsAndSendUseCase

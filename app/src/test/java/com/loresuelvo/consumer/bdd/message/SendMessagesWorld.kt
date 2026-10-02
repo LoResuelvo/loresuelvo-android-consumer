@@ -37,8 +37,8 @@ import com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderEvent
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderUiState
 import com.loresuelvo.consumer.ui.screens.professional.ContactProviderViewModel
-import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -170,7 +170,7 @@ class SendMessagesWorld : AutoCloseable {
         )
         contactProviderViewModel = ContactProviderViewModel(
             createJobRequest = createJobRequestUseCase,
-            mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+            mediaReader = io.mockk.mockk<com.loresuelvo.consumer.platform.media.MediaReader>(relaxed = true),
             uploadJobRequestImages = io.mockk.mockk<com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase>(relaxed = true).also {
                 io.mockk.coEvery { it.invoke(any()) } returns
                     com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome.Success(emptyList())

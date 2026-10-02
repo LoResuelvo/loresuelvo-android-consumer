@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
-import com.loresuelvo.consumer.platform.media.AudioRecorder as PlatformAudioRecorder
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.util.UUID
@@ -25,7 +25,7 @@ import javax.inject.Singleton
 @Singleton
 class AndroidAudioRecorder @Inject constructor(
     @ApplicationContext private val context: Context,
-) : PlatformAudioRecorder {
+) : AudioRecorder {
 
     private var recorder: MediaRecorder? = null
     private var outputFile: File? = null

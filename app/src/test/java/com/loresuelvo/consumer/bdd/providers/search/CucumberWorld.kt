@@ -30,8 +30,8 @@ import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUs
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
-import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import io.mockk.every
 import io.mockk.mockk

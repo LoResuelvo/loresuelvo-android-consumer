@@ -5,6 +5,8 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.conversation.validationError
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.VideoMetadata
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

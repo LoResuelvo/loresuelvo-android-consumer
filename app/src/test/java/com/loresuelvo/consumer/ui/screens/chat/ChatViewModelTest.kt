@@ -1,6 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment

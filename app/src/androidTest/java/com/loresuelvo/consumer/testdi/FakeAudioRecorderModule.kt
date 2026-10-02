@@ -1,6 +1,6 @@
 package com.loresuelvo.consumer.testdi
 
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import com.loresuelvo.consumer.di.AudioRecorderModule
 import dagger.Binds
 import dagger.Module

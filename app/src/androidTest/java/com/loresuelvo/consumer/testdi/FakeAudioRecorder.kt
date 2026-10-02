@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.testdi
 
 import android.net.Uri
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import javax.inject.Inject
 
 class FakeAudioRecorder @Inject constructor() : AudioRecorder {

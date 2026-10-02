@@ -19,8 +19,8 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCa
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.ui.screens.chat.ConversationUiState
 import com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel
-import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import io.mockk.every
 import io.mockk.mockk
@@ -102,8 +102,8 @@ class SendMediaWorld : AutoCloseable {
     private val getConversationById = GetConversationByIdUseCase(fakeRepo)
     private val sendMessage = SendMessageUseCase(fakeRepo)
     private val sendMedia = SendMediaMessageUseCase(fakeRepo)
-    private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
-    private val audioRecorder = mockk<com.loresuelvo.consumer.data.media.AudioRecorder>(relaxed = true)
+    private val mediaReader = mockk<com.loresuelvo.consumer.platform.media.MediaReader>(relaxed = true)
+    private val audioRecorder = mockk<com.loresuelvo.consumer.platform.media.AudioRecorder>(relaxed = true)
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>(relaxed = true)
     private val audioPlayer = FakeAudioPlayer()
     private var uiStateJob: Job? = null

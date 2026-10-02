@@ -85,7 +85,7 @@ class ContactProviderWorld : AutoCloseable {
 
         viewModel = ContactProviderViewModel(
             createJobRequest = useCase,
-            mediaReader = io.mockk.mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true),
+            mediaReader = io.mockk.mockk<com.loresuelvo.consumer.platform.media.MediaReader>(relaxed = true),
             uploadJobRequestImages = io.mockk.mockk<com.loresuelvo.consumer.domain.usecase.jobrequest.UploadJobRequestImagesUseCase>(relaxed = true).also {
                 io.mockk.coEvery { it.invoke(any()) } returns
                     com.loresuelvo.consumer.domain.jobrequest.UploadJobRequestImagesOutcome.Success(emptyList())

@@ -7,7 +7,7 @@ import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerCommand
 import com.loresuelvo.consumer.domain.usecase.auth.RegisterConsumerUseCase
 import io.mockk.coEvery

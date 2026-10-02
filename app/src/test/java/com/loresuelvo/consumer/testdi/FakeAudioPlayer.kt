@@ -1,6 +1,6 @@
 package com.loresuelvo.consumer.testdi
 
-import com.loresuelvo.consumer.data.media.AudioPlayer
+import com.loresuelvo.consumer.platform.media.AudioPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 

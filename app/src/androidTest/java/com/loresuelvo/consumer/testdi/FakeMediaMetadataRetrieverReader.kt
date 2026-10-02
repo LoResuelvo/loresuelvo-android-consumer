@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.testdi
 
 import android.net.Uri
-import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
 
 class FakeMediaMetadataRetrieverReader : MediaMetadataRetrieverReader {
 

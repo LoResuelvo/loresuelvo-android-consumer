@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import com.loresuelvo.consumer.data.api.WebSocketClient
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
@@ -9,8 +9,8 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
-import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import com.loresuelvo.consumer.testdi.FakeAudioPlayer
 import io.mockk.coEvery
 import io.mockk.coVerify

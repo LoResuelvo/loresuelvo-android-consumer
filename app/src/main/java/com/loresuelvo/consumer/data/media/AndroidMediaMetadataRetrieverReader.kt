@@ -3,8 +3,8 @@ package com.loresuelvo.consumer.data.media
 import android.content.Context
 import android.media.MediaMetadataRetriever
 import android.net.Uri
-import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader as PlatformMetadataReader
-import com.loresuelvo.consumer.platform.media.VideoMetadata as PlatformVideoMetadata
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.VideoMetadata
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -42,7 +42,7 @@ import javax.inject.Singleton
 @Singleton
 class AndroidMediaMetadataRetrieverReader @Inject constructor(
     @ApplicationContext private val context: Context,
-) : PlatformMetadataReader {
+) : MediaMetadataRetrieverReader {
 
     override suspend fun extractDurationMillis(uri: Uri): Long? = withContext(Dispatchers.IO) {
         val retriever = MediaMetadataRetriever()
@@ -59,7 +59,7 @@ class AndroidMediaMetadataRetrieverReader @Inject constructor(
         }
     }
 
-    override suspend fun extractVideoMetadata(uri: Uri): PlatformVideoMetadata? = withContext(Dispatchers.IO) {
+    override suspend fun extractVideoMetadata(uri: Uri): VideoMetadata? = withContext(Dispatchers.IO) {
         val retriever = MediaMetadataRetriever()
         try {
             retriever.setDataSource(context, uri)
@@ -78,7 +78,7 @@ class AndroidMediaMetadataRetrieverReader @Inject constructor(
             if (duration == null || width == null || height == null) {
                 return@withContext null
             }
-            PlatformVideoMetadata(
+            VideoMetadata(
                 durationMillis = duration,
                 width = width,
                 height = height,

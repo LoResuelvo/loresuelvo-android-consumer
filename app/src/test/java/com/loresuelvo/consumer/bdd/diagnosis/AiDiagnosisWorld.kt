@@ -72,7 +72,7 @@ class AiDiagnosisWorld : AutoCloseable {
     private val fakeRepo = FakeDiagnosisRepository()
     private val fakeAiJobRequestRepo = FakeAiJobRequestRepository()
     private val fakeAiConversationRepo = FakeAiConversationRepository()
-    private val mediaReader = mockk<com.loresuelvo.consumer.data.media.MediaReader>(relaxed = true)
+    private val mediaReader = mockk<com.loresuelvo.consumer.platform.media.MediaReader>(relaxed = true)
     private val fileRepository = mockk<FileRepository>(relaxed = true)
     private lateinit var sendDiagnosisPrompt: SendDiagnosisPromptUseCase
     private lateinit var uploadAttachmentsAndSend: UploadAttachmentsAndSendUseCase

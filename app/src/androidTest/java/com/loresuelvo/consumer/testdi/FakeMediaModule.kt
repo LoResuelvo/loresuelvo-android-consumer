@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.testdi
 
-import com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.di.MediaMetadataModule
 import com.loresuelvo.consumer.di.MediaModule
 import dagger.Module

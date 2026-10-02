@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.media
 
 import android.net.Uri
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk

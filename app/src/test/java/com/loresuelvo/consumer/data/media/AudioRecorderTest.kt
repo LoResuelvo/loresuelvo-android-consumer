@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.media
 
 import android.net.Uri
+import com.loresuelvo.consumer.platform.media.AudioRecorder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
