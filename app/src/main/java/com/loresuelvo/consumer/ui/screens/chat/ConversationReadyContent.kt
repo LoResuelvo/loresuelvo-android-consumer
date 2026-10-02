@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
@@ -20,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationMessageBubble
 import com.loresuelvo.consumer.ui.screens.chat.components.NewMessageBanner
 import com.loresuelvo.consumer.ui.screens.chat.components.ProposalSummaryCard
@@ -64,13 +62,17 @@ internal fun ConversationReadyContent(
         }
         Box(modifier = Modifier.fillMaxSize()) {
             ConversationMessagesList(
-                messages = state.detail.messages,
-                listState = listState,
-                audioPlayback = state.audioPlayback,
-                onPlayAudio = actions.playback.onPlayAudio,
-                onPauseAudio = actions.playback.onPauseAudio,
-                onImageClick = actions.playback.onImageClick,
-                onVideoClick = actions.playback.onVideoClick,
+                state = ConversationMessagesListState(
+                    messages = state.detail.messages,
+                    listState = listState,
+                    audioPlayback = state.audioPlayback,
+                ),
+                actions = ConversationMessageBubbleActions(
+                    onPlayAudio = actions.playback.onPlayAudio,
+                    onPauseAudio = actions.playback.onPauseAudio,
+                    onImageClick = actions.playback.onImageClick,
+                    onVideoClick = actions.playback.onVideoClick,
+                ),
             )
             if (state.hasUnreadIncoming) {
                 NewMessageBanner(
@@ -91,33 +93,27 @@ internal fun ConversationReadyContent(
 
 @Composable
 private fun ConversationMessagesList(
-    messages: List<ConversationMessage>,
-    listState: LazyListState,
-    audioPlayback: AudioPlaybackState,
-    onPlayAudio: (String) -> Unit,
-    onPauseAudio: (String) -> Unit,
-    onImageClick: (String) -> Unit,
-    onVideoClick: (String) -> Unit,
+    state: ConversationMessagesListState,
+    actions: ConversationMessageBubbleActions,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
         modifier = modifier
             .fillMaxWidth()
             .testTag(CONVERSATION_LIST_TAG),
-        state = listState,
+        state = state.listState,
         contentPadding = PaddingValues(vertical = 12.dp),
     ) {
         items(
-            items = messages,
+            items = state.messages,
             key = { it.id },
         ) { message ->
             ConversationMessageBubble(
-                message = message,
-                audioPlayback = audioPlayback,
-                onPlayAudio = onPlayAudio,
-                onPauseAudio = onPauseAudio,
-                onImageClick = onImageClick,
-                onVideoClick = onVideoClick,
+                state = ConversationMessageBubbleState(
+                    message = message,
+                    audioPlayback = state.audioPlayback,
+                ),
+                actions = actions,
             )
         }
     }

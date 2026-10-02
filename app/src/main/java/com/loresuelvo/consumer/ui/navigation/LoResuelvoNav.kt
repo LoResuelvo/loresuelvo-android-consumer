@@ -25,6 +25,7 @@ import com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination
 import com.loresuelvo.consumer.ui.components.bottomnav.LoResuelvoBottomBar
 import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.categories.CategoriesScreen
+import com.loresuelvo.consumer.ui.screens.categories.CategoriesScreenActions
 import com.loresuelvo.consumer.ui.screens.categories.CategoriesViewModel
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
 import com.loresuelvo.consumer.ui.screens.home.HomeScreenActions
@@ -489,14 +490,16 @@ private fun CategoriesRoute(
 
     CategoriesScreen(
         state = state,
-        onCategoryClick = { categoryId, categoryName ->
-            navController.navigate(
-                Route.Professionals.buildPath(categoryId, categoryName),
-            )
-        },
-        onSearchQueryChange = viewModel::onSearchQueryChange,
-        onBackClick = { navController.popBackStack() },
-        onRetryClick = { viewModel.loadCategories() },
+        actions = CategoriesScreenActions(
+            onCategoryClick = { categoryId, categoryName ->
+                navController.navigate(
+                    Route.Professionals.buildPath(categoryId, categoryName),
+                )
+            },
+            onSearchQueryChange = viewModel::onSearchQueryChange,
+            onBackClick = { navController.popBackStack() },
+            onRetryClick = { viewModel.loadCategories() },
+        ),
     )
 }
 

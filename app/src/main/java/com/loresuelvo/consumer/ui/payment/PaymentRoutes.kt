@@ -17,6 +17,7 @@ import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.screens.paymentresult.PaymentResultScreen
 import com.loresuelvo.consumer.ui.screens.paymentresult.PaymentResultViewModel
 import com.loresuelvo.consumer.ui.screens.serviceagreement.ServiceAgreementScreen
+import com.loresuelvo.consumer.ui.screens.serviceagreement.ServiceAgreementActions
 import com.loresuelvo.consumer.ui.screens.serviceagreement.ServiceAgreementViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -54,19 +55,17 @@ object ServiceAgreementRoute {
 
         ServiceAgreementScreen(
             state = uiState,
-            onRetry = {
-                // We don't carry the proposalId inside the VM; the
-                // host re-loads it. In practice the proposalId is
-                // only known when the host's `onProposalSelected`
-                // route handler invokes `viewModel.load(id)`, so
-                // this path is rarely exercised: errors happen at
-                // the load step, not the confirm step.
-                scope.launch { serviceAgreementViewModel.load(currentServiceProposalId(uiState)) }
-            },
-            onConfirm = serviceAgreementViewModel::confirmAgreement,
-            onCancel = serviceAgreementViewModel::cancel,
-            onReturnHome = onReturnHome,
-            onPaidAlready = onReturnHome,
+            actions = ServiceAgreementActions(
+                onRetry = {
+                    scope.launch {
+                        serviceAgreementViewModel.load(currentServiceProposalId(uiState))
+                    }
+                },
+                onConfirm = serviceAgreementViewModel::confirmAgreement,
+                onCancel = serviceAgreementViewModel::cancel,
+                onReturnHome = onReturnHome,
+                onPaidAlready = onReturnHome,
+            ),
         )
     }
 

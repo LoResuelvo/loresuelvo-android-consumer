@@ -29,10 +29,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
-import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.MediaReference
-import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
+import com.loresuelvo.consumer.ui.screens.chat.ConversationMessageBubbleActions
+import com.loresuelvo.consumer.ui.screens.chat.ConversationMessageBubbleState
 
 /**
  * WhatsApp-style bubble for a single message in a consumer ↔
@@ -45,14 +45,12 @@ import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
  */
 @Composable
 fun ConversationMessageBubble(
-    message: ConversationMessage,
-    audioPlayback: AudioPlaybackState = AudioPlaybackState(),
-    onPlayAudio: (String) -> Unit = {},
-    onPauseAudio: (String) -> Unit = {},
-    onImageClick: (String) -> Unit = {},
-    onVideoClick: (String) -> Unit = {},
+    state: ConversationMessageBubbleState,
+    actions: ConversationMessageBubbleActions = ConversationMessageBubbleActions(),
     modifier: Modifier = Modifier,
 ) {
+    val message = state.message
+    val audioPlayback = state.audioPlayback
     val isConsumer = message.sender is ConversationSender.Consumer
 
     val bubbleColor = if (isConsumer) {
@@ -94,7 +92,7 @@ fun ConversationMessageBubble(
                                 .height(180.dp)
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { onImageClick(message.id) }
+                                .clickable { actions.onImageClick(message.id) }
                                 .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -168,9 +166,9 @@ fun ConversationMessageBubble(
                                     .testTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
                                     .clickable {
                                         if (isThisPlaying) {
-                                            onPauseAudio(message.id)
+                                            actions.onPauseAudio(message.id)
                                         } else {
-                                            onPlayAudio(message.id)
+                                            actions.onPlayAudio(message.id)
                                         }
                                     },
                             )
@@ -237,7 +235,7 @@ fun ConversationMessageBubble(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         ConversationVideoPlayer(
                             media = media,
-                            onOpenFullscreen = { onVideoClick(message.id) },
+                            onOpenFullscreen = { actions.onVideoClick(message.id) },
                         )
                         if (message.content.isNotBlank()) {
                             Text(

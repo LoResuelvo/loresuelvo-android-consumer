@@ -15,8 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
-import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 
 /**
  * Pure mapping from the current state to the index the messages
@@ -92,12 +90,8 @@ internal fun shouldAutoScroll(target: Int?, isAtBottom: Boolean): Boolean =
  */
 @Composable
 fun MessagesList(
-    messages: List<ChatMessage>,
-    typingIndicatorVisible: Boolean,
-    transientError: ChatError?,
-    onRetryClick: () -> Unit,
-    onErrorDismissClick: () -> Unit,
-    onImageClick: (ChatImage) -> Unit = {},
+    state: MessagesListState,
+    actions: MessagesListActions,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
@@ -114,10 +108,10 @@ fun MessagesList(
                 info.visibleItemsInfo.lastOrNull()?.index == info.totalItemsCount - 1
         }
     }
-    LaunchedEffect(messages.size, typingIndicatorVisible) {
+    LaunchedEffect(state.messages.size, state.typingIndicatorVisible) {
         val target = messagesListScrollIndex(
-            messageCount = messages.size,
-            typingIndicatorVisible = typingIndicatorVisible,
+            messageCount = state.messages.size,
+            typingIndicatorVisible = state.typingIndicatorVisible,
         )
         // When the list is shorter than the viewport, the bottom
         // alignment already places the content correctly, so we
@@ -136,20 +130,20 @@ fun MessagesList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Bottom),
     ) {
-        items(items = messages, key = { it.id }) { message ->
-            MessageBubble(message = message, onImageClick = onImageClick)
+        items(items = state.messages, key = { it.id }) { message ->
+            MessageBubble(message = message, onImageClick = actions.onImageClick)
         }
-        if (typingIndicatorVisible) {
+        if (state.typingIndicatorVisible) {
             item(key = TYPING_INDICATOR_KEY) {
                 TypingIndicatorBubble()
             }
         }
-        if (transientError != null) {
+        if (state.transientError != null) {
             item(key = ERROR_CARD_KEY) {
                 ChatErrorCard(
-                    error = transientError,
-                    onRetryClick = onRetryClick,
-                    onDismissClick = onErrorDismissClick,
+                    error = state.transientError,
+                    onRetryClick = actions.onRetry,
+                    onDismissClick = actions.onErrorDismiss,
                 )
             }
         }

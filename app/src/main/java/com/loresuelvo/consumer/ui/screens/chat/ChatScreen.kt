@@ -128,12 +128,16 @@ fun ChatScreen(
                     PreliminaryBanner()
                 }
                 MessagesList(
-                    messages = conversation,
-                    typingIndicatorVisible = state.sending,
-                    transientError = state.transientError,
-                    onRetryClick = actions.errors.onRetry,
-                    onErrorDismissClick = actions.errors.onDismiss,
-                    onImageClick = { fullscreenImage = it },
+                    state = MessagesListState(
+                        messages = conversation,
+                        typingIndicatorVisible = state.sending,
+                        transientError = state.transientError,
+                    ),
+                    actions = MessagesListActions(
+                        onRetry = actions.errors.onRetry,
+                        onErrorDismiss = actions.errors.onDismiss,
+                        onImageClick = { fullscreenImage = it },
+                    ),
                     modifier = Modifier.weight(1f),
                 )
                 if (state.assessment != null && state.assessment.isProfessionalRequired) {

@@ -43,11 +43,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ServiceAgreementScreen(
     state: ServiceAgreementUiState,
-    onRetry: () -> Unit,
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit,
-    onReturnHome: () -> Unit,
-    onPaidAlready: () -> Unit,
+    actions: ServiceAgreementActions,
     modifier: Modifier = Modifier,
 ) {
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -61,29 +57,27 @@ fun ServiceAgreementScreen(
             is ServiceAgreementUiState.Ready -> ReadyBlock(
                 state = state,
                 onTapConfirm = { showConfirmDialog = true },
-                onCancel = onCancel,
-                onReturnHome = onReturnHome,
+                onCancel = actions.onCancel,
             )
             is ServiceAgreementUiState.StartingCheckout -> StartingBlock(
                 state = state,
-                onReturnHome = onReturnHome,
             )
             is ServiceAgreementUiState.CheckoutReady -> CheckoutReadyBlock(state = state)
             is ServiceAgreementUiState.NetworkError -> ErrorBlock(
                 primaryMessage = stringResource(R.string.service_agreement_error_network),
-                onRetry = onRetry,
-                onReturnHome = onReturnHome,
+                onRetry = actions.onRetry,
+                onReturnHome = actions.onReturnHome,
             )
             is ServiceAgreementUiState.ServerError -> ErrorBlock(
                 primaryMessage = state.message.ifBlank {
                     stringResource(R.string.service_agreement_error_server)
                 },
-                onRetry = onRetry,
-                onReturnHome = onReturnHome,
+                onRetry = actions.onRetry,
+                onReturnHome = actions.onReturnHome,
             )
             is ServiceAgreementUiState.AlreadyPaid -> AlreadyPaidBlock(
                 message = state.message,
-                onReturnHome = onPaidAlready,
+                onReturnHome = actions.onPaidAlready,
             )
         }
         if (showConfirmDialog) {
@@ -95,7 +89,7 @@ fun ServiceAgreementScreen(
                     TextButton(
                         onClick = {
                             showConfirmDialog = false
-                            onConfirm()
+                            actions.onConfirm()
                         },
                         modifier = Modifier.testTag(SERVICE_AGREEMENT_CONFIRM_BUTTON_TAG),
                     ) {
@@ -135,7 +129,6 @@ private fun ReadyBlock(
     state: ServiceAgreementUiState.Ready,
     onTapConfirm: () -> Unit,
     onCancel: () -> Unit,
-    @Suppress("UNUSED_PARAMETER") onReturnHome: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -214,7 +207,6 @@ private fun ReadyBlock(
 @Composable
 private fun StartingBlock(
     state: ServiceAgreementUiState.StartingCheckout,
-    @Suppress("UNUSED_PARAMETER") onReturnHome: () -> Unit = {},
 ) {
     Column(
         modifier = Modifier

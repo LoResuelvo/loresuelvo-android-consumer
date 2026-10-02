@@ -39,16 +39,13 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 @Composable
 fun CategoriesScreen(
     state: CategoriesUiState,
-    onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
-    onSearchQueryChange: (String) -> Unit,
-    onBackClick: () -> Unit,
-    onRetryClick: () -> Unit,
+    actions: CategoriesScreenActions,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { CategoriesTopBar(onBackClick = onBackClick) },
+        topBar = { CategoriesTopBar(onBackClick = actions.onBackClick) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -58,7 +55,7 @@ fun CategoriesScreen(
         ) {
             CategoriesSearchBar(
                 query = state.searchQuery,
-                onQueryChange = onSearchQueryChange,
+                onQueryChange = actions.onSearchQueryChange,
             )
             Box(modifier = Modifier.fillMaxSize()) {
                 when (val categories = state.categories) {
@@ -68,7 +65,7 @@ fun CategoriesScreen(
                     } else {
                         CategoryGrid(
                             categories = categories.items,
-                            onCategoryClick = onCategoryClick,
+                            onCategoryClick = actions.onCategoryClick,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -78,7 +75,7 @@ fun CategoriesScreen(
                     CategoriesState.Error -> ErrorState(
                         messageResId = (state as? CategoriesUiState.Error)?.messageResId
                             ?: R.string.categories_error_body,
-                        onRetryClick = onRetryClick,
+                        onRetryClick = actions.onRetryClick,
                     )
                 }
             }
