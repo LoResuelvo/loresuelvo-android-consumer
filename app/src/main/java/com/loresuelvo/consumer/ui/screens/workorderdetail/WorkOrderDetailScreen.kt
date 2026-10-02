@@ -52,45 +52,11 @@ import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
-/**
- * Consumer work-order detail screen (US-54 scenario 16-VSP,
- * US-27 `visualize-turns-detail`). Mirrors
- * [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen]
- * structurally — a vertical stack of label / value rows — but
- * the data source is the [com.loresuelvo.consumer.domain.workorder.WorkOrderDetail]
- * type instead of the raw
- * [com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal].
- * The screen is stateless: every visible value is sourced from
- * [WorkOrderDetailUiState] and the only user action (the
- * "Reintentar" CTA on the error branch) is delegated via
- * [onRetry].
- *
- *  - [WorkOrderDetailUiState.Loading] → centred spinner.
- *  - [WorkOrderDetailUiState.Ready] → top bar + the full work-order
- *    layout (provider, category, amount, scheduled date,
- *    estimated time on site, description, status).
- *  - [WorkOrderDetailUiState.NotFound] → not-found copy.
- *  - [WorkOrderDetailUiState.Error] → typed copy + retry button.
- *
- * Compose testTags are exported as `WORK_ORDER_*` constants
- * so the instrumented suite can target each row without
- * depending on the localised copy. US-27 keeps the tag names
- * to avoid touching the instrumented suite that already
- * targets them; a future refactor commit can align them with
- * the new screen / route name.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkOrderDetailScreen(
     state: WorkOrderDetailUiState,
-    onRetry: () -> Unit,
-    onBackClick: () -> Unit,
-    onPayNow: () -> Unit = {},
-    onOpenReviewForm: () -> Unit = {},
-    onRatingChange: (Int) -> Unit = {},
-    onDescriptionChange: (String) -> Unit = {},
-    onSubmitReview: () -> Unit = {},
-    onCancelReview: () -> Unit = {},
+    actions: WorkOrderDetailActions = WorkOrderDetailActions(),
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -106,7 +72,6 @@ fun WorkOrderDetailScreen(
             )
         },
     ) { padding ->
-        // US-27 scenario 06-VTD: the lightbox is host-owned state
         // so it survives recomposition + process death (the
         // config-change / rotate case). When the photo is set
         // the overlay renders on top of the regular surface.
@@ -130,16 +95,11 @@ fun WorkOrderDetailScreen(
                 is WorkOrderDetailUiState.Ready -> ReadyState(
                     workOrder = state.workOrder,
                     composer = state.composer,
-                    onPayNow = onPayNow,
                     onPhotoClick = { lightboxPhoto = it },
-                    onOpenReviewForm = onOpenReviewForm,
-                    onRatingChange = onRatingChange,
-                    onDescriptionChange = onDescriptionChange,
-                    onSubmitReview = onSubmitReview,
-                    onCancelReview = onCancelReview,
+                    actions = actions,
                 )
                 is WorkOrderDetailUiState.NotFound -> NotFoundState()
-                is WorkOrderDetailUiState.Error -> ErrorState(state.failure, onRetry)
+                is WorkOrderDetailUiState.Error -> ErrorState(state.failure, actions.onRetry)
             }
             lightboxPhoto?.let { photo ->
                 FullScreenImageViewer(
@@ -174,13 +134,8 @@ private fun LoadingState() {
 private fun ReadyState(
     workOrder: WorkOrderDetail,
     composer: ReviewComposerState,
-    onPayNow: () -> Unit,
     onPhotoClick: (CompletionReportPhoto) -> Unit,
-    onOpenReviewForm: () -> Unit,
-    onRatingChange: (Int) -> Unit,
-    onDescriptionChange: (String) -> Unit,
-    onSubmitReview: () -> Unit,
-    onCancelReview: () -> Unit,
+    actions: WorkOrderDetailActions,
 ) {
     Column(
         modifier = Modifier
@@ -190,7 +145,6 @@ private fun ReadyState(
             .testTag(WORK_ORDER_READY_TAG),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // US-27 scenario 09-VTD: the "Pagar saldo restante" CTA
         // is the primary action when the work order is in
         // `awaiting_payment`. Renders above the counterpart row
         // so it's the first thing the consumer sees; uses the
@@ -198,7 +152,7 @@ private fun ReadyState(
         // of the surface.
         if (workOrder.status == TurnoStatus.AwaitingPayment) {
             Button(
-                onClick = onPayNow,
+                onClick = actions.onPayNow,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag(WORK_ORDER_PAY_NOW_TAG),
@@ -206,7 +160,6 @@ private fun ReadyState(
                 Text(stringResource(R.string.work_order_pay_now_cta))
             }
         }
-        // US-30 scenario 01-CT: the "Calificar servicio" CTA
         // is the primary action when the work order is `paid`
         // and the consumer has not yet filed a review. The
         // composer is collapsed by default; tapping the CTA
@@ -216,7 +169,7 @@ private fun ReadyState(
             composer is ReviewComposerState.Hidden
         ) {
             OutlinedButton(
-                onClick = onOpenReviewForm,
+                onClick = actions.review.onOpen,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag(WORK_ORDER_RATE_CTA_TAG),
@@ -224,17 +177,13 @@ private fun ReadyState(
                 Text(stringResource(R.string.work_order_rate_cta))
             }
         }
-        // US-30 scenarios 02-CT → 09-CT: when the consumer
         // taps the CTA, the composer expands inline (between
         // the pay-now CTA and the detail rows) so they can rate
         // the provider without leaving the work-order surface.
         if (composer is ReviewComposerState.Editing) {
             ReviewComposerSection(
                 composer = composer,
-                onRatingChange = onRatingChange,
-                onDescriptionChange = onDescriptionChange,
-                onSubmitReview = onSubmitReview,
-                onCancelReview = onCancelReview,
+                actions = actions.review,
             )
         }
         DetailRow(
@@ -274,7 +223,6 @@ private fun ReadyState(
             value = statusLabel(workOrder.status),
             valueTestTag = WORK_ORDER_STATUS_TAG,
         )
-        // US-27 `visualize-turns-detail`: the "Fecha en que se
         // saldó el pago" row is only present once the consumer
         // clears the remaining balance (state == `paid`). The
         // `ScheduledDateFormatter` formats the same way the
@@ -287,11 +235,9 @@ private fun ReadyState(
                 valueTestTag = WORK_ORDER_PAID_ON_TAG,
             )
         }
-        // US-27 scenarios 04-VTD / 05-VTD: the "Evidencia de
         // finalización" section only renders when the provider
         // filed a completion report AND the work order has moved
         // out of `Confirmed` into the post-service lifecycle
-        // (`awaiting_payment` / `paid`). Scenario 10-VTD pins
         // the `Confirmed` exclusion — even when the domain
         // carries a `completionReport` (which can happen on a
         // legacy wire), the screen must ignore it for scheduled
@@ -307,7 +253,6 @@ private fun ReadyState(
                 )
             }
         }
-        // US-27 scenarios 07-VTD / 08-VTD: the "Reseña" section
         // only renders when the consumer filed a review
         // (state == `paid`).
         workOrder.review?.let { review ->
@@ -395,34 +340,10 @@ private fun ReviewSection(review: WorkOrderReview) {
     }
 }
 
-/**
- * In-place composer for the consumer's review (US-30
- * `calify-provider-service`, scenarios 02-CT → 09-CT). Renders
- * a 5-star selector, a multiline comment field capped at 500
- * characters, a live character counter, the inline error row
- * when the most recent submission surfaced a typed failure, and
- * the "Enviar" / "Cancelar" CTA pair.
- *
- * State flows down (the host owns [ReviewComposerState.Editing]
- * via the VM) and events flow up through the [onRatingChange],
- * [onDescriptionChange], [onSubmitReview], and [onCancelReview]
- * callbacks — every visible value is sourced from [composer]
- * so the surface stays stateless across recomposition.
- *
- * The submit CTA stays disabled while `ratingDraft == null ||
- * submitting` so the consumer cannot ship an empty rating (US-30
- * scenario 09-CT). The "Enviar" button also blocks while
- * [REVIEW_DESCRIPTION_MAX_LENGTH] is exceeded (scenario 08-CT) —
- * the host already truncate the input upstream so the visual
- * counter never paints the over-limit copy in red.
- */
 @Composable
 private fun ReviewComposerSection(
     composer: ReviewComposerState.Editing,
-    onRatingChange: (Int) -> Unit,
-    onDescriptionChange: (String) -> Unit,
-    onSubmitReview: () -> Unit,
-    onCancelReview: () -> Unit,
+    actions: WorkOrderDetailActions.ReviewActions,
 ) {
     val overflow = composer.descriptionDraft.length > REVIEW_DESCRIPTION_MAX_LENGTH
     Column(
@@ -449,7 +370,7 @@ private fun ReviewComposerSection(
             (1..5).forEach { star ->
                 val filled = composer.ratingDraft != null && star <= (composer.ratingDraft ?: 0)
                 IconButton(
-                    onClick = { onRatingChange(star) },
+                    onClick = { actions.onRatingChange(star) },
                     modifier = Modifier.testTag(WORK_ORDER_RATE_STAR_TAG_PREFIX + star),
                 ) {
                     Icon(
@@ -466,7 +387,7 @@ private fun ReviewComposerSection(
         }
         OutlinedTextField(
             value = composer.descriptionDraft,
-            onValueChange = { new -> onDescriptionChange(new) },
+            onValueChange = actions.onDescriptionChange,
             label = { Text(stringResource(R.string.work_order_rate_comment_label)) },
             placeholder = { Text(stringResource(R.string.work_order_rate_comment_hint)) },
             singleLine = false,
@@ -514,7 +435,7 @@ private fun ReviewComposerSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             OutlinedButton(
-                onClick = onCancelReview,
+                onClick = actions.onCancel,
                 modifier = Modifier
                     .weight(1f)
                     .testTag(WORK_ORDER_RATE_CANCEL_TAG),
@@ -523,7 +444,7 @@ private fun ReviewComposerSection(
                 Text(stringResource(android.R.string.cancel))
             }
             Button(
-                onClick = onSubmitReview,
+                onClick = actions.onSubmit,
                 modifier = Modifier
                     .weight(1f)
                     .testTag(WORK_ORDER_RATE_SUBMIT_TAG),

@@ -29,79 +29,32 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.domain.conversation.MediaUpload
-import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.components.images.JobRequestImageAttachmentSelector
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
-/**
- * Stateless content for the contact-provider bottom sheet. Renders
- * the provider's avatar, name and category up top, the modal
- * title + subtitle, the two required fields, the image attachment
- * surface (scenario 03-UXUI), an inline error message (when the
- * previous submit failed), and the Cancel / Submit action row.
- *
- * The host ([ProfessionalsScreen]) is responsible for wrapping
- * this content in a `ModalBottomSheet` and toggling visibility
- * from the `ContactProviderUiState`. Keeping the sheet
- * **stateless** means the screen — not the composable — owns
- * the form's lifecycle, which is exactly what the ViewModel
- * already models.
- *
- * Layout rules (per the user's UX brief):
- *  - Light typography, generous whitespace, rounded corners.
- *  - Title (the modal's heading) sits BELOW the provider
- *    header so the consumer always sees who they're writing to.
- *  - Submit button is a filled `Button`; Cancel is a `TextButton`.
- *  - When `isSubmitting` is true, the submit button shows a
- *    compact progress indicator instead of a label so the round-
- *    trip's loading state is unmistakable.
- *
- * `testTag`s are exposed publicly so the Compose-test in
- * `ContactProviderBottomSheetTest` can locate the form fields and
- * the action buttons without depending on text content.
- */
 @Composable
 fun ContactProviderBottomSheet(
-    provider: Provider,
-    title: String,
-    description: String,
-    canSubmit: Boolean,
-    isSubmitting: Boolean,
-    error: ContactProviderError?,
-    attachedImages: List<MediaUpload.Image>,
-    attachmentError: String?,
-    onTitleChange: (String) -> Unit,
-    onDescriptionChange: (String) -> Unit,
-    onAttachImagesClick: () -> Unit,
-    onRemoveImage: (Int) -> Unit,
-    onSubmit: () -> Unit,
-    onCancel: () -> Unit,
+    state: ContactProviderFormState,
+    actions: ContactProviderBottomSheetActions = ContactProviderBottomSheetActions(),
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            // Scrollable so the form keeps working on small phones
-            // (and the keyboard inset never hides the submit button).
-            // The ModalBottomSheet host already biases the sheet
-            // toward the bottom of the screen; verticalScroll lets
-            // the user reach the action buttons when the IME is
-            // open or the description field grows.
+
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Header: provider identity so the consumer always knows
-        // who they are starting a conversation with.
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ProviderAvatar(
-                name = provider.name,
-                profilePhotoUrl = provider.profilePhotoUrl,
+                name = state.provider.name,
+                profilePhotoUrl = state.provider.profilePhotoUrl,
                 size = 48.dp,
             )
             Column(
@@ -109,13 +62,13 @@ fun ContactProviderBottomSheet(
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
                 Text(
-                    text = "${provider.name} ${provider.surname}",
+                    text = "${state.provider.name} ${state.provider.surname}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
-                    text = provider.categoryName,
+                    text = state.provider.categoryName,
                     style = MaterialTheme.typography.bodyMedium,
                     color = SubtitleGray,
                 )
@@ -124,7 +77,6 @@ fun ContactProviderBottomSheet(
 
         Spacer(Modifier.size(4.dp))
 
-        // Modal heading + subtitle.
         Text(
             text = stringResource(R.string.contact_provider_modal_title),
             style = MaterialTheme.typography.titleLarge,
@@ -139,19 +91,15 @@ fun ContactProviderBottomSheet(
 
         Spacer(Modifier.size(4.dp))
 
-        // Form fields. The label doubles as the hint shown when
-        // the field is empty, so we don't need a separate
-        // placeholder. KeyboardOptions hint: the title field is
-        // a single line, the description grows up to 6 lines.
         OutlinedTextField(
-            value = title,
-            onValueChange = onTitleChange,
+            value = state.title,
+            onValueChange = actions.onTitleChange,
             label = { Text(stringResource(R.string.contact_provider_field_title)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(CONTACT_PROVIDER_TITLE_FIELD_TAG),
             singleLine = true,
-            enabled = !isSubmitting,
+            enabled = !state.isSubmitting,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 keyboardType = KeyboardType.Text,
@@ -159,8 +107,8 @@ fun ContactProviderBottomSheet(
         )
 
         OutlinedTextField(
-            value = description,
-            onValueChange = onDescriptionChange,
+            value = state.description,
+            onValueChange = actions.onDescriptionChange,
             label = { Text(stringResource(R.string.contact_provider_field_description)) },
             modifier = Modifier
                 .fillMaxWidth()
@@ -168,32 +116,22 @@ fun ContactProviderBottomSheet(
                 .testTag(CONTACT_PROVIDER_DESCRIPTION_FIELD_TAG),
             minLines = 4,
             maxLines = 6,
-            enabled = !isSubmitting,
+            enabled = !state.isSubmitting,
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Sentences,
                 keyboardType = KeyboardType.Text,
             ),
         )
 
-        // Image attachment surface (scenario 03-UXUI). The
-        // selector is stateless: the parent owns the image
-        // list and reacts to `onAttachImagesClick` (a
-        // gallery / camera picker launcher held by the host
-        // route) and `onRemoveImage` (delegates to the VM).
-        // `attachmentError` is the already-localised string the
-        // host route built from the VM's sentinel — null when
-        // the form is idle.
         JobRequestImageAttachmentSelector(
-            images = attachedImages,
-            onAttachClick = onAttachImagesClick,
-            onRemove = onRemoveImage,
-            error = attachmentError,
+            images = state.attachedImages,
+            onAttachClick = actions.onAttachImages,
+            onRemove = actions.onRemoveImage,
+            error = state.attachmentError,
         )
 
-        // Inline error message. Renders nothing when `error` is
-        // null so the layout shifts gracefully across attempts.
-        if (error != null) {
-            val errorMessage = when (error) {
+        if (state.error != null) {
+            val errorMessage = when (val error = requireNotNull(state.error)) {
                 ContactProviderError.Network ->
                     stringResource(R.string.contact_provider_error_network)
                 ContactProviderError.Unauthorized ->
@@ -218,11 +156,6 @@ fun ContactProviderBottomSheet(
 
         Spacer(Modifier.size(4.dp))
 
-        // Action row. Cancel on the left (text button), Submit on
-        // the right (filled button, primary colour). The submit
-        // button becomes a circular progress indicator while the
-        // round-trip is in flight so the user sees the action
-        // without an ambiguous "Send" button that ignores input.
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(
@@ -232,18 +165,18 @@ fun ContactProviderBottomSheet(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(
-                onClick = onCancel,
-                enabled = !isSubmitting,
+                onClick = actions.onCancel,
+                enabled = !state.isSubmitting,
                 modifier = Modifier.testTag(CONTACT_PROVIDER_CANCEL_BUTTON_TAG),
             ) {
                 Text(stringResource(R.string.contact_provider_button_cancel))
             }
             Button(
-                onClick = onSubmit,
-                enabled = canSubmit,
+                onClick = actions.onSubmit,
+                enabled = state.canSubmit,
                 modifier = Modifier.testTag(CONTACT_PROVIDER_SUBMIT_BUTTON_TAG),
             ) {
-                if (isSubmitting) {
+                if (state.isSubmitting) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,

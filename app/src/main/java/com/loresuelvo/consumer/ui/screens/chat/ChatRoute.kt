@@ -50,29 +50,16 @@ fun ChatRoute(
     val aiContactViewModel: AiDiagnosisContactViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsState()
 
-    // The attach sheet visibility is owned by the route so the
-    // `+` button on the input bar can surface the gallery /
-    // camera options without losing the launcher state on
-    // recomposition.
     var sheetVisible by remember { mutableStateOf(false) }
 
-    // Camera output URI factory from Hilt — backed by the
-    // existing `MediaOutputUriFactory` port.
     val cameraOutputUriFactory = hiltViewModel<CameraOutputUriFactoryHolder>().factory
 
-    // Resume a saved AI session when the route was opened with a
-    // `conversationId` arg (Assistant list → tap a row). The VM
-    // no-ops if the same conversation is already loaded, so this
-    // is safe to fire on every recomposition.
     LaunchedEffect(conversationId) {
         if (!conversationId.isNullOrBlank()) {
             viewModel.loadExisting(conversationId)
         }
     }
 
-    // Forward the navigation event emitted by the AI contact flow
-    // when the round-trip succeeds. The backend's `job-requests`
-    // response carries the `conversation_id` the chat pops to.
     LaunchedEffect(aiContactViewModel) {
         aiContactViewModel.events.collect { event ->
             when (event) {
@@ -84,11 +71,6 @@ fun ChatRoute(
         }
     }
 
-    // Gallery picker for the AI diagnostic chat. 01-AIP wires
-    // the gallery path only; camera (02-AIP) adds its own
-    // launcher in its respective commit. The launcher is
-    // remembered at the route level so the result callback
-    // survives recompositions.
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
@@ -98,13 +80,6 @@ fun ChatRoute(
         sheetVisible = false
     }
 
-    // Camera launcher writes the captured photo to a
-    // FileProvider-backed URI in the app's cache directory
-    // (same pattern as the chat-with-provider surface — see
-    // `LoResuelvoNav.kt`). The `MediaOutputUriFactory` is the
-    // existing port for cache-backed content URIs; we resolve
-    // it through [CameraOutputUriFactoryHolder] so Hilt's
-    // singleton graph is reachable from the Composable layer.
     var cameraOutputUri by remember { mutableStateOf<Uri?>(null) }
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture(),
@@ -118,57 +93,54 @@ fun ChatRoute(
     }
 
     ChatScreen(
-        promptInput = state.promptInput,
-        canSend = state.canSend,
-        sending = state.sending,
-        messages = state.messages,
-        assessment = state.assessment,
-        recommendedProviders = state.recommendedProviders,
-        transientError = state.transientError,
-        preliminaryWarningVisible = state.preliminaryWarningVisible,
-        pendingAttachments = state.pendingAttachments,
-        onPromptChange = viewModel::onPromptChange,
-        onSendClick = viewModel::onSendClick,
-        onRetryClick = viewModel::onRetryClick,
-        onErrorDismiss = viewModel::onErrorDismiss,
-        onContactClick = { provider ->
-            aiContactViewModel.onContactProviderClick(
-                provider,
-                state.conversationId,
-            )
-        },
-        onViewProfileClick = { provider ->
-            navController.navigate(Route.ProviderProfile.buildPath(provider.id))
-        },
-        onBackClick = { navController.popBackStack() },
-        onAttachClick = { sheetVisible = true },
-        onAttachImageFromGallery = {
-            galleryLauncher.launch(
-                PickVisualMediaRequest(
-                    ActivityResultContracts.PickVisualMedia.ImageOnly,
-                ),
-            )
-        },
-        onAttachImageFromCamera = {
-            val uri = cameraOutputUriFactory.createCameraOutputUri()
-            cameraOutputUri = uri
-            cameraLauncher.launch(uri)
-        },
-        onConfirmAttachmentSend = { index ->
-            // 06-AIP wires the actual upload via
-            // FileRepository. Today the consumer can stage an
-            // image + preview + discard it; "Enviar" stays a
-            // no-op until the orchestrator lands.
-            @Suppress("UNUSED_PARAMETER") index
-        },
-        onDiscardAttachment = { index ->
-            viewModel.onRemoveAttachment(index)
-        },
-        showAttachSheet = sheetVisible,
-        onAttachSheetDismiss = { sheetVisible = false },
-        // 01-UXUI: the AI audio functionality is not available
-        // yet, so the Mic / Stop buttons are hidden in the
-        // diagnostic chat surface.
-        audioEnabled = state.audioEnabled,
+        state = state,
+        actions = ChatScreenActions(
+            composer = ChatScreenActions.Composer(
+                onPromptChange = viewModel::onPromptChange,
+                onSend = viewModel::onSendClick,
+            ),
+            diagnosis = ChatScreenActions.Diagnosis(
+                onContact = { provider ->
+                    aiContactViewModel.onContactProviderClick(
+                        provider,
+                        state.conversationId,
+                    )
+                },
+                onViewProfile = { provider ->
+                    navController.navigate(Route.ProviderProfile.buildPath(provider.id))
+                },
+            ),
+            navigation = ChatScreenActions.Navigation(
+                onBack = { navController.popBackStack() },
+            ),
+            media = ChatScreenActions.Media(
+                onAttach = { sheetVisible = true },
+                onGallery = {
+                    galleryLauncher.launch(
+                        PickVisualMediaRequest(
+                            ActivityResultContracts.PickVisualMedia.ImageOnly,
+                        ),
+                    )
+                },
+                onCamera = {
+                    val uri = cameraOutputUriFactory.createCameraOutputUri()
+                    cameraOutputUri = uri
+                    cameraLauncher.launch(uri)
+                },
+                onConfirmSend = { index ->
+
+                    @Suppress("UNUSED_PARAMETER") index
+                },
+                onDiscard = viewModel::onRemoveAttachment,
+                showAttachSheet = sheetVisible,
+                onAttachSheetDismiss = { sheetVisible = false },
+
+                audioEnabled = state.audioEnabled,
+            ),
+            errors = ChatScreenActions.Errors(
+                onRetry = viewModel::onRetryClick,
+                onDismiss = viewModel::onErrorDismiss,
+            ),
+        ),
     )
 }

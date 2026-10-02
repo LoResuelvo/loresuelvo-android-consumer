@@ -28,9 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.ChatImage
-import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.Sender
-import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
 
 /**
@@ -52,38 +50,8 @@ import com.loresuelvo.consumer.ui.screens.chat.CHAT_INPUT_DIVIDER_TAG
  */
 @Composable
 fun ChatScreen(
-    promptInput: String,
-    canSend: Boolean,
-    sending: Boolean,
-    messages: List<ChatMessage>,
-    assessment: DiagnosisAssessment?,
-    recommendedProviders: List<Provider>?,
-    transientError: ChatError?,
-    preliminaryWarningVisible: Boolean,
-    pendingAttachments: List<PendingMedia> = emptyList(),
-    onPromptChange: (String) -> Unit,
-    onSendClick: () -> Unit,
-    onRetryClick: () -> Unit,
-    onErrorDismiss: () -> Unit,
-    onContactClick: (Provider) -> Unit,
-    onViewProfileClick: (Provider) -> Unit = {},
-    onBackClick: () -> Unit,
-    onAttachClick: () -> Unit = {},
-    onAttachImageFromGallery: () -> Unit = {},
-    onAttachImageFromCamera: () -> Unit = {},
-    onConfirmAttachmentSend: (Int) -> Unit = {},
-    onDiscardAttachment: (Int) -> Unit = {},
-    showAttachSheet: Boolean = false,
-    onAttachSheetDismiss: () -> Unit = {},
-    /**
-     * Whether the audio recording affordance should be rendered
-     * in the input bar. Wired to
-     * [com.loresuelvo.consumer.ui.screens.chat.ChatUiState.audioEnabled]
-     * by [com.loresuelvo.consumer.ui.screens.chat.ChatRoute]; the
-     * AI diagnostic chat passes `false` while the AI audio
-     * feature is not available (scenario 01-UXUI).
-     */
-    audioEnabled: Boolean = false,
+    state: ChatUiState,
+    actions: ChatScreenActions = ChatScreenActions(),
     modifier: Modifier = Modifier,
 ) {
     var fullscreenImage by remember { mutableStateOf<ChatImage?>(null) }
@@ -93,35 +61,19 @@ fun ChatScreen(
         content = stringResource(R.string.chat_initial_message_body),
         sentAtEpochMillis = 0L,
     )
-    val conversation = remember(messages) { listOf(initialMessage) + messages }
+    val conversation = remember(state.messages) { listOf(initialMessage) + state.messages }
 
     Scaffold(
-        // Default `contentWindowInsets = WindowInsets.systemBars` is
-        // correct: the `Scaffold` consumes the status bar inset
-        // for the `topBar` and the navigation bar inset for the
-        // `bottomBar`. Setting it to `safeDrawing` previously
-        // double-applied the nav bar inset (the `bottomBar`
-        // already adds its own `navigationBarsPadding()`), which
-        // left a gap between the input bar and the screen edge
-        // that grew when the IME came up because the inset
-        // collapsed under the keyboard.
+
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
-        topBar = { ChatTopBar(onBackClick = onBackClick) },
+        topBar = { ChatTopBar(onBackClick = actions.navigation.onBack) },
         bottomBar = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    // 08-UXUI: the `Scaffold` already consumes the
-                    // IME inset for the `bottomBar` (the bar lifts
-                    // above the keyboard automatically). The bottom
-                    // padding adds breathing room above the keyboard
-                    // for a less cramped feel — the check on
-                    // `WindowInsets.ime` keeps the bar flush against
-                    // the navigation bar when the keyboard is closed
-                    // (otherwise the padding would be visible at the
-                    // bottom of the screen all the time).
+
                     .padding(
                                 bottom = if (WindowInsets.ime.asPaddingValues()
                                         .calculateBottomPadding() > 0.dp) 20.dp else 0.dp,
@@ -132,13 +84,13 @@ fun ChatScreen(
                     modifier = Modifier.testTag(CHAT_INPUT_DIVIDER_TAG)
                                 .padding(horizontal = 16.dp),
                 )
-                if (pendingAttachments.isNotEmpty()) {
-                    pendingAttachments.forEachIndexed { index, attachment ->
+                if (state.pendingAttachments.isNotEmpty()) {
+                    state.pendingAttachments.forEachIndexed { index, attachment ->
                         MediaPreviewCard(
                             pendingMedia = attachment,
                             sending = false,
-                            onSendClick = { onConfirmAttachmentSend(index) },
-                            onDiscardClick = { onDiscardAttachment(index) },
+                            onSendClick = { actions.media.onConfirmSend(index) },
+                            onDiscardClick = { actions.media.onDiscard(index) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .testTag("$CHAT_ATTACHMENT_CARD_TAG_PREFIX-$index"),
@@ -146,16 +98,17 @@ fun ChatScreen(
                     }
                 }
                 ChatInputBar(
-                    promptInput = promptInput,
-                    canSend = canSend,
-                    sending = sending,
-                    recordingAudio = false,
-                    audioEnabled = audioEnabled,
-                    onPromptChange = onPromptChange,
-                    onSendClick = onSendClick,
-                    onStartAudioRecording = {},
-                    onStopAudioRecording = {},
-                    onAttachClick = onAttachClick,
+                    state = ChatInputBarState(
+                        promptInput = state.promptInput,
+                        canSend = state.canSend,
+                        sending = state.sending,
+                        audioEnabled = actions.media.audioEnabled,
+                    ),
+                    actions = ChatInputBarActions(
+                        onPromptChange = actions.composer.onPromptChange,
+                        onSend = actions.composer.onSend,
+                        onAttach = actions.media.onAttach,
+                    ),
                 )
             }
         },
@@ -171,24 +124,24 @@ fun ChatScreen(
                     .fillMaxWidth()
                     .weight(1f),
             ) {
-                if (preliminaryWarningVisible) {
+                if (state.preliminaryWarningVisible) {
                     PreliminaryBanner()
                 }
                 MessagesList(
                     messages = conversation,
-                    typingIndicatorVisible = sending,
-                    transientError = transientError,
-                    onRetryClick = onRetryClick,
-                    onErrorDismissClick = onErrorDismiss,
+                    typingIndicatorVisible = state.sending,
+                    transientError = state.transientError,
+                    onRetryClick = actions.errors.onRetry,
+                    onErrorDismissClick = actions.errors.onDismiss,
                     onImageClick = { fullscreenImage = it },
                     modifier = Modifier.weight(1f),
                 )
-                if (assessment != null && assessment.isProfessionalRequired) {
+                if (state.assessment != null && state.assessment.isProfessionalRequired) {
                     DiagnosisSummaryCard(
-                        categoryName = assessment.problemCategory?.name,
-                        providers = recommendedProviders.orEmpty(),
-                        onContactClick = onContactClick,
-                        onViewProfileClick = onViewProfileClick,
+                        categoryName = state.assessment.problemCategory?.name,
+                        providers = state.recommendedProviders.orEmpty(),
+                        onContactClick = actions.diagnosis.onContact,
+                        onViewProfileClick = actions.diagnosis.onViewProfile,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -199,10 +152,10 @@ fun ChatScreen(
     }
 
     MediaAttachSheet(
-        show = showAttachSheet,
-        onDismiss = onAttachSheetDismiss,
-        onGalleryClick = onAttachImageFromGallery,
-        onCameraClick = onAttachImageFromCamera,
+        show = actions.media.showAttachSheet,
+        onDismiss = actions.media.onAttachSheetDismiss,
+        onGalleryClick = actions.media.onGallery,
+        onCameraClick = actions.media.onCamera,
     )
 
     fullscreenImage?.let { image ->

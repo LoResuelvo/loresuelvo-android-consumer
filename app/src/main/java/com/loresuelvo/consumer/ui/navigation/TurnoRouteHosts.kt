@@ -80,13 +80,16 @@ internal fun WorkOrderDetailRoute(
 
     com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
         state = state,
-        onRetry = { viewModel.load(workOrderId, provider) },
-        onBackClick = { navController.popBackStack() },
-        onPayNow = { viewModel.payNow(workOrderId) },
-        onOpenReviewForm = { viewModel.openReviewComposer() },
-        onRatingChange = viewModel::onRatingChange,
-        onDescriptionChange = viewModel::onDescriptionChange,
-        onSubmitReview = viewModel::submitReview,
-        onCancelReview = viewModel::cancelReviewComposer,
+        actions = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions(
+            onRetry = { viewModel.load(workOrderId, provider) },
+            onPayNow = { viewModel.payNow(workOrderId) },
+            review = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions.ReviewActions(
+                onOpen = viewModel::openReviewComposer,
+                onRatingChange = viewModel::onRatingChange,
+                onDescriptionChange = viewModel::onDescriptionChange,
+                onSubmit = viewModel::submitReview,
+                onCancel = viewModel::cancelReviewComposer,
+            ),
+        ),
     )
 }

@@ -75,25 +75,14 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 fun ProfessionalsScreen(
     state: ProfessionalsUiState,
     contactFormState: ContactProviderUiState,
-    onRetryClick: () -> Unit,
-    onContactarClick: (Provider) -> Unit,
-    onViewProfileClick: (Provider) -> Unit = {},
-    onContactTitleChange: (String) -> Unit,
-    onContactDescriptionChange: (String) -> Unit,
-    onContactAttachImagesClick: () -> Unit,
-    onContactRemoveImage: (Int) -> Unit,
-    onContactSubmit: () -> Unit,
-    onContactCancel: () -> Unit,
+    actions: ProfessionalsScreenActions = ProfessionalsScreenActions(),
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            // 08-UXUI: see HomeScreen for the rationale — the
-            // outer `Scaffold` no longer consumes the top
-            // inset, so each bottom-nav screen must apply
-            // `statusBarsPadding()` itself.
+
             .statusBarsPadding()
             .padding(horizontal = 24.dp, vertical = 16.dp),
     ) {
@@ -111,45 +100,49 @@ fun ProfessionalsScreen(
             is ProfessionalsUiState.Ready ->
                 ReadyList(
                     providers = state.providers,
-                    onContactarClick = onContactarClick,
-                    onViewProfileClick = onViewProfileClick,
+                    onContactarClick = actions.onContact,
+                    onViewProfileClick = actions.onViewProfile,
                 )
             is ProfessionalsUiState.Empty -> EmptyView(state.categoryName)
-            is ProfessionalsUiState.Error -> ErrorView(onRetryClick)
+            is ProfessionalsUiState.Error -> ErrorView(actions.onRetry)
         }
     }
 
-    // Contact-provider bottom sheet. Renders only when the VM
-    // exposes an Open state (the modal is dismissed by transitioning
-    // back to Closed). The sheet's own onDismissRequest calls
-    // onContactCancel so swiping the sheet down also clears the
-    // VM state.
     val openState = contactFormState as? ContactProviderUiState.Open
     if (openState != null) {
         val sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         )
         ModalBottomSheet(
-            onDismissRequest = onContactCancel,
+            onDismissRequest = actions.contact.onCancel,
             sheetState = sheetState,
         ) {
             ContactProviderBottomSheet(
-                provider = openState.provider,
-                title = openState.title,
-                description = openState.description,
-                canSubmit = openState.canSubmit,
-                isSubmitting = openState.isSubmitting,
-                error = openState.error,
-                attachedImages = openState.attachedImages,
-                attachmentError = openState.attachmentError
-                    ?.takeIf { it == ATTACHMENT_LIMIT_REACHED_SENTINEL }
-                    ?.let { stringResource(R.string.job_request_image_limit_reached, MAX_IMAGES_HINT) },
-                onTitleChange = onContactTitleChange,
-                onDescriptionChange = onContactDescriptionChange,
-                onAttachImagesClick = onContactAttachImagesClick,
-                onRemoveImage = onContactRemoveImage,
-                onSubmit = onContactSubmit,
-                onCancel = onContactCancel,
+                state = ContactProviderFormState(
+                    provider = openState.provider,
+                    title = openState.title,
+                    description = openState.description,
+                    canSubmit = openState.canSubmit,
+                    isSubmitting = openState.isSubmitting,
+                    error = openState.error,
+                    attachedImages = openState.attachedImages,
+                    attachmentError = openState.attachmentError
+                        ?.takeIf { it == ATTACHMENT_LIMIT_REACHED_SENTINEL }
+                        ?.let {
+                            stringResource(
+                                R.string.job_request_image_limit_reached,
+                                MAX_IMAGES_HINT,
+                            )
+                        },
+                ),
+                actions = ContactProviderBottomSheetActions(
+                    onTitleChange = actions.contact.onTitleChange,
+                    onDescriptionChange = actions.contact.onDescriptionChange,
+                    onAttachImages = actions.contact.onAttachImages,
+                    onRemoveImage = actions.contact.onRemoveImage,
+                    onSubmit = actions.contact.onSubmit,
+                    onCancel = actions.contact.onCancel,
+                ),
             )
         }
     }
@@ -460,9 +453,7 @@ private fun ProfessionalsReadyPreview() {
                         surname = "Molina",
                         categoryId = 2,
                         categoryName = "Electricidad",
-                        // First row carries a photo URL so the preview
-                        // exercises the Coil path; the second row
-                        // exercises the initial-letter fallback.
+
                         profilePhotoUrl = "https://example.com/p.webp",
                     ),
                     Provider(
@@ -476,14 +467,6 @@ private fun ProfessionalsReadyPreview() {
                 ),
             ),
             contactFormState = ContactProviderUiState.Closed,
-            onRetryClick = {},
-            onContactarClick = {},
-            onContactTitleChange = {},
-            onContactDescriptionChange = {},
-            onContactAttachImagesClick = {},
-            onContactRemoveImage = {},
-            onContactSubmit = {},
-            onContactCancel = {},
         )
     }
 }
@@ -538,14 +521,6 @@ private fun ProfessionalsEmptyPreview() {
         ProfessionalsScreen(
             state = ProfessionalsUiState.Empty(categoryName = "Gas"),
             contactFormState = ContactProviderUiState.Closed,
-            onRetryClick = {},
-            onContactarClick = {},
-            onContactTitleChange = {},
-            onContactDescriptionChange = {},
-            onContactAttachImagesClick = {},
-            onContactRemoveImage = {},
-            onContactSubmit = {},
-            onContactCancel = {},
         )
     }
 }
@@ -570,14 +545,6 @@ private fun ProfessionalsErrorPreview() {
         ProfessionalsScreen(
             state = ProfessionalsUiState.Error(categoryName = "Electricidad"),
             contactFormState = ContactProviderUiState.Closed,
-            onRetryClick = {},
-            onContactarClick = {},
-            onContactTitleChange = {},
-            onContactDescriptionChange = {},
-            onContactAttachImagesClick = {},
-            onContactRemoveImage = {},
-            onContactSubmit = {},
-            onContactCancel = {},
         )
     }
 }
@@ -602,14 +569,6 @@ private fun ProfessionalsLoadingPreview() {
         ProfessionalsScreen(
             state = ProfessionalsUiState.Loading(categoryName = "Electricidad"),
             contactFormState = ContactProviderUiState.Closed,
-            onRetryClick = {},
-            onContactarClick = {},
-            onContactTitleChange = {},
-            onContactDescriptionChange = {},
-            onContactAttachImagesClick = {},
-            onContactRemoveImage = {},
-            onContactSubmit = {},
-            onContactCancel = {},
         )
     }
 }

@@ -37,42 +37,11 @@ import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
-/**
- * State-driven surface for the "Mis Servicios" screen
- * (`Route.MisServicios`), the consumer-facing list of every
- * service proposal regardless of status (US-54 scenario 03-VSP).
- *
- * Renders:
- *  - A horizontal row of filter chips at the top (US-54 scenario
- *    05-VSP / 06-VSP / 07-VSP) — the active chip is driven by
- *    `state.selectedStatusFilter`.
- *  - A vertical list of `ProposalCard`s for the current filter.
- *  - The standard Loading / Empty / Error states for the list.
- *  - A modal bottom sheet with the full proposal detail when the
- *    consumer taps a card (US-54 scenario 08-VSP). The sheet
- *    uses the dedicated [ProposalDetailScreen]; tapping its "Ver
- *    conversación" CTA calls [onViewConversation] which the host
- *    `LoResuelvoNav` resolves into a navigation to
- *    `Route.Conversation`.
- *
- * The host wraps the screen in a Hilt-managed
- * [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel]
- * via `hiltViewModel()` so the sheet's round trip fires when the
- * consumer taps a card. When the bottom sheet is dismissed
- * (`onDismiss`) the sheet-local VM keeps the proposal cached for
- * the next open so a second tap doesn't refetch.
- */
 @Composable
 fun MisServiciosScreen(
     state: MisServiciosUiState,
     detailState: ProposalDetailUiState,
-    onFilterSelected: (com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus?) -> Unit = {},
-    onRetryClick: () -> Unit = {},
-    onProposalSelected: (proposalId: String) -> Unit = {},
-    onDetailRetry: () -> Unit = {},
-    onViewConversation: (conversationId: String) -> Unit = {},
-    onPayNow: (proposalId: String) -> Unit = {},
-    onDetailDismiss: () -> Unit = {},
+    actions: MisServiciosScreenActions = MisServiciosScreenActions(),
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -83,7 +52,7 @@ fun MisServiciosScreen(
     ) {
         FilterChipsRow(
             selected = state.selectedStatusFilter,
-            onFilterSelected = onFilterSelected,
+            onFilterSelected = actions.filters.onSelected,
         )
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -97,13 +66,13 @@ fun MisServiciosScreen(
                     } else {
                         ProposalsList(
                             proposals = state.proposals,
-                            onProposalSelected = onProposalSelected,
+                            onProposalSelected = actions.proposals.onSelected,
                         )
                     }
                 }
                 is MisServiciosUiState.Error -> ErrorState(
                     failure = state.failure,
-                    onRetryClick = onRetryClick,
+                    onRetryClick = actions.proposals.onRetry,
                 )
             }
         }
@@ -115,10 +84,7 @@ fun MisServiciosScreen(
     // `onProposalSelected`, which kicks the round trip.
     DetailSheet(
         detailState = detailState,
-        onRetry = onDetailRetry,
-        onViewConversation = onViewConversation,
-        onPayNow = onPayNow,
-        onDismiss = onDetailDismiss,
+        actions = actions.detail,
     )
 }
 
@@ -126,15 +92,11 @@ fun MisServiciosScreen(
 @Composable
 private fun DetailSheet(
     detailState: ProposalDetailUiState,
-    onRetry: () -> Unit,
-    onViewConversation: (conversationId: String) -> Unit,
-    onPayNow: (proposalId: String) -> Unit,
-    onDismiss: () -> Unit,
+    actions: MisServiciosScreenActions.Detail,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(detailState) {
-        // US-54 bug fix: gate on `Ready`/`Error`, not on "not
         // Loading". A post-dismiss `Error(404)` round trip used to
         // satisfy `!isLoading` and re-open the sheet behind the
         // consumer's back; routing dismiss through
@@ -149,18 +111,18 @@ private fun DetailSheet(
     ModalBottomSheet(
         onDismissRequest = {
             visible = false
-            onDismiss()
+            actions.onDismiss()
         },
         sheetState = sheetState,
     ) {
         ProposalDetailScreen(
             state = detailState,
-            onRetry = onRetry,
-            onViewConversation = onViewConversation,
-            onPayNow = onPayNow,
+            onRetry = actions.onRetry,
+            onViewConversation = actions.onViewConversation,
+            onPayNow = actions.onPayNow,
             onDismiss = {
                 visible = false
-                onDismiss()
+                actions.onDismiss()
             },
         )
     }

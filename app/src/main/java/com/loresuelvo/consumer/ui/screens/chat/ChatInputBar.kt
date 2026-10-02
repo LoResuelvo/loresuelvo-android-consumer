@@ -54,26 +54,8 @@ import com.loresuelvo.consumer.R
  */
 @Composable
 fun ChatInputBar(
-    promptInput: String,
-    canSend: Boolean,
-    sending: Boolean,
-    recordingAudio: Boolean,
-    onPromptChange: (String) -> Unit,
-    onSendClick: () -> Unit,
-    onStartAudioRecording: () -> Unit,
-    onStopAudioRecording: () -> Unit,
-    onAttachClick: (() -> Unit)? = null,
-    /**
-     * Whether the audio affordance (Mic / Stop buttons) should
-     * be rendered. Defaults to `true` so the chat-with-provider
-     * surface keeps the existing behaviour. The AI diagnostic
-     * chat surface passes `false` while the AI audio
-     * functionality is not available (scenario 01-UXUI) so the
-     * Mic / Stop buttons are omitted entirely and the field is
-     * followed by either the Send button (when the prompt has
-     * content) or empty space (when the prompt is blank).
-     */
-    audioEnabled: Boolean = true,
+    state: ChatInputBarState,
+    actions: ChatInputBarActions = ChatInputBarActions(),
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -90,13 +72,9 @@ fun ChatInputBar(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
 
-        // ------------------------------------------------------------
-        // Attach button
-        // ------------------------------------------------------------
-
-        if (onAttachClick != null && !recordingAudio) {
+        if (actions.onAttach != null && !state.recordingAudio) {
             Surface(
-                onClick = onAttachClick,
+                onClick = requireNotNull(actions.onAttach),
                 modifier = Modifier
                     .size(48.dp)
                     .testTag(ATTACH_BUTTON_TAG),
@@ -119,14 +97,10 @@ fun ChatInputBar(
             }
         }
 
-        // ------------------------------------------------------------
-        // Text input
-        // ------------------------------------------------------------
-
         BasicTextField(
-            value = promptInput,
-            onValueChange = onPromptChange,
-            enabled = !recordingAudio,
+            value = state.promptInput,
+            onValueChange = actions.onPromptChange,
+            enabled = !state.recordingAudio,
             modifier = Modifier
                 .weight(1f)
                 .background(
@@ -148,7 +122,7 @@ fun ChatInputBar(
             maxLines = CHAT_INPUT_MAX_LINES,
             singleLine = false,
             decorationBox = { inner ->
-                if (promptInput.isEmpty()) {
+                if (state.promptInput.isEmpty()) {
                     Text(
                         text = stringResource(
                             R.string.chat_input_placeholder,
@@ -163,45 +137,33 @@ fun ChatInputBar(
             },
         )
 
-        // ------------------------------------------------------------
-        // Recording / Send button
-        // ------------------------------------------------------------
-
         when {
-            // Audio disabled -> the Mic / Stop affordances are
-            // removed entirely (01-UXUI). The trailing slot shows
-            // the Send button with its `canSend`-driven enabled
-            // state, so the consumer sees a disabled button while
-            // the prompt is empty and the live Send button as
-            // soon as they type.
-            !audioEnabled -> {
+
+            !state.audioEnabled -> {
                 SendButton(
-                    canSend = canSend,
-                    onSendClick = onSendClick,
+                    canSend = state.canSend,
+                    onSendClick = actions.onSend,
                 )
             }
 
-            // Currently recording -> STOP
-            recordingAudio -> {
+            state.recordingAudio -> {
                 StopButton(
-                    onStopAudioRecording = onStopAudioRecording,
+                    onStopAudioRecording = actions.onStopAudioRecording,
                     enabled = true,
                 )
             }
 
-            // Empty prompt -> START RECORDING
-            promptInput.isBlank() && !sending -> {
+            state.promptInput.isBlank() && !state.sending -> {
                 MicButton(
-                    onStartAudioRecording = onStartAudioRecording,
+                    onStartAudioRecording = actions.onStartAudioRecording,
                     enabled = true,
                 )
             }
 
-            // Non-empty prompt -> SEND
             else -> {
                 SendButton(
-                    canSend = canSend,
-                    onSendClick = onSendClick,
+                    canSend = state.canSend,
+                    onSendClick = actions.onSend,
                 )
             }
         }
@@ -213,11 +175,6 @@ fun ChatInputBar(
  */
 const val CHAT_INPUT_FIELD_TAG: String = "chat_input-field"
 
-/**
- * Trailing send button. Shared between the audio-enabled and
- * audio-disabled branches of [ChatInputBar] so the visual
- * styling and `testTag` stay in one place (extracted in 01-UXUI).
- */
 @Composable
 private fun SendButton(
     canSend: Boolean,
@@ -263,13 +220,6 @@ private fun SendButton(
     }
 }
 
-/**
- * Trailing microphone button. Rendered with reduced opacity and
- * `enabled = false` when [audioEnabled] is `false` so the
- * consumer sees the affordance is present but unavailable
- * (scenario 01-UXUI). The button keeps its 48.dp footprint so
- * the layout doesn't shift between enabled / disabled states.
- */
 @Composable
 private fun MicButton(
     onStartAudioRecording: () -> Unit,
@@ -315,11 +265,6 @@ private fun MicButton(
     }
 }
 
-/**
- * Trailing stop-recording button. Same disabled-styling rules
- * as [MicButton] so the slot keeps its footprint while the AI
- * audio feature is unavailable (01-UXUI).
- */
 @Composable
 private fun StopButton(
     onStopAudioRecording: () -> Unit,

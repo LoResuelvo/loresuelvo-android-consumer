@@ -31,50 +31,6 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.ui.screens.chat.components.ConversationTopBar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
-/**
- * Consumer ↔ provider conversation detail screen
- * (`Route.Conversation`). Replaces the previous placeholder
- * scaffold. Drives the [ConversationViewModel] via the UDF
- * [ConversationUiState].
- *
- * State rendering:
- *  - [ConversationUiState.Loading] → centred spinner.
- *  - [ConversationUiState.Error] → typed copy + retry button.
- *    The retry calls back to the host, which re-invokes the
- *    VM's [ConversationViewModel.load] with the same id.
- *  - [ConversationUiState.Ready] → top bar + scrolling message
- *    list + composer. The composer is **never** gated on
- *    `ConversationStatus.Pending` (scenario 05-IC: "without
- *    restrictions"). A transient [SendMessageOutcome.Failure]
- *    surfaces as a card pinned above the composer with retry +
- *    dismiss callbacks.
- *
- * Media attach surface (01-MM onwards):
- *  - The [ChatInputBar] receives `onAttachClick = { showAttachSheet = true }`
- *    so the `+` button is rendered to the LEFT of the prompt.
- *  - Tapping the button surfaces [MediaAttachSheet]; tapping
- *    "Galería" calls [onGalleryClick] (the host owns the
- *    `ActivityResultContracts.PickVisualMedia` launcher) which
- *    ultimately drives [ConversationViewModel.onAttachImageFromGallery].
- *  - Once a media is staged, [MediaPreviewCard] renders between
- *    the list and the composer with Send + Discard actions.
- *  - The transient-media-error card lives just above the
- *    composer and uses the same retry / dismiss pattern as the
- *    text transient error card.
- *
- * Auto-scroll: a [LaunchedEffect] keyed on the message count
- * scrolls to the freshly-added bubble so the consumer's just-
- * sent message is always visible. We deliberately do NOT
- * implement the "respect reader position" gate that the AI
- * diagnostic chat has (see `MessagesList.shouldAutoScroll`) —
- * for the provider chat the user is expected to stay at the
- * bottom; scrolling up to re-read history is an edge case the
- * Gherkin does not yet cover.
- *
- * The host (`ConversationRoute` in `LoResuelvoNav`) is the only
- * place that owns the navigation callback and re-invokes the
- * VM's `load(conversationId)` after composition.
- */
 @Composable
 fun ConversationScreen(
     state: ConversationUiState,
@@ -89,15 +45,7 @@ fun ConversationScreen(
             .testTag(CONVERSATION_SCREEN_TAG),
         contentAlignment = Alignment.Center,
     ) {
-        // 08-UXUI: the original `Box + Column.windowInsetsPadding`
-        // design produced a permanent bottom gap and doubled the
-        // padding when the IME opened. Switching to `Scaffold` with
-        // a dedicated `topBar` and `bottomBar` mirrors the
-        // `ChatScreen` pattern, which the consumer already
-        // approved visually: the `Scaffold` consumes the status
-        // bar inset for the `topBar` and the nav bar / IME inset
-        // for the `bottomBar`, and the `bottomBar` only needs
-        // `imePadding()` to lift above the keyboard.
+
         when (state) {
             is ConversationUiState.Loading -> LoadingState()
             is ConversationUiState.Error -> ErrorState(
@@ -113,13 +61,7 @@ fun ConversationScreen(
                             counterpart = state.detail.counterpart,
                             status = state.detail.status,
                             onBackClick = actions.navigation.onBack,
-                            // US-27 scenario 02-VTD: when the
-                            // conversation has an associated work
-                            // order, the top bar surfaces an icon
-                            // button that navigates to the work-order
-                            // detail screen via the route handler.
-                            // `null` for pre-acceptance conversations
-                            // hides the button entirely.
+
                             onViewWorkOrder = state.detail.workOrderId
                                 ?.let { workOrderId ->
                                     { actions.navigation.onViewWorkOrder?.invoke(workOrderId) }
@@ -131,16 +73,7 @@ fun ConversationScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .background(MaterialTheme.colorScheme.background)
-                                // 08-UXUI: the `Scaffold` already
-                                // consumes the IME inset for the
-                                // `bottomBar` (the bar lifts above
-                                // the keyboard automatically). The
-                                // bottom padding adds breathing room
-                                // above the keyboard for a less
-                                // cramped feel — the check on
-                                // `WindowInsets.ime` keeps the bar
-                                // flush against the navigation bar
-                                // when the keyboard is closed.
+
                                 .padding(
                                     bottom = if (WindowInsets.ime.asPaddingValues()
                                             .calculateBottomPadding() > 0.dp) 20.dp else 0.dp,
@@ -176,15 +109,19 @@ fun ConversationScreen(
                                 }
                             }
                             ChatInputBar(
-                                promptInput = state.promptInput,
-                                canSend = state.promptInput.isNotBlank() && !state.sending,
-                                sending = state.sending,
-                                recordingAudio = state.recordingAudio,
-                                onPromptChange = actions.composer.onPromptChange,
-                                onSendClick = actions.composer.onSend,
-                                onStartAudioRecording = actions.composer.onStartAudioRecording,
-                                onStopAudioRecording = actions.composer.onStopAudioRecording,
-                                onAttachClick = actions.composer.onAttach,
+                                state = ChatInputBarState(
+                                    promptInput = state.promptInput,
+                                    canSend = state.promptInput.isNotBlank() && !state.sending,
+                                    sending = state.sending,
+                                    recordingAudio = state.recordingAudio,
+                                ),
+                                actions = ChatInputBarActions(
+                                    onPromptChange = actions.composer.onPromptChange,
+                                    onSend = actions.composer.onSend,
+                                    onStartAudioRecording = actions.composer.onStartAudioRecording,
+                                    onStopAudioRecording = actions.composer.onStopAudioRecording,
+                                    onAttach = actions.composer.onAttach,
+                                ),
                             )
                         }
                     },
@@ -292,10 +229,7 @@ private fun TransientErrorCard(
         is SendMessageOutcome.Failure.Unauthorized ->
             stringResource(R.string.conversation_transient_error_unauthorized)
         is SendMessageOutcome.Failure.PayloadTooLarge ->
-            // The text-message path can't produce a
-            // PayloadTooLarge (text has no size limit), but the
-            // sealed type forces an explicit branch — fall back
-            // to the generic server copy defensively.
+
             stringResource(R.string.conversation_transient_error_server)
     }
     Surface(
@@ -356,14 +290,6 @@ const val CONVERSATION_TRANSIENT_ERROR_TAG: String = "conversation-transient-err
 const val CONVERSATION_TRANSIENT_ERROR_RETRY_TAG: String = "conversation-transient-error-retry"
 const val CONVERSATION_TRANSIENT_ERROR_DISMISS_TAG: String = "conversation-transient-error-dismiss"
 
-/**
- * Companion of [TransientErrorCard] for the media upload path
- * (01-MM). Same visual treatment (`errorContainer` surface +
- * dismiss / retry row), but the typed failure is the media-side
- * [SendMessageOutcome.Failure] and the copy uses the
- * `conversation_transient_media_error_*` strings so the wording
- * matches the file-attachment context.
- */
 @Composable
 private fun MediaTransientErrorCard(
     failure: SendMessageOutcome.Failure,

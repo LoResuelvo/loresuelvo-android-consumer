@@ -27,6 +27,8 @@ import com.loresuelvo.consumer.ui.professional.ProfessionalsViewModel
 import com.loresuelvo.consumer.ui.screens.categories.CategoriesScreen
 import com.loresuelvo.consumer.ui.screens.categories.CategoriesViewModel
 import com.loresuelvo.consumer.ui.screens.home.HomeScreen
+import com.loresuelvo.consumer.ui.screens.home.HomeScreenActions
+import com.loresuelvo.consumer.ui.screens.home.HomeScreenConfig
 import com.loresuelvo.consumer.ui.screens.home.HomeViewModel
 import com.loresuelvo.consumer.ui.screens.chat.ChatRoute
 import com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreen
@@ -315,10 +317,6 @@ private fun ProfessionalsRoute(
     val state by viewModel.uiState.collectAsState()
     val contactState by contactViewModel.uiState.collectAsState()
 
-    // Forward the navigation event emitted by the contact form
-    // (Phase 5 / scenario 02-SRP). The VM closes the modal before
-    // sending the event, so the user lands on the chat screen
-    // directly without an intermediate "submitted" state.
     androidx.compose.runtime.LaunchedEffect(contactViewModel) {
         contactViewModel.events.collect { event ->
             when (event) {
@@ -330,12 +328,6 @@ private fun ProfessionalsRoute(
         }
     }
 
-    // 03-UXUI: gallery picker launcher for the job-request
-    // image attachment flow. The launcher is remembered at the
-    // route level so the result callback survives
-    // recompositions. The returned `Uri` is forwarded to the
-    // VM, which decodes it via `MediaReader` and stages the
-    // `MediaUpload.Image` (the same pattern the chat flows use).
     val galleryLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
@@ -345,25 +337,28 @@ private fun ProfessionalsRoute(
     com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreen(
         state = state,
         contactFormState = contactState,
-        onRetryClick = { viewModel.loadProviders(categoryId, categoryName) },
-        onContactarClick = contactViewModel::onOpenContact,
-        onViewProfileClick = { provider ->
-            navController.navigate(Route.ProviderProfile.buildPath(provider.id))
-        },
-        onContactTitleChange = contactViewModel::onTitleChange,
-        onContactDescriptionChange = contactViewModel::onDescriptionChange,
-        // 03-UXUI: the picker is local to the route so the
-        // Composable stays stateless.
-        onContactAttachImagesClick = {
-            galleryLauncher.launch(
-                androidx.activity.result.PickVisualMediaRequest(
-                    androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
-                ),
-            )
-        },
-        onContactRemoveImage = contactViewModel::onRemoveImage,
-        onContactSubmit = contactViewModel::onSubmit,
-        onContactCancel = contactViewModel::onCancel,
+        actions = com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreenActions(
+            onRetry = { viewModel.loadProviders(categoryId, categoryName) },
+            onContact = contactViewModel::onOpenContact,
+            onViewProfile = { provider ->
+                navController.navigate(Route.ProviderProfile.buildPath(provider.id))
+            },
+            contact = com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreenActions.ContactFormActions(
+                onTitleChange = contactViewModel::onTitleChange,
+                onDescriptionChange = contactViewModel::onDescriptionChange,
+
+                onAttachImages = {
+                    galleryLauncher.launch(
+                        androidx.activity.result.PickVisualMediaRequest(
+                            androidx.activity.result.contract.ActivityResultContracts.PickVisualMedia.ImageOnly,
+                        ),
+                    )
+                },
+                onRemoveImage = contactViewModel::onRemoveImage,
+                onSubmit = contactViewModel::onSubmit,
+                onCancel = contactViewModel::onCancel,
+            ),
+        ),
     )
 }
 
@@ -381,10 +376,7 @@ private fun HomeRoute(
 ) {
     val sessionViewModel: SessionViewModel = hiltViewModel()
     val homeViewModel: HomeViewModel = hiltViewModel()
-    // US-54 bug fix: the Home row's "Ver Solicitud" CTA must open
-    // the same proposal-detail bottom sheet that the MisServicios
-    // list does. Before this wiring the callback was a no-op so
-    // tapping a card from Home did nothing.
+
     val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel =
         hiltViewModel()
     val context = LocalContext.current
@@ -424,67 +416,61 @@ private fun HomeRoute(
 
     HomeScreen(
         state = homeState,
-        displayName = sessionState.session?.user?.firstName,
-        onCategoryClick = { categoryId, categoryName ->
-            navController.navigate(
-                Route.Professionals.buildPath(categoryId, categoryName),
-            )
-        },
-        // 02-UXUI: the "Ver todas" link surfaces every category
-        // published by the platform (Home truncates to the first
-        // six tiles for the at-a-glance view).
-        onSeeAllCategoriesClick = {
-            navController.navigate(Route.Categories.path)
-        },
-        // US-54 scenario 03-VSP: the "Mis Servicios" link surfaces
-        // every service proposal regardless of status.
-        onSeeAllMisServiciosClick = {
-            navController.navigate(Route.MisServicios.path)
-        },
-        // visualize-turns.feature scenario 01-VT: the Home "Mis
-        // Turnos" link lands on the dedicated screen.
-        onSeeAllTurnosClick = {
-            navController.navigate(Route.Turnos.path)
-        },
-        // US-27 `visualize-turns-detail` scenario 01-VTD: tapping
-        // the "Ver detalles" CTA on a Home preview card opens the
-        // dedicated work-order detail screen.
-        onTurnoCardClick = { turnoId ->
-            val turno = findTurnoById(turnoId)
-            val provider = turno?.counterpart?.let { counterpart ->
-                com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
-                    id = counterpart.id,
-                    name = counterpart.name,
-                    surname = counterpart.surname,
-                    categoryName = counterpart.categoryName,
-                    profilePhotoUrl = counterpart.profilePhotoUrl,
-                )
-            }
-            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
-        },
-        // US-54 bug fix: every "Ver Solicitud" tap from the home
-        // row feeds the Hilt-scoped ProposalDetailViewModel so the
-        // bottom sheet surfaces the full proposal.
-        onProposalClicked = { proposalId -> detailViewModel.load(proposalId) },
-        onNotificationsClick = { /* TODO */ },
-        onAiSendClick = { navController.navigate(Route.Chat.buildPath()) },
-        onRetryClick = { homeViewModel.loadCategories() },
-        onLogoutClick = { sessionViewModel.signOut(context) },
-        detailState = detailState,
-        onDetailRetry = {
-            val cachedId = (detailState as? com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready)
-                ?.proposal?.id.orEmpty()
-            detailViewModel.load(cachedId)
-        },
-        onViewConversation = { conversationId ->
-            if (conversationId.isNotBlank()) {
-                navController.navigate(Route.Conversation.buildPath(conversationId))
-            }
-        },
-        onPayNow = { proposalId ->
-            detailViewModel.payNow(proposalId)
-        },
-        onDetailDismiss = { detailViewModel.reset() },
+        config = HomeScreenConfig(
+            displayName = sessionState.session?.user?.firstName,
+            detailState = detailState,
+        ),
+        actions = HomeScreenActions(
+            categories = HomeScreenActions.Categories(
+                onCategoryClick = { categoryId, categoryName ->
+                    navController.navigate(
+                        Route.Professionals.buildPath(categoryId, categoryName),
+                    )
+                },
+                onSeeAll = { navController.navigate(Route.Categories.path) },
+                onRetry = { homeViewModel.loadCategories() },
+            ),
+            turnos = HomeScreenActions.Turnos(
+                onSeeAll = { navController.navigate(Route.Turnos.path) },
+                onCardClick = { turnoId ->
+                    val turno = findTurnoById(turnoId)
+                    val provider = turno?.counterpart?.let { counterpart ->
+                        com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart(
+                            id = counterpart.id,
+                            name = counterpart.name,
+                            surname = counterpart.surname,
+                            categoryName = counterpart.categoryName,
+                            profilePhotoUrl = counterpart.profilePhotoUrl,
+                        )
+                    }
+                    navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
+                },
+            ),
+            proposals = HomeScreenActions.Proposals(
+                onSeeAll = { navController.navigate(Route.MisServicios.path) },
+                onSelected = detailViewModel::load,
+                detail = HomeScreenActions.Proposals.Detail(
+                    onRetry = {
+                        val cachedId = (detailState as? com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready)
+                            ?.proposal?.id.orEmpty()
+                        detailViewModel.load(cachedId)
+                    },
+                    onViewConversation = { conversationId ->
+                        if (conversationId.isNotBlank()) {
+                            navController.navigate(Route.Conversation.buildPath(conversationId))
+                        }
+                    },
+                    onPayNow = detailViewModel::payNow,
+                    onDismiss = detailViewModel::reset,
+                ),
+            ),
+            diagnostics = HomeScreenActions.Diagnostics(
+                onSend = { navController.navigate(Route.Chat.buildPath()) },
+            ),
+            account = HomeScreenActions.Account(
+                onLogout = { sessionViewModel.signOut(context) },
+            ),
+        ),
     )
 }
 
@@ -514,14 +500,6 @@ private fun CategoriesRoute(
     )
 }
 
-/**
- * "Mis Servicios" route (US-54 scenario 03-VSP). Resolves the
- * [MisServiciosViewModel] through Hilt and forwards the UDF state
- * to [MisServiciosScreen]. The VM's `init { load() }` fires the
- * fetch on first composition so the screen never has to call it
- * explicitly; `onRetryClick` re-fires the round trip on user
- * demand.
- */
 @Composable
 private fun MisServiciosRoute(
     navController: androidx.navigation.NavHostController,
@@ -543,28 +521,30 @@ private fun MisServiciosRoute(
     MisServiciosScreen(
         state = state,
         detailState = detailState,
-        onFilterSelected = viewModel::onFilterSelected,
-        onRetryClick = viewModel::load,
-        onProposalSelected = { proposalId -> detailViewModel.load(proposalId) },
-        onDetailRetry = {
-            // Re-load using the proposal id currently in Ready
-            // state (the last successfully loaded one). If the
-            // consumer dismissed the sheet, we reset to Loading so
-            // the next tap is a fresh round trip.
-            val cachedId = (detailState as? com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready)
-                ?.proposal?.id.orEmpty()
-            detailViewModel.load(cachedId)
-        },
-        onViewConversation = { conversationId ->
-            if (conversationId.isNotBlank()) {
-                navController.navigate(
-                    Route.Conversation.buildPath(conversationId),
-                )
-            }
-        },
-        onPayNow = { proposalId ->
-            detailViewModel.payNow(proposalId)
-        },
-        onDetailDismiss = { detailViewModel.reset() },
+        actions = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions(
+            filters = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions.Filters(
+                onSelected = viewModel::onFilterSelected,
+            ),
+            proposals = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions.Proposals(
+                onRetry = viewModel::load,
+                onSelected = detailViewModel::load,
+            ),
+            detail = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions.Detail(
+                onRetry = {
+                    val cachedId = (detailState as? com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState.Ready)
+                        ?.proposal?.id.orEmpty()
+                    detailViewModel.load(cachedId)
+                },
+                onViewConversation = { conversationId ->
+                    if (conversationId.isNotBlank()) {
+                        navController.navigate(
+                            Route.Conversation.buildPath(conversationId),
+                        )
+                    }
+                },
+                onPayNow = detailViewModel::payNow,
+                onDismiss = detailViewModel::reset,
+            ),
+        ),
     )
 }
