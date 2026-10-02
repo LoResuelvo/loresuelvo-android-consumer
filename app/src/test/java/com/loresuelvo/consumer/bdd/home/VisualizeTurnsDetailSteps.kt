@@ -11,60 +11,25 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 
-/**
- * Real step implementations for the
- * `features/home/visualize-turns-detail.feature` BDD specs
- * (US-27). The [VisualizeTurnsDetailWorld] drives the
- * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
- * with a fake repo so each scenario's `Given` seeds the right
- * status and the `Then` step asserts the resolved
- * [WorkOrderDetailUiState].
- *
- * Each per-scenario commit removes the `@wip` from exactly one
- * Gherkin scenario. The scaffold keeps all step defs in place;
- * the runner filters `@wip` so they don't execute until the
- * scenario lands.
- */
 class VisualizeTurnsDetailSteps {
 
     private val world: VisualizeTurnsDetailWorld = VisualizeTurnsDetailWorld()
 
     // The Background step defs (`que estoy autenticado como
     // usuario` / `me encuentro en la pantalla Home`) already
-    // exist on [VisualizeTurnsSteps] (US-55); the Cucumber runner
     // matches step patterns across all glue classes in
-    // `bdd.home` so the shared Background keeps a single source
     // of truth.
 
-    // ---- Scenario 03-VTD --------------------------------------
 
     @Given("participa en una orden de trabajo")
     fun participaEnUnaOrdenDeTrabajo() {
         world.startScenario()
-        // Scenario 01-VTD does not specify a state; seed a
         // default `scheduled` work order so the trigger step
-        // resolves to Ready. Scenarios that require a different
         // state (03-VTD, 04-VTD, etc.) override the seed via
         // the `la orden se encuentra en estado ...` step.
         world.seedScheduledWorkOrder()
     }
 
-    /**
-     * Cucumber JVM matches step definitions across `@Given`,
-     * `@When` and `@Then` by pattern, not by keyword. The
-     * `visualize-turns-detail.feature` scenarios use both
-     * `Given la orden se encuentra en estado "..."` (04-VTD /
-     * 05-VTD / 07-VTD) and `When la orden se encuentra en
-     * estado "..."` (03-VTD); a single `@Given` step def covers
-     * both, since the runner treats the annotation as a label
-     * for reporting and matches by the captured step text.
-     *
-     * Declaring both `@Given` and `@When` with the same pattern
-     * makes Cucumber JVM 7.x raise `DuplicateStepDefinitionException`
-     * because it indexes each annotation as a separate binding.
-     * Using a single `@Given` avoids the duplication and still
-     * matches both Gherkin keywords.
-     */
     @Given("la orden se encuentra en estado {string}")
     fun laOrdenSeEncuentraEnEstadoScheduled(stateLabel: String) {
         when (stateLabel.lowercase()) {
@@ -104,7 +69,6 @@ class VisualizeTurnsDetailSteps {
 
     @Given("participa en una orden de trabajo con evidencia fotográfica")
     fun participaEnUnaOrdenDeTrabajoConEvidenciaFotografica() {
-        // Scenario 06-VTD bundles the setup: starts the scenario
         // and seeds an `awaiting_payment` work order (which is
         // the lifecycle where evidence shows up). The trigger
         // step (`selecciona para ver detalle ...`) opens the
@@ -118,16 +82,13 @@ class VisualizeTurnsDetailSteps {
     @Given("que el usuario está visualizando una orden")
     fun queElUsuarioEstaVisualizandoUnaOrden() {
         world.startScenario()
-        // Scenario 08-VTD does not specify a state in the
         // Background; seed a default `paid` work order so the
         // trigger step resolves to Ready with a paidOnEpochMillis
-        // (the scenario's first Then asserts the paid-on row).
         world.seedPaidWorkOrderWithoutReview()
     }
 
     @Given("que el consumidor está visualizando una orden")
     fun queElConsumidorEstaVisualizandoUnaOrden() {
-        // Scenario 09-VTD uses the same Background as 08-VTD
         // but framed from the consumer's perspective ("el
         // consumidor"). The seam between the two phrasings is
         // incidental; the step seeds the same default so the
@@ -156,7 +117,6 @@ class VisualizeTurnsDetailSteps {
     @When("selecciona una fotografía de evidencia")
     fun seleccionaUnaFotografiaDeEvidencia() {
         // Lightbox wiring is captured by 06-VTD via the
-        // instrumented suite (Compose UI test). The BDD asserts
         // the data-layer wiring so the screen test can target
         // the photo's testTag.
     }
@@ -179,7 +139,6 @@ class VisualizeTurnsDetailSteps {
     @Then("debe mostrar el avatar de la contraparte")
     fun debeMostrarElAvatarDeLaContraparte() {
         // The avatar render lives in the Compose UI test
-        // (`WorkOrderDetailInstrumentedTest`); the BDD pins the
         // data-layer carries a `profilePhotoUrl` slot so the
         // avatar branch can render it.
         val state = world.lastUiState() as WorkOrderDetailUiState.Ready
@@ -228,7 +187,6 @@ class VisualizeTurnsDetailSteps {
     @Then("debe mostrar la sección {string}")
     fun debeMostrarLaSeccion(sectionTitle: String) {
         // The render decision (section present vs absent) is
-        // owned by the domain nullability; the BDD pins the data
         // layer so the Compose UI test can target the testTag
         // the section emits.
         when (sectionTitle) {
@@ -343,17 +301,7 @@ class VisualizeTurnsDetailSteps {
         // test.
     }
 
-    // ---- Scenario 02-VTD (entry desde el Chat) ---------------
 
-    /**
-     * "tengo una conversación abierta con el prestador "..."" —
-     * scenario 02-VTD. The seed sets up the conversation's
-     * `workOrderId` so the chat top bar renders the "Ver orden"
-     * CTA when the screen opens. The conversation itself is
-     * data-only here: the BDD layer does not exercise the chat
-     * composer / VM path (covered by other specs) — it pins the
-     * data layer for the `Then` assertion.
-     */
     @Given("tengo una conversación abierta con el prestador {string}")
     fun tengoUnaConversacionAbiertaConElPrestador(providerName: String) {
         world.startScenario()
@@ -368,44 +316,17 @@ class VisualizeTurnsDetailSteps {
         )
     }
 
-    /**
-     * "participa en una orden de trabajo asociada a la
-     * conversación con ..." — scenario 02-VTD. The converse
-     * step just confirms the data the previous `Given` seeded;
-     * kept as a separate step def so the Gherkin flows naturally.
-     */
     @Given("participa en una orden de trabajo asociada a la conversación con {string}")
     fun participaEnUnaOrdenDeTrabajoAsociada(providerName: String) {
         // Already asserted by `tengoUnaConversacionAbierta...`.
     }
 
-    /**
-     * "selecciona para ver detalle de la orden desde el Chat" —
-     * scenario 02-VTD. The user-agent click on the top bar's
-     * "Ver orden" icon button is a pure UI concern (covered by
-     * the Compose UI test for the conversation top bar). The
-     * BDD pins the data layer so the route handler can navigate
-     * to the right destination: the conversation's
-     * `workOrderId` is non-null.
-     */
     @When("selecciona para ver detalle de la orden desde el Chat")
     fun seleccionaParaVerDetalleDeLaOrdenDesdeElChat() {
-        // No-op at the BDD layer; the tap → navigation flow
         // is asserted by the Compose UI test for the
         // conversation top bar.
     }
 
-    /**
-     * "el sistema debe mostrar el detalle de la orden desde el
-     * Chat" — scenario 02-VTD. The Gherkin text deliberately
-     * adds "desde el Chat" so the pattern does not collide with
-     * the equivalent step in scenario 01-VTD (which asserts the
-     * work-order VM transitions to Ready). The chat path pins the
-     * data layer (`workOrderId` is non-null on the conversation
-     * detail) so the route handler can navigate. The navigation
-     * itself is covered by the Compose UI test for the
-     * conversation top bar.
-     */
     @Then("el sistema debe mostrar el detalle de la orden desde el Chat")
     fun elSistemaDebeMostrarElDetalleDeLaOrdenDesdeChat() {
         val detail = world.lastConversationDetail()

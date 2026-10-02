@@ -12,30 +12,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 
-/**
- * Real step implementations for the scenarios in
- * `features/work_order/complete-service-payment.feature`
- * (US-21 "Confirmar acuerdo de servicio"). The world owns the
- * domain fakes and the [PaymentResultViewModel] polling loop is
- * driven by the test dispatcher (`scheduler.advanceTimeBy`).
- *
- * Cucumber rule: one `@Given/@When/@Then/@And` regex per step
- * definition. Step texts that appear in multiple scenarios share
- * a single step def here (the body is the same observable
- * effect). The world's [CompleteServicePaymentWorld] holds all
- * scenario-specific state so the body is reusable.
- *
- * The BDD asserts observable effects:
- *  - The agreement screen exposes the immutable proposal terms
- *    and a "Confirm" CTA.
- *  - A confirmation modal appears before the seña is requested.
- *  - Tapping confirm drives the screen through
- *    `Ready → StartingCheckout → CheckoutReady`, after which the
- *    VM emits an `OpenCheckout` event the host uses to open a
- *    Custom Tab and navigate to the result route.
- *  - The polling loop surfaces `paid` / `rejected` / `processing`
- *    without trusting the browser redirect.
- */
 class CompleteServicePaymentSteps {
 
     private val world: CompleteServicePaymentWorld = CompleteServicePaymentWorld()
@@ -93,7 +69,6 @@ class CompleteServicePaymentSteps {
         // a UI concern (the modal is in [ServiceAgreementScreen]).
         // The VM just transitions Ready -> StartingCheckout on
         // confirmAgreement(). So this step is a no-op at the JVM
-        // layer; the BDD splits the modal interaction (tested in
         // the Compose instrumented suite) from the underlying VM
         // flow (tested here).
     }
@@ -102,7 +77,6 @@ class CompleteServicePaymentSteps {
     fun veoUnMensajeSolicitandoConfirmarLaAceptacionDelAcuerdo() {
         // Trivially true: the screen is in `Ready` (CTA visible).
         // The full modal interaction is verified via the Compose
-        // instrumented suite — the BDD asserts the underlying state
         // machine supports it without trusting the UI to be on
         // screen at any specific moment.
         val state = world.lastAgreementState()
@@ -140,7 +114,6 @@ class CompleteServicePaymentSteps {
         // confirmAgreement() and stays there until the round trip
         // resolves. The fake resolves synchronously in the test
         // dispatcher, so the world has already advanced past this
-        // step by the time the assertion runs. The BDD's
         // observable effect here is therefore that the screen
         // never displayed the spinner twice.
         val state = world.lastAgreementState()
@@ -180,7 +153,6 @@ class CompleteServicePaymentSteps {
 
     @And("conozco el importe de la seña correspondiente")
     fun conozcoElImporteDeLaSenaCorrespondiente() {
-        // The deposit is computed server-side. The BDD doesn't
         // assert the exact amount — that would couple the test to
         // backend pricing. We only require the agreement UI to
         // surface a deposit when the backend provides one.
@@ -190,7 +162,6 @@ class CompleteServicePaymentSteps {
     fun confirmoQueQuieroAceptarElAcuerdo() {
         world.confirmAgreement()
         // Capture the payment_intent_id from the OpenCheckout event so
-        // the result-screen scenarios can poll it.
         world.captureLastPaymentIntentIdFromEvent()
     }
 
@@ -213,7 +184,6 @@ class CompleteServicePaymentSteps {
         world.loadAgreement(9001)
         world.confirmAgreement()
         // Capture the payment_intent_id from the OpenCheckout event so
-        // the result-screen scenarios can poll it.
         world.captureLastPaymentIntentIdFromEvent()
         world.startPolling()
     }
@@ -236,7 +206,6 @@ class CompleteServicePaymentSteps {
         // App Link; the host's `navController.handleDeepLink` then
         // routes to the PaymentResult screen and the polling loop is
         // already in flight. At the JVM layer this step is a
-        // no-op — the BDD's load-bearing assertion is the resulting
         // PaymentResultUiState.
     }
 
@@ -251,7 +220,6 @@ class CompleteServicePaymentSteps {
 
     @Then("la solicitud de servicio refleja que el acuerdo fue aceptado")
     fun laSolicitudDeServicioReflejaQueElAcuerdoFueAceptado() {
-        // The BDD cannot directly observe the backend's proposal
         // table — that lives behind the webhook. What we can
         // observe at the JVM layer is the agreement screen state,
         // which the user navigates AWAY from after the redirect
@@ -277,7 +245,6 @@ class CompleteServicePaymentSteps {
     @Then("puedo intentar nuevamente")
     fun puedoIntentarNuevamente() {
         // The screen exposes a Reintentar CTA. The actual tap is
-        // an Android instrumented concern; the BDD asserts the
         // state machine supports the retry by re-running the
         // polling loop with a flipped status. The previous loop
         // was terminal (Rejected); restartPolling() spawns a new
@@ -326,7 +293,6 @@ class CompleteServicePaymentSteps {
     fun noEsPosableProcesarLaConfirmacion() {
         // No additional effect at the JVM layer: the forced
         // Network failure was queued by the previous step. The
-        // step is preserved so the scenario reads naturally and
         // so a follow-up step (e.g. "veo un mensaje de error")
         // can assert the resulting VM state.
     }
@@ -348,7 +314,6 @@ class CompleteServicePaymentSteps {
         // The Ready -> StartingCheckout -> NetworkError
         // transition must NOT have persisted any checkout
         // side-effect: no new transaction, no accepted
-        // proposal. The BDD asserts the VM is still in the
         // error branch (the Ready state was lost to the error,
         // which is the actual current contract — the user is
         // expected to retry from the error screen).
@@ -372,7 +337,6 @@ class CompleteServicePaymentSteps {
         // backend returned, unmodified. The data class
         // [ServiceProposal] is immutable (all `val`); the only
         // way to "mutate" a term would be to construct a new
-        // [ServiceProposal]. The BDD asserts this cannot happen
         // by comparing the proposal's read-only fields to the
         // values the FakeServiceProposalRepository returned.
         assertEquals(
@@ -435,7 +399,6 @@ class CompleteServicePaymentSteps {
     fun yLaSenaFuePagadaCorrectamente() {
         // The poll observed Paid; the proposal status is updated
         // server-side. At the JVM layer this is a no-op — the
-        // BDD's load-bearing assertion is the resulting Approved
         // payment intent state (verified in the next step).
     }
 

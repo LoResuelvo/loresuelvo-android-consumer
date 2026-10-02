@@ -1,7 +1,4 @@
 # language: es
-#
-# Especificación de US-50.2 para el modelo Android de video.
-# Los escenarios se publican como @wip antes de implementar el contrato.
 
 Característica: Modelo de video para mensajes del chat
 

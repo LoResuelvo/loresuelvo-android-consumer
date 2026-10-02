@@ -12,14 +12,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Pure JVM unit tests for [GetWorkOrderDetailUseCase] and the
- * [WorkOrderDetailRepository] adapter contract it depends on.
- * US-54 scenario 16-VSP pins the work-order detail surface;
- * these tests guard the data layer so the screen can rely on a
- * typed outcome. US-27 keeps them green while migrating the
- * surface to the new `GET /work-orders/{workOrderID}` endpoint.
- */
 class GetWorkOrderDetailUseCaseTest {
 
     private fun workOrder(
@@ -126,14 +118,6 @@ class GetWorkOrderDetailUseCaseTest {
         assertEquals(null, (outcome as GetWorkOrderOutcome.Found).workOrder.estimatedDurationMinutes)
     }
 
-    /**
-     * Port-level fake. Holds a single `WorkOrderDetail` or a
-     * failure to assert the typed outcomes the use case passes
-     * through unchanged. The US-30 `submitReview` surface is
-     * stubbed here because this test only exercises the GET
-     * flow; the dedicated `RateProviderUseCaseTest` (commit 3)
-     * owns the real submission fake.
-     */
     private class FakeWorkOrderDetailRepository(
         private val detail: WorkOrderDetail? = null,
         private val failure: ServiceProposalsOutcome.Failure? = null,

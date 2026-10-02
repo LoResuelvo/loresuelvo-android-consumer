@@ -33,24 +33,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Pure JVM unit tests for [WorkOrderDetailViewModel] (US-27
- * `visualize-turns-detail`). Two flows pin:
- *  - [load] transitions `Loading → Ready | NotFound | Failure`
- *    driven by the [GetWorkOrderDetailUseCase].
- *  - [payNow] delegates to [StartWorkOrderCheckoutUseCase] and
- *    surfaces either the resulting checkout URL on
- *    `checkoutUrl` or a typed error message on `payError`.
- *
- * Turbine drives the `SharedFlow` assertions — the rest of the
- * codebase uses `flow.first()` for single-emission cases, but
- * Turbine's `expectMostRecentItem()` (via `turbineScope.test { }`)
- * avoids the subtle `MutableSharedFlow` cancellation that
- * `viewModelScope` introduces when the test body completes.
- *
- * `UnconfinedTestDispatcher` runs every coroutine synchronously
- * so no `advanceUntilIdle` is needed.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkOrderDetailViewModelTest {
 
@@ -279,7 +261,6 @@ class WorkOrderDetailViewModelTest {
             provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?,
         ): GetWorkOrderOutcome = outcome
 
-        // US-30 stub: this VM test only covers the read flow.
         //  The calify-provider VM tests (commit 12) get a dedicated
         //  fake that records submissions and queues outcomes.
         override suspend fun submitReview(
@@ -420,7 +401,6 @@ class WorkOrderDetailViewModelTest {
         review = WorkOrderReview(rating = 5, description = "Excelente"),
     )
 
-    // ---- US-30 review-composer state machine ----------------------
 
     /**
      * Recording fake for the rate-provider surface. [enqueue]

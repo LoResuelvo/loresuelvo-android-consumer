@@ -4,13 +4,6 @@ import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 
-/**
- * Test-only [CategoryRepository] for the `ux_ui_fixes` BDD spec.
- * Lets the world seed a deterministic category list (or a
- * failure) per scenario. Defaults to a representative 9-item
- * set so scenarios that forget to seed still land on a
- * non-empty Ready state.
- */
 class FakeCategoryRepository(
     initial: CategoriesOutcome = CategoriesOutcome.Success(DEFAULT_CATEGORIES),
 ) : CategoryRepository {

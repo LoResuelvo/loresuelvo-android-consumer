@@ -12,29 +12,14 @@ import io.cucumber.java.en.When
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
-/**
- * Real step implementations for the scenarios in
- * `features/message/send-messages.feature`. Scenarios 01-06-IC
- * are green; scenarios 07-10-IC are the next batch (real-time
- * chat over WebSocket) and live as `@wip` placeholders in
- * `PendingSteps.kt` until each one is implemented.
- *
- * The per-scenario discipline (one scenario per commit, ≤ 400
- * lines) is documented at the top of the feature file. Comments
- * at each step flag whether the assertion is at the state level
- * (this file) or the visual / integration level (covered
- * separately by the Compose test suite).
- */
 class SendMessagesSteps {
 
     private val world: SendMessagesWorld = SendMessagesWorld()
 
-    // ---- Scenario 01-IC --------------------------------------
 
     @Given("I am searching for providers by category")
     fun iAmSearchingForProvidersByCategory() {
         world.startScenario()
-        // Hard-coded to Plomería for 01-IC; later scenarios pivot the
         // category via dedicated Given steps.
         world.loadProvidersForCategory("Plomería")
     }
@@ -47,7 +32,6 @@ class SendMessagesSteps {
     @Then("I see a message icon to contact them")
     fun iSeeAMessageIconToContactThem() {
         // The "message icon" in this US is the per-provider
-        // `Contactar` button (US-39). The BDD asserts the data layer
         // that backs the affordance; the visual rendering per row
         // is covered by `ProfessionalsInstrumentedTest`.
         val state = world.lastUiState()
@@ -57,7 +41,6 @@ class SendMessagesSteps {
         )
     }
 
-    // ---- Scenario 02-IC --------------------------------------
 
     @Given("I want to start a chat with a provider from the search results")
     fun iWantToStartAChatWithAProviderFromTheSearchResults() {
@@ -65,24 +48,8 @@ class SendMessagesSteps {
         world.loadProvidersForCategory("Plomería")
     }
 
-    /**
-     * The Gherkin says "I tap the 'Contactar' button on the
-     * provider" — a single user-visible action. The implementation
-     * drills all the way through because the navigation event is
-     * only emitted after the contact form is submitted (the
-     * `CreateJobRequestUseCase` round-trip is the trigger for
-     * `NavigateToConversation`). The BDD:
-     *  - opens the contact form (modal)
-     *  - pre-loads a success outcome on the fake repo so the submit
-     *    lands cleanly
-     *  - fills the required fields (the VM's `canSubmit` is gated
-     *    on non-blank title + description)
-     *  - submits the form
-     */
     @When("I tap the {string} button on the provider")
     fun iTapTheButtonOnTheProvider(buttonLabel: String) {
-        // Hard-coded to "Juan Pérez" because the Gherkin doesn't pin
-        // a provider name; the BDD fixture has only this provider
         // in Plomería, so the lookup is unambiguous.
         world.openContactFor("Juan Pérez")
         world.preLoadSuccess()
@@ -105,15 +72,7 @@ class SendMessagesSteps {
         // integration test in `ProfessionalsInstrumentedTest`.
     }
 
-    // ---- Scenario 03-IC --------------------------------------
 
-    /**
-     * "I already sent a message" → the backend already has a
-     * conversation for the consumer with the provider. The BDD
-     * seeds the fake [ConversationRepository] with that
-     * conversation so the next `When` step observes it in the
-     * list.
-     */
     @Given("I already sent a message to a provider")
     fun iAlreadySentAMessageToAProvider() {
         world.startScenario()
@@ -156,17 +115,7 @@ class SendMessagesSteps {
         assertEquals("Plomería", counterpart.categoryName)
     }
 
-    // ---- Scenario 04-IC --------------------------------------
 
-    /**
-     * "I started a chat with a provider" — the consumer has an
-     * active conversation with status=Pending (the provider has
-     * not yet accepted). The BDD seeds the conversation directly
-     * with `Pending` so the row's notification badge will render.
-     *
-     * Re-uses the same world helpers as 03-IC; the only
-     * difference is the explicit `status = Pending` parameter.
-     */
     @Given("I started a chat with a provider")
     fun iStartedAChatWithAProvider() {
         world.startScenario()
@@ -179,12 +128,6 @@ class SendMessagesSteps {
         )
     }
 
-    /**
-     * "The provider has not yet accepted the conversation" —
-     * already encoded by the `Pending` status seeded in the
-     * `Given` step. No further action; the step exists so the
-     * Gherkin flow reads naturally.
-     */
     @And("the provider has not yet accepted the conversation")
     fun theProviderHasNotYetAcceptedTheConversation() {
         // No-op: the seed carries the Pending status; the
@@ -220,7 +163,6 @@ class SendMessagesSteps {
         val conversation = conversations.first()
         // The "notification" the user sees is the row's
         // `PendingBadge` (`CONVERSATION_ROW_PENDING_TAG` in
-        // `ConversationRow.kt`). The BDD asserts the data
         // backing that badge — `status is Pending` — and
         // trusts the Compose test for the visual rendering.
         assertTrue(
@@ -229,7 +171,6 @@ class SendMessagesSteps {
         )
     }
 
-    // ---- Scenario 05-IC --------------------------------------
 
     /**
      * "I started a chat with a provider and it was not accepted"
@@ -251,12 +192,6 @@ class SendMessagesSteps {
         world.openConversation("1")
     }
 
-    /**
-     * "I write a new message" — the consumer types into the
-     * composer and taps send. The BDD combines the type + send
-     * actions into one step so the `Then` assertion can read
-     * the post-send state in a single snapshot.
-     */
     @When("I write a new message")
     fun iWriteANewMessage() {
         world.typeMessage("¿Podés venir mañana a las 10?")
@@ -296,14 +231,12 @@ class SendMessagesSteps {
         // "Without restrictions" — pin that the conversation
         // was Pending when the send went through (so a future
         // commit that gates the composer on `status == Accepted`
-        // breaks this scenario).
         assertEquals(
             ConversationStatus.Pending,
             ready.detail.status,
         )
     }
 
-    // ---- Scenario 06-IC --------------------------------------
 
     /**
      * "I started a chat with a provider and sent a message" — the
@@ -372,7 +305,6 @@ class SendMessagesSteps {
         )
     }
 
-    // ---- Scenario 07-IC --------------------------------------
 
     /**
      * "I am viewing a conversation with a provider" — the
@@ -426,7 +358,6 @@ class SendMessagesSteps {
         )
     }
 
-    // ---- Scenario 08-IC --------------------------------------
 
     /**
      * "I am viewing a conversation with one provider" — same
@@ -480,7 +411,6 @@ class SendMessagesSteps {
         )
     }
 
-    // ---- Scenario 09-IC --------------------------------------
 
     /**
      * "I am viewing a conversation and I am at the bottom of the
@@ -542,7 +472,6 @@ class SendMessagesSteps {
         )
     }
 
-    // ---- Scenario 10-IC --------------------------------------
 
     /**
      * "I am viewing a conversation and I am scrolled up reading

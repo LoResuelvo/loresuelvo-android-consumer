@@ -24,31 +24,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [MisServiciosViewModel]. Mirrors
- * `MessagesListViewModelTest`: the VM is constructed **inside**
- * each test (after `coEvery` stubs the round trip) because its
- * `init { load() }` launches a coroutine that, with
- * `StandardTestDispatcher`, would sit on the scheduler until
- * pumped. `UnconfinedTestDispatcher` inside `runTest` runs the
- * coroutine eagerly so the post-`init` state is observable
- * synchronously.
- *
- * Coverage:
- *  - Round trip succeeds with items → `Ready(items)` ordered by
- *    recency (US-54 scenario 04-VSP).
- *  - Round trip succeeds with empty list → `Ready(empty)`.
- *  - Round trip fails Network → `Error(failure)`.
- *  - Round trip fails Server → `Error(failure)`.
- *  - Manual `load()` after failure re-fires the use case
- *    (retry path).
- *  - Filter by status routes the round trip through the matching
- *    per-status use case (US-54 scenario 05-VSP / 06-VSP /
- *    07-VSP). `selectedStatusFilter` survives the route change
- *    and survives `Error → load()` (retry).
- *  - `selectedStatusFilter = null` (= "Todos") routes through
- *    `GetAllServiceProposalsUseCase`.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MisServiciosViewModelTest {
 
@@ -194,7 +169,6 @@ class MisServiciosViewModelTest {
         )
     }
 
-    // ---- Filter by status (US-54 scenarios 05/06/07-VSP) ------
 
     @Test
     fun default_filter_is_null_and_shows_all_proposals() = runTest {

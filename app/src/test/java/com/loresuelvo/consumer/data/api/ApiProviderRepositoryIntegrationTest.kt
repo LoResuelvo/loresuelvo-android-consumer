@@ -16,22 +16,6 @@ import org.junit.Test
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
-/**
- * End-to-end coverage of [ApiProviderRepository] against a
- * [MockWebServer] emulating the loresuelvo-api backend. Exercised
- * scenarios:
- *   200 + multi body -> Success(2 providers)
- *   200 + empty body  -> Success(empty)
- *   500               -> Failure.Server
- *   network drop      -> Failure.Network
- *
- * Wire-level inspection verifies the path and `category_id` query
- * param on every request. The mocked body matches the real backend
- * shape captured on 2026-07-27: each provider carries `id`, `name`,
- * `surname`, `category_name` and `profile_photo_url` — `category_id`
- * is **not** echoed in the response (the repository injects it from
- * the query parameter instead, see [ProviderDtoMapper]).
- */
 class ApiProviderRepositoryIntegrationTest {
 
     private lateinit var server: MockWebServer

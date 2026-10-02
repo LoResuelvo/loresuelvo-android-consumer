@@ -10,20 +10,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Pure JVM unit tests for [GetServiceProposalByConversationIdUseCase].
- * Pins the three branches the conversation-summary surface
- * (US-54 scenario 14-VSP) depends on:
- *
- *  - Linked: when the seed carries a proposal with the same
- *    `conversationId`, the use case surfaces it on the outcome.
- *  - NotLinked: when no proposal matches the conversation id,
- *    the use case surfaces `NotLinked` rather than throwing or
- *    returning null.
- *  - Failure: when the repository round trip fails, the use
- *    case collapses to `Failure(failure)` so the chat can keep
- *    working without a summary card.
- */
 class GetServiceProposalByConversationIdUseCaseTest {
 
     @Test

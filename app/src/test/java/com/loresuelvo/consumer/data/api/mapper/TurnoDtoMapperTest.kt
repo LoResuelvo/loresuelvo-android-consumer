@@ -8,17 +8,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * Pins the DTO -> domain translation for the `GET /work-orders`
- * endpoint (visualize-turns.feature + visualize-turns-detail).
- *
- * Every rule that differs (snake_case → camelCase, `Long` ids →
- * `String` keys, ISO strings → epoch millis, lowercase wire
- * status → typed enum, unknown statuses silently dropped) lives
- * in `TurnoDto.toDomain()` and is pinned here. US-27 widens the
- * recognised statuses with `awaiting_payment` and `paid` so
- * the same enum powers both the list and the detail surface.
- */
 class TurnoDtoMapperTest {
 
     private fun dto(

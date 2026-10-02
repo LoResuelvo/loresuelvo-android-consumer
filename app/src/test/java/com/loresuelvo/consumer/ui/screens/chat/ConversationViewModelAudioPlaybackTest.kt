@@ -172,7 +172,6 @@ class ConversationViewModelAudioPlaybackTest {
 
     @Test
     fun onPlayAudio_starts_audio_player_for_provider_audio_message() = runTest {
-        // Scenario 07-MM: a provider-sent audio message is played
         // the same way as a consumer-sent one — the VM surface
         // doesn't branch on sender.
         coEvery {

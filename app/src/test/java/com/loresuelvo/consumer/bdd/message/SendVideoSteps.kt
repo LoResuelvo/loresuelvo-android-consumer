@@ -7,14 +7,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
-/**
- * Executable contract for US-50.2's video send flow. The
- * production-shaped presign/upload/confirm contract is covered by
- * [com.loresuelvo.consumer.data.api.MediaMessageIntegrationTest];
- * these steps keep the business scenarios readable and verify the
- * observable state transitions (single media, caption, cleanup and
- * retry preservation).
- */
 class SendVideoSteps {
 
     private var pendingVideo = false

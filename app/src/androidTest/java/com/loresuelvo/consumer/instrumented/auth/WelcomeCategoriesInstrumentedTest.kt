@@ -73,7 +73,6 @@ class WelcomeCategoriesInstrumentedTest {
         composeTestRule.waitForIdle()
     }
 
-    // Scenario: 05-CPI Mostrar las categorías de servicios en Welcome
     @Test
     fun displays_categories_from_repository() {
 

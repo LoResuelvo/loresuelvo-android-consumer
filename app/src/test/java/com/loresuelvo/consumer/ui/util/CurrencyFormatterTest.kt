@@ -3,14 +3,6 @@ package com.loresuelvo.consumer.ui.util
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Pure JVM unit tests for [CurrencyFormatter.formatAmount].
- * US-54 scenario 11-VSP pins the "$ 15.000" output shape (peso
- * prefix, dot thousands separator, no decimals) and the BDD step
- * def pins the same observable output through the public
- * formatter — these tests guard the formatter itself against
- * regressions introduced by copy-paste tweaks.
- */
 class CurrencyFormatterTest {
 
     @Test

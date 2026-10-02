@@ -17,7 +17,6 @@
             android:exported="true">
 
             <!--
-              US-21 / US-28 DEV App Link.
 
               Example:
                 https://<ngrok-host>/payments/success?external_reference=...

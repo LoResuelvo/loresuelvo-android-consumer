@@ -75,7 +75,6 @@ class WelcomeScreenInstrumentedTest {
         composeTestRule.waitForIdle()
     }
 
-    // Scenario: 01-CPI Mostrar nombre y branding de LoResuelvo
     @Test
     fun displays_loresuelvo_branding() {
 
@@ -84,7 +83,6 @@ class WelcomeScreenInstrumentedTest {
             .assertIsDisplayed()
     }
 
-    // Scenario: Mostrar la propuesta de valor antes de la autenticación
     @Test
     fun displays_value_proposition() {
 
@@ -101,7 +99,6 @@ class WelcomeScreenInstrumentedTest {
             .assertIsDisplayed()
     }
 
-    // Scenario: 02-CPI Mostrar botón de Registrarse
     @Test
     fun displays_register_button() {
 
@@ -111,7 +108,6 @@ class WelcomeScreenInstrumentedTest {
             .assertHasClickAction()
     }
 
-    // Scenario: 03-CPI Mostrar acción de Iniciar Sesión
     @Test
     fun displays_login_action() {
 
@@ -121,7 +117,6 @@ class WelcomeScreenInstrumentedTest {
             .assertHasClickAction()
     }
 
-    // Scenario: 04-CPI Mostrar opción de continuar con Google
     @Ignore("WIP: Google login button")
     @Test
     fun displays_google_login_button() {

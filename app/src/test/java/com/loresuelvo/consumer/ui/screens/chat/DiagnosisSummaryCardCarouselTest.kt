@@ -20,7 +20,7 @@ import org.robolectric.annotation.Config
 
 /**
  * Compose test that pins the horizontal carousel contract for
- * the diagnosis summary card (post US-DIA-09 follow-up).
+ * the diagnosis summary card.
  *
  * Concerns under test:
  *  1. Every recommended provider renders exactly one tile inside

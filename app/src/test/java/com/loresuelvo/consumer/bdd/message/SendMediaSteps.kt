@@ -10,23 +10,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 
-/**
- * Step definitions for the scenarios in
- * `features/message/send-media.feature`. The first scenario
- * (01-MM) goes green in this commit; scenarios 02-10 remain
- * `@wip` and will land in their own commits.
- *
- * The per-scenario discipline (one scenario per commit) is
- * documented at the top of the feature file. Each `When` /
- * `Then` step maps directly to a helper on [SendMediaWorld]
- * so the steps stay terse and the world owns the orchestration
- * details.
- *
- * The Background `Dado` / `Y` steps (`estoy autenticado como
- * consumidor` + `tengo una conversación abierta con el
- * prestador ...`) live alongside the scenario steps so the
- * Cucumber glue layer can resolve them without an extra file.
- */
 class SendMediaSteps {
 
     private val world: SendMediaWorld = SendMediaWorld()
@@ -35,7 +18,6 @@ class SendMediaSteps {
 
     @Given("estoy autenticado como consumidor")
     fun iAmAuthenticatedAsConsumer() {
-        // The media BDD doesn't exercise the Auth0 path; the
         // world starts the dispatcher + builds the VM.
         world.startScenario()
     }
@@ -45,7 +27,6 @@ class SendMediaSteps {
         world.enqueueConversation(counterpartName)
     }
 
-    // ---- Scenario 01-MM ---------------------------------------------
 
     /**
      * "que estoy en la conversación con 'Juan Pérez'" — fires
@@ -59,56 +40,22 @@ class SendMediaSteps {
         world.openConversation()
     }
 
-    /**
-     * "toco el botón de adjuntar imagen desde la galería" — in
-     * the real UI the user opens the [MediaAttachSheet] and
-     * taps the "Galería" entry which launches the
-     * `PickVisualMedia` activity. The world collapses both taps
-     * into a single helper that drives
-     * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel.onAttachImageFromGallery]
-     * with a deterministic fake URI — the BDD asserts the data
-     * behaviour, not the UI rendering (the Compose acceptance
-     * test in `acceptance/` covers the sheet + launcher).
-     */
     @When("toco el botón de adjuntar imagen desde la galería")
     fun iTapAttachImageFromGallery() {
-        // The scenario does not pin a specific filename in the
         // `When` step — the next `And` step does. The world
         // opens the conversation's media flow with a default
         // filename that the next step can override.
         world.chooseFromGallery()
     }
 
-    /**
-     * "selecciono la imagen 'foto-baño.jpg'" — the activity
-     * result fires `vm.onAttachImageFromGallery(uri)`. The world
-     * re-builds the URI with the named filename so the
-     * downstream assertions can pin the original name + mime.
-     *
-     * For 01-MM the assertion that follows only checks that a
-     * preview surfaces; the next iteration can re-stage with a
-     * specific filename if the Gherkin grows a richer
-     * "confirmo el envío" step.
-     */
     @And("selecciono la imagen {string}")
     fun iSelectTheImage(filename: String) {
         // The picker step has already attached with the default
         // filename; for 01-MM's assertion contract this is
         // sufficient. The world is left ready for future
-        // scenarios to drive a re-attach with a specific name.
         @Suppress("UNUSED_PARAMETER") filename
     }
 
-    /**
-     * "toco el botón de adjuntar imagen desde la cámara" —
-     * mirrors the gallery step but for the camera source. The
-     * camera intent (`ActivityResultContracts.TakePicture`)
-     * ultimately calls `vm.onAttachImageFromGallery(uri)` with
-     * the FileProvider-backed URI once the camera activity
-     * returns; the BDD short-circuits the system camera and
-     * stages the `pendingMedia` directly via `onAttachMedia`,
-     * the canonical non-Uri entry point.
-     */
     @When("toco el botón de adjuntar imagen desde la cámara")
     fun iTapAttachImageFromCamera() {
         // La captura real ocurre en el siguiente step:
@@ -128,15 +75,6 @@ class SendMediaSteps {
         world.captureFromCamera(filename)
     }
 
-    /**
-     * "veo la vista previa de la foto capturada" — same
-     * observable as 01-MM's gallery preview: the
-     * [ConversationUiState.Ready.pendingMedia] field becomes
-     * non-null after the camera result is staged. The wording
-     * is distinct so the Gherkin reads naturally for each
-     * source; the assertion is identical because the VM
-     * doesn't differentiate between gallery and camera.
-     */
     @Then("veo la vista previa de la foto capturada")
     fun iSeeThePreviewOfTheCapturedPhoto() {
         val state = world.lastConversationUiState()
@@ -152,15 +90,6 @@ class SendMediaSteps {
         )
     }
 
-    /**
-     * "veo la vista previa de la imagen seleccionada" — the
-     * [com.loresuelvo.consumer.ui.screens.chat.ConversationUiState.Ready.pendingMedia]
-     * field becomes non-null once
-     * `vm.onAttachImageFromGallery` finishes reading the URI.
-     * The BDD asserts against the state, not the rendered
-     * `MediaPreviewCard`; the Compose acceptance test pins
-     * the visual contract.
-     */
     @Then("veo la vista previa de la imagen seleccionada")
     fun iSeeThePreviewOfTheSelectedImage() {
         val state = world.lastConversationUiState()
@@ -176,14 +105,6 @@ class SendMediaSteps {
         )
     }
 
-    /**
-     * "puedo confirmar el envío o descartarla" — the user can
-     * either tap "Enviar" (which fires the multipart upload) or
-     * "Descartar" (which clears `pendingMedia`). Both actions
-     * are no-ops in `Sending` / `Error` states, so the BDD
-     * asserts the preview state is ready (no in-flight upload,
-     * no transient failure).
-     */
     @And("puedo confirmar el envío o descartarla")
     fun iCanConfirmOrDiscardThePreview() {
         val state = world.lastConversationUiState()
@@ -203,7 +124,6 @@ class SendMediaSteps {
         )
         // `attach=in-flight` and `transientMediaError` are also
         // pinned to defaults so a future commit that adds
-        // validation (e.g. size limit per scenario 09-MM) breaks
         // this assertion cleanly.
         assertEquals(
             "no transient media error before confirm",
@@ -212,7 +132,6 @@ class SendMediaSteps {
         )
     }
 
-    // ---- Scenario 03-MM ---------------------------------------------
 
     @When("toco el botón de grabar audio")
     fun iTapRecordAudioButton() {
@@ -304,7 +223,6 @@ class SendMediaSteps {
         println(world.lastConversationUiState())
     }
 
-    // ---- Scenario 04-MM ---------------------------------------------
 
     @Given("que envié una imagen en la conversación con {string}")
     fun iSentAnImage(counterpartName: String) {
@@ -326,7 +244,6 @@ class SendMediaSteps {
         world.assertSentImageThumbnailIsVisible()
     }
 
-    // ---- Scenario 05-MM ---------------------------------------------
 
     @Given("que envié un audio en la conversación con {string}")
     fun iSentAnAudio(counterpartName: String) {
@@ -343,7 +260,6 @@ class SendMediaSteps {
         world.assertSentAudioDurationIsVisible()
     }
 
-    // ---- Scenario 06-MM ---------------------------------------------
 
     @Given("que el prestador {string} me envió una imagen")
     fun theProviderSentMeAnImage(counterpartName: String) {
@@ -365,7 +281,6 @@ class SendMediaSteps {
         world.assertReceivedImageIsOpenFullscreen()
     }
 
-    // ---- Scenario 07-MM ---------------------------------------------
 
     @Given("que el prestador {string} me envió un audio")
     fun theProviderSentMeAnAudio(counterpartName: String) {
@@ -377,7 +292,6 @@ class SendMediaSteps {
         world.playReceivedAudio()
     }
 
-    // ---- Scenario 08-MM ---------------------------------------------
 
     @Given("que el backend no responde")
     fun theBackendIsDown() {
@@ -400,7 +314,6 @@ class SendMediaSteps {
         world.assertNoMessageWasAppended()
     }
 
-    // ---- Scenario 09-MM ---------------------------------------------
 
     @And("grabo un audio que excede el tamaño máximo permitido")
     fun iRecordedAnAudioThatExceedsTheMaxSize() {
@@ -429,7 +342,6 @@ class SendMediaSteps {
         world.assertNoMessageWasAppended()
     }
 
-    // ---- Scenario 10-MM ---------------------------------------------
 
     /**
      * "selecciono una imagen de la galería" — equivalent to
@@ -455,7 +367,6 @@ class SendMediaSteps {
         world.assertNoMessageWasAppended()
     }
 
-    // ---- Scenario 11-MM ---------------------------------------------
 
     @Given("que tengo un audio enviado en la conversación con {string}")
     fun iHaveASentAudio(counterpartName: String) {

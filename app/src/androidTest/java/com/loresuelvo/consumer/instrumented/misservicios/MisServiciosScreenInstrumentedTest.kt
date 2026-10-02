@@ -64,38 +64,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Instrumented coverage for US-54 scenario 03-VSP ("Visualizar
- * todas las propuestas de servicio"). Drives the consumer through
- * the navigation graph — Home → "Mis Servicios" link → MisServicios
- * list — and pins that the seeded proposals land in the rendered
- * `LazyColumn`.
- *
- * Mirrors [com.loresuelvo.consumer.instrumented.auth.CompleteProfileScreenInstrumentedTest]:
- *
- *  - `@HiltAndroidTest` + `@UninstallModules(RepositoryModule::class,
- *    SessionStoreModule::class)` to install a deterministic test
- *    graph: every port the production ViewModels transitively
- *    need (Categories / Provider / AuthSessionStore /
- *    Diagnosis / JobRequest / Conversation /
- *    ServiceProposal) is bound to a fake / production stub that
- *    returns a fast, in-memory result.
- *  - `@EntryPoint` to resolve the **same** `@Singleton` instance of
- *    `AuthSessionStore` that `SessionViewModel` observes, so the
- *    `saveSession(...)` mutation propagates through the production
- *    StateFlow and the smart router in `LoResuelvoNav` redirects
- *    the consumer to the Home (not Welcome / CompleteProfile).
- *  - `FakeServiceProposalRepository.set(...)` to seed the
- *    proposal list the MisServicios screen renders.
- *  - `composeTestRule.runOnUiThread { ... }` for the Hilt mutation
- *    + `activityRule.scenario.recreate()` to force the activity
- *    to rebuild against the new state.
- *
- * Locale note: the CI emulator boots as `en-US`, so the screen
- * resolves the strings from `values-en/`. The Compose assertions
- * resolve `R.string.*` from the activity's resources rather than
- * hard-coded Spanish literals.
- */
 @HiltAndroidTest
 @UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)

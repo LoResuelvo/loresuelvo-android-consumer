@@ -5,23 +5,6 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 
-/**
- * Step defs for `features/diagnosis/ai_diagnosis.feature`. Each step
- * is intentionally thin: the heavy lifting lives in [AiDiagnosisWorld]
- * which pins `Dispatchers.Main` and drives the [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel]
- * through a `StandardTestDispatcher` against a [FakeDiagnosisRepository].
- *
- * Cucumber instantiates this class with its zero-arg constructor on
- * a per-scenario basis; `close()` is invoked from the JVM shutdown
- * hook.
- *
- * Steps that live here today:
- *  - 01-DIA: typing + sending surfaces the user's optimistic message.
- *  - 02-DIA: the assistant round-trip becomes visible in the chat.
- *  - 06-DIA: structural assertion that `Route.Chat` is registered.
- *
- * Steps for the remaining `@wip` scenarios live in [PendingSteps].
- */
 class AiDiagnosisSteps {
 
     private val world: AiDiagnosisWorld = AiDiagnosisWorld()
@@ -34,9 +17,6 @@ class AiDiagnosisSteps {
     @Given("me encuentro en la pantalla Home")
     fun meEncuentroEnLaPantallaHome() {
         // The chat VM does not depend on any Home state — the step
-        // exists only to mirror the Gherkin Background and make the
-        // scenarios read like a user journey. The Home screen's own
-        // behaviours are covered by `bdd/home/HomeSteps`.
     }
 
     @When("ingreso un mensaje {string} en el campo de diagnóstico")
@@ -62,7 +42,6 @@ class AiDiagnosisSteps {
         world.assertUserMessageVisible(world.lastTypedPromptSnapshot())
     }
 
-    // ---- Scenario: 02-DIA Recibir respuesta del asistente ----------
 
     /**
      * 02-DIA "Given": the consumer has already kicked off the
@@ -85,7 +64,6 @@ class AiDiagnosisSteps {
         world.assertAssistantMessageVisible()
     }
 
-    // ---- Scenario: 03-DIA Mostrar indicador de carga ----------------
 
     /**
      * 03-DIA "Given": the consumer is already mid-conversation
@@ -121,7 +99,6 @@ class AiDiagnosisSteps {
         world.assertSendingFlagBlocksNewSends()
     }
 
-    // ---- Scenario: 04-DIA Mostrar error de servicio ----------------
 
     /**
      * 04-DIA "When": the user types and sends a follow-up, but
@@ -156,7 +133,6 @@ class AiDiagnosisSteps {
         world.assertRetryClearsError()
     }
 
-    // ---- Scenario: 05-DIA Mostrar advertencia de orientación -----
 
     /**
      * 05-DIA "When": the user opens the chat screen. There's no
@@ -176,7 +152,6 @@ class AiDiagnosisSteps {
         // banner by default (see [ChatUiState.preliminaryWarningVisible]).
     }
 
-    // ---- Scenario: 07-DIA Auto-grow del campo hasta 6 líneas ----
 
     /**
      * 07-DIA "Given": the consumer is in the chat screen typing.
@@ -189,11 +164,6 @@ class AiDiagnosisSteps {
         // Visual assertion only — verified by ChatInputBarTest.
     }
 
-    /**
-     * 07-DIA "When": the user types a multi-line message. The BDD
-     * layer can only assert the VM state; the visible height-grow
-     * is verified by [com.loresuelvo.consumer.ui.screens.chat.ChatInputBarTest].
-     */
     @When("el contenido supera una línea")
     fun elContenidoSuperaUnaLinea() {
         world.typePrompt("Línea uno\nLínea dos\nLínea tres")
@@ -209,13 +179,7 @@ class AiDiagnosisSteps {
         // Visual assertion — covered by ChatInputBarTest.
     }
 
-    // ---- Scenario: 08-DIA Scroll interno para > 6 líneas ----------
 
-    /**
-     * 08-DIA "When": the user types content longer than the
-     * 6-line cap. The BDD layer reflects the VM state; the
-     * visual scroll behavior is verified by the Compose-test.
-     */
     @When("el contenido supera las 6 líneas visibles")
     fun elContenidoSuperaLas6LineasVisibles() {
         world.typePrompt("L1\nL2\nL3\nL4\nL5\nL6\nL7\nL8")
@@ -236,7 +200,6 @@ class AiDiagnosisSteps {
         // Visual assertion — covered by ChatInputBarTest.
     }
 
-    // ---- Scenario: 06-DIA Navegar al chat de IA --------------------
 
     @When("selecciono la opción {string}")
     fun seleccionoLaOpcion(opcion: String) {
@@ -254,7 +217,6 @@ class AiDiagnosisSteps {
         world.assertChatScreenRouteAvailable()
     }
 
-    // ---- Scenario: 09-DIA Visualizar diagnóstico concluido --------
 
     /**
      * 09-DIA "Given": the AI concluded the diagnosis and the
@@ -269,12 +231,6 @@ class AiDiagnosisSteps {
         world.seedConcludedDiagnosis(categoryName = rubro)
     }
 
-    /**
-     * 09-DIA "When": the user views the assistant's response. The
-     * world already drove the round-trip in the `Given` step, so
-     * this step is a no-op placeholder mirroring the Gherkin
-     * wording.
-     */
     @When("visualizo la respuesta del asistente")
     fun visualizoLaRespuestaDelAsistente() {
         // No-op: the round-trip has already settled in the
@@ -291,7 +247,6 @@ class AiDiagnosisSteps {
         world.assertRecommendedProvidersVisible(categoryName = rubro)
     }
 
-    // ---- Scenario: 10-DIA Visualizar datos de cada prestador -----
 
     @Then("cada prestador muestra nombre y apellido")
     fun cadaPrestadorMuestraNombreYApellido() {
@@ -321,7 +276,6 @@ class AiDiagnosisSteps {
         }
     }
 
-    // ---- Scenario: 11-DIA Contactar prestador desde el chat ----
 
     /**
      * 11-DIA `When`: the user taps "Contactar" on the first
@@ -362,7 +316,6 @@ class AiDiagnosisSteps {
         world.assertNavigatesToConversation()
     }
 
-    // ---- Scenario: 12-DIA Ver sesiones previas del chat con IA --
 
     /**
      * 12-DIA `And`: seed the AI conversation list fake with
@@ -385,15 +338,6 @@ class AiDiagnosisSteps {
         world.seedAiConversations(conversations)
     }
 
-    /**
-     * 12-DIA `When`: the consumer taps the "Asistente IA" tab in
-     * the bottom navigation. The BDD layer surfaces the
-     * structural assertion that the Assistant route is
-     * registered; the user-visible "the list surface is
-     * rendered" proof is verified by the `Then` step's
-     * `Ready` state assertion (which fires on the VM's
-     * auto-load-on-init).
-     */
     @When("accedo al apartado \"Asistente IA\"")
     fun accedoAlApartadoAsistenteIA() {
         // No-op: the Assistant VM auto-loads on construction in
@@ -414,40 +358,18 @@ class AiDiagnosisSteps {
         world.assertAssistantConversationsHaveTimestamp()
     }
 
-    // ---- Scenario 01-AIP Adjuntar imagen desde la galería ------
 
-    /**
-     * 01-AIP / 03-AIP `When toco el botón de adjuntar imagen
-     * desde la galería`. No-op: represents the user tapping the
-     * `+` and the system surfacing the picker. The actual
-     * staging fires from each `Y selecciono la imagen X` step,
-     * so a scenario can stage one (01-AIP) or several
-     * (03-AIP) images in order.
-     */
     @When("toco el botón de adjuntar imagen desde la galería")
     fun tocoBotonAdjuntarImagenGaleria() {
         // No-op: the next `And` step drives the VM via
         // `world.chooseFromGallery`.
     }
 
-    /**
-     * 01-AIP / 03-AIP `And selecciono la imagen "{filename}"`.
-     * Drives the canonical non-Uri VM entry point with the
-     * Gherkin-named filename so the scenario can stage one
-     * (01-AIP) or several (03-AIP) images in order.
-     */
     @And("selecciono la imagen {string}")
     fun seleccionoLaImagen(filename: String) {
         world.chooseFromGallery(filename)
     }
 
-    /**
-     * 01-AIP `Then la imagen queda pendiente de envío en la
-     * conversación`. Shared with 02-AIP — the structural
-     * assertion (one attachment staged, send round-trip NOT
-     * fired) is identical across both picker sources. The
-     * filename is pinned by the `When` step of each scenario.
-     */
     @Then("la imagen queda pendiente de envío en la conversación")
     fun laImagenQuedaPendienteDeEnvio() {
         world.assertPendingAttachmentStaged()
@@ -473,7 +395,6 @@ class AiDiagnosisSteps {
         world.assertPendingAttachmentStaged()
     }
 
-    // ---- Scenario 02-AIP Capturar imagen con la cámara -------
 
     /**
      * 02-AIP `When toco el botón de adjuntar imagen desde la
@@ -488,28 +409,13 @@ class AiDiagnosisSteps {
         world.chooseFromCamera()
     }
 
-    /**
-     * 02-AIP `And capturo la foto "{filename}"`. No-op — the
-     * `When` step already staged with the scenario's canonical
-     * filename ("fuga-cocina.jpg"). The Gherkin reads naturally
-     * as "tap, then capture"; the BDD world collapses both
-     * actions into one helper.
-     */
     @And("capturo la foto {string}")
     fun capturoLaFoto(filename: String) {
         @Suppress("UNUSED_PARAMETER") filename
     }
 
-    // ---- Scenario 03-AIP Adjuntar múltiples imágenes -------
 
-    // ---- Scenario 06-AIP Enviar imágenes + pre diagnóstico ----
 
-    /**
-     * 06-AIP `Dado que tengo la imagen "X" pendiente de envío`.
-     * Stages one attachment in isolation (the BDD world defaults
-     * the filename to the scenario's name so the assertion in
-     * `assertFileUploaded` matches verbatim).
-     */
     @Given("que tengo la imagen {string} pendiente de envío")
     fun tengoLaImagenPendiente(filename: String) {
         world.stageImages(listOf(filename))
@@ -533,24 +439,11 @@ class AiDiagnosisSteps {
         )
     }
 
-    /**
-     * 06-AIP `Cuando escribo "X"`. The text input lives on the
-     * chat VM; the step mirrors the existing 01-DIA prompt
-     * handler so the Gherkin can speak about the same input
-     * field in two flows.
-     */
     @When("escribo {string}")
     fun escribo(text: String) {
         world.typePrompt(text)
     }
 
-    /**
-     * 06-AIP `Entonces se sube la imagen "X"`. Pins that the
-     * upload pipeline ran with the staged filename as the
-     * presign's `originalName`. Two attachments staging two
-     * images would generate two presign calls in the order the
-     * scenario listed them.
-     */
     @Then("se sube la imagen {string}")
     fun seSubeLaImagen(filename: String) {
         val calls = world.presignCallsSnapshot()
@@ -565,12 +458,6 @@ class AiDiagnosisSteps {
         @Suppress("UNUSED_VARIABLE") val unused = match
     }
 
-    /**
-     * 06-AIP `Y se envía el mensaje con la imagen adjunta`. The
-     * orchestrator dispatches the prompt with the joined
-     * `image_file_ids[]` after every upload confirms; the BDD
-     * step reads the last call off the fake repository.
-     */
     @Then("se envía el mensaje con la imagen adjunta")
     fun seEnviaElMensajeConLaImagenAdjunta() {
         val ids = world.lastImageFileIdsSnapshot()
@@ -582,7 +469,6 @@ class AiDiagnosisSteps {
         }
     }
 
-    // ---- Scenario 07-AIP Pre diagnóstico generado -------
 
     /**
      * Drives the full happy path with
@@ -606,12 +492,6 @@ class AiDiagnosisSteps {
         world.assertAssessmentCategoryVisible(categoryName)
     }
 
-    /**
-     * 03-AIP `Dado que no tengo imágenes pendientes de envío`.
-     * Pre-condition: the chat starts clean so the multiple-
-     * attach scenario can deterministically count its own
-     * stagings.
-     */
     @Given("que no tengo imágenes pendientes de envío")
     fun noTengoImagenesPendientesPrecondicion() {
         world.assertPendingAttachmentCount(expected = 0)
@@ -626,19 +506,9 @@ class AiDiagnosisSteps {
     @And("la vista previa muestra las {int} imágenes en orden de selección")
     fun previewMuestraLasNImagenesEnOrden(count: Int) {
         world.assertPendingAttachmentCount(expected = count)
-        // The Gherkin pins "en orden de selección" — the world
-        // stages filenames in the order the scenario typed
-        // them, so the BDD layer only needs to verify count.
         // Per-image names get pinned by 04-AIP instead, which
-        // has explicit names in its Gherkin.
     }
 
-    /**
-     * 03-AIP `Entonces tengo N imágenes pendientes de envío
-     * en la conversación`. Count-driven assertion that
-     * includes the "en la conversación" suffix specific to
-     * the multiple-attach scenario wording.
-     */
     @Then("tengo {int} imágenes pendientes de envío en la conversación")
     fun tengoImagenesPendientesEnLaConversacion(count: Int) {
         world.assertPendingAttachmentCount(expected = count)
@@ -656,7 +526,6 @@ class AiDiagnosisSteps {
         world.assertPendingAttachmentStaged()
     }
 
-    // ---- Background steps for AIP scenarios ----------------------
 
     @Given("me encuentro en la pantalla de conversación con el asistente")
     fun meEncuentroEnLaPantallaChatIa() {
@@ -668,26 +537,12 @@ class AiDiagnosisSteps {
         // Structural assertion; pinned in unit tests.
     }
 
-    // ---- Scenario 04-AIP Eliminar una imagen pendiente -------
 
-    /**
-     * 04-AIP `Dado que tengo las imágenes "a", "b" y "c"
-     * pendientes de envío`. Pinned to three filenames so the
-     * Gherkin stays readable for the client. Each `{string}`
-     * carries one quoted filename; the world's staging helper
-     * preserves the call order so the "Y conservan su orden
-     * original" assertion later can verify it.
-     */
     @Given("que tengo las imágenes {string}, {string} y {string} pendientes de envío")
     fun tengoLasImagenesPendientes(first: String, second: String, third: String) {
         world.stageImages(listOf(first, second, third))
     }
 
-    /**
-     * 04-AIP `Cuando elimino la imagen "x"`. Discards by
-     * filename so the step stays Gherkin-friendly; the world
-     * translates it into the index-based VM call.
-     */
     @When("elimino la imagen {string}")
     fun eliminoLaImagen(filename: String) {
         world.removeAttachmentByFilename(filename)
@@ -712,28 +567,13 @@ class AiDiagnosisSteps {
         world.assertPendingAttachmentsAre(listOf(first, second))
     }
 
-    /**
-     * 04-AIP `Y conservan su orden original`. No-op: the
-     * previous step's assertion pins the order. The Gherkin
-     * sentence exists so the scenario reads naturally to the
-     * client.
-     */
     @Then("conservan su orden original")
     fun conservanSuOrdenOriginal() {
         // See [lasImagenesPendientesSon] — order is already
         // asserted by the previous step.
     }
 
-    // ---- Scenario 05-AIP Eliminar todas las imágenes -----------
 
-    /**
-     * 05-AIP `Dado que tengo N imágenes pendientes de envío`.
-     * Count-driven staging with synthetic "imagen-N.jpg"
-     * filenames so the scenario can stay compact (no need to
-     * spell every name). The filenames stay observable via
-     * [assertPendingAttachmentCount] without the test pinning
-     * each one.
-     */
     @Given("que tengo {int} imágenes pendientes de envío")
     fun tengoNImagenesPendientes(count: Int) {
         world.stageNImages(count)
@@ -757,7 +597,6 @@ class AiDiagnosisSteps {
         world.assertPendingAttachmentCount(expected = 0)
     }
 
-    // ---- Scenario 08-AIP Mantener imágenes pendientes ante fallo ----
 
     @And("la subida de la imagen falla por un error de red")
     fun laSubidaDeLaImagenFallaPorUnErrorDeRed() {
@@ -779,7 +618,6 @@ class AiDiagnosisSteps {
         world.assertDiagnosisPromptWasNotSent()
     }
 
-    // ---- Scenario 09-AIP Reintentar envío de imagen fallida ----
     @Given("que la subida de {string} falló")
     fun laSubidaDeLaImagenFallo(filename: String) {
         world.stageImages(listOf(filename))
@@ -812,7 +650,6 @@ class AiDiagnosisSteps {
         world.assertPendingAttachmentCount(0)
     }
 
-    // ---- Scenario 10-AIP Error de procesamiento del pre diagnóstico ----
 
     /**
      * 10-AIP `Dado que envié la imagen "X"`. Collapses the
@@ -833,13 +670,6 @@ class AiDiagnosisSteps {
         world.tapSend()
     }
 
-    /**
-     * 10-AIP `Y el servicio de IA falla al procesar el
-     * mensaje`. No-op: the failure is already seeded inside
-     * `queEnvieLaImagen` so the next `sendPrompt` returns the
-     * 500 outcome. The Gherkin sentence exists so the
-     * scenario reads naturally to the client.
-     */
     @And("el servicio de IA falla al procesar el mensaje")
     fun elServicioDeIaFallaAlProcesarElMensaje() {
         // See [queEnvieLaImagen].
@@ -892,7 +722,6 @@ class AiDiagnosisSteps {
         }
     }
 
-    // ---- Scenario 11-AIP Reintentar el procesamiento ----
 
     /**
      * 11-AIP `Dado que el procesamiento del pre diagnóstico
@@ -963,7 +792,6 @@ class AiDiagnosisSteps {
         // cached file IDs, so the file repository must NOT
         // receive any new presign calls. The world exposed
         // `presignCallsSnapshot()` already; the assertion is
-        // implemented inline so the Gherkin step stays
         // self-contained (no parameter plumbing).
         val calls = world.presignCallsSnapshot()
         // Capture the size bound: the world has seeded file

@@ -23,19 +23,6 @@ import kotlinx.coroutines.test.setMain
 import io.mockk.coEvery
 import io.mockk.mockk
 
-/**
- * Per-scenario world for the "Mis Turnos" BDD specs
- * (visualize-turns.feature).
- *
- * Builds the [TurnosViewModel] against an in-memory
- * [TurnosRepository] the scenario can seed via [seedTurnos] or
- * [seedTurnosFailure] and exposes the resulting [TurnosUiState]
- * for assertions.
- *
- * Landed incrementally per scenario:
- *  - 02-VT → [seedTurnos] (Success path).
- *  - 13-VT / 14-VT → [seedTurnosFailure] (Network / Server paths).
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class VisualizeTurnsWorld : AutoCloseable {
 
@@ -90,12 +77,6 @@ class VisualizeTurnsWorld : AutoCloseable {
         Dispatchers.resetMain()
     }
 
-    /**
-     * In-memory [TurnosRepository] that returns whatever the
-     * step def seeded. Supports both Success and Failure
-     * outcomes so the BDD can assert the screen's Error
-     * branches (scenarios 13-VT / 14-VT).
-     */
     private class FakeTurnosRepository(
         items: List<Turno>,
     ) : TurnosRepository {
@@ -116,11 +97,6 @@ class VisualizeTurnsWorld : AutoCloseable {
     }
 }
 
-/**
- * Builder used by the step defs to construct turnos without
- * duplicating boilerplate. Landed minimally for 02-VT; richer
- * fields land alongside the scenarios that surface them.
- */
 internal fun turno(
     id: String,
     status: TurnoStatus = TurnoStatus.Confirmed,

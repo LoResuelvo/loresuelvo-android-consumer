@@ -15,22 +15,6 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for [GetAllServiceProposalsUseCase].
- *
- * The use case is the simplest in the service-proposal family: it
- * delegates to the [ServiceProposalRepository] port WITHOUT
- * applying any status filter (unlike
- * [GetPendingServiceProposalsUseCase] and
- * [GetAcceptedServiceProposalsUseCase]) so the "Mis Servicios"
- * surface can render every proposal regardless of status. Status
- * filtering on top of this base list is a presentation concern
- * (scenario 05-VSP / 06-VSP / 07-VSP).
- *
- * Failures propagate verbatim — the use case must never swallow
- * a typed [ServiceProposalsOutcome.Failure] into a fabricated
- * empty `Success`.
- */
 class GetAllServiceProposalsUseCaseTest {
 
     private val repository = mockk<ServiceProposalRepository>()

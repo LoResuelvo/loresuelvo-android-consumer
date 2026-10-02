@@ -49,15 +49,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import com.loresuelvo.consumer.domain.realtime.WsEvent
 
-/**
- * Per-scenario world for the search-providers BDD specs. Owns a
- * [StandardTestDispatcher] shared by the [ProfessionalsViewModel] and
- * the observation scope, so step defs can deterministically drive and
- * inspect the flow without Hilt, Compose, or a backend.
- *
- * The world is reconstructed per scenario by Cucumber JVM (one step
- * def instance per scenario); no state leaks across scenarios.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class CucumberWorld : AutoCloseable {
 
@@ -99,10 +90,6 @@ class CucumberWorld : AutoCloseable {
     private val categoriesByName = mutableMapOf<String, Category>()
     private val categoriesById = mutableMapOf<Int, Category>()
 
-    /**
-     * Provider seed from the Background table, plus any per-scenario
-     * overrides.
-     */
     private val providers = mutableListOf<Provider>()
 
     /**
@@ -198,8 +185,6 @@ class CucumberWorld : AutoCloseable {
             val categoryName = row.getValue("category_name")
             val categoryId = row.getValue("category_id").toInt()
             // `profile_photo_url` is optional: the column is omitted
-            // on the existing scenarios to keep them focused. A blank
-            // value also collapses to `null` so scenario authors can
             // spell "no photo" as an empty cell.
             val photoUrl = row["profile_photo_url"]
                 ?.trim()
@@ -228,12 +213,6 @@ class CucumberWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Overrides the [profilePhotoUrl] of the first provider found in
-     * the given [categoryName]. Used by the @wip "photo URL flows
-     * through to UI" scenario in
-     * `features/provider/search-providers.feature`.
-     */
     fun overridePhotoUrlForFirstProviderIn(categoryName: String, photoUrl: String?) {
         val provider = providers.first { it.categoryName == categoryName }
         val idx = providers.indexOf(provider)
@@ -241,11 +220,6 @@ class CucumberWorld : AutoCloseable {
         providerRepo.setSeed(providers.toList())
     }
 
-    /**
-     * Returns the [profilePhotoUrl] of the provider whose full name
-     * ("Name Surname") matches [providerFullName]. Used by the @wip
-     * photo-URL scenarios.
-     */
     fun photoUrlOf(providerFullName: String): String? =
         providers.first { "${it.name} ${it.surname}" == providerFullName }
             .profilePhotoUrl
@@ -333,11 +307,6 @@ class CucumberWorld : AutoCloseable {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Minimal AuthSessionStore stub: the BDD journey for this feature
-     * doesn't need the real EncryptedSharedPreferences; only `getSession`
-     * is touched by the consumer-home nav path.
-     */
     private class StubSessionStore(
         initial: AuthSession?,
     ) : AuthSessionStore {

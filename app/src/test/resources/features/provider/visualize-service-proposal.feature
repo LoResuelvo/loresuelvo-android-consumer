@@ -1,27 +1,4 @@
 # language: es
-#
-# Especificación ejecutable para la US-54 "Visualizar propuesta
-# de servicio". Cubre el journey del consumidor que recibe
-# propuestas de prestadores, las explora desde el inicio y desde
-# "Mis Servicios", abre el detalle, salta a la conversación
-# asociada y consulta el tiempo estimado tanto en la propuesta
-# como en la orden de trabajo.
-#
-# Cada escenario arranca marcado con `@wip` (salteado). Cada
-# commit remueve el `@wip` de exactamente un escenario, deja sus
-# aserciones en verde y conserva el resto en `@wip`. Cuando se
-# quita el último `@wip`, el feature está terminado. El runner
-# de Cucumber JVM filtra `@wip` mediante la system property
-# `cucumber.filter.tags` configurada en `app/build.gradle.kts`.
-#
-# Los textos visibles al usuario se validan en español y en
-# inglés en los tests instrumentados de Compose, no aquí. El BDD
-# asserta tipos de error y efectos observables.
-#
-# El acceso a la app sin sesión ya está cubierto por el smart
-# router de `LoResuelvoNav` y por `authentication-session.feature`,
-# por lo que no se replica acá. El caso de sesión expirada
-# (401 mid-flow) es una mejora pendiente del feature de auth.
 
 Característica: Visualizar propuesta de servicio
 
@@ -33,7 +10,6 @@ Característica: Visualizar propuesta de servicio
     Given que el usuario tiene una sesión iniciada
     And que el usuario tiene propuestas de servicio recibidas
 
-  # Inicio
 
   Escenario: 01-VSP Visualizar propuestas que requieren atención en el inicio
     Given que entre las propuestas recibidas hay pendientes
@@ -45,7 +21,6 @@ Característica: Visualizar propuesta de servicio
     When accede al inicio
     Then debe visualizar los trabajos próximos destacados
 
-  # Mis Servicios
 
   Escenario: 03-VSP Visualizar todas las propuestas de servicio
     When accede a "Mis Servicios"
@@ -71,7 +46,6 @@ Característica: Visualizar propuesta de servicio
     When selecciona el filtro de propuestas rechazadas
     Then debe visualizar únicamente las propuestas rechazadas
 
-  # Detalle de la propuesta
 
   Escenario: 08-VSP Consultar el detalle de una propuesta de servicio
     Given que existe una propuesta de servicio
@@ -102,7 +76,6 @@ Característica: Visualizar propuesta de servicio
     When el usuario consulta el detalle de la propuesta
     Then debe visualizar la fecha y hora como "15/10/2026 - 14:30 hs"
 
-  # Conversación
 
   Escenario: 13-VSP Acceder a la conversación desde una propuesta
     Given que el usuario está consultando una propuesta de servicio
@@ -118,7 +91,6 @@ Característica: Visualizar propuesta de servicio
     And debe visualizar la descripción del servicio en el resumen de la conversación
     And debe visualizar el estado actual de la propuesta en el resumen de la conversación
 
-  # Duración estimada
 
   Esquema del escenario: 15-VSP Visualizar la duración estimada del servicio
     Given que existe una propuesta de servicio con una duración estimada de <duracion>
@@ -132,14 +104,12 @@ Característica: Visualizar propuesta de servicio
       | 1 hora 30 min  | 1 h 30 min |
       | 2 horas        | 2 h        |
 
-  # Orden de trabajo
 
   Escenario: 16-VSP Consultar el tiempo estimado de trabajo en la orden
     Given que existe una orden de trabajo con un tiempo estimado para realizar el servicio
     When el usuario consulta el detalle de la orden de trabajo
     Then debe visualizar el tiempo estimado de trabajo junto con los datos acordados del servicio
 
-  # Estados vacíos
 
   Escenario: 17-VSP No existen propuestas para mostrar
     Given que el usuario no tiene propuestas de servicio

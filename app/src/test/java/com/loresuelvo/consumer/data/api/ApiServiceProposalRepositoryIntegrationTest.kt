@@ -19,22 +19,6 @@ import retrofit2.Retrofit
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/**
- * End-to-end coverage of [ApiServiceProposalRepository] against a
- * [MockWebServer] emulating the backend's `GET /service-proposals`:
- *   200 + multi body -> Success(2 proposals, including pending and accepted)
- *   200 + empty body  -> Success(empty)
- *   500               -> Failure.Server
- *   transport drop    -> Failure.Network
- *
- * Verifies both the outcome AND the wire-level request (method,
- * path). The mocked body matches the swagger example the user
- * shared for US-54: `pending` status, `amount_cents`,
- * `scheduled_on`, `description`, `created_on`, `counterpart`
- * with `role`, `name`, `surname`, `category_name`,
- * `profile_photo_url`. `booking_terms` is intentionally absent
- * from the body to pin that the client survives its omission.
- */
 class ApiServiceProposalRepositoryIntegrationTest {
 
     private lateinit var server: MockWebServer

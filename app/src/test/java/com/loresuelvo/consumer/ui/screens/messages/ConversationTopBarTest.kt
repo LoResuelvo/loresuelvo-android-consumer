@@ -116,14 +116,6 @@ class ConversationTopBarTest {
             .assertDoesNotExist()
     }
 
-    /**
-     * US-27 scenario 02-VTD: when the conversation has an
-     * associated work order, the top bar surfaces the
-     * "Ver orden" icon button (the host wires the click → nav to
-     * `Route.WorkOrderDetail`). The button is the only way the
-     * chat screen exposes navigation into the work-order
-     * surface, so its render contract is pinned here.
-     */
     @Test
     fun view_work_order_cta_renders_when_handler_is_provided() {
         val counterpart = ConversationCounterpart(

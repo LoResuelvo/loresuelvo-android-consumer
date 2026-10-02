@@ -31,42 +31,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI tests for [WorkOrderDetailScreen] (US-54 scenario
- * 16-VSP, US-27 `visualize-turns-detail`). Runs on the JVM via
- * [RobolectricTestRunner] so it participates in the fast
- * `./gradlew testDevDebugUnitTest` task without needing an
- * emulator.
- *
- * Pins the four observable branches (US-54 16-VSP):
- *  - Loading → spinner + loading copy.
- *  - Ready (with estimated duration) → provider, category,
- *    amount, date, estimated duration, description, status
- *    rows render.
- *  - Ready (no estimated duration) → the estimated-duration
- *    row is hidden so the screen never shows a "0 min" stub.
- *  - NotFound → not-found copy.
- *  - Error (Network / Server) → typed copy + retry CTA.
- *
- * Plus the US-27 render assertions per scenario:
- *  - 03-VTD: scheduled → NO evidence section, NO pay CTA.
- *  - 04-VTD / 05-VTD: completion_report → evidence section + photos row.
- *  - 06-VTD: tapping a photo's testTag → lightbox overlay.
- *  - 07-VTD: paid + review → review section + paid-on row.
- *  - 08-VTD: paid, no review → NO review section.
- *  - 09-VTD: awaiting_payment → pay CTA, positioned ABOVE the
- *    provider row (the "antes de las categorías" invariant).
- *  - 10-VTD: scheduled, no completion_report → NO evidence.
- *
- * The BDD layer (`VisualizeTurnsDetailSteps`) pins the data flow
- * (VM → state); these Compose tests pin the render (state → UI).
- * Both layers are necessary: a regression that drops the
- * evidence section render still passes the BDD (it would only
- * fail if the `completionReport` field flipped to `null`).
- *
- * Locale is pinned to `es-rAR` so the localised copy matches
- * the `values/strings.xml` strings the production app ships.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class WorkOrderDetailScreenTest {
@@ -240,11 +204,6 @@ class WorkOrderDetailScreenTest {
         status = TurnoStatus.Pending,
     )
 
-    /**
-     * Builds a work order for the US-27 render assertions. Each
-     * scenario sets only the field it cares about — every other
-     * field defaults to the same shape `workOrder()` returns.
-     */
     private fun workOrderForRender(
         status: TurnoStatus = TurnoStatus.Confirmed,
         paidOnEpochMillis: Long? = null,
@@ -275,15 +234,7 @@ class WorkOrderDetailScreenTest {
         description = "Trabajo prolijo y excelente atención.",
     )
 
-    // ---- US-27 render assertions per scenario -----------------
 
-    /**
-     * Scenario 03-VTD: scheduled work order does NOT render the
-     * "Pagar saldo restante" CTA nor the "Evidencia de
-     * finalización" section. The screen stays in its baseline
-     * layout (provider / category / amount / date / description
-     * / status).
-     */
     @Test
     fun ready_state_with_scheduled_status_omits_pay_cta_and_evidence() {
         composeTestRule.setContent {
@@ -307,11 +258,6 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(WORK_ORDER_PAID_ON_TAG).assertCountEquals(0)
     }
 
-    /**
-     * Scenario 04-VTD + 05-VTD: a non-null `completionReport`
-     * surfaces the "Evidencia de finalización" section with the
-     * description, the reported-on row, and the photos row.
-     */
     @Test
     fun ready_state_with_completion_report_renders_evidence_section_and_photos() {
         composeTestRule.setContent {
@@ -334,7 +280,6 @@ class WorkOrderDetailScreenTest {
         // The Ready column vertically scrolls; the evidence
         // section + photo grid land below the default Robolectric
         // viewport (1024x768). `assertExists` is enough to pin
-        // the render: the BDD layer (`ready_state_with_paid_*`)
         // pins the data-layer wiring separately.
         composeTestRule.onAllNodesWithTag(WORK_ORDER_EVIDENCE_SECTION_TAG).assertCountEquals(1)
         composeTestRule.onAllNodesWithTag(WORK_ORDER_EVIDENCE_DESCRIPTION_TAG).assertCountEquals(1)
@@ -347,15 +292,6 @@ class WorkOrderDetailScreenTest {
             .assertCountEquals(1)
     }
 
-    /**
-     * Scenario 06-VTD: the photo is in the semantics tree with
-     * its own testTag so the instrumented suite can target it.
-     * The click → lightbox transition is asserted by the
-     * instrumented test (the Robolectric `clickable` inside a
-     * `horizontalScroll` row does not register the click action
-     * reliably for `performClick`, so this JVM-side test pins
-     * the render only).
-     */
     @Test
     fun ready_state_photo_is_present_in_the_evidence_row() {
         composeTestRule.setContent {
@@ -384,11 +320,6 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(FULLSCREEN_IMAGE_TAG).assertCountEquals(0)
     }
 
-    /**
-     * Scenario 07-VTD: a paid work order with a consumer review
-     * surfaces the "Reseña" section (rating + description) AND
-     * the "Fecha en que se saldó el pago" row.
-     */
     @Test
     fun ready_state_with_paid_and_review_renders_review_and_paid_on() {
         composeTestRule.setContent {
@@ -423,11 +354,6 @@ class WorkOrderDetailScreenTest {
             .assertCountEquals(1)
     }
 
-    /**
-     * Scenario 08-VTD: a paid work order with a `null` review
-     * does NOT render the "Reseña" section but DOES still
-     * render the paid-on row + evidence section.
-     */
     @Test
     fun ready_state_with_paid_without_review_omits_review_section() {
         composeTestRule.setContent {
@@ -452,14 +378,6 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(WORK_ORDER_REVIEW_SECTION_TAG).assertCountEquals(0)
     }
 
-    /**
-     * Scenario 09-VTD: awaiting_payment surfaces the
-     * "Pagar saldo restante" CTA. The CTA renders ABOVE the
-     * provider row in the layout (the Gherkin says "antes de
-     * las categorías" — the same invariant as "above the
-     * counterpart row" since the counterpart row sits in the
-     * same category-list surface).
-     */
     @Test
     fun ready_state_with_awaiting_payment_renders_pay_cta_above_provider_row() {
         composeTestRule.setContent {
@@ -492,10 +410,6 @@ class WorkOrderDetailScreenTest {
         }
     }
 
-    /**
-     * Scenario 10-VTD: a scheduled work order does NOT render
-     * the evidence section even when other rows are populated.
-     */
     @Test
     fun ready_state_with_scheduled_status_omits_evidence_section() {
         composeTestRule.setContent {
@@ -522,14 +436,7 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(WORK_ORDER_PAY_NOW_TAG).assertCountEquals(0)
     }
 
-    // ---- US-30 render assertions (calify-provider-service) -----
 
-    /**
-     * Scenario 01-CT: a paid work order without a review
-     * surfaces the "Calificar servicio" CTA. The CTA renders
-     * between the pay-now CTA (absent because the order is
-     * already paid) and the detail rows.
-     */
     @Test
     fun ready_state_with_paid_and_no_review_renders_rate_cta() {
         composeTestRule.setContent {
@@ -556,12 +463,6 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(WORK_ORDER_REVIEW_SECTION_TAG).assertCountEquals(0)
     }
 
-    /**
-     * Scenarios 10-CT / no-balance-pending: an `awaiting_payment`
-     * work order does NOT render the rating CTA nor the
-     * composer. The CTA only surfaces when the consumer paid
-     * the full balance.
-     */
     @Test
     fun ready_state_with_awaiting_payment_hides_rate_cta_and_composer() {
         composeTestRule.setContent {
@@ -585,11 +486,6 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(WORK_ORDER_RATE_COMPOSER_TAG).assertCountEquals(0)
     }
 
-    /**
-     * Scenario 07-CT: when the consumer already filed a review,
-     * the CTA is hidden (the read-only ReviewSection takes its
-     * place). The composer also stays collapsed.
-     */
     @Test
     fun ready_state_with_existing_review_hides_rate_cta_and_composer() {
         composeTestRule.setContent {
@@ -620,14 +516,6 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onAllNodesWithTag(WORK_ORDER_REVIEW_SECTION_TAG).assertCountEquals(1)
     }
 
-    /**
-     * Scenario 02-CT: the host flips `composer` to `Editing`
-     * after the consumer taps the CTA. The composer renders
-     * inline with the title, the 1-5 star row, a multiline
-     * comment field, the counter ("0/500"), and the submit /
-     * cancel CTA pair. The submit button stays disabled while
-     * no rating is selected (scenario 09-CT).
-     */
     @Test
     fun ready_state_with_composer_editing_renders_composer_with_submit_disabled() {
         composeTestRule.setContent {

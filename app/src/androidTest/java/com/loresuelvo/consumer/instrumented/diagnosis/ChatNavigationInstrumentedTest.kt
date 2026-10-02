@@ -56,21 +56,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Acceptance test for the navigation step "Chat con IA".
- *
- *  Scenario: 06-DIA Navegar al chat de IA
- *    When selecciono la opción "Chat con IA"
- *    Then veo la pantalla de conversación con el asistente.
- *
- * The AI search bar at the top of Home is the "Chat con IA" entry
- * point on Android: tapping its trailing arrow must navigate to the
- * new [com.loresuelvo.consumer.ui.screens.chat.ChatScreen]. We assert
- * that the chat screen's title and placeholder body become visible
- * after the tap. Real HTTP and Auth0 are bypassed via
- * [HiltAndroidTest] + `@UninstallModules`; only the navigation graph
- * is exercised.
- */
 @HiltAndroidTest
 @UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
@@ -115,7 +100,6 @@ class ChatNavigationInstrumentedTest {
         composeTestRule.waitForIdle()
     }
 
-    // Scenario: 06-DIA Navegar al chat de IA
     @Test
     fun tapping_ai_entry_navigates_to_chat_screen() {
         val sendButtonDescription = localizedString(R.string.home_search_send_content_description)

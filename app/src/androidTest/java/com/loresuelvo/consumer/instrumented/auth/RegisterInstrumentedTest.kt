@@ -94,7 +94,6 @@ class RegisterWithAuth0InstrumentedTest {
     private fun localizedString(@StringRes resourceId: Int): String =
         composeTestRule.activity.getString(resourceId)
 
-    // Scenario: 01-RCN Redirección al portal de registro de Auth0
     @Ignore("Fails in CI because Auth0 launches external activity")
     @Test
     fun redirects_to_auth0_signup() {
@@ -114,7 +113,6 @@ class RegisterWithAuth0InstrumentedTest {
         )
     }
 
-    // Scenario: 02-RCN Registro exitoso
     @Test
     fun register_successfully_with_auth0() {
 
@@ -132,7 +130,6 @@ class RegisterWithAuth0InstrumentedTest {
             .assertIsDisplayed()
     }
 
-    // Scenario: 03-RCN Verificación de sesión persistente
     @Test
     fun keeps_authenticated_session() {
 
@@ -158,7 +155,6 @@ class RegisterWithAuth0InstrumentedTest {
             .assertCountEquals(0)
     }
 
-    // Scenario: 04-RCN Registro fallido
     @Test
     fun register_failure_with_auth0() {
 

@@ -44,40 +44,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import android.net.Uri
 
-/**
- * Per-scenario world for the US "Send photos / audio in the chat"
- * BDD specs. Self-contained: owns its OWN
- * [ConversationViewModel], its OWN [FakeConversationRepository]
- * (with media-aware responses), its OWN [FakeMediaReader], and
- * its OWN [WebSocketClient] mock.
- *
- * Decoupled from `SendMessagesWorld` on purpose: the user has
- * flagged that media scenarios will grow into video and
- * eventually general file attachments, and we want each media
- * scenario's world to evolve independently of the text-message
- * world's concerns. Sharing one world would couple two flows
- * that have nothing in common beyond the chat surface.
- *
- * For 01-MM the world exposes:
- *  - `startScenario` — sets the dispatcher, builds the VM, and
- *    starts collecting the UI state stream.
- *  - `enqueueConversation` — seeds the fake repo with a single
- *    pending conversation with the named provider counterpart.
- *  - `openConversation` — drives `ConversationViewModel.load` so
- *    the screen surfaces the seeded detail.
- *  - `chooseFromGallery(filename)` — simulates the picker
- *    returning a content URI for the named file: invokes
- *    `vm.onAttachImageFromGallery` with a deterministic fake URI.
- *  - `confirmSend` / `discardPreview` — drives the matching VM
- *    handlers.
- *  - `lastConversationUiState` — the most recent observed
- *    [ConversationUiState] (the BDD asserts against this).
- *
- * The world is `@OptIn(ExperimentalCoroutinesApi::class)` because
- * the test dispatcher is `StandardTestDispatcher` — the same
- * pattern the existing `SendMessagesWorld` uses for the text
- * path.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SendMediaWorld : AutoCloseable {
 
@@ -158,13 +124,6 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Seeds the fake [ConversationRepository] with a single
-     * pending conversation for the named counterpart. Defaults to
-     * `conversationId = "1"` so the BDD step ("tengo una
-     * conversación abierta con el prestador 'Juan Pérez'") can
-     * stay terse. Future scenarios will pass explicit ids.
-     */
     fun enqueueConversation(
         counterpartName: String,
         conversationId: String = "1",
@@ -205,21 +164,6 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Simulates the gallery picker returning a content URI for
-     * [filename]. The world skips the picker + the launcher
-     * because the BDD layer asserts data behaviour, not UI
-     * rendering (the Compose acceptance test covers that).
-     * Instead it stages a deterministic in-memory JPEG straight
-     * through [ConversationViewModel.onAttachMedia], the
-     * canonical non-Uri entry point.
-     *
-     * In the real UI flow the user would tap "Galería" inside
-     * [MediaAttachSheet] which launches the
-     * `PickVisualMedia` activity; the resulting Uri is fed to
-     * [ConversationViewModel.onAttachImageFromGallery] which
-     * internally calls `onAttachMedia(media, sourceUri = uri)`.
-     */
     fun chooseFromGallery(filename: String = "foto-baño.jpg") {
         val media = MediaUpload.Image(
             bytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte()),
@@ -245,13 +189,6 @@ class SendMediaWorld : AutoCloseable {
     fun lastConversationUiState(): ConversationUiState =
         observedConversationStates.last()
 
-    /**
-     * Snapshot of the `(conversationId, media)` pairs that hit
-     * the fake repo's `sendMediaMessage` — useful when the BDD
-     * needs to assert WHICH file was sent (not just that the
-     * state mutated). Returns a triple so the assertion can
-     * pin the original name + mime + byte payload.
-     */
     fun observedSendMediaCalls(): List<List<MediaUpload>> =
         fakeRepo.sendMediaCallsSnapshot()
 
@@ -292,12 +229,6 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Records an audio clip of [seconds] with [sizeBytes] of
-     * payload. Scenario 09-MM passes a value larger than
-     * `MAX_AUDIO_BYTES` so the use case rejects the upload with
-     * `PayloadTooLarge` before it hits the repo.
-     */
     fun recordAudioFor(seconds: Int, sizeBytes: Int) {
         require(seconds > 0)
         require(sizeBytes >= 0)
@@ -326,7 +257,6 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    // ---- Scenario 04-MM ---------------------------------------------
 
     fun seedConversationWithSentImage(counterpartName: String) {
         val counterpart = knownCounterparts[counterpartName]
@@ -405,7 +335,6 @@ class SendMediaWorld : AutoCloseable {
         if (!condition) throw AssertionError(message)
     }
 
-    // ---- Scenario 06-MM ---------------------------------------------
 
     fun seedConversationWithReceivedImage(counterpartName: String) {
         val counterpart = knownCounterparts[counterpartName]
@@ -464,7 +393,6 @@ class SendMediaWorld : AutoCloseable {
         )
     }
 
-    // ---- Scenario 07-MM ---------------------------------------------
 
     fun seedConversationWithReceivedAudio(counterpartName: String) {
         val counterpart = knownCounterparts[counterpartName]
@@ -500,15 +428,7 @@ class SendMediaWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    // ---- Scenario 08-MM ---------------------------------------------
 
-    /**
-     * Forces the next `sendMediaMessage` call to surface as a
-     * typed [SendMessageOutcome.Failure.Network]. The fake keeps
-     * recording the call (so the BDD could still assert "we DID
-     * try to send") but doesn't append a bubble to the
-     * conversation.
-     */
     fun simulateBackendNetworkFailure() {
         fakeRepo.setSendMediaFailure(
             SendMessageOutcome.Failure.Network(
@@ -568,7 +488,6 @@ class SendMediaWorld : AutoCloseable {
         )
     }
 
-    // ---- Scenario 09-MM ---------------------------------------------
 
     fun assertMediaSendFailureIsPayloadTooLarge() {
         val state = lastConversationUiState()
@@ -603,7 +522,6 @@ class SendMediaWorld : AutoCloseable {
         )
     }
 
-    // ---- Scenario 05-MM ---------------------------------------------
 
     fun seedConversationWithSentAudio(counterpartName: String) {
         val counterpart = knownCounterparts[counterpartName]
@@ -744,19 +662,6 @@ class SendMediaWorld : AutoCloseable {
             ready.audioPlayback.currentPositionMillis,
         )
     }
-    /**
-     * Fake [ConversationRepository] for the media BDD. Always
-     * returns Success on `sendMediaMessage` with a fresh
-     * server-issued [ConversationMessage] carrying a
-     * [MediaReference.Image] derived from the upload's mime +
-     * name. Records every call so the BDD can assert which file
-     * was sent.
-     *
-     * Text-path responses (`sendMessage`) deliberately fail with
-     * `Server(500)` because the media scenarios don't exercise
-     * them — if a future test does, it must seed a custom
-     * outcome first.
-     */
     private class FakeConversationRepository : ConversationRepository {
         private var listSeed: List<Conversation> = emptyList()
         private var detailSeed: ConversationDetail? = null

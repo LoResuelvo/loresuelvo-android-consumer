@@ -54,7 +54,6 @@ Feature: Visualizar historial de trabajos y reseñas de un prestador
     And los trabajos están ordenados desde el más reciente al más antiguo
     And veo la calificación y el comentario en los trabajos que tienen una reseña
 
-    # tal vez sea mejor que no muestre nada directamente
   Scenario: 07-CT Visualizar prestador sin calificaciones
     Given estoy visualizando el perfil de un prestador
     And el prestador no tiene calificaciones recibidas

@@ -36,16 +36,6 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for the 06-MM scenario surface: tapping an image
- * bubble in the conversation opens a fullscreen viewer.
- *
- * The view-model surface is intentionally minimal — the
- * fullscreen state is just a nullable `MediaReference.Image` on
- * the `Ready` UI state — but pinning it in a dedicated file
- * keeps the audio and image flows from drifting into the same
- * giant test class.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConversationViewModelImageClickTest {
 

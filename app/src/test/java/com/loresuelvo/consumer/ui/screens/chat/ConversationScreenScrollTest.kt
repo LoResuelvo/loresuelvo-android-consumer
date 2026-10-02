@@ -25,17 +25,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI coverage for the real-time chat wire (scenarios
- * 09-IC / 10-IC): the "↓ nuevo mensaje" banner surfaces when
- * the consumer is scrolled up and a provider message arrives,
- * and tapping it scrolls the list back to the bottom.
- *
- * The state-level coverage of the same flow lives in
- * [ConversationViewModelTest]'s scroll-tracking section. These
- * tests pin the *visual* surface that the unit tests can't see:
- * banner render, banner tap → scroll-to-bottom.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class ConversationScreenScrollTest {

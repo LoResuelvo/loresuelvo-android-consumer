@@ -9,17 +9,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 
-/**
- * Step defs for `features/provider/search-providers.feature`. Each
- * step is intentionally thin: the heavy lifting lives in
- * [CucumberWorld] (which pins `Dispatchers.Main` and drives the
- * `ProfessionalsViewModel` through a `StandardTestDispatcher`).
- *
- * Cucumber instantiates this class with its zero-arg constructor
- * (DefaultObjectFactory). The [CucumberWorld] is owned per scenario
- * via a field initializer; `close()` runs from `@After` /
- * teardown via the JVM shutdown hook.
- */
 class SearchProvidersSteps {
 
     private val world: CucumberWorld = CucumberWorld()
@@ -66,8 +55,6 @@ class SearchProvidersSteps {
     @When("the providers list loads")
     fun theProvidersListLoads() {
         // No-op: Background starts on home; visiting the list happens
-        // through `tap_category_card`. Kept for the one scenario that
-        // exercises the list view directly during the BDD jump.
         world.visitProvidersFor(world.currentCategoryName() ?: "Electricidad")
     }
 
@@ -113,14 +100,7 @@ class SearchProvidersSteps {
         assertEquals(expected, world.expectedErrorMessage())
     }
 
-    // ---- Scenario: Provider profile photo URL flows through to UI --
 
-    /**
-     * Assigns a placeholder profile photo URL to the first provider
-     * in [categoryName]. The actual URL value is an implementation
-     * detail (a real backend would return MinIO / CDN URLs); the
-     * BDD layer only asserts the field is present.
-     */
     @Given("a provider in {string} has a profile photo assigned")
     fun aProviderInHasAProfilePhotoAssigned(categoryName: String) {
         world.overridePhotoUrlForFirstProviderIn(
@@ -177,7 +157,6 @@ class SearchProvidersSteps {
 
     private companion object {
         // Synthetic URL used by the "photo assigned" Given step. The
-        // BDD layer doesn't assert the actual URL value (that's an
         // implementation detail owned by the backend / MinIO); any
         // non-null string is enough to drive the photo-URL code path.
         const val PLACEHOLDER_PHOTO_URL: String = "http://example.test/photo.webp"

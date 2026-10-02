@@ -12,21 +12,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 
-/**
- * Step defs for `features/home/visualize-turns.feature`. Each
- * step is intentionally thin: the heavy lifting lives in
- * [VisualizeTurnsWorld].
- *
- * Landed incrementally per scenario:
- *  - 01-VT → Background steps + navigation step.
- *  - 02-VT → `queTengoTurnosRegistrados` (seed non-empty) +
- *    `veoUnaListaConMisTurnos`.
- *  - 03-VT → `queNoTengoTurnosRegistrados` (seed empty) +
- *    `veoUnMensajeIndicandoQueNoTengoTurnos`.
- *
- * Subsequent scenarios (04-VT..14-VT) add their own step
- * patterns here as they land.
- */
 class VisualizeTurnsSteps {
 
     private val world: VisualizeTurnsWorld = VisualizeTurnsWorld()
@@ -38,7 +23,6 @@ class VisualizeTurnsSteps {
 
     @Given("me encuentro en la pantalla Home")
     fun meEncuentroEnLaPantallaHome() {
-        // Home routing is owned by the navigation graph; the BDD
         // asserts the VM state without composing the host.
     }
 
@@ -134,7 +118,6 @@ class VisualizeTurnsSteps {
     fun veoLaFotoDePerfilDeLaContraparte() {
         // The full UI assertion lives in
         // [com.loresuelvo.consumer.ui.components.turnocard.TurnoCardTest];
-        // the BDD only pins that the seeded turno carries a
         // photo URL so the avatar branch can render it.
         val state = world.lastUiState() as TurnosUiState.Ready
         val first = state.turnos.first()
@@ -164,7 +147,6 @@ class VisualizeTurnsSteps {
         // The Turno domain type stores a single
         // `scheduledOnEpochMillis` that encodes date + time;
         // `ScheduledDateFormatter.formatScheduled` splits them
-        // visually as "dd/MM/yyyy - HH:mm hs". The BDD asserts
         // the underlying timestamp is non-zero; the formatted
         // "fecha" / "hora" split is covered by the JVM
         // `TurnoCardTest` + `ScheduledDateFormatterTest`.
@@ -174,14 +156,12 @@ class VisualizeTurnsSteps {
     @When("visualizo el turno")
     fun visualizoElTurno() {
         // The screen always renders the seeded turno; this step
-        // is a marker for the Gherkin narrative.
     }
 
     @Then("veo el estado actual del turno")
     fun veoElEstadoActualDelTurno() {
         // The badge label rendering is pinned by
         // [com.loresuelvo.consumer.ui.components.turnocard.TurnoCardTest];
-        // the BDD asserts the domain type carries a non-null
         // [TurnoStatus] so the badge can render it.
         val state = world.lastUiState() as TurnosUiState.Ready
         assertNotNull(state.turnos.first().status)

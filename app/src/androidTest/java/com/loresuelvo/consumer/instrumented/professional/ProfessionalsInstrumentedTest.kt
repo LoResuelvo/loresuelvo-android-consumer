@@ -65,23 +65,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Acceptance test for the US "Search providers by category".
- *
- * Verifies the Home -> Professionals navigation end-to-end against
- * deterministic fakes (no real HTTP). The point is to assert the
- * wiring of the navigation graph and the screen rendering, NOT the
- * data layer — those are covered by `MockWebServer` unit tests in
- * `data/api/ApiProviderRepositoryIntegrationTest`.
- *
- * Stubs used here:
- *  - [StubCategoryRepository] returns a hardcoded list of 4
- *    categories so the Home grid renders predictably.
- *  - [StubProviderRepository] returns a per-category deterministic
- *    list of providers, so the Professionals screen can exercise
- *    Ready (Plomería) and Empty (Albañilería) branches from the
- *    same test class.
- */
 @HiltAndroidTest
 @UninstallModules(
     RepositoryModule::class,

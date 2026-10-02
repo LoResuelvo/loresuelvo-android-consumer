@@ -4,19 +4,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for [shouldAutoScroll]. The helper encodes the
- * "respect reader position" rule (ticket 4 of the chat-UX
- * backlog): auto-scroll to the bottom on a new message **only**
- * when the user is already at the bottom, so a fresh server reply
- * doesn't yank the reader away from older messages they're
- * currently reading.
- *
- * The truth table:
- *  - `target == null` (empty state) → never scroll.
- *  - `target != null` AND `isAtBottom == true` → scroll.
- *  - `target != null` AND `isAtBottom == false` → do NOT scroll.
- */
 class ShouldAutoScrollTest {
 
     @Test

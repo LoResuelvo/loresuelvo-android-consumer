@@ -10,16 +10,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * Pins the DTO -> domain translation for
- * `GET /work-orders/{workOrderID}` (US-27
- * `visualize-turns-detail`).
- *
- * Every rule that differs (snake_case → camelCase, `Long` ids →
- * `String` keys, ISO strings → epoch millis, lowercase wire
- * status → typed enum, unknown statuses silently dropped) lives
- * in `WorkOrderDetailDto.toDomain()` and is pinned here.
- */
 class WorkOrderDetailDtoMapperTest {
 
     private fun provider(): WorkOrderDetailCounterpart = WorkOrderDetailCounterpart(

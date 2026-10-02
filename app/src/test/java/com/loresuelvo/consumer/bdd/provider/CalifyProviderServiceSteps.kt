@@ -14,28 +14,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 
-/**
- * Per-scenario step definitions for the
- * `calify-provider-service.feature` BDD specs (US-30). Mirrors
- * the structure of [CompleteServicePaymentSteps]: a fresh
- * [CalifyProviderServiceWorld] per scenario, one
- * `@Given/@When/@Then/@And` per Gherkin line.
- *
- * The step defs assert **typed outcomes and observable
- * effects**, NOT the localised Spanish copy. The visible copy
- * ("Calificar servicio", "0/500", "Gracias", etc.) is pinned in
- * the Compose UI tests under
- * `app/src/test/java/com/loresuelvo/consumer/ui/screens/workorderdetail/WorkOrderDetailScreenTest.kt`
- * — the JVM BDD layer pins the data-flow contract, the
- * Compose layer pins the render.
- *
- * Each step def is intentionally thin: it translates a natural
- * language line into one or two [CalifyProviderServiceWorld]
- * calls and asserts the typed effect. Helpers added to the
- * world land one-at-a-time alongside the step defs that need
- * them, so every commit in this work stream keeps the
- * `make test-all-once` gate green.
- */
 class CalifyProviderServiceSteps {
 
     private val world = CalifyProviderServiceWorld()
@@ -52,17 +30,9 @@ class CalifyProviderServiceSteps {
 
     // ---- Background -------------------------------------------
 
-    /**
-     * The rate-provider BDD never exercises the auth surface
-     * (the VM treats every session as a logged-in consumer)
-     * — declaring the step keeps the `Background: estoy
-     * autenticado como consumidor` line passing without
-     * dragging in [VisualizeTurnsDetailSteps]'s auth fakes.
-     */
     @Given("estoy autenticado como consumidor")
     fun estoyAutenticadoComoConsumidor() = Unit
 
-    // ---- Scenario 01-CT ---------------------------------------
 
     @Given("tengo una orden de trabajo completamente pagada")
     fun tengoUnaOrdenDeTrabajoCompletamentePagada() {
@@ -74,12 +44,6 @@ class CalifyProviderServiceSteps {
         world.openWorkOrder()
     }
 
-    /**
-     * Tapping actions on the work-order detail CTA / composer.
-     * The mapping is driven by the CTA label the Gherkin pin
-     * (US-30 scenarios 02-CT onwards): "Calificar servicio"
-     * opens the composer; "Enviar" submits it.
-     */
     @When("selecciono la opción {string}")
     fun seleccionoLaOpcion(opcion: String) {
         when (opcion) {
@@ -101,7 +65,6 @@ class CalifyProviderServiceSteps {
         val ready: WorkOrderDetailUiState.Ready = readyOrNull
         when (opcion) {
             "Calificar servicio" -> {
-                // US-30 scenario 01-CT: the CTA renders when
                 // status==paid && review==null && composer is
                 // hidden. The Compose UI test pins the actual
                 // render; here we pin the data-flow contract
@@ -119,17 +82,7 @@ class CalifyProviderServiceSteps {
         }
     }
 
-    // ---- Scenario 02-CT ---------------------------------------
 
-    /**
-     * Scenario 02-CT: after tapping the CTA, the composer
-     * expands inline. The screen surfaces the title, the 1-5
-     * star row, an empty comment field, the "0/500" character
-     * counter, and the Enviar / Cancelar CTA pair. Each step
-     * below pins a single observable effect; the Compose UI
-     * test owns the actual render and the canSubmit / overflow
-     * rules.
-     */
     @Then("veo el formulario de calificación")
     fun veoElFormularioDeCalificacion() {
         val readyRaw = world.lastReadyState()
@@ -156,7 +109,6 @@ class CalifyProviderServiceSteps {
     fun veoUnSelectorDe1A5Estrellas() {
         // The star row exists iff composer is Editing; the
         // Compose UI test pins the render. Asserting the
-        // typed state is enough for the BDD.
         val readyRaw = world.lastReadyState()
         if (readyRaw == null) {
             fail("expected Ready state, got ${world.observedStates()}")
@@ -185,7 +137,6 @@ class CalifyProviderServiceSteps {
     @Then("veo el contador de caracteres {string}")
     fun veoElContadorDeCaracteres(texto: String) {
         // The counter renders the live "<current>/<max>" pair.
-        // On a freshly opened composer (scenario 02-CT) the
         // match must be "0/500"; later commits extend this
         // step to read the live `descriptionDraft.length`.
         assertEquals(
@@ -195,15 +146,7 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 03-CT ---------------------------------------
 
-    /**
-     * Composite Given: seed a paid work order with no review
-     * and immediately tap the Calificar servicio CTA so the
-     * composer opens (the "open form" state). Scenarios that
-     * need a composer already open use this to skip the
-     * "tengo una orden" / "selecciono Calificar" steps.
-     */
     @Given("tengo abierto el formulario de calificación")
     fun tengoAbiertoElFormularioDeCalificacion() {
         world.seedPaidWorkOrderWithoutReview()
@@ -236,24 +179,11 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    /**
-     * Tapping a star inside the composer (US-30 scenario
-     * 03-CT). Delegates to the VM's [onRatingChange].
-     */
     @When("selecciono {int} estrellas")
     fun seleccionoNEstrellas(n: Int) {
         world.selectStars(n)
     }
 
-    /**
-     * Past-tense variant of [seleccionoNEstrellas] used by
-     * scenarios that compose Given/And steps that already
-     * had a value (US-30 scenarios 04-CT, 05-CT, 06-CT,
-     * 11-CT). Auto-opens the composer if it is still collapsed
-     * so the rating draft lands on the Editing state — the
-     * Gherkin for these scenarios is implicit about the form
-     * being open ("And seleccioné…").
-     */
     @Given("seleccioné {int} estrellas")
     fun seleccioneNEstrellas(n: Int) {
         val current = world.lastReadyState()?.composer
@@ -286,24 +216,12 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 04-CT ---------------------------------------
 
-    /**
-     * Typing into the comment field (US-30 scenario 04-CT).
-     * Delegates to the VM's [onDescriptionChange].
-     */
     @When("ingreso el comentario {string}")
     fun ingresoElComentario(texto: String) {
         world.typeComment(texto)
     }
 
-    /**
-     * Past-tense variant of [ingresoElComentario] used by
-     * scenarios that compose Given/And steps that already
-     * have a value (US-30 scenarios 05-CT, 06-CT, 11-CT).
-     * Auto-opens the composer if it is still collapsed so the
-     * description draft lands on the Editing state.
-     */
     @Given("ingresé el comentario {string}")
     fun ingreseElComentario(texto: String) {
         val current = world.lastReadyState()?.composer
@@ -313,11 +231,6 @@ class CalifyProviderServiceSteps {
         world.typeComment(texto)
     }
 
-    /**
-     * The character counter renders the live
-     * "<current>/<max>" pair (US-30 scenario 04-CT asserts the
-     * counter stays in sync with the typed text).
-     */
     @Then("veo el contador actualizado con la cantidad de caracteres ingresados")
     fun veoElContadorActualizadoConLaCantidadDeCaracteresIngresados() {
         val readyRaw = world.lastReadyState()
@@ -333,7 +246,6 @@ class CalifyProviderServiceSteps {
         // The counter is "<n>/<max>" where <n> is the live
         // character count of the description draft. We don't
         // pin a specific value (the typed text varies per
-        // scenario); the assertion is that the counter
         // matches the draft length, which the screen enforces
         // verbatim.
         assertEquals(
@@ -347,11 +259,6 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    /**
-     * The submit button is enabled iff a rating has been
-     * selected (US-30 scenario 04-CT asserts the comment is
-     * NOT required for the submit CTA to unlock).
-     */
     @Then("puedo enviar la calificación sin completar el comentario")
     fun puedoEnviarLaCalificacionSinCompletarElComentario() {
         val readyRaw = world.lastReadyState()
@@ -374,15 +281,7 @@ class CalifyProviderServiceSteps {
         assertNotNull(composer.ratingDraft)
     }
 
-    // ---- Scenario 05-CT ---------------------------------------
 
-    /**
-     * Submitting the rating. The world pulls the next
-     * [SubmitWorkOrderReviewOutcome] from its queue (set
-     * via [enqueueServerFailure] in scenario 11-CT) or, when
-     * nothing is queued, defaults to a happy-path
-     * `Submitted` carrying the typed rating / description.
-     */
     @When("selecciono {string}")
     fun seleccionoLabel(label: String) {
         when (label) {
@@ -391,11 +290,6 @@ class CalifyProviderServiceSteps {
         }
     }
 
-    /**
-     * The submit handler forwarded the rating + description
-     * to the rate-provider port unchanged (scenario 05-CT
-     * asserts the data-flow contract).
-     */
     @Then("se registra la calificación correctamente")
     fun seRegistraLaCalificacionCorrectamente() {
         val recordedRaw = world.recordedSubmission()
@@ -416,12 +310,6 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    /**
-     * After a successful submit, the composer collapses (the
-     * read-only review section takes over — scenario 05-CT
-     * pins the visible "calificación realizada" copy via the
-     * Compose UI test).
-     */
     @Then("veo una confirmación de agradecimiento")
     fun veoUnaConfirmacionDeAgradecimiento() {
         val readyRaw = world.lastReadyState()
@@ -475,11 +363,6 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    /**
-     * After a successful submit, the CTA stays hidden and the
-     * composer stays collapsed (US-30 scenario 05-CT asserts
-     * the consumer can no longer file a review).
-     */
     @Then("ya no puedo volver a calificar la orden")
     fun yaNoPuedoVolverACalificarLaOrden() {
         val readyRaw = world.lastReadyState()
@@ -497,14 +380,7 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 06-CT ---------------------------------------
 
-    /**
-     * The user did NOT type into the comment field — the
-     * descriptionDraft stays empty (scenario 06-CT submits
-     * with rating only). No-op in the world (the VM's draft
-     * starts empty).
-     */
     @Given("no ingresé ningún comentario")
     fun noIngreseNingunComentario() {
         // The composer was just opened by [tapCalificar];
@@ -531,7 +407,6 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 07-CT ---------------------------------------
 
     /**
      * Seeds a paid work order with an existing review so the
@@ -542,12 +417,6 @@ class CalifyProviderServiceSteps {
         world.seedPaidWorkOrderWithReview()
     }
 
-    /**
-     * Mirror of [veoLaOpcion] for the negation:
-     * scenario 07-CT asserts the "Calificar servicio" CTA
-     * stays hidden when a review already exists on the work
-     * order.
-     */
     @Then("no veo la opción {string}")
     fun noVeoLaOpcion(opcion: String) {
         if (opcion != "Calificar servicio") {
@@ -584,26 +453,12 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 08-CT ---------------------------------------
 
-    /**
-     * Compose test pins the over-limit `maxLength` filter at
-     * the screen level; the BDD asserts the typed `length`
-     * reaches the VM verbatim (the screen stores the value
-     * so the counter can paint the over-limit copy in red).
-     */
     @When("ingreso un comentario de {int} caracteres")
     fun ingresoUnComentarioDeNCaracteres(longitud: Int) {
         world.typeComment("x".repeat(longitud))
     }
 
-    /**
-     * US-30 scenario 08-CT: the 500-character cap blocks the
-     * submit CTA once the draft exceeds it. The exact cap
-     * number is enforced by the screen widget; the VM just
-     * stores the verbatim draft so the counter can paint the
-     * over-limit copy.
-     */
     @Then("el sistema no permite superar los {int} caracteres")
     fun elSistemaNoPermiteSuperarLos500Caracteres(max: Int) {
         assertEquals(
@@ -637,7 +492,6 @@ class CalifyProviderServiceSteps {
     @Then("el contador muestra en rojo {string}")
     fun elContadorMuestraEnRojo(texto: String) {
         // The screen paints the counter red when the
-        // description exceeds 500 chars; the JVM BDD layer
         // has no access to the rendered colour, so we pin the
         // contract via the typed state. The "0/500" /
         // "<n>/500" rendering is owned by the Compose UI
@@ -649,7 +503,6 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 09-CT ---------------------------------------
 
     @Given("no seleccioné ninguna estrella")
     fun noSeleccioneNingunaEstrella() {
@@ -684,7 +537,6 @@ class CalifyProviderServiceSteps {
         )
     }
 
-    // ---- Scenario 10-CT ---------------------------------------
 
     /**
      * Seeds an `awaiting_payment` work order (pre-loads the
@@ -696,13 +548,6 @@ class CalifyProviderServiceSteps {
         world.seedAwaitingPaymentWorkOrder()
     }
 
-    /**
-     * US-30 scenario 10-CT: an `awaiting_payment` work order
-     * never surfaces the "Calificar servicio" CTA — only the
-     * pay-now CTA is rendered. The BDD pins the data-flow
-     * contract (status != Paid, composer stays Hidden), and
-     * the Compose UI test pins the actual CTA absence.
-     */
     @Then("veo un mensaje indicando que la orden debe estar completamente pagada para poder calificarla")
     fun veoUnMensajeIndicandoQueLaOrdenDebeEstarCompletamentePagadaParaPoderCalificarla() {
         val readyRaw = world.lastReadyState()
@@ -725,18 +570,7 @@ class CalifyProviderServiceSteps {
         )
     }
 
-// ---- Scenario 11-CT ---------------------------------------
 
-    /**
-     * US-30 scenario 11-CT packs the failure injection AND
-     * the submit into a single Gherkin step
-     * ("envío la calificación y el servicio no está
-     * disponible"). Enqueues a 503 `Server` outcome on the
-     * fake repo and immediately drives the VM through
-     * [CalifyProviderServiceWorld.submitRating] — the next
-     * observation carries the typed error stamp on the
-     * composer.
-     */
     @When("envío la calificación y el servicio no está disponible")
     fun envioLaCalificacionYElServicioNoEstaDisponible() {
         world.enqueueServerFailure()
@@ -780,8 +614,5 @@ class CalifyProviderServiceSteps {
     //
     // The world helpers `tapCalificar`, `selectStars`,
     // `typeComment`, `submitRating`, `cancelRating` and the
-    // corresponding Gherkin step defs land here incrementally —
-    // one commit per destageado scenario. Keeping them in the
-    // same file (instead of splitting per scenario) lets the
     // Cucumber JVM runtime resolve step definitions across
     // @wip removal commits without churn.

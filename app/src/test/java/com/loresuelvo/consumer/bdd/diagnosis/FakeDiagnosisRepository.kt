@@ -5,31 +5,6 @@ import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
 import java.util.concurrent.atomic.AtomicReference
 
-/**
- * In-memory [DiagnosisRepository] used by the AI diagnostic chat
- * BDD layer. The world enqueues an outcome per scenario; the VM's
- * `viewModelScope.launch` consumes it on the first
- * [sendPrompt] call.
- *
- * Three enqueue modes are exposed:
- *
- *  - [enqueueOutcome] — returns the given outcome on the next call
- *    (happy path used by 01-DIA / 02-DIA).
- *  - [enqueueHangingResponse] — suspends [sendPrompt] forever
- *    (`awaitCancellation`), simulating a slow backend. Used by
- *    03-DIA to keep `state.sending = true` while we assert that
- *    the UI gating logic disables the next send.
- *
- * Each call consumes its enqueued state once; subsequent calls
- * without a fresh enqueue throw an `error("…")` so BDD failures
- * surface loud rather than silently reusing stale state. Future
- * scenarios that need to chain multiple round-trips (03-DIA's
- * `Then` phase for the "second message") seed a fresh outcome
- * before each `tapSend()`.
- *
- * Mirrors the pattern of `FakeUserRepository` in
- * `bdd/onboarding/registerconsumer/`.
- */
 class FakeDiagnosisRepository : DiagnosisRepository {
 
     private val nextOutcomeRef = AtomicReference<SendDiagnosisPromptOutcome?>(null)
@@ -46,12 +21,6 @@ class FakeDiagnosisRepository : DiagnosisRepository {
         hangModeRef.set(false)
     }
 
-    /**
-     * 04-DIA: enqueue a [SendDiagnosisPromptOutcome.Failure] for
-     * the next [sendPrompt] call. Convenience over
-     * [enqueueOutcome] that keeps the BDD step defs readable
-     * when the intent is "the service failed".
-     */
     fun enqueueFailure(failure: SendDiagnosisPromptOutcome.Failure) {
         enqueueOutcome(failure)
     }
@@ -83,12 +52,6 @@ class FakeDiagnosisRepository : DiagnosisRepository {
         return outcome
     }
 
-    /**
-     * Snapshot of the [imageFileIds] passed to the last
-     * [sendPrompt] call. The BDD step that asserts "se envía el
-     * mensaje con la imagen adjunta" reads this back; the unit
-     * tests assert against [useCase] arguments directly.
-     */
     fun lastImageFileIdsSnapshot(): List<String> = lastImageFileIds.toList()
 
     /**

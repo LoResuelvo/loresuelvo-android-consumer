@@ -7,13 +7,6 @@ import com.loresuelvo.consumer.domain.auth.UserRegistrationOutcome
 import com.loresuelvo.consumer.domain.auth.UserRepository
 import java.util.concurrent.atomic.AtomicInteger
 
-/**
- * In-memory `UserRepository` used by the BDD specs. Plays back a
- * configured [nextOutcome] every time `registerConsumer` is called and
- * records what reached it so the specs can assert the exact payload
- * the use case passed to the port. Tests never have to mock the network
- * layer to assert that the right body — and only one — was sent.
- */
 class FakeUserRepository : UserRepository {
 
     override suspend fun getCurrentUser(): CurrentUserOutcome = CurrentUserOutcome.NotFound

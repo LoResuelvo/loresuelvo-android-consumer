@@ -1,25 +1,4 @@
 # language: es
-#
-# Especificación ejecutable para la historia de usuario "UX/UI Fixes".
-# Cubre los criterios de aceptación:
-# ocultar el ícono de audio de IA cuando la funcionalidad no está
-# disponible, visualizar todas las categorías disponibles, adjuntar
-# imágenes en las ofertas de trabajo, previsualizar y eliminar
-# imágenes antes de publicar, indicar nuevos mensajes en la lista
-# de chats, actualizar el indicador al leer los mensajes y corregir
-# bordes y márgenes de las pantallas.
-#
-# Cada escenario arranca marcado como `@wip` (salteado). Cada commit
-# remueve el `@wip` de exactamente un escenario, deja sus
-# aserciones en verde y conserva el resto en `@wip`. Cuando se
-# remueve el último `@wip`, la feature está completa. El runner de
-# Cucumber JVM filtra `@wip` mediante la system property
-# `cucumber.filter.tags` configurada en `app/build.gradle.kts`.
-#
-# Actualizar este archivo junto con `strings.xml` y las pantallas
-# cada vez que cambia el copy o el comportamiento visible.
-# Los textos visibles en español se asertan en los acceptance tests
-# de Compose, no aquí.
 
 Característica: Correcciones de UX/UI
 

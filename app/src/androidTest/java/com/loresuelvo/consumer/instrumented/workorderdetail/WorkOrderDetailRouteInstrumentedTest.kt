@@ -63,55 +63,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Integration coverage for the US-30 `calify-provider-service`
- * **route wiring** — the contract that [WorkOrderDetailRoute]
- * (in `LoResuelvoNav.kt`) forwards every composer callback to
- * the Hilt-injected `WorkOrderDetailViewModel`.
- *
- * Why this test exists (post-mortem on commit `b1cc0eb`)
- *
- *  - The initial drop of US-30 left `WorkOrderDetailRoute`
- *    untouched on the composer-button change set, so every new
- *    callback (`onOpenReviewForm`, `onRatingChange`,
- *    `onDescriptionChange`, `onSubmitReview`,
- *    `onCancelReview`) defaulted to `{}` in production. The
- *    screen-level Compose UI tests still passed because they
- *    drive the screen with explicit lambdas; the JVM BDD suite
- *    passed because it talks to the VM through a hand-rolled
- *    `World` that bypasses the route entirely. The bug only
- *    surfaced in manual testing on a real device.
- *
- *  - This instrumented test pins the route→VM wire contract
- *    end-to-end: Hilt provides the same `@HiltViewModel`
- *    instance the production route resolves; the screen
- *    receives the production-route-issued callbacks (not the
- *    `{}` defaults); and [FakeWorkOrderDetailRepository]
- *    records the call the VM hands off. A future regression
- *    that omits one of the production wire callbacks from the
- *    route would fail this test with a clear assertion —
- *    preventing another silent regression.
- *
- * Setup mirrors the other acceptance suites in this repo:
- *
- *  - `@HiltAndroidTest` + `@UninstallModules(RepositoryModule::class,
- *    SessionStoreModule::class)` to install a deterministic graph.
- *  - `@EntryPoint` to resolve the same `@Singleton`
- *    [FakeWorkOrderDetailRepository] the route's Hilt VM
- *    observes, so [FakeWorkOrderDetailRepository.set] /
- *    [FakeWorkOrderDetailRepository.lastSubmission] /
- *    [FakeWorkOrderDetailRepository.enqueueSubmitOutcome] reach
- *    the same instance the production code sees.
- *  - `composeTestRule.activity.setContent { WorkOrderDetailRoute(...) }`
- *    mounts the production route directly inside the activity's
- *    Compose tree. `WorkOrderDetailRoute` is `internal` for
- *    exactly this test (no other consumer needs it).
- *
- * The CI emulator boots as `en-US` while developer devices may
- * use Spanish. Render assertions target `testTag`s — locale
- * independent — so the test stays green regardless of the
- * emulator locale.
- */
 @HiltAndroidTest
 @UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)

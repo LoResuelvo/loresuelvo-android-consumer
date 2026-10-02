@@ -11,25 +11,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 
-/**
- * Spanish step defs for
- * `features/provider/view-provider-profile-photo.feature`. Mirrors
- * the English `SearchProvidersSteps.kt` in
- * `bdd.providers.search` but writes the Gherkin regex in Spanish
- * (per the project's BDD rule: "Steps de BDD: español"). Each step
- * is intentionally thin: the heavy lifting lives in
- * [CucumberWorld] (which pins `Dispatchers.Main` and drives the
- * `ProfessionalsViewModel` through a `StandardTestDispatcher`).
- *
- * Cucumber instantiates this class with its zero-arg constructor
- * (DefaultObjectFactory). The [CucumberWorld] is owned per scenario
- * via a field initializer; `close()` runs from `@After` /
- * teardown via the JVM shutdown hook.
- *
- * Only the steps exercised by scenario 01-VFP are defined here.
- * Scenarios 02-VFP and 03-VFP stay `@wip`; their step defs land in
- * a follow-up commit when each scenario goes green.
- */
 class ViewProviderProfilePhotoSteps {
 
     private val world: CucumberWorld = CucumberWorld()

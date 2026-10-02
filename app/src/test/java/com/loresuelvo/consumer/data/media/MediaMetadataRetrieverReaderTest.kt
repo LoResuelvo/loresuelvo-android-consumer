@@ -12,29 +12,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for [MediaMetadataRetrieverReader].
- *
- * The Android-backed implementation is exercised indirectly by
- * the e2e suite (the system voice recorder + `MediaPlayer`
- * round-trip happens on a real device). What's covered here is
- * the contract: the reader returns a non-negative millis count
- * for valid URIs and `null` for unreadable / malformed ones.
- *
- * Mocking the reader interface (instead of the production
- * `AndroidMediaMetadataRetrieverReader`) keeps the test JVM-side
- * — `MediaMetadataRetriever` itself is native code that
- * Robolectric's sandbox can't reliably run on Android 14, so
- * pinning the contract at the interface level is the cleanest
- * way to cover the dispatch logic in
- * `ConversationViewModel.onAttachAudioFromUri` (`audioUpload`
- * branches + duration extraction + fallback to `0L`).
- *
- * The "happy path" — bytes flow from a real `content://`
- * provider through `MediaMetadataRetriever` into
- * `PendingMedia.durationMillis` — is verified by the e2e suite
- * (03-MM scenario + the device-level voice recorder).
- */
 class MediaMetadataRetrieverReaderTest {
 
     private val uri: Uri = mockk(relaxed = true)

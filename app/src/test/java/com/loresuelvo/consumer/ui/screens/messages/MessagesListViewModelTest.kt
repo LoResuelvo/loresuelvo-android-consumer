@@ -22,22 +22,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [MessagesListViewModel]. Covers the round-trip
- * flow exercised by scenario 03-IC ("the provider appears as a
- * contact after the first message") at the state-machine level,
- * complementing the BDD layer in `bdd/message/`.
- *
- * Coverage:
- *  - Initial state is `Loading`.
- *  - `init { load() }` dispatches the use case and transitions
- *    to `Ready(list)` on success (including empty list).
- *  - Failure paths (Network / Server / Unauthorized) transition
- *    to `Error(failure)` carrying the typed failure verbatim.
- *  - Re-calling `load()` after a failure re-fires the use case
- *    (retry path — even though the screen does not expose it
- *    yet, the contract is "the VM re-fires on demand").
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MessagesListViewModelTest {
 

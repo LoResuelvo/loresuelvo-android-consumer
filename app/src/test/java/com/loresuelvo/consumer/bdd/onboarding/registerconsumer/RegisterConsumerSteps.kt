@@ -16,20 +16,6 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import java.io.IOException
 
-/**
- * Cucumber JVM step definitions for the "register consumer" user
- * journey. Cucumber instantiates this class once per scenario, so the
- * [world] field is rebuilt every scenario and no step definition
- * shares state across scenarios.
- *
- * Each `@When` calls a synchronous `world.tapContinue(...)` style
- * helper that mutates the VM and then runs
- * `TestCoroutineScheduler.advanceUntilIdle()` so the test does not
- * have to know about coroutines. The world is closed in [teardown]
- * via Cucumber's `@After` hook, which cancels the supervisor job and
- * calls `Dispatchers.resetMain()` so the next test in the JVM is not
- * held against an unused main dispatcher.
- */
 class RegisterConsumerSteps {
 
     private val world: CucumberWorld = CucumberWorld()
@@ -64,7 +50,6 @@ class RegisterConsumerSteps {
 
     @And("I am on the {string} screen")
     fun i_am_on_screen(name: String) {
-        // Pure VM-mode in the BDD layer: the "screen" concept only
         // exists in the production code. We pin the name here so the
         // step doubles as documentation of which screen is under test.
         assertEquals("Complete profile", name)
@@ -75,7 +60,6 @@ class RegisterConsumerSteps {
     @Given("the backend will accept the registration")
     fun backend_will_accept() {
         // Default Success is already wired in the fake; declaring it
-        // explicitly makes the scenario self-describing.
         world.configureOutcome(
             UserRegistrationOutcome.Success(
                 com.loresuelvo.consumer.domain.auth.User(

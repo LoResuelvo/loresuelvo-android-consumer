@@ -1,7 +1,4 @@
 # language: es
-#
-# Especificación de US-50.2 para el envío de videos.
-# Se publica primero como @wip y se desmarca después de validar el flujo.
 
 Característica: Enviar videos al prestador desde el chat
 

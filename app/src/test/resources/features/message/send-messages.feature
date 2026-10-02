@@ -1,20 +1,4 @@
 # language: en
-#
-# Executable specification for the US-17 "Start a conversation with
-# a provider" user journey. The consumer initiates a chat with a
-# provider they haven't interacted with yet and continues the
-# conversation until the provider accepts (or doesn't).
-#
-# Each scenario starts marked `@wip` (skipped). Each commit removes
-# the `@wip` from exactly one scenario, makes its assertions
-# green, and leaves the rest at `@wip`. When the last `@wip` is
-# removed the feature is done. The Cucumber JVM runner filters
-# `@wip` via the `cucumber.filter.tags` system property set in
-# `app/build.gradle.kts`.
-#
-# Update this file together with `strings.xml` and the screen
-# whenever copy or behaviour changes. The user-visible Spanish
-# strings are asserted in the Compose UI tests, not here.
 
 Feature: Start a conversation with a provider
 

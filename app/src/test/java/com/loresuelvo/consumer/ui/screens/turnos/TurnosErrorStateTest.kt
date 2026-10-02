@@ -21,17 +21,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI tests for the [TurnosScreen] Error branch
- * (visualize-turns.feature scenarios 13-VT / 14-VT).
- *
- * Landed incrementally per scenario:
- *  - 13-VT → `error_network_state_renders_typed_copy_and_retry_cta`.
- *  - 14-VT → `error_server_state_renders_typed_copy_and_retry_cta`.
- *
- * Locale is pinned to `es-rAR` so the localised copy matches
- * the `values/strings.xml` strings the production app ships.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class TurnosErrorStateTest {

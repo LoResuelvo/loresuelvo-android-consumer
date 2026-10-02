@@ -5,25 +5,10 @@ import com.loresuelvo.consumer.domain.provider.ProvidersOutcome
 import com.loresuelvo.consumer.domain.provider.ProviderRepository
 import java.util.concurrent.atomic.AtomicReference
 
-/**
- * In-memory implementation of [ProviderRepository] used by the BDD
- * scenarios. The seed [providers] come from the Background of the
- * feature file; per-category overrides set by the scenarios
- * (`Given no providers exist for category "Gas"`) take precedence.
- *
- * Mirrors the pattern of `FakeUserRepository` /
- * `FakeAuthSessionStore` in `bdd/onboarding/registerconsumer`.
- */
 class FakeProviderRepository(
     seed: List<Provider> = emptyList(),
 ) : ProviderRepository {
 
-    /**
-     * If non-null, the scenario forced a specific outcome for the
-     * given [Provider]s. Looked up by `categoryId` per call so that
-     * scenarios can pre-load the "no providers for category X"
-     * state without us caring about its internal shape.
-     */
     private val overridesByCategory = mutableMapOf<Int, List<Provider>>()
     private val failureOutcome = AtomicReference<ProvidersOutcome.Failure?>(null)
 

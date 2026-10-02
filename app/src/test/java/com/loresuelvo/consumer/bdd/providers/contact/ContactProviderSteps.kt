@@ -9,22 +9,6 @@ import io.cucumber.java.en.Given
 import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 
-/**
- * Step definitions for the `contact-provider.feature` scenarios.
- *
- * The Background uses the shared `I am logged in as a consumer`
- * + `the following categories exist:` + `the following providers
- * exist:` + `I tap the {string} category card` steps, which live
- * in `com.loresuelvo.consumer.bdd.providers.search.SearchProvidersSteps`
- * (the runner's `glue` includes both packages). This class owns
- * only the contact-specific steps.
- *
- * The BDD asserts the [ContactProviderViewModel] state machine,
- * not the visual rendering. The actual UI pixels (the "Create
- * Work Request" title, the field labels, the submit button
- * enabled/disabled state) are verified by `ContactProviderBottomSheetTest`
- * in `src/test/.../ui/screens/professional/`.
- */
 class ContactProviderSteps {
 
     private val world: ContactProviderWorld = ContactProviderWorld()
@@ -52,7 +36,6 @@ class ContactProviderSteps {
 
     @And("I see the required fields {string} and {string}")
     fun iSeeTheRequiredFields(firstFieldLabel: String, secondFieldLabel: String) {
-        // The BDD doesn't read the literal field labels (those are
         // visual / locale-dependent — covered by the Compose UI
         // test). It asserts the structurally required fields exist
         // on the form state and start empty.
@@ -61,7 +44,6 @@ class ContactProviderSteps {
         assertEquals("", state.description)
     }
 
-    // ---- Scenario 02-SRP: submission flow ------------------------
 
     @Given("the {string} modal is open for {string}")
     fun theModalIsOpenFor(modalTitle: String, providerFullName: String) {
@@ -71,7 +53,6 @@ class ContactProviderSteps {
     @When("I enter a title, a description and tap the {string} button")
     fun iEnterTitleDescriptionAndTapButton(buttonLabel: String) {
         // Seed the fake repo so the submit returns the success
-        // path. The narrative of the Gherkin step implies the user
         // typed the values used in the Background.
         world.enqueueSuccess()
         world.typeTitle("Fuga en el lavamanos")
@@ -107,10 +88,8 @@ class ContactProviderSteps {
             "expected a NavigateToConversation event, was $event",
             event is ContactProviderEvent.NavigateToConversation,
         )
-        // The event's conversationId is opaque at the BDD layer
         // (the contact feature wires it to `Route.Conversation` in
         // `LoResuelvoNav`; the actual chat surface is out of scope).
         // We still capture the payload for any future assertion
-        // when the navigation surface is fleshed out.
     }
 }

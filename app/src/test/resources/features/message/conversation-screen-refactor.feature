@@ -1,8 +1,4 @@
 # language: es
-#
-# Especificación ejecutable de la modularización de ConversationScreen
-# (US-48). El primer commit la publica como @wip; se quita la marca
-# cuando la composición con contratos agrupados queda validada.
 
 Característica: Composición modular de la conversación
 

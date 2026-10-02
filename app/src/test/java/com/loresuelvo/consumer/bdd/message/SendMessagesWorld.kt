@@ -53,25 +53,6 @@ import java.util.concurrent.atomic.AtomicReference
 import io.mockk.every
 import io.mockk.mockk
 
-/**
- * Per-scenario world for the US-17 "Start a conversation with a
- * provider" BDD specs. Wires the [ProfessionalsViewModel] (for the
- * search results list) AND the [ContactProviderViewModel] (for the
- * contact form flow against the same provider) against in-memory
- * fakes so the scenarios can drive the user journey and assert on
- * the observed state.
- *
- * The world is self-contained — it does NOT share state with the
- * search-providers BDD world's `SearchProvidersCucumberWorld` or the
- * contact-provider BDD world's `ContactProviderWorld`. The shared
- * `Given` steps (login, providers, etc.) live in the search glue
- * package and operate on the search world's VM; this world drives
- * SEPARATE VM instances so the messaging BDD scenarios observe
- * their own state transitions.
- *
- * As scenarios 03-IC onwards are landed, the world will gain
- * `MessagesViewModel` (or equivalent) helpers in the same pattern.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SendMessagesWorld : AutoCloseable {
 
@@ -84,17 +65,14 @@ class SendMessagesWorld : AutoCloseable {
     private val fakeCategoryRepo = FakeCategoryRepository()
     private lateinit var viewModel: ProfessionalsViewModel
 
-    // Contact form flow (scenario 02-IC): owns its own VM and uses
     // a fake JobRequestRepository so the `When` step can pre-load a
     // success outcome and the submit transitions to the navigation
     // event. The data layer's `CreateJobRequestUseCase` is shared
-    // with production — the BDD only substitutes the repository it
     // depends on.
     private val fakeJobRequestRepo = FakeJobRequestRepository()
     private val createJobRequestUseCase = CreateJobRequestUseCase(fakeJobRequestRepo)
     private lateinit var contactProviderViewModel: ContactProviderViewModel
 
-    // Conversations list (scenario 03-IC): owns its own VM against
     // a fake ConversationRepository. The VM auto-loads in its
     // `init { }` block (mirrors production) so the world seeds the
     // fake repo FIRST (in the `Given` step) and then re-fires the
@@ -105,7 +83,6 @@ class SendMessagesWorld : AutoCloseable {
     private val sendMessageUseCase = SendMessageUseCase(fakeConversationRepo)
     private lateinit var messagesListViewModel: MessagesListViewModel
 
-    // Conversation detail (scenario 05-IC + 07-IC): the same fake
     // repo backs both the list and the detail VM. The detail VM
     // is constructed but does NOT auto-load — the `Given` step
     // must seed the detail + call `openConversation(id)` so the
@@ -226,13 +203,7 @@ class SendMessagesWorld : AutoCloseable {
         knownProviders[fullName]
             ?: error("Unknown provider: $fullName (BDD has ${knownProviders.keys})")
 
-    // ---- Contact form flow (scenario 02-IC) -------------------
 
-    /**
-     * Opens the contact form for [providerName]. Mirrors the
-     * `ContactProviderWorld.openContactFor` API so the messaging
-     * BDD step stays terse.
-     */
     fun openContactFor(providerName: String) {
         contactProviderViewModel.onOpenContact(providerNamed(providerName))
         scheduler.advanceUntilIdle()
@@ -267,16 +238,7 @@ class SendMessagesWorld : AutoCloseable {
 
     fun observedContactEvents(): List<ContactProviderEvent> = observedContactEvents.toList()
 
-    // ---- Conversations list (scenario 03-IC) ---------------
 
-    /**
-     * Seeds the fake [ConversationRepository] with a single
-     * conversation so the next [accessMessagesSection] call
-     * observes the seeded row in the list, AND seeds the
-     * detail endpoint so [openConversation] lands on a
-     * populated thread. Earlier scenarios (03-IC, 04-IC) only
-     * read the list state — the detail seed is a no-op for them.
-     */
     fun enqueueConversation(
         conversationId: String = "1",
         counterpartName: String = "Juan",
@@ -315,7 +277,6 @@ class SendMessagesWorld : AutoCloseable {
             ),
         )
         // The detail endpoint returns the full thread. For the
-        // BDD "conversation has at least one message" baseline we
         // mirror the seeded `lastMessage` into the `messages[]`
         // list; `null` ⇒ an empty thread (a brand-new conversation
         // the consumer just opened).
@@ -330,13 +291,6 @@ class SendMessagesWorld : AutoCloseable {
         )
     }
 
-    /**
-     * Re-fires [MessagesListViewModel.load]. The BDD's `When`
-     * step ("I access the messages section") maps to this — the
-     * VM's `init { load() }` already fired during
-     * [startScenario] against an empty seed; the re-fetch after
-     * seeding surfaces the conversation the user "already sent".
-     */
     fun accessMessagesSection() {
         messagesListViewModel.load()
         scheduler.advanceUntilIdle()
@@ -345,14 +299,7 @@ class SendMessagesWorld : AutoCloseable {
     fun lastMessagesListUiState(): MessagesListUiState =
         observedMessagesListStates.last()
 
-    // ---- Conversation detail (scenario 05-IC) -------------
 
-    /**
-     * Drives [ConversationViewModel.load] for the seeded
-     * conversation. Mirrors the host's `LaunchedEffect` in
-     * `ConversationRoute` so the BDD exercises the same code
-     * path the production UI does.
-     */
     fun openConversation(conversationId: String) {
         conversationViewModel.load(conversationId)
         scheduler.advanceUntilIdle()
@@ -371,17 +318,6 @@ class SendMessagesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Simulates the backend pushing a `conversation.message.created`
-     * event to the consumer's WebSocket (the production wire the
-     * `WebSocketClient` decodes). Emits into the same flow the VM
-     * subscribed to in its `init {}` so the test exercises the
-     * real VM filtering + appending path.
-     *
-     * Scenarios 07-IC (consumer sees provider's message in
-     * real-time) and 08-IC (other-conversation messages don't
-     * leak) both drive the wire through this helper.
-     */
     fun providerSendsViaWebSocket(
         conversationId: String = "1",
         messageId: String = "100",
@@ -406,14 +342,9 @@ class SendMessagesWorld : AutoCloseable {
     fun lastConversationUiState(): ConversationUiState =
         observedConversationStates.last()
 
-    /** Snapshots the `(conversationId, content)` pairs that hit
-     *  the fake repo's `sendMessage` — useful when the BDD needs
-     *  to assert WHICH message was sent (not just that the state
-     *  mutated). */
     fun observedSendCalls(): List<Pair<String, String>> =
         fakeConversationRepo.sendCallsSnapshot()
 
-    // ---- Scroll position (scenarios 09-IC + 10-IC) ---------------
 
     /**
      * Reports to the VM that the chat's LazyColumn is at the
@@ -426,18 +357,11 @@ class SendMessagesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Reports to the VM that the chat is scrolled up reading
-     * older messages (i.e. not at the bottom). Scenario 10-IC
-     * uses this to flip `isAtBottom = false` before the WS push
-     * so the unread-banner flag flips on.
-     */
     fun scrolledUpOfTheChat() {
         conversationViewModel.onScrollPositionChanged(atBottom = false)
         scheduler.advanceUntilIdle()
     }
 
-    // ---- Navigation lifecycle (scenario 06-IC) --------------
 
     /**
      * Simulates the user leaving the conversation screen (e.g.
@@ -462,7 +386,6 @@ class SendMessagesWorld : AutoCloseable {
             audioPlayer = audioPlayer,
             webSocketClient = fakeWebSocketClient,
         )
-        // No observer for the new instance — the BDD re-entry
         // step creates yet another VM with its own observer.
         // This mirrors the production lifecycle: the previous
         // VM is gone, the new VM is fresh, and the user
@@ -551,19 +474,6 @@ class SendMessagesWorld : AutoCloseable {
         }
     }
 
-    /**
-     * Fake [ConversationRepository] for the send-messages BDD
-     * scenarios. Holds a seeded list of conversations AND a
-     * seeded single-conversation detail so both the list screen
-     * and the detail screen have something to render. Records
-     * every `sendMessage` call so the BDD can assert what the
-     * user actually sent (and not just that the state mutated).
-     *
-     * Send responses are always `Success` with a fresh server-
-     * issued message — the BDD scenarios for 05-IC and 06-IC
-     * don't exercise typed failures at the repo level (those
-     * are pinned by `ApiConversationRepositoryIntegrationTest`).
-     */
     private class FakeConversationRepository : ConversationRepository {
         private var listSeed: List<Conversation> = emptyList()
         private var detailSeed: ConversationDetail? = null

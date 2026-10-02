@@ -45,16 +45,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.assertNotNull
-/**
- * Unit tests for [ConversationViewModel] — load + prompt flow.
- * Companion file
- * `ConversationViewModelSendRetryTest.kt` covers the
- * send / retry / dismiss surface.
- *
- * Mirrors the discipline of `ChatViewModelTest`: fine-grained
- * state coverage that complements the BDD layer in
- * `bdd/message/`.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConversationViewModelTest {
 
@@ -194,7 +184,6 @@ class ConversationViewModelTest {
 
     @Test
     fun rebuilding_VM_and_reloading_surfaces_persisted_messages() = runTest {
-        // Scenario 06-IC: the user leaves the conversation screen
         // (Hilt discards the NavBackStackEntry → the VM is gone)
         // and re-enters it (new VM, fresh `load`). The previously
         // sent message must surface in the new VM's state because
@@ -302,7 +291,6 @@ class ConversationViewModelTest {
 
     @Test
     fun ws_event_for_current_conversation_is_appended_to_messages() = runTest {
-        // Scenario 07-IC: provider's message arrives in
         // real-time while the consumer is viewing the chat.
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
@@ -326,7 +314,6 @@ class ConversationViewModelTest {
 
     @Test
     fun ws_event_for_other_conversation_is_ignored() = runTest {
-        // Scenario 08-IC: messages from another conversation must
         // NOT leak into the current chat.
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
@@ -444,7 +431,6 @@ class ConversationViewModelTest {
 
     @Test
     fun ws_event_while_at_bottom_sets_hasUnreadIncoming_to_false() = runTest {
-        // Scenario 09-IC: when the user is at the bottom and a
         // new message arrives, no "↓ nuevo mensaje" banner shows
         // (the new bubble auto-scrolls into view).
         coEvery { getConversationById("1") } returns
@@ -471,7 +457,6 @@ class ConversationViewModelTest {
 
     @Test
     fun ws_event_while_scrolled_up_sets_hasUnreadIncoming_to_true() = runTest {
-        // Scenario 10-IC: when the user is scrolled up reading
         // older messages and a new one arrives, surface the
         // "↓ nuevo mensaje" banner.
         coEvery { getConversationById("1") } returns

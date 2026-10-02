@@ -23,24 +23,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the `visualize-turns-detail.feature`
- * BDD specs (US-27). Drives the
- * [WorkOrderDetailViewModel] against a port-level fake
- * [WorkOrderDetailRepository] so the step defs can mount the VM
- * with a seeded `WorkOrderDetail` and observe the resolved
- * [WorkOrderDetailUiState].
- *
- * Each step def seeds one of the predefined work orders
- * ([seedScheduledWorkOrder], [seedAwaitingPaymentWorkOrder],
- * [seedPaidWorkOrder]) and drives the VM via [openWorkOrder].
- * The world captures the VM's emissions so the `Then` step can
- * assert against [lastUiState] / [observedUiStates].
- *
- * Landed as the scaffold for the scenarios the US adds. The
- * per-scenario commits remove the `@wip` from one Gherkin
- * scenario at a time.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class VisualizeTurnsDetailWorld : AutoCloseable {
 
@@ -80,12 +62,6 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Scenario 03-VTD: `scheduled` work order. Surfaces the
-     * counterpart + category + agreed amount + scheduled date +
-     * description + status. No paid-on row, no completion
-     * report, no review.
-     */
     fun seedScheduledWorkOrder() {
         repository.set(
             WorkOrderDetail(
@@ -110,11 +86,6 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
         )
     }
 
-    /**
-     * Scenario 04-VTD: `awaiting_payment` work order. Surfaces the
-     * completion report (description + reported date + photos)
-     * but no paid-on row yet.
-     */
     fun seedAwaitingPaymentWorkOrder() {
         repository.set(
             WorkOrderDetail(
@@ -150,10 +121,6 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
         )
     }
 
-    /**
-     * Scenario 05-VTD: `paid` work order. Surfaces the completion
-     * report AND the paid-on row (no review yet).
-     */
     fun seedPaidWorkOrderWithoutReview() {
         repository.set(
             WorkOrderDetail(
@@ -189,9 +156,6 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
         )
     }
 
-    /**
-     * Scenario 07-VTD: `paid` work order with a consumer review.
-     */
     fun seedPaidWorkOrderWithReview() {
         repository.set(
             WorkOrderDetail(
@@ -243,17 +207,10 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
 
     fun lastUiState(): WorkOrderDetailUiState = observedUiStates.last()
 
-    // ---- Scenario 02-VTD (entry desde el Chat) ---------------
 
     private var conversationDetail: com.loresuelvo.consumer.domain.conversation.ConversationDetail? =
         null
 
-    /**
-     * Seeds a `ConversationDetail` with a non-null
-     * [com.loresuelvo.consumer.domain.conversation.ConversationDetail.workOrderId]
-     * so the chat top bar surfaces the "Ver orden" CTA (US-27
-     * scenario 02-VTD).
-     */
     fun seedConversationWithWorkOrder(workOrderId: String) {
         conversationDetail = com.loresuelvo.consumer.domain.conversation.ConversationDetail(
             id = "conv-1",
@@ -296,9 +253,7 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
                 ?.let { GetWorkOrderOutcome.Found(it) }
                 ?: GetWorkOrderOutcome.NotFound
 
-        // US-30 stub: this world only exercises the read-only
         //  `getWorkOrderDetail` path. The calify-provider-service
-        //  BDD suite wires its own dedicated fake that queues the
         //  success / failure outcomes.
         override suspend fun submitReview(
             workOrderId: String,
@@ -316,14 +271,6 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
     }
 }
 
-/**
- * Stand-in [com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository]
- * for the BDD world — every checkout call is a no-op (returns
- * [CheckoutSessionOutcome.Server] so the screen surfaces a
- * typed error rather than crashing). The pay-now scenario
- * (09-VTD) asserts the CTA presence; the underlying flow is
- * covered by the proposal-payment BDD suite.
- */
 private object NoOpWorkOrderCheckoutRepository :
     com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository {
     override suspend fun startServiceProposalCheckout(

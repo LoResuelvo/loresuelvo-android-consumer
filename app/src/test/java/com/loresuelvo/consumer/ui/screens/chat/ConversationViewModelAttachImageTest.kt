@@ -392,7 +392,6 @@ class ConversationViewModelAttachImageTest {
 
     @Test
     fun onConfirmMediaSend_network_failure_surfaces_error_and_keeps_pending() = runTest {
-        // Scenario 08-MM: backend doesn't respond (network failure).
         // The user must see a typed Network error and the message
         // must NOT be appended to the conversation.
         coEvery { getConversationById("1") } returns
@@ -453,7 +452,6 @@ class ConversationViewModelAttachImageTest {
 
     @Test
     fun onConfirmMediaSend_payload_too_large_audio_surfaces_typed_failure() = runTest {
-        // Scenario 09-MM: an audio clip larger than the domain
         // size limit is rejected client-side; the user sees a
         // specific "tamaño excedido" failure and the audio must
         // NOT be appended to the conversation.
@@ -705,7 +703,6 @@ val state = viewModel.uiState.value as ConversationUiState.Ready
         // TDD for the multi-image contract: a second attach
         // must APPEND, not replace. Pin the count + the order so
         // a future refactor that drops the append-everywhere
-        // behaviour surfaces here before the BDD layer does.
         coEvery { getConversationById("1") } returns
             ConversationDetailOutcome.Success(detail())
         viewModel = ConversationViewModel(

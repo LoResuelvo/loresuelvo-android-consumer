@@ -29,26 +29,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests pinning the image-attach surface of [ChatViewModel]
- * for the AI pre-diagnosis flow (scenario 01-AIP). Companion to
- * [ChatViewModelTest]; lives separately so each test class
- * stays under the team's per-commit LoC budget.
- *
- * Coverage of 01-AIP:
- *  - initial state has empty `pendingAttachments`,
- *  - `onAttachImageFromGallery` reads the [Uri] via [MediaReader]
- *    and appends a [PendingMedia] of kind [PendingMediaKind.IMAGE]
- *    with the read bytes + name + mime,
- *  - `onAttachMedia` (the canonical non-`Uri` entry point used by
- *    the BDD world) appends without invoking [MediaReader] and
- *    does NOT fire the send round-trip.
- *
- * The [Uri] is built via MockK to keep the test on the plain JUnit
- * runner (no Robolectric boot) — the production code only hands the
- * [Uri] to the mocked [MediaReader], so the Android surface area
- * stays bounded to the test fixture.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatViewModelAttachImageTest {
 

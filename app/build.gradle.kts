@@ -97,8 +97,6 @@ android {
         unitTests {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
-            // BDD: only run scenarios that don't carry the `@wip` marker.
-            // Each commit adds the step defs for one scenario and
             // removes its `@wip` marker; this keeps the rest of the
             // feature dormant without polluting the build with
             // `UndefinedStepException`s.
@@ -272,7 +270,6 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    // Chrome Custom Tabs (US-21 deposit flow) — opens the Mercado Pago
     // Checkout Pro URL in the user's default browser so the back
     // navigation lands back in our app via the App Link.
     implementation(libs.androidx.browser)

@@ -1,17 +1,4 @@
 # language: en
-#
-# Executable specification for the "Complete consumer profile on first
-# login" user journey. Runs as a Cucumber JVM scenario per scenario on
-# the JVM classpath; each scenario exercises the
-# `CompleteProfileViewModel` directly through `CucumberWorld`, fakes
-# `FakeAuthSessionStore` / `FakeUserRepository`, and asserts the user-
-# observable behaviour (state, events, side effects) without rendering
-# Compose or hitting a real backend. The user-visible Spanish strings
-# are tested in the Compose UI unit tests, not here.
-#
-# Update the `register-consumer.feature` together with `strings.xml`
-# and the `CompleteProfileScreen` mapping whenever the wording
-# changes.
 
 Feature: Complete consumer profile on first login
   As an authenticated consumer whose profile is incomplete
@@ -23,7 +10,6 @@ Feature: Complete consumer profile on first login
     And my app session has no profile yet
     And I am on the "Complete profile" screen
 
-  # --- Local validation: errors must never reach the backend ----------
 
   Scenario: Empty first name triggers a "first name required" error and never calls the backend
     When I leave the first name field blank
@@ -40,7 +26,6 @@ Feature: Complete consumer profile on first login
     Then I see a "last name required" error
     And no POST is sent to "/consumers"
 
-  # --- Happy path: register, persist, navigate home -------------------
 
   Scenario: Valid submission registers me and navigates home
     Given the backend will accept the registration
@@ -70,7 +55,6 @@ Feature: Complete consumer profile on first login
     And a POST is sent to "/consumers" with profile photo file id "profile-file-1"
     And the profile photo URL "https://cdn.loresuelvo.test/avatar.webp" is saved in the session
 
-  # --- Backend failures: visible errors, no navigation ----------------
 
   Scenario: A 401 from the backend clears the session and shows a "session expired" error
     Given the backend rejects the registration with status 401 and "Token expired"
@@ -106,7 +90,6 @@ Feature: Complete consumer profile on first login
     Then I see a "network" error
     And the "Continuar" button is enabled again
 
-  # --- Idempotent submit: re-entrancy must not double-fire ----------
 
   Scenario: Double-tapping "Continuar" sends only one POST
     Given the backend will accept the registration

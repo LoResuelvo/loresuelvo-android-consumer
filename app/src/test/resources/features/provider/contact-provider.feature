@@ -1,24 +1,4 @@
 # language: en
-#
-# Executable specification for the "Contact a provider from the
-# category list" user journey. The consumer taps "Contactar" on a
-# provider card, fills a short form (title + description), and the
-# submission opens the conversation with the provider — which
-# becomes the first message of that conversation.
-#
-# Scenarios 01-SRP and 02-SRP cover the modal + form + submission.
-# Scenarios 03-SRP and 04-SRP cover the follow-up flows: the
-# provider appearing as a contact, and additional messages while
-# the conversation is not yet accepted.
-#
-# Each scenario starts marked `@wip` (skipped). Each commit removes
-# the `@wip` from exactly one scenario, makes its assertions green,
-# and leaves the rest at `@wip`. When the last `@wip` is removed the
-# feature is done. The Cucumber JVM runner filters `@wip` via the
-# `cucumber.filter.tags` system property set in `app/build.gradle.kts`.
-#
-# Update this file together with `strings.xml` and the screen
-# whenever copy or behaviour changes.
 
 Feature: Contact a provider from the category list
 

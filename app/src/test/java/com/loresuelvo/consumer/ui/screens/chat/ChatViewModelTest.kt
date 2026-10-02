@@ -29,30 +29,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [ChatViewModel]. Covers the round-trip flow
- * exercised by scenario 02-DIA at fine-grained level, complementing
- * the BDD layer in `bdd/diagnosis/` which runs against the same
- * use case but with a [com.loresuelvo.consumer.bdd.diagnosis.FakeDiagnosisRepository].
- *
- * Coverage:
- *  - Initial state (no prompt, no messages, sending=false).
- *  - `onPromptChange` mirrors the field; `canSend` flips.
- *  - `onSendClick` with empty / whitespace-only prompts is a no-op.
- *  - `onSendClick` with a valid prompt:
- *      * appends the optimistic `Sender.Consumer` bubble,
- *      * flips `sending = true`,
- *      * clears the input.
- *  - Success path: messages replaced with the server's, `conversationId`
- *    updated, `sending = false`.
- *  - Failure paths (Network / Server / Unauthorized) reset `sending`
- *    while preserving the optimistic bubble; explicit error UI
- *    lands in commit 04-DIA.
- *  - Sending flag prevents double-tap (idempotent while inflight).
- *  - Retry-by-send: a second tap after a Failure.Server sends the
- *    new prompt to the server (the use case ignores the previous
- *    failure unless the caller chooses to retry with `canSend`).
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatViewModelTest {
 
@@ -427,14 +403,6 @@ class ChatViewModelTest {
 
     // ---- 01-UXUI: hide Mic when AI audio is unavailable ------------
 
-    /**
-     * The AI diagnostic chat surface must default to
-     * `audioEnabled = false` so the Mic / Stop buttons are
-     * hidden from the consumer while the AI audio feature is
-     * not available (scenario 01-UXUI). The chat-with-provider
-     * surface uses a separate [com.loresuelvo.consumer.ui.screens.chat.ConversationUiState]
-     * and keeps audio enabled regardless of this flag.
-     */
     @Test
     fun initial_state_audioEnabled_defaults_to_false_for_ai_diagnosis_chat() = runTest {
         advanceUntilIdle()

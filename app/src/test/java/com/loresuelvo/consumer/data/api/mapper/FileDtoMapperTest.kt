@@ -14,12 +14,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Test
 
-/**
- * Pins the DTO ↔ domain translation for the presign / confirm
- * file upload flow (scenario 03-MM audio path). Every mapping
- * decision that touches wire types lives here so a backend
- * shape drift is caught immediately.
- */
 class FileDtoMapperTest {
 
     @Test

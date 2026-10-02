@@ -6,12 +6,6 @@ import java.util.TimeZone
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Pure JVM unit tests for [ScheduledDateFormatter.formatScheduled].
- * US-54 scenario 12-VSP pins the `"15/10/2026 - 14:30 hs"` shape;
- * these tests guard the formatter itself against regressions
- * introduced by locale or timezone drift.
- */
 class ScheduledDateFormatterTest {
 
     @Test

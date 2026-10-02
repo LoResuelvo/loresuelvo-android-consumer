@@ -44,22 +44,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import java.io.IOException
 
-/**
- * Per-scenario world for the AI diagnostic chat BDD spec. Owns a
- * single [StandardTestDispatcher] shared by the [ChatViewModel] and
- * the observation scope, so step defs can deterministically drive
- * and inspect the UDF state without Hilt, Compose, or a backend.
- *
- * The chat screen exercises a real round-trip against a
- * [FakeDiagnosisRepository] (no Hilt). The repo's response is
- * deterministic per scenario: scenarios that need a successful
- * server reply enqueue a [Diagnosis] through
- * [seedSuccessDiagnosis]; scenarios that need a typed failure
- * (04-DIA) enqueue a [SendDiagnosisPromptOutcome.Failure].
- *
- * Cucumber instantiates this class via its zero-arg constructor on
- * a per-scenario basis (no state leaks across scenarios).
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class AiDiagnosisWorld : AutoCloseable {
 
@@ -96,14 +80,6 @@ class AiDiagnosisWorld : AutoCloseable {
      */
     private var lastTypedPrompt: String = ""
 
-    /**
-     * Marker for scenario 06-DIA: when the user selects the
-     * "Chat con IA" entry on Home, we record that the intent was
-     * issued. The matching `Then` step then asserts the route
-     * exists with the expected path. Real "the screen is visible"
-     * verification is handled by
-     * `src/androidTest/.../instrumented/diagnosis/ChatNavigationInstrumentedTest`.
-     */
     private var chatWithAiIntentIssued: Boolean = false
 
     fun startScenario() {
@@ -162,12 +138,6 @@ class AiDiagnosisWorld : AutoCloseable {
 
     fun lastTypedPromptSnapshot(): String = lastTypedPrompt
 
-    /**
-     * "se inicia una conversación con el asistente" — 01-DIA. For
-     * this scenario the optimistic append alone proves the
-     * conversation started; subsequent scenarios will assert on a
-     * server-issued `conversationId` instead.
-     */
     fun assertConversationStarted() {
         val state = lastUiState()
         if (state.messages.isEmpty()) {
@@ -285,22 +255,6 @@ class AiDiagnosisWorld : AutoCloseable {
         tapSend()
     }
 
-    /**
-     * 04-DIA + 05-DIA shared `Then veo el mensaje del asistente
-     * "{string}"`: assert the literal user-visible text is
-     * surfaced by EITHER the transient error card (04-DIA) OR the
-     * preliminary warning banner (05-DIA). The two assistants
-     * share a Gherkin step so the dispatcher checks the typed
-     * `transientError` first; if absent, falls back to the
-     * `preliminaryWarningVisible` flag.
-     *
-     * The literal text is bridged through the same
-     * [com.loresuelvo.consumer.ui.screens.chat.errorLiteral]
-     * function used by the UI for errors. The warning banner's
-     * literal lives in `R.string.chat_preliminary_warning`, so we
-     * match it against the canonical Spanish string the Gherkin
-     * phrase expects.
-     */
     fun assertAssistantMessageShows(expected: String) {
         val state = lastUiState()
 
@@ -318,7 +272,6 @@ class AiDiagnosisWorld : AutoCloseable {
         // 05-DIA path: the warning banner is visible.
         if (state.preliminaryWarningVisible) {
             // The banner text in the resource is fixed and
-            // matches the Gherkin phrase verbatim. The actual
             // i18n is verified by the locale-aware strings.xml
             // snapshots; here we assert the flag is on so the
             // banner renders the right resource.
@@ -354,13 +307,6 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
-    /**
-     * Test-only helper: trigger [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRetryClick]
-     * and advance the scheduler so the launched coroutine
-     * completes with the next queued outcome. The BDD step
-     * `And puedo volver a intentarlo` calls this through the
-     * world, mirroring the user's tap on the retry CTA.
-     */
     fun simulateRetry() {
         viewModel.onRetryClick()
         scheduler.advanceUntilIdle()
@@ -427,13 +373,6 @@ class AiDiagnosisWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * "veo una respuesta del asistente en el chat" — 02-DIA.
-     * Asserts that the assistant bubble is present in `state.messages`
-     * after the round-trip. We don't pin the exact content because
-     * the Gherkin has no `{string}` parameter; the fake's seeded
-     * content is asserted in unit tests instead.
-     */
     fun assertAssistantMessageVisible() {
         val state = lastUiState()
         if (state.sending) {
@@ -625,15 +564,6 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
-    /**
-     * 10-AIP: enqueue a `Failure.Server(500)` for the next
-     * `sendDiagnosisPrompt` call. The orchestrator populates
-     * `partiallyUploadedAttachments` + `partiallyUploadedFileIds`
-     * on the failure once it knows which uploads succeeded —
-     * the BDD step doesn't have to predict them. Pairs with
-     * [seedFileRepositorySuccess] so the upload pipeline
-     * confirms the bytes before the prompt endpoint rejects.
-     */
     fun seedSendDiagnosisPromptServerFailure() {
         fakeRepo.enqueueOutcome(
             SendDiagnosisPromptOutcome.Failure.Server(
@@ -807,29 +737,10 @@ class AiDiagnosisWorld : AutoCloseable {
 
     // ---- 01-AIP / 02-AIP image attach helpers -----------------------
 
-    /**
-     * Simulates the gallery picker returning a content URI for
-     * [filename]. The world collapses picker + launcher + reader
-     * into a single helper that drives
-     * [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onAttachMedia]
-     * with a deterministic in-memory JPEG (the picker UI is
-     * verified by the Compose acceptance test). Mirrors the
-     * discipline used by
-     * [com.loresuelvo.consumer.bdd.message.SendMediaWorld.chooseFromGallery].
-     */
     fun chooseFromGallery(filename: String = "gotera-baño.jpg") {
         stageImageAttachment(filename)
     }
 
-    /**
-     * Simulates the system camera returning a content URI for
-     * [filename]. The world collapses the camera capture +
-     * `TakePicture` launcher + reader into a single helper
-     * that drives the canonical non-Uri VM entry point. The
-     * camera UI is verified by the Compose acceptance test;
-     *  the BDD layer only pins the data behaviour for scenario
-     * 02-AIP.
-     */
     fun chooseFromCamera(filename: String = "fuga-cocina.jpg") {
         stageImageAttachment(filename)
     }
@@ -844,13 +755,6 @@ class AiDiagnosisWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Seed [fileRepository] so the three-step upload pipeline
-     * returns Success for every attachment the consumer sends.
-     * Mirrors the pattern used by [FakeDiagnosisRepository]: the
-     * world records the calls so the BDD step "se sube la
-     * imagen X" can pin what was actually uploaded.
-     */
     fun seedFileRepositorySuccess() {
         coEvery { fileRepository.presign(any()) } answers {
             val request = firstArg<PresignUploadRequest>()
@@ -900,15 +804,6 @@ class AiDiagnosisWorld : AutoCloseable {
     private val presignCalls = mutableListOf<PresignUploadRequest>()
     private val confirmCalls = mutableListOf<String>()
 
-    /**
-     * 01-AIP / 02-AIP `Then la imagen queda pendiente de envío
-     * en la conversación`: at least one [PendingMedia] is
-     * staged with a non-blank `originalName` and the send
-     * round-trip has not fired. The exact filename is pinned
-     * by the scenario's `When` step (gallery → "gotera-baño.jpg",
-     * camera → "fuga-cocina.jpg"), so the assertion only checks
-     * structural readiness.
-     */
     fun assertPendingAttachmentStaged() {
         val state = lastUiState()
         val attachments = state.pendingAttachments
@@ -932,34 +827,15 @@ class AiDiagnosisWorld : AutoCloseable {
         }
     }
 
-    /**
-     * 03-AIP / 04-AIP: stage [filenames] in order through the
-     * canonical non-Uri VM entry point so the Gherkin can list
-     * the names inline.
-     */
     fun stageImages(filenames: List<String>) {
         filenames.forEach { stageImageAttachment(it) }
     }
 
-    /**
-     * 05-AIP: stage [count] synthetic images with deterministic
-     * filenames ("imagen-1.jpg", "imagen-2.jpg", ...) so the
-     * Gherkin can stay count-driven ( "tengo 3 imágenes
-     * pendientes" ) without spelling each name.
-     */
     fun stageNImages(count: Int) {
         val names = (1..count).map { "imagen-$it.jpg" }
         stageImages(names)
     }
 
-    /**
-     * 04-AIP: discard the staged attachment whose
-     * `originalName` matches [filename]. The VM exposes the
-     * index-based variant ([com.loresuelvo.consumer.ui.screens.chat.ChatViewModel.onRemoveAttachment]);
-     * the world translates the Gherkin-friendly filename into
-     * the index so the step def stays readable. Out-of-range
-     * matches surface as a BDD error rather than crashing.
-     */
     fun removeAttachmentByFilename(filename: String) {
         val state = lastUiState()
         val index = state.pendingAttachments.indexOfFirst {
@@ -1091,13 +967,6 @@ class AiDiagnosisWorld : AutoCloseable {
                     "state=${lastUiState()}",
             )
 
-    /**
-     * 11-DIA `And`: the VM emitted
-     * [AiDiagnosisContactEvent.NavigateToConversation] with the
-     * backend's `conversation_id`. The route's `LaunchedEffect`
-     * would have forwarded this to `Route.Conversation.buildPath(...)`,
-     * but the BDD layer stops at the event emission.
-     */
     fun assertNavigatesToConversation() {
         val event = observedAiContactEvents.lastOrNull()
             ?: error(
@@ -1202,7 +1071,6 @@ class AiDiagnosisWorld : AutoCloseable {
 
     private companion object {
         // Mirrors `app/src/main/res/values/strings.xml#chat_preliminary_warning`
-        // for the BDD bridge — see [assertAssistantMessageShows].
         const val PRELIMINARY_WARNING_LITERAL: String =
             "Las respuestas brindadas son una orientación preliminar y no constituyen un diagnóstico técnico definitivo"
 

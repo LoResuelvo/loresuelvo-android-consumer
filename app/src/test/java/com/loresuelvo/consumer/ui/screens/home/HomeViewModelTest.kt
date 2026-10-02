@@ -32,27 +32,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [HomeViewModel] covering the US-54 scenario
- * 01-VSP ("pending proposals") and 02-VSP ("upcoming jobs")
- * branches. Each surface — categories, pending proposals,
- * upcoming proposals — renders independently:
- *
- *  - The global state — Loading / Ready / Error — is driven by
- *    the categories round trip (it's the action without which
- *    the Home dashboard is not usable).
- *  - The two proposals sub-states land on their own Loading /
- *    Ready / Error without disturbing the categories outcome.
- *
- * The VM is constructed **inside** each test (after `coEvery`
- * stubs the round trips) for the same reason as
- * `MessagesListViewModelTest`: the VM's `init` launches three
- * parallel coroutines; with `StandardTestDispatcher` they sit on
- * the scheduler until the test pumps. If the VM were built in
- * `@Before` (before the stubs), the coroutines would dispatch
- * and blow up on the first unstubbed call. `UnconfinedTestDispatcher`
- * runs them eagerly inside the `runTest` body.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
@@ -63,7 +42,6 @@ class HomeViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        // Default stub: every US-54 test sees an empty list of
         // turnos unless it explicitly overrides (no test does
         // today — the new sub-state is exercised by the
         // dedicated `loadTurnos_*` tests below). Mirrors the
@@ -124,7 +102,6 @@ class HomeViewModelTest {
         createdOnEpochMillis = 1_789_200_000_000L,
     )
 
-    // ---- Scenario 01-VSP: pending proposals ----------------------
 
     @Test
     fun categories_and_pending_proposals_both_succeed_lands_in_Ready() = runTest {
@@ -235,7 +212,6 @@ class HomeViewModelTest {
         )
     }
 
-    // ---- Scenario 02-VSP: upcoming jobs ---------------------------
 
     @Test
     fun categories_and_upcoming_proposals_both_succeed_lands_in_Ready() = runTest {

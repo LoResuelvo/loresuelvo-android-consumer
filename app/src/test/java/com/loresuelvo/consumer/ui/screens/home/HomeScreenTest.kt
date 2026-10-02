@@ -35,24 +35,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI tests for the US-54 bug fix that reconnects the
- * Home "Ver Solicitud" CTA to the proposal-detail bottom sheet.
- *
- * Pins:
- *  - **Without detail state**: tapping "Ver Solicitud" on a
- *    `ProposalCard` fires `onProposalClicked(proposalId)`. The
- *    host (`HomeRoute`) wires that callback to a Hilt-scoped
- *    `ProposalDetailViewModel.load(id)`; the test observes the
- *    callback directly because the Compose rule does not
- *    exercise Hilt.
- *  - **Without the fix**: the host used to pass the default
- *    `{}` no-op; the `assertEquals` would fail with
- *    "expected: <proposalId>, was: <null>".
- *
- * Locale pinned to `es-rAR` so the screen resolves the
- * production Spanish copy.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class HomeScreenTest {
@@ -313,12 +295,6 @@ class HomeScreenTest {
         scheduledOnEpochMillis = 1_788_000_000_000L,
     )
 
-    /**
-     * US-27 follow-up: the "Pagos pendientes" section renders
-     * when the awaiting-payment sub-state has at least one item.
-     * The row carries `HOME_PENDING_PAYMENTS_ROW_TAG` so the
-     * instrumented suite can target each card.
-     */
     @Test
     fun pending_payments_section_renders_when_at_least_one_awaiting_turno() {
         composeTestRule.setContent {
@@ -357,12 +333,6 @@ class HomeScreenTest {
             .assertCountEquals(1)
     }
 
-    /**
-     * US-27 follow-up: the section is HIDDEN entirely (no
-     * title, no row, no placeholder) when the awaiting-payment
-     * sub-state is empty / loading / errored. The dashboard
-     * should never render an empty "Pending payments" block.
-     */
     @Test
     fun pending_payments_section_hidden_when_awaiting_turnos_empty() {
         composeTestRule.setContent {

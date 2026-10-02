@@ -9,32 +9,10 @@ import io.cucumber.java.en.When
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
-/**
- * Real step implementations for the US-54 "Mis Servicios" BDD
- * specs in `features/provider/visualize-service-proposal.feature`.
- *
- * Today only scenario 03-VSP is green ("ver todas las propuestas
- * en Mis Servicios"). Each subsequent scenario — order
- * chronologically (04-VSP), filter by status (05-VSP / 06-VSP /
- * 07-VSP) — will gain its step defs here as it lands.
- *
- * The Background steps ("sesión iniciada", "propuestas recibidas")
- * live on [VisualizeServiceProposalSteps] and seed the Home world.
- * That world is the one driving the Home dashboard scenarios
- * (01-VSP / 02-VSP); MisServicios has its own world seeded from
- * the `When` step below so we avoid cross-world coupling and
- * duplicate step definitions against the Background glue.
- *
- * At the JVM BDD layer "el usuario accede a Mis Servicios" maps
- * to "the MisServiciosViewModel mounts against the seeded repo";
- * the navigation graph itself is exercised by the
- * `MisServiciosScreenInstrumentedTest` on a real device.
- */
 class MisServiciosSteps {
 
     private val world: MisServiciosWorld = MisServiciosWorld()
 
-    // ---- Scenario 03-VSP --------------------------------------
 
     @When("accede a Mis Servicios")
     fun accedeAMisServicios() {
@@ -42,7 +20,6 @@ class MisServiciosSteps {
         // step mounts the MisServiciosViewModel against the
         // seeded repo so the Then assertion observes its state.
         // The seed mirrors the Home world's seed (mixed statuses)
-        // because scenario 03-VSP asserts every status is present.
         world.startScenario()
         world.seedProposalsReceived()
         world.openMisServicios()
@@ -64,7 +41,6 @@ class MisServiciosSteps {
         )
         // Pin the explicit breadth: every status is present in
         // the rendered list (the screen-level filter chips on
-        // top of this list are scenarios 05-VSP / 06-VSP / 07-VSP).
         val statuses = items.map { it.status }.toSet()
         assertEquals(
             "expected the seeded mixed-status set, was $statuses",
@@ -77,7 +53,6 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 04-VSP --------------------------------------
 
     @Given("que el usuario tiene varias propuestas de servicio con fechas distintas")
     fun queElUsuarioTieneVariasPropuestasDeServicioConFechasDistintas() {
@@ -110,7 +85,6 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 05-VSP --------------------------------------
 
     @Given("que el usuario tiene propuestas en diferentes estados")
     fun queElUsuarioTienePropuestasEnDiferentesEstados() {
@@ -127,7 +101,6 @@ class MisServiciosSteps {
     @When("selecciona el filtro de propuestas que requieren su atención")
     fun seleccionaElFiltroDePropuestasQueRequierenSuAtencion() {
         // The "requieren atención" wording maps to the Pending
-        // status filter (US-54 scenario 05-VSP). The VM routes
         // through `GetPendingServiceProposalsUseCase`.
         world.selectFilter(ServiceProposalStatus.Pending)
     }
@@ -157,15 +130,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 06-VSP --------------------------------------
 
-    /**
-     * "selecciona el filtro de propuestas aceptadas" — scenario 06-VSP.
-     * Routes through `GetAcceptedServiceProposalsUseCase`; the fake
-     * repo's mixed-status seed (set up by [seedProposalsReceived])
-     * carries exactly one `Accepted` entry (`id="11"`) so the
-     * narrower result is observable.
-     */
     @When("selecciona el filtro de propuestas aceptadas")
     fun seleccionaElFiltroDePropuestasAceptadas() {
         world.selectFilter(ServiceProposalStatus.Accepted)
@@ -196,15 +161,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 07-VSP --------------------------------------
 
-    /**
-     * "selecciona el filtro de propuestas rechazadas" — scenario 07-VSP.
-     * Routes through `GetRejectedServiceProposalsUseCase`; the fake
-     * repo's mixed-status seed (set up by [seedProposalsReceived])
-     * carries exactly one `Rejected` entry (`id="12"`) so the
-     * narrower result is observable.
-     */
     @When("selecciona el filtro de propuestas rechazadas")
     fun seleccionaElFiltroDePropuestasRechazadas() {
         world.selectFilter(ServiceProposalStatus.Rejected)
@@ -235,28 +192,13 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 17-VSP --------------------------------------
 
-    /**
-     * "que el usuario no tiene propuestas de servicio" — scenario 17-VSP.
-     * Seeds an empty list into the fake repo so the screen renders
-     * its empty-state copy. The VM is started (and `load()` fired)
-     * lazily from the `When` step so the `init` block doesn't run
-     * against the default empty seed before the explicit empty
-     * seed is in place.
-     */
     @Given("que el usuario no tiene propuestas de servicio")
     fun queElUsuarioNoTienePropuestasDeServicio() {
         world.startScenario()
         world.seedProposalsEmpty()
     }
 
-    /**
-     * "accede a la sección correspondiente" — scenario 17-VSP. The
-     * MisServiciosViewModel is already mounted by [startScenario];
-     * this step is a no-op at the VM level and exists so the
-     * Gherkin flow reads naturally.
-     */
     @When("accede a la sección correspondiente")
     fun accedeALaSeccionCorrespondiente() {
         world.openMisServicios()
@@ -278,28 +220,13 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 18-VSP --------------------------------------
 
-    /**
-     * "no tiene propuestas correspondientes al estado seleccionado" —
-     * scenario 18-VSP. Seeds two Pending + one Accepted with zero
-     * Rejected so the next filter tap on `Rejected` lands on an
-     * empty result.
-     */
     @And("no tiene propuestas correspondientes al estado seleccionado")
     fun noTienePropuestasCorrespondientesAlEstadoSeleccionado() {
         world.startScenario()
         world.seedProposalsPendingAndAcceptedOnly()
     }
 
-    /**
-     * "selecciona dicho estado" — scenario 18-VSP. The Gherkin
-     * text is intentionally generic because the `And` step does
-     * not pin a status. The seed has zero `Rejected` proposals, so
-     * the chip tap below drives the only filter for which the
-     * narrowed result is empty. If a future scenario needs a
-     * different status here, the seed and the chip should match.
-     */
     @When("selecciona dicho estado")
     fun seleccionaDichoEstado() {
         world.selectFilter(ServiceProposalStatus.Rejected)
@@ -326,27 +253,13 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 09-VSP --------------------------------------
 
-    /**
-     * "que el prestador tiene una foto de perfil" — scenario 09-VSP.
-     * Seeds a single proposal whose counterpart carries a
-     * non-null `profilePhotoUrl`. The detail VM resolves the
-     * proposal into `Ready(proposal)` so the `Then` step can read
-     * the URL straight off the state.
-     */
     @Given("que el prestador tiene una foto de perfil")
     fun queElPrestadorTieneUnaFotoDePerfil() {
         world.startScenario()
         world.seedProposalWithPhoto()
     }
 
-    /**
-     * "el usuario consulta el detalle de su propuesta" — scenario 09-VSP.
-     * At the JVM BDD layer "querying the detail" maps to feeding
-     * the detail VM with the chosen proposalId; the modal bottom
-     * sheet itself is exercised by the Compose instrumented test.
-     */
     @When("el usuario consulta el detalle de su propuesta")
     fun elUsuarioConsultaElDetalleDeSuPropuesta() {
         world.openProposalDetail("40")
@@ -368,15 +281,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 10-VSP --------------------------------------
 
-    /**
-     * "que el prestador no tiene una foto de perfil" — scenario 10-VSP.
-     * Seeds a single proposal whose counterpart carries a `null`
-     * `profilePhotoUrl`. The detail VM resolves the proposal into
-     * `Ready(proposal)` so the `Then` step can pin the null URL
-     * that backs the avatar fallback.
-     */
     @Given("que el prestador no tiene una foto de perfil")
     fun queElPrestadorNoTieneUnaFotoDePerfil() {
         world.startScenario()
@@ -400,16 +305,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 15-VSP --------------------------------------
 
-    /**
-     * "que existe una propuesta de servicio con una duración
-     * estimada de {duracion}" — scenario 15-VSP (Scenario
-     * Outline). The human-readable text is parsed by
-     * [MisServiciosWorld.parseDurationMinutes] into the minutes
-     * count the seed carries; the Examples table maps each
-     * input to the [EstimatedDurationFormatter]'s output.
-     */
     @Given("que existe una propuesta de servicio con una duración estimada de {string}")
     fun queExisteUnaPropuestaDeServicioConUnaDuracionEstimadaDe(duracion: String) {
         world.startScenario()
@@ -438,14 +334,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 12-VSP --------------------------------------
 
-    /**
-     * "que existe una propuesta de servicio para el 15 de octubre
-     * de 2026 a las 14:30" — scenario 12-VSP. The seed carries
-     * `scheduledOnEpochMillis = 1_792_074_600_000L` which the
-     * [ScheduledDateFormatter] renders as `"15/10/2026 - 14:30 hs"`.
-     */
     @Given("que existe una propuesta de servicio para el 15 de octubre de 2026 a las 14:30")
     fun queExisteUnaPropuestaDeServicioParaEl15DeOctubreDe2026ALas1430() {
         world.startScenario()
@@ -468,14 +357,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 11-VSP --------------------------------------
 
-    /**
-     * "que existe una propuesta de servicio por un monto de 15000
-     * pesos" — scenario 11-VSP. The seed carries
-     * `amountCents = 1_500_000L` so the [CurrencyFormatter]
-     * rounds it to `"$ 15.000"`.
-     */
     @Given("que existe una propuesta de servicio por un monto de 15000 pesos")
     fun queExisteUnaPropuestaDeServicioPorUnMontoDe15000Pesos() {
         world.startScenario()
@@ -498,15 +380,7 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 13-VSP --------------------------------------
 
-    /**
-     * "que el usuario está consultando una propuesta de servicio" —
-     * scenario 13-VSP. The consumer has tapped the proposal card
-     * and the detail VM is in `Ready`. Reuses the standard seed
-     * (id="10", conversationId="1000") so the conversation id
-     * surfaced by the CTA is deterministic.
-     */
     @Given("que el usuario está consultando una propuesta de servicio")
     fun queElUsuarioEstaConsultandoUnaPropuestaDeServicio() {
         world.startScenario()
@@ -514,14 +388,6 @@ class MisServiciosSteps {
         world.openProposalDetail("10")
     }
 
-    /**
-     * "selecciona 'Ver conversación'" — scenario 13-VSP. Mirrors
-     * the production [ProposalDetailScreen] behaviour: when the
-     * consumer taps the CTA, the screen fires `onViewConversation`
-     * with the proposal's `conversationId`. The world captures
-     * the invocation so the `Then` step can pin the navigation
-     * intent.
-     */
     @When("^selecciona \"Ver conversación\"$")
     fun seleccionaVerConversacion() {
         world.tapViewConversation()
@@ -538,7 +404,6 @@ class MisServiciosSteps {
         )
     }
 
-    // ---- Scenario 08-VSP --------------------------------------
 
     @Given("que existe una propuesta de servicio")
     fun queExisteUnaPropuestaDeServicio() {
@@ -552,7 +417,6 @@ class MisServiciosSteps {
 
     @When("el usuario accede a su detalle")
     fun elUsuarioAccedeASuDetalle() {
-        // US-54 scenario 08-VSP: at the JVM BDD layer "accessing
         // the detail" maps to "the host dispatches the chosen
         // proposalId into the detail VM" — the modal bottom sheet
         // is exercised by the Compose instrumented test.

@@ -25,21 +25,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI tests for [TurnosScreen].
- *
- * Landed incrementally per scenario:
- *  - 01-VT → `loading_state_renders_top_app_bar_and_spinner`
- *  - 02-VT → `ready_state_with_items_renders_one_card_per_turno`
- *  - 03-VT → `ready_state_with_empty_list_renders_empty_state_copy`
- *
- * Error branches live in `TurnosErrorStateTest` (scenarios
- * 13-VT / 14-VT) — kept in a separate file so the failure
- * surface doesn't drown the happy-path tests.
- *
- * Locale is pinned to `es-rAR` so the localised copy matches
- * the `values/strings.xml` strings the production app ships.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class TurnosScreenTest {

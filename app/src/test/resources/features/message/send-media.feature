@@ -1,24 +1,4 @@
 # language: es
-#
-# Especificación ejecutable para la historia de usuario "Enviar
-# fotos o audios en el chat". Cubre los criterios de aceptación:
-# adjuntar imágenes desde la galería y la cámara del dispositivo,
-# grabar y enviar audios, previsualizar los archivos antes de
-# enviarlos, mostrar correctamente las imágenes y audios enviados
-# dentro de la conversación, permitir visualizar/descargar los
-# archivos recibidos, e informar errores de carga o envío.
-#
-# Cada escenario arranca marcado como `@wip` (salteado). Cada commit
-# remueve el `@wip` de exactamente un escenario, deja sus
-# aserciones en verde y conserva el resto en `@wip`. Cuando se
-# remueve el último `@wip`, la feature está completa. El runner de
-# Cucumber JVM filtra `@wip` mediante la system property
-# `cucumber.filter.tags` configurada en `app/build.gradle.kts`.
-#
-# Actualizar este archivo junto con `strings.xml` y las pantallas
-# cada vez que cambia el copy o el comportamiento visible.
-# Los textos visibles en español se asertan en los acceptance tests
-# de Compose, no aquí.
 
 Característica: Enviar fotos o audios en el chat
 

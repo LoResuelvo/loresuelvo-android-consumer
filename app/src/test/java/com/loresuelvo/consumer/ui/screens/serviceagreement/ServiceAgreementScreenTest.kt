@@ -23,24 +23,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI tests for the US-21 service-agreement confirmation
- * dialog. The dialog itself is UI-only state inside the
- * composable (a `remember { mutableStateOf(false) }`), so the JVM
- * BDD world cannot reach it. These tests run the screen under
- * Robolectric so they exercise the actual `AlertDialog` dismissal
- * flow (which is the user-visible behaviour the JVM BDD asserts
- * is satisfied by the implementation).
- *
- * The Compose rule here does NOT bring up the production Hilt
- * graph — we render `ServiceAgreementScreen` directly with a
- * `Ready` state. The VM-level transitions are covered by the
- * BDD world; this file is intentionally scoped to the dialog's
- * open/close semantics.
- *
- * Locale pinned to `es-rAR` so the test resolves the production
- * Spanish copy (`Sí, confirmar` / `No, cancelar`).
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class ServiceAgreementScreenTest {

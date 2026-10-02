@@ -27,25 +27,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the US-21 "Confirmar acuerdo de servicio"
- * BDD specs (`features/work_order/complete-service-payment.feature`).
- * Owns two fakes:
- *  - `FakeServiceProposalRepository` returning a single pending
- *    proposal.
- *  - `FakeCheckoutSessionRepository` returning a synthetic
- *    checkout session (URL + payment intent id) on the first
- *    call, configurable to return any status on subsequent calls
- *    so the payment-result polling loop can be driven.
- *  - `FakePaymentIntentRepository` returning a configurable
- *    [PaymentIntentStatus] (used to flip from `processing` to
- *    `paid` / `rejected` mid-scenario).
- *
- * The world also owns a [TestCoroutineScheduler] + [Dispatchers.setMain]
- * so the VMs run on the test dispatcher and the
- * `PaymentResultViewModel.startPolling(...)` loop is driven by
- * `scheduler.advanceTimeBy(...)` from the step defs.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class CompleteServicePaymentWorld : AutoCloseable {
 
@@ -66,9 +47,6 @@ class CompleteServicePaymentWorld : AutoCloseable {
     private val observedEvents: MutableList<Any> = mutableListOf()
     private var started: Boolean = false
 
-    /** The active `payment_intent_id` produced by the fake checkout
-     *  repository. Read by the polling scenarios to know which id
-     *  to mutate when the simulated MP callback arrives. */
     var lastPaymentIntentId: String = ""
         private set
 
@@ -201,11 +179,6 @@ class CompleteServicePaymentWorld : AutoCloseable {
         checkoutRepo.nextOutcome = outcome
     }
 
-    /**
-     * Snapshot the current list of proposals as the fake repository
-     * serves them. Used by the BDD to assert the post-refresh state
-     * after [markProposalAsAccepted] has flipped the status.
-     */
     fun snapshotProposal(id: String): ServiceProposal? {
         return serviceProposalRepo.snapshot().firstOrNull { it.id == id }
     }
@@ -305,9 +278,6 @@ class CompleteServicePaymentWorld : AutoCloseable {
         override suspend fun startWorkOrderCheckout(
             workOrderId: Int,
         ): CheckoutSessionOutcome {
-            // US-27: the work-order balance flow is exercised by
-            // scenario 09-VTD in `visualize-turns-detail.feature`;
-            // the existing booking-deposit BDD does not need this
             // path so the fake delegates to the proposal checkout
             // with a `0` proposal id to keep the existing
             // assertions green.

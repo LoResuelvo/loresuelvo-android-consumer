@@ -1,7 +1,4 @@
 # language: es
-#
-# Especificación de US-50.2 para selección y preview de video.
-# Se publica primero como @wip y se desmarca al validar la UI y el VM.
 
 Característica: Seleccionar y previsualizar videos en el chat
 

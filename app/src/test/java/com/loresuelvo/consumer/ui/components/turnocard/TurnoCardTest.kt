@@ -21,18 +21,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose UI tests for [TurnoCard].
- *
- * Landed incrementally per scenario:
- *  - 04-VT → `renders_every_pinned_field` (name, photo,
- *    description, amount, date, time).
- *  - 05-VT → `status_badge_renders_per_turno_status` (Pending /
- *    Confirmed / Finished / Cancelled).
- *
- * Locale is pinned to `es-rAR` so the localised copy matches
- * the `values/strings.xml` strings the production app ships.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class TurnoCardTest {
@@ -78,14 +66,6 @@ class TurnoCardTest {
             .assertCountEquals(1)
     }
 
-    /**
-     * US-27 follow-up: the "Ver detalles" CTA renders in the
-     * bottom-right corner of the card, on the same row as the
-     * scheduled date. `Arrangement.SpaceBetween` parks the CTA
-     * past the date; the assertion below verifies the layout
-     * invariant so a future refactor that re-stacks the column
-     * breaks this test instead of silently moving the CTA.
-     */
     @Test
     fun details_cta_renders_in_bottom_right_next_to_the_date() {
         composeTestRule.setContent {

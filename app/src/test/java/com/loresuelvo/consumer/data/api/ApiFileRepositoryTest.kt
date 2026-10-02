@@ -25,23 +25,6 @@ import retrofit2.Retrofit
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/**
- * End-to-end coverage of [ApiFileRepository] against a
- * [MockWebServer] emulating the backend's presign / confirm
- * endpoints plus a stub [FileUploader] for the storage PUT.
- *
- * Pins:
- *  - `POST /files/presign` body shape (`original_name`,
- *    `mime_type`, `size_bytes`, `purpose` snake_case) — the
- *    backend validates `purpose` against its `UploadPolicy`
- *    table, so the wire constant matters.
- *  - Response mapping to `PresignUploadOutcome.Success` /
- *    `Failure.Network / Server / Unauthorized`.
- *  - `POST /files/{fileID}/confirm` body echoes the presign
- *    response (`key`, `mime_type`, `size_bytes`).
- *  - Response mapping including the nested `audio.{codec,
- *    duration_seconds}` block (scenario 03-MM).
- */
 class ApiFileRepositoryTest {
 
     private lateinit var server: MockWebServer

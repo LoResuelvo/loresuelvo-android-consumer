@@ -14,20 +14,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for [GetPendingServiceProposalsUseCase].
- *
- * The use case is a thin orchestrator: it must delegate to the
- * [ServiceProposalRepository] port and filter the returned list
- * down to [ServiceProposalStatus.Pending] entries, propagating
- * any failure branch verbatim. It must NOT swallow failures into
- * an empty `Success`.
- *
- * The BDD scenario 01-VSP asserts the "filter to pending" branch
- * through the ViewModel; this test pins the use case contract in
- * isolation so a regression in the VM does not mask a use-case
- * regression (and vice versa).
- */
 class GetPendingServiceProposalsUseCaseTest {
 
     private val repository = mockk<ServiceProposalRepository>()

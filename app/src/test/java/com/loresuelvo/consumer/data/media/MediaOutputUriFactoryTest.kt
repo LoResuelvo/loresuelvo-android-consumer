@@ -12,37 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Unit test for [MediaOutputUriFactory]. Runs under Robolectric so
- * `Context.cacheDir` / `Context.packageName` paths are real.
- *
- * Note: we don't pin the actual `FileProvider.getUriForFile(...)`
- * round-trip here — Robolectric's sandbox `FileProvider`
- * implementation can't reconcile its synthetic cache dir
- * (`/tmp/robolectric-.../cache`) with the `file_paths.xml`
- * declaration merged from the production manifest, and throws
- * `IllegalArgumentException: Failed to find configured root`.
- * The provider resolution is covered by:
- *  - `make build` — the `AndroidManifest.xml` merge pins the
- *    authority and the `cache-path` declaration;
- *  - the `connectedDevDebugAndroidTest` e2e suite — a real
- *    device launches the camera and writes to the URI.
- *
- * What we DO pin here:
- *  - the camera cache subdirectory is created on demand
- *    (`mkdirs` against a fresh install);
- *  - the URI's last path segment follows the
- *    `capture_<epoch>.jpg` convention so two captures within
- *    the same millisecond never collide;
- *  - the authority and package-name suffix stay in sync with
- *    the manifest declaration.
- *
- * The factory body is short enough that a single
- * happy-path test covers the contract; if a future scenario
- * requires splitting the factory into a strategy interface
- * (so the integration with `FileProvider` can be swapped for a
- * fake in unit tests) this file is the place to start.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class MediaOutputUriFactoryTest {

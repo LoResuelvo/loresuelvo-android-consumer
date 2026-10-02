@@ -7,26 +7,6 @@ import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Hilt-friendly fake for the AI diagnostic chat repository. Used
- * by every `@HiltAndroidTest` that uninstalls
- * `DiagnosisRepository` binding is satisfied without dragging in
- * the production Retrofit-typed [com.loresuelvo.consumer.data.api.ApiDiagnosisRepository].
- *
- * The fake never returns a successful response: the test classes
- * that wire it (e.g. `CompleteProfileScreenInstrumentedTest`,
- * `WelcomeCategoriesInstrumentedTest`, `ProfessionalsInstrumentedTest`,
- * `RealBackendFlowE2ETest`, `ChatNavigationInstrumentedTest`) never
- * navigate to the chat screen, so the `sendPrompt(...)` call
- * never runs. The failure-shaped default is the defensive
- * equivalent of [com.loresuelvo.consumer.bdd.diagnosis.FakeDiagnosisRepository]:
- * if the test ever exercises it by mistake, the chat's `ChatErrorCard`
- * shows up rather than crashing the process.
- *
- * If a future acceptance test needs the full conversation flow,
- * extend this fake with a configurable response — mirroring the
- * pattern in the JVM BDD layer.
- */
 @Singleton
 class FakeDiagnosisRepository @Inject constructor() : DiagnosisRepository {
 

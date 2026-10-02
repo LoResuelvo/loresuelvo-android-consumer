@@ -568,18 +568,6 @@ class ApiConversationRepositoryIntegrationTest {
     }
 }
 
-/**
- * Test fake for [FileRepository] used by this integration test:
- * `ApiConversationRepository` requires the dependency today but
- * the text-only scenarios here never exercise the media path, so
- * the fake short-circuits every method to `Server(0, …)` and
- * surfaces the call for any future test that wants to assert
- * against it.
- *
- * Media-path coverage lives in
- * `SendMediaMessageUseCaseTest` (BDD JVM) and the
- * `MediaMessageIntegrationTest` end-to-end tests.
- */
 private class NoopFileRepository : FileRepository {
     override suspend fun presign(
         request: PresignUploadRequest,

@@ -15,26 +15,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the contact-provider BDD specs. Mirrors
- * the conventions of `SearchProvidersCucumberWorld` and
- * `AiDiagnosisWorld`: a `StandardTestDispatcher` exposes the
- * [ContactProviderViewModel]'s state deterministically, and the
- * world retains the observed state + events so the step defs
- * can assert on the full history.
- *
- * The world also owns a [FakeJobRequestRepository] so the BDD
- * can:
- *  - enqueue the next outcome (success with a configurable
- *    `conversationId`, or a typed failure);
- *  - inspect the `CreateJobRequestData` payload the VM forwarded
- *    to the repository on the last call.
- *
- * The world is **lazily initialized** on the first VM action —
- * Cucumber JVM creates a fresh `ContactProviderSteps` instance
- * per scenario, so the `startScenario` flag is reset at the
- * start of each scenario.
- */
 class ContactProviderWorld : AutoCloseable {
 
     private val scheduler = TestCoroutineScheduler()
@@ -50,12 +30,6 @@ class ContactProviderWorld : AutoCloseable {
     private val observedUiStates = mutableListOf<ContactProviderUiState>()
     private val observedEvents = mutableListOf<ContactProviderEvent>()
 
-    /**
-     * Hard-coded provider registry. The BDD's Background uses two
-     * providers (Juan Pérez and Pedro Dib) for Plomería; we keep
-     * the same shape here so the contact flow can look up the
-     * provider by full name in the `When` step.
-     */
     private val knownProviders: Map<String, Provider> = mapOf(
         "Juan Pérez" to Provider(
             id = 1,
@@ -122,11 +96,6 @@ class ContactProviderWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Convenience used by Scenario 02-SRP: pre-loads a successful
-     * outcome so the BDD step can submit the form and observe the
-     * navigation event without explicit outcome plumbing.
-     */
     fun enqueueSuccess(conversationId: String = "fake-conv-1") {
         fakeRepo.enqueueSuccess(conversationId)
     }

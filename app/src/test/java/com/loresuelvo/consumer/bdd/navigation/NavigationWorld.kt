@@ -4,7 +4,6 @@ import com.loresuelvo.consumer.ui.components.bottomnav.BottomDestination
 import com.loresuelvo.consumer.ui.navigation.Route
 import com.loresuelvo.consumer.ui.navigation.paymentResultPathFor
 
-/** Small observable model for the navigation acceptance scenarios. */
 class NavigationWorld {
 
     var currentRoute: String = Route.Home.path

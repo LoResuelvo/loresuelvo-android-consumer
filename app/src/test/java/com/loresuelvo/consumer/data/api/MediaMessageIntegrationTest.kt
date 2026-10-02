@@ -21,37 +21,6 @@ import org.junit.Test
 import retrofit2.Retrofit
 import java.util.concurrent.TimeUnit
 
-/**
- * End-to-end coverage of the consumer ↔ provider chat
- * `sendMediaMessage` flow for both audio (scenario 03-MM) and
- * image (Phase 2). Drives `ApiConversationRepository
- * .sendMediaMessage(...)` against two `MockWebServer`s:
- *
- *  - the **backend** server (presign / confirm /
- *    `POST /conversations/{id}/messages`)
- *  - the **storage** server (the pre-signed `PUT` the
- *    presign response points at)
- *
- * Pins the wire contract documented in
- * `openapi/paths/files-presign.yaml`,
- * `openapi/paths/file-confirm.yaml` and
- * `openapi/paths/conversation-messages.yaml`, plus the Go
- * backend's reference flows in `features/steps/send_audio_test.go`
- * `consumerSentAudioInActiveChat` and `attach_message_images_test.go`
- * `consumerAttachesImagesToMessage`.
- *
- * Critical invariants:
- *  - presign body carries the right `purpose` per subtype
- *    (`conversation_message_audio` vs `conversation_message_image`).
- *  - The upload URL + headers from the presign response go
- *    verbatim to the storage `PUT` (no Auth0 token).
- *  - The confirmed file id round-trips through the JSON field
- *    of the final `POST /messages` (`audio_file_id` for audio,
- *    `image_file_ids: [<uuid>]` for image).
- *  - `content` is empty on the final message (audio is
- *    exclusive — backend's
- *    `internal/domain/conversation/service.go:113-115`).
- */
 class MediaMessageIntegrationTest {
 
     private lateinit var backend: MockWebServer

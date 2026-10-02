@@ -9,17 +9,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * Unit tests for [MisServiciosUiState]. The state carries a
- * `selectedStatusFilter` value across every branch so the filter
- * chips can stay highlighted even during Loading / Error (no
- * visual flicker when the consumer taps a chip and the round trip
- * is in flight).
- *
- * `null` means "Todos" — the default filter. The VM starts with
- * `null` so the 03-VSP / 04-VSP scenarios (which never tap a
- * chip) keep observing every proposal regardless of status.
- */
 class MisServiciosUiStateTest {
 
     private fun proposal(id: String): ServiceProposal = ServiceProposal(

@@ -22,18 +22,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for `features/fixes/ux_ui_fixes.feature`.
- * Owns a single [StandardTestDispatcher] so step defs can
- * inspect the UDF state of both the AI chat VM (scenario 01-UXUI)
- * and the categories VM (scenario 02-UXUI) deterministically
- * without Hilt, Compose, or a backend.
- *
- * Scenarios that don't need one of the VMs simply ignore the
- * other surface — there's no cross-coupling between them. Each
- * scenario gets its own world instance (Cucumber's default), so
- * state doesn't leak across scenarios.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class UxUiFixesWorld : AutoCloseable {
 
@@ -83,7 +71,6 @@ class UxUiFixesWorld : AutoCloseable {
     private var categoriesStarted = false
     private var chatStarted = false
 
-    /** Boots the AI chat VM (scenario 01-UXUI). */
     fun startScenario() {
         if (chatStarted) return
         chatStarted = true
@@ -100,7 +87,6 @@ class UxUiFixesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /** Boots the all-categories VM (scenario 02-UXUI). */
     fun startCategoriesScenario() {
         if (categoriesStarted) return
         categoriesStarted = true
@@ -113,7 +99,6 @@ class UxUiFixesWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /** Boots the contact-provider VM (scenario 03-UXUI). */
     fun startContactScenario() {
         if (contactStarted) return
         contactStarted = true
@@ -160,7 +145,6 @@ class UxUiFixesWorld : AutoCloseable {
 
     // ---- 08-UXUI helpers ----------------------------------------
 
-    /** Boots the messages list VM (scenario 08-UXUI smoke test). */
     fun startMessagesListScenario() {
         if (messagesStarted) return
         messagesStarted = true
@@ -179,13 +163,6 @@ class UxUiFixesWorld : AutoCloseable {
         startMessagesListScenario()
     }
 
-    /**
-     * Smoke-test assertion: the messages list VM landed on
-     * [MessagesListUiState.Ready]. The dev-side visual sweep on
-     * the device is the authoritative check for the actual
-     * rendering (status bar / nav bar / IME insets); this BDD
-     * step confirms the renderable surface exists.
-     */
     fun assertMessagesListRendered() {
         val state = observedMessagesListStates.lastOrNull()
             ?: error("MessagesListViewModel emitted no state — startMessagesListScenario was never called")

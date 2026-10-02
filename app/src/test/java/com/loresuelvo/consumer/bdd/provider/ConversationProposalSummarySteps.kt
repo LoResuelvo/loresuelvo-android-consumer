@@ -9,39 +9,17 @@ import io.cucumber.java.en.When
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
-/**
- * Real step implementations for the US-54 BDD spec
- * `14-VSP Consultar el resumen de la propuesta desde la
- * conversación`. The [ConversationProposalSummaryWorld] drives
- * the [com.loresuelvo.consumer.ui.screens.chat.ConversationProposalSummaryViewModel]
- * with a fake repo whose only proposal is linked to the seeded
- * `conversationId`, so the four pinned fields the scenario asserts
- * (monto, fecha, descripción, estado) are observable end-to-end
- * without depending on Hilt, Compose, or a backend.
- */
 class ConversationProposalSummarySteps {
 
     private val world: ConversationProposalSummaryWorld = ConversationProposalSummaryWorld()
 
-    // ---- Scenario 14-VSP --------------------------------------
 
-    /**
-     * "que existe una conversación relacionada con una propuesta
-     * de servicio" — scenario 14-VSP. The world seeds a single
-     * proposal whose `conversationId = "1000"` so the VM's
-     * `load("1000")` round trip lands on the proposal.
-     */
     @Given("que existe una conversación relacionada con una propuesta de servicio")
     fun queExisteUnaConversacionRelacionadaConUnaPropuestaDeServicio() {
         world.startScenario()
         world.seedProposalLinkedToConversation()
     }
 
-    /**
-     * "el usuario accede a la conversación" — scenario 14-VSP.
-     * Drives the VM's `load(conversationId)` so the `Then`
-     * assertions can observe the resolved state.
-     */
     @When("el usuario accede a la conversación")
     fun elUsuarioAccedeALaConversacion() {
         world.openConversation()

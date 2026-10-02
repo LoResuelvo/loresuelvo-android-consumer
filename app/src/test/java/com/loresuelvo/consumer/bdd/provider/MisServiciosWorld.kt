@@ -25,24 +25,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import io.mockk.mockk
 
-/**
- * Per-scenario world for the US-54 "Mis Servicios" BDD specs
- * (scenarios 03-VSP onwards). Owns a [StandardTestDispatcher]
- * shared by the [MisServiciosViewModel] and the observation scope
- * so step defs can deterministically drive the VM (without Hilt,
- * Compose, or a backend) and inspect the resulting state.
- *
- * Only scenario 03-VSP is implemented today; later scenarios in
- * this feature (filter by status, ordering, etc.) will gain their
- * own step defs but reuse this world because they all drive the
- * same MisServicios entry point.
- *
- * The fake [ServiceProposalRepository] lets the world seed a
- * list of any status / amount / date — the
- * [GetAllServiceProposalsUseCase] applies NO filter, so every
- * seeded entry (Pending, Accepted, Rejected) should land on the
- * resulting `Ready(items)` state.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class MisServiciosWorld : AutoCloseable {
 
@@ -62,13 +44,6 @@ class MisServiciosWorld : AutoCloseable {
     private val observedViewConversationCalls: MutableList<String> = mutableListOf()
     private var started: Boolean = false
 
-    /**
-     * Mixed-status seed driven by the Gherkin steps. The
-     * MisServicios scenario expects every entry to land in the
-     * rendered list (no filter applied), so the seed carries
-     * one Pending + one Accepted + one Rejected proposal to prove
-     * the use case does not narrow the result.
-     */
     private val seedProposals: MutableList<ServiceProposal> = mutableListOf()
 
     fun startScenario() {
@@ -92,7 +67,6 @@ class MisServiciosWorld : AutoCloseable {
             detailViewModel.uiState.collect { observedDetailStates += it }
         }
 
-        // Push the BDD seeds into the fake repo BEFORE pumping,
         // so the VM's `init { load() }` resolves against them
         // rather than the empty defaults.
         serviceProposalRepo.set(seedProposals.toList())
@@ -165,17 +139,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "que el usuario tiene varias propuestas de servicio con
-     * fechas distintas" — scenario 04-VSP. Seeds three
-     * proposals whose `createdOnEpochMillis` is intentionally NOT
-     * in insertion order so the `sortedByDescending` sort inside
-     * the use case is observable end-to-end.
-     *
-     * The most recently created proposal (id "30") was inserted
-     * first in this list — without the use case sort the BDD
-     * would see "30" first and the assertion would fail.
-     */
     fun seedProposalsWithDistinctDates() {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -233,13 +196,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "que existe una propuesta de servicio con una duración
-     * estimada de {duracion}" — scenario 15-VSP (Scenario Outline).
-     * Seeds a single proposal whose
-     * [ServiceProposal.estimatedDurationMinutes] is [minutes] so
-     * the [EstimatedDurationFormatter] output is observable.
-     */
     fun seedProposalWithEstimatedDuration(minutes: Int) {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -266,15 +222,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * Parses the human-readable duration text from the Gherkin
-     * Examples column into a minutes count. Supports the four
-     * shapes pinned by scenario 15-VSP:
-     *  - "45 minutos"      → 45
-     *  - "1 hora"          → 60
-     *  - "1 hora 30 min"   → 90
-     *  - "2 horas"         → 120
-     */
     fun parseDurationMinutes(text: String): Int {
         var hours = 0
         var minutes = 0
@@ -290,13 +237,6 @@ class MisServiciosWorld : AutoCloseable {
         return hours * 60 + minutes
     }
 
-    /**
-     * "que existe una propuesta de servicio para el 15 de octubre
-     * de 2026 a las 14:30" — scenario 12-VSP. The timestamp is
-     * `1_792_074_600_000L`, which is exactly `2026-10-15T14:30:00Z`
-     * in UTC. The [ScheduledDateFormatter] renders that as the
-     * `"15/10/2026 - 14:30 hs"` string the scenario pins.
-     */
     fun seedProposalScheduledForOctober15At1430() {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -322,12 +262,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "que existe una propuesta de servicio por un monto de 15000
-     * pesos" — scenario 11-VSP. Seeds a single proposal whose
-     * `amountCents` is `1_500_000L` (= 15000 pesos at 100 cents/peso)
-     * so the formatter's "$ 15.000" output is observable end-to-end.
-     */
     fun seedProposalWithFifteenThousandPesos() {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -353,13 +287,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "que el prestador tiene una foto de perfil" — scenario 09-VSP.
-     * Seeds a single proposal whose counterpart carries a
-     * non-null `profilePhotoUrl`. The detail VM is the one that
-     * surfaces that field on the `Ready` state, so the assertion
-     * can read the URL straight off the proposal.
-     */
     fun seedProposalWithPhoto() {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -385,14 +312,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "que el prestador no tiene una foto de perfil" — scenario 10-VSP.
-     * Seeds a single proposal whose counterpart carries a
-     * `null` `profilePhotoUrl`. The detail VM resolves the
-     * proposal into `Ready(proposal)` and the screen falls back
-     * to the avatar placeholder; the BDD asserts the data layer
-     * that backs that fallback.
-     */
     fun seedProposalWithoutPhoto() {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -418,13 +337,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "no tiene propuestas correspondientes al estado seleccionado" —
-     * scenario 18-VSP. Seeds two Pending + one Accepted and zero
-     * Rejected, so the next filter tap on `Rejected` lands on an
-     * empty `Ready(proposals = [])` and the screen renders the
-     * empty-state copy for that specific filter.
-     */
     fun seedProposalsPendingAndAcceptedOnly() {
         seedProposals.clear()
         seedProposals += ServiceProposal(
@@ -482,12 +394,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "que el usuario no tiene propuestas de servicio" — scenario 17-VSP.
-     * Seeds an empty list so the MisServiciosViewModel's `load()`
-     * resolves to `Ready(proposals = emptyList())` and the screen
-     * renders its empty-state copy rather than the proposal list.
-     */
     fun seedProposalsEmpty() {
         seedProposals.clear()
         if (started) {
@@ -497,12 +403,6 @@ class MisServiciosWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "accede a Mis Servicios" — the consumer opens the MisServicios
-     * screen. At the VM level this is a no-op (the VM's `init`
-     * already fired against the seeded repo during [startScenario]).
-     * The step exists so the Gherkin flow reads naturally.
-     */
     fun openMisServicios() {
         // No-op: `init` fired the round trip; the observer
         // already captured the resolved state.
@@ -523,16 +423,6 @@ class MisServiciosWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * "el usuario accede a su detalle" — the consumer taps a
-     * card on the MisServicios list, which in production opens
-     * the modal proposal-detail bottom sheet driven by the
-     * dedicated [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel].
-     *
-     * At the JVM BDD layer the modal sheet itself is exercised by
-     * a Compose instrumented test; here we just need to pin that
-     * the detail VM is correctly fed with the chosen proposalId.
-     */
     fun openProposalDetail(proposalId: String) {
         detailViewModel.load(proposalId)
         scheduler.advanceUntilIdle()

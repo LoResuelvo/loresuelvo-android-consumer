@@ -23,26 +23,6 @@ import retrofit2.Retrofit
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
-/**
- * End-to-end coverage of `ApiWorkOrderDetailRepository.submitReview`
- * (US-30 `calify-provider-service`) against a [MockWebServer]
- * emulating the backend's
- * `POST /work-orders/{workOrderID}/review` endpoint.
- *
- * Coverage mirrors the [SubmitWorkOrderReviewOutcome]
- * sealed hierarchy:
- *   - 200 + valid ReviewDto body                → Submitted(review)
- *   - 409 "already reviewed"                    → AlreadyReviewed(message)
- *   - 500 generic server error                  → Server(500, …)
- *   - 400 invalid rating (boundary)             → Server(400, …)
- *   - transport-level failure (DISCONNECT)      → Network(IOException)
- *   - request body is the snake_case payload    → asserted on takeRequest()
- *
- * The wire-level details — HTTP method, path, body shape —
- * are pinned against `MockWebServer.takeRequest()` so a future
- * regression in the Retrofit method's `@Path`/`@Body` annotations
- * trips the test instead of silently making it to production.
- */
 class ApiWorkOrderDetailRepositorySubmitReviewTest {
 
     private lateinit var server: MockWebServer

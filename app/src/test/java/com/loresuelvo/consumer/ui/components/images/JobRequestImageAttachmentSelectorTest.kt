@@ -28,18 +28,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Compose tests for [JobRequestImageAttachmentSelector]. Covers
- * the visible contract pinned by scenario 03-UXUI ("the
- * attached image shows up in the surface") and the validation
- * behaviour pinned by scenario 05-UXUI's sibling (limit / type
- * / size): the selector rejects over-limit batches, filters
- * non-allowed mime types, and lets the user remove a previously
- * attached image.
- *
- * Run on the JVM via Robolectric so the unit-test task exercises
- * them without a device.
- */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "es-rAR", sdk = [34])
 class JobRequestImageAttachmentSelectorTest {

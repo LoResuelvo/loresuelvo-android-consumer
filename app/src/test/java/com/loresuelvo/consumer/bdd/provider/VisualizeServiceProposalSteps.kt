@@ -10,34 +10,11 @@ import io.cucumber.java.en.When
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 
-/**
- * Real step implementations for the scenarios in
- * `features/provider/visualize-service-proposal.feature`.
- *
- * Today only scenario 01-VSP is green. Each subsequent scenario
- * (Mis Servicios, Detalle, Chat, Duración, Orden de trabajo)
- * will gain its step defs here as it lands.
- *
- * The per-scenario discipline (one scenario per commit, ≤ 400
- * lines) is documented at the top of the feature file. Comments
- * at each step flag whether the assertion is at the state level
- * (this file) or the visual / integration level (covered
- * separately by the Compose test suite).
- */
 class VisualizeServiceProposalSteps {
 
     private val world: VisualizeServiceProposalWorld = VisualizeServiceProposalWorld()
 
-    // ---- Scenario 01-VSP --------------------------------------
 
-    /**
-     * The Background step "que el usuario tiene una sesión
-     * iniciada" is implicit in the BDD: every Android scenario
-     * assumes a valid session because the smart router in
-     * `LoResuelvoNav` redirects unauthenticated users to
-     * `Welcome` (see `authentication-session.feature`). Starting
-     * the scenario is therefore a no-op for the session surface.
-     */
     @Given("que el usuario tiene una sesión iniciada")
     fun queElUsuarioTieneUnaSesionIniciada() {
         world.startScenario()
@@ -54,7 +31,6 @@ class VisualizeServiceProposalSteps {
     @And("que entre las propuestas recibidas hay pendientes")
     fun queEntreLasPropuestasRecibidasHayPendientes() {
         // The seed already includes pending entries; this step
-        // exists so the Gherkin flow reads naturally.
     }
 
     @When("accede al inicio")
@@ -89,13 +65,11 @@ class VisualizeServiceProposalSteps {
         )
     }
 
-    // ---- Scenario 02-VSP --------------------------------------
 
     @And("que entre las propuestas recibidas hay aceptadas")
     fun queEntreLasPropuestasRecibidasHayAceptadas() {
         // The seed in [VisualizeServiceProposalWorld.seedProposalsReceived]
         // already includes an `Accepted` entry; this step exists
-        // so the Gherkin flow reads naturally.
     }
 
     @Then("debe visualizar los trabajos próximos destacados")

@@ -8,26 +8,6 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Test-only [WorkOrderDetailRepository] for the acceptance /
- * integration tests that `@UninstallModules(RepositoryModule::class)`.
- *
- * Mirrors `FakeTurnosRepository` — the production binding lives in
- * `com.loresuelvo.consumer.di.RepositoryModule`; once a test
- * uninstalls that module it must rebind every port the
- * ViewModels under test transitively depend on.
- *
- * Default seed: `NotFound`. Tests that need a populated
- * detail call [set] from the main thread before
- * `scenario.recreate()` so the new seed lands in the same
- * `@Singleton` instance the activity resolves through
- * `hiltViewModel()`.
- *
- * US-30 `calify-provider-service`: also records the last
- * `submitReview` call (US-30 instrumentation wire-assertion)
- * and lets the failure-path tests pin a queued outcome via
- * [enqueueSubmitOutcome] before the Enviar tap lands.
- */
 @Singleton
 class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepository {
     private var seed: WorkOrderDetail? = null

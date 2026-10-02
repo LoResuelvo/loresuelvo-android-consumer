@@ -25,24 +25,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the US-54 BDD specs (scenarios 01-VSP
- * onwards). Owns a [StandardTestDispatcher] shared by the
- * [HomeViewModel] and the observation scope so step defs can
- * deterministically drive the VM (without Hilt, Compose, or a
- * backend) and inspect the resulting state.
- *
- * Only scenario 01-VSP ("propuestas que requieren atención en el
- * inicio") is implemented today; later scenarios in this feature
- * will gain their own step defs but reuse this world because
- * they all drive the same Home entry point.
- *
- * The fake [ServiceProposalRepository] lets the world seed a
- * mixed-status list so the `GetPendingServiceProposalsUseCase`
- * can apply its `Pending` filter; the BDD asserts that
- * observable effect end-to-end (state mutation + non-empty
- * `items` list on the Home dashboard).
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class VisualizeServiceProposalWorld : AutoCloseable {
 
@@ -59,12 +41,6 @@ class VisualizeServiceProposalWorld : AutoCloseable {
     private val observedUiStates: MutableList<HomeUiState> = mutableListOf()
     private var started: Boolean = false
 
-    /**
-     * Mixed-status seed driven by the Gherkin steps. The Home
-     * scenario needs at least one `Pending` entry to land in a
-     * non-empty `Ready(items)`; the `Accepted` / `Rejected`
-     * entries verify the use-case filter dropped them.
-     */
     private val seedProposals: MutableList<ServiceProposal> = mutableListOf()
 
     fun startScenario() {
@@ -84,7 +60,6 @@ class VisualizeServiceProposalWorld : AutoCloseable {
             viewModel.uiState.collect { observedUiStates += it }
         }
 
-        // Push the BDD seeds into the fake repos BEFORE pumping,
         // so the VM's `init { loadCategories(); loadPendingServiceProposals() }`
         // resolves against them rather than the empty defaults.
         categoryRepo.set(listOf(Category(id = 1, name = "Plomería")))
@@ -159,12 +134,6 @@ class VisualizeServiceProposalWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "accede al inicio" — the consumer opens the Home dashboard.
-     * At the VM level this is a no-op (the VM's `init` already
-     * fired against the seeded repos during [startScenario]). The
-     * step exists so the Gherkin flow reads naturally.
-     */
     fun openHome() {
         // No-op: `init` fired the round trips; the observer
         // already captured the resolved state.

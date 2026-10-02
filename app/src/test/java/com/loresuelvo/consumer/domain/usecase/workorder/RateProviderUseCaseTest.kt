@@ -11,20 +11,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
-/**
- * Pure JVM unit tests for [RateProviderUseCase] (US-30
- * `calify-provider-service`). Pins the typed
- * [SubmitWorkOrderReviewOutcome] contract: the use case must be
- * a transparent passthrough of the repository outcome so the VM
- * can branch on each sealed variant explicitly.
- *
- * Pattern mirrors `GetWorkOrderDetailUseCaseTest`: a private
- * nested port-level fake queues the next response and asserts
- * that the use case forwards every variant — [Submitted],
- * [Network], [Server], [AlreadyReviewed] — unchanged and with
- * the same identity so the VM can compare typed failures with
- * [assertSame].
- */
 class RateProviderUseCaseTest {
 
     private fun savedReview(rating: Int = 5, description: String = "Excelente trabajo"): WorkOrderReview =

@@ -96,7 +96,6 @@ class ProposalCardTest {
     fun without_a_click_handler_no_callback_is_invoked() {
         // The default `onViewClicked = {}` keeps the card a no-op
         // when the host forgets to wire it — pinning the behaviour
-        // that hid the US-54 Home tap bug in the first place.
         var clicks = 0
         composeTestRule.setContent {
             MaterialTheme {

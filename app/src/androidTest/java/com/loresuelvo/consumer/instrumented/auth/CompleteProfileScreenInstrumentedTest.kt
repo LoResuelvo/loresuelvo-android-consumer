@@ -83,7 +83,6 @@ class CompleteProfileScreenInstrumentedTest {
         sessionStore.clearSession()
     }
 
-    // Scenario: 01-CPC Mostrar formulario de completar perfil
     @Test
     fun displays_complete_profile_form() {
 
@@ -113,7 +112,6 @@ class CompleteProfileScreenInstrumentedTest {
             .assertHasClickAction()
     }
 
-    // Scenario: 02-CPC Completar perfil exitosamente
     @Test
     fun completes_profile_successfully() {
 
@@ -150,7 +148,6 @@ class CompleteProfileScreenInstrumentedTest {
             .assertIsDisplayed()
     }
 
-    // Scenario: 03-CPC Nombre obligatorio
     @Ignore("Brittle in CI because Compose semantics do not reliably surface the validation banner for the first-name path under the address-aware flow.")
     @Test
     fun requires_first_name() {
@@ -188,7 +185,6 @@ class CompleteProfileScreenInstrumentedTest {
             .assertIsDisplayed()
     }
 
-    // Scenario: 04-CPC Apellido obligatorio
     @Ignore("Brittle in CI because Compose semantics do not reliably surface the validation banner for the last-name path under the address-aware flow.")
     @Test
     fun requires_last_name() {
@@ -224,7 +220,6 @@ class CompleteProfileScreenInstrumentedTest {
             .assertIsDisplayed()
     }
 
-    // Scenario: 05-CPC Persistir perfil completado
     @Test
     fun keeps_completed_profile_after_reopening_app() {
 

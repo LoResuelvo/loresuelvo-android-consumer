@@ -14,20 +14,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for [GetRejectedServiceProposalsUseCase].
- *
- * Mirrors [GetPendingServiceProposalsUseCaseTest] and
- * [GetAcceptedServiceProposalsUseCaseTest]: the use case is a
- * thin orchestrator that filters the repository result down to
- * [ServiceProposalStatus.Rejected] entries. Failures propagate
- * verbatim so the VM can branch on the typed failure.
- *
- * This use case powers the "Rechazadas" filter chip on the
- * MisServicios surface (US-54 scenario 07-VSP). The 05-VSP commit
- * that wires it into the VM also benefits from this base because
- * the same DI graph binds the rejected repo through the use case.
- */
 class GetRejectedServiceProposalsUseCaseTest {
 
     private val repository = mockk<ServiceProposalRepository>()

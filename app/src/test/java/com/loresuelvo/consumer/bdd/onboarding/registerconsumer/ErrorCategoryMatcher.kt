@@ -2,17 +2,6 @@ package com.loresuelvo.consumer.bdd.onboarding.registerconsumer
 
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileError
 
-/**
- * Maps the Gherkin-level error category labels used in
- * `register-consumer.feature` to the typed [CompleteProfileError]
- * variants produced by `CompleteProfileViewModel`. Keeps the
- * `.feature` readable by non-developers while binding it to the
- * production state machine.
- *
- * The labels live in the same vocabulary as the user-facing errors:
- * "first name required" → `MissingFirstName`,
- * "session expired"     → `Unauthorized`, …
- */
 internal object ErrorCategoryMatcher {
 
     private val matchers: Map<String, (CompleteProfileError) -> Boolean> = mapOf(

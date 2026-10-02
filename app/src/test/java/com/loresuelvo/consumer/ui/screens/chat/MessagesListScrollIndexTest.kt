@@ -4,16 +4,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/**
- * Unit tests for [messagesListScrollIndex]. The pure mapping
- * decides what index [MessagesList] should auto-scroll to. The
- * integration with `LazyListState.scrollToItem(...)` is exercised
- * by the Compose runtime in production and verified by manual
- * smoke tests; the math is the only rigorous contract and that's
- * what this class covers.
- *
- * Ticket 1 of the chat-UX backlog.
- */
 class MessagesListScrollIndexTest {
 
     @Test

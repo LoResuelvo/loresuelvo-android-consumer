@@ -3,13 +3,6 @@ package com.loresuelvo.consumer.ui.util
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Pure JVM unit tests for [EstimatedDurationFormatter.formatDuration].
- * US-54 scenario 15-VSP pins the four example rows in the Gherkin
- * scenario outline (45 min, 1 h, 1 h 30 min, 2 h); these tests
- * guard the formatter against regressions introduced by tweaks
- * to the layout rules.
- */
 class EstimatedDurationFormatterTest {
 
     @Test

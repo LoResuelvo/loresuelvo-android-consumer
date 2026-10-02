@@ -1,49 +1,4 @@
 # language: es
-#
-# Especificación ejecutable para la historia de usuario "Adjuntar
-# imágenes del problema para obtener un pre diagnóstico". Cubre
-# los criterios de aceptación:
-#   - adjuntar imágenes desde la galería y la cámara del dispositivo,
-#   - visualizar las imágenes seleccionadas antes de enviarlas,
-#   - eliminar imágenes adjuntas antes del envío (individuales y en masa),
-#   - procesar las imágenes adjuntas para generar un pre diagnóstico
-#     (assessment + categoría detectada + nivel de confianza),
-#   - informar errores de carga (subida a `/files/presign` →
-#     PUT al storage → `POST /files/{id}/confirm`) y errores de
-#     procesamiento del servicio de IA, con reintento explícito.
-#
-# Las imágenes viajan como mensajes de la conversación IA
-# (`POST /chatbot/conversations/{id}/messages` con `image_file_ids[]`),
-# reusando la infraestructura de `FileRepository` (presign → upload →
-# confirm) ya implementada para el chat con prestadores. La superficie
-# es `ChatViewModel` del flujo de diagnóstico con IA: este feature
-# añade el estado `pendingAttachments`, el orquestador
-# `UploadAttachmentsAndSendUseCase` y los callbacks `onAttachImage*`,
-# `onRemoveAttachment`, `onClearAttachments`, `onRetryAttachClick`.
-#
-# Cada escenario arranca marcado como `@wip` (salteado). Cada commit
-# remueve el `@wip` de exactamente un escenario, deja sus aserciones
-# en verde y conserva el resto en `@wip`. Cuando se remueve el
-# último `@wip`, la feature está completa. El runner de Cucumber JVM
-# filtra `@wip` mediante la system property
-# `cucumber.filter.tags` configurada en `app/build.gradle.kts`.
-#
-# Convenciones:
-#  - IDs `NN-AIP` correlativos. AIP = Adjuntar Imágenes
-#    Pre-diagnóstico.
-#  - Los textos visibles en español se asertan en los acceptance
-#    tests de Compose (`src/androidTest/.../instrumented/diagnosis/`),
-#    no aquí. La capa BDD pinea el contrato del state machine.
-#  - BDD+TDD outside-in: este `.feature` precede al
-#    `*ChatViewModelTest` unitario, que precede a la impl. Cada commit
-#    sigue RED → GREEN → REFACTOR estricto.
-#  - Comandos de validación por commit:
-#      ./gradlew :app:testDevDebugUnitTest --tests "*AiDiagnosis*"
-#      ./gradlew :app:testDevDebugUnitTest --tests "*PreDiagnosisImages*"
-#    Antes de PR: `make lint && make test && make build`.
-#
-# Actualizar este archivo junto con `strings.xml` y las pantallas
-# cada vez que cambia el copy o el comportamiento visible.
 
 Característica: Adjuntar imágenes del problema al chat con IA
 

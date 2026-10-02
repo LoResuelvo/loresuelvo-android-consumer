@@ -14,19 +14,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for [GetAcceptedServiceProposalsUseCase].
- *
- * Mirrors [GetPendingServiceProposalsUseCaseTest]: the use case
- * is a thin orchestrator that filters the repository result down
- * to [ServiceProposalStatus.Accepted] entries. Failures propagate
- * verbatim so the VM can branch on the typed failure.
- *
- * The BDD scenario 02-VSP asserts the end-to-end "upcoming jobs"
- * branch through the ViewModel; this test pins the use case
- * contract in isolation so a regression in either layer does not
- * mask the other.
- */
 class GetAcceptedServiceProposalsUseCaseTest {
 
     private val repository = mockk<ServiceProposalRepository>()

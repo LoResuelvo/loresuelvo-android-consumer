@@ -1,19 +1,4 @@
 # language: en
-#
-# Executable specification for the "Search providers by category"
-# user journey. Each scenario exercises the
-# `ProfessionalsViewModel` directly through `CucumberWorld` with a
-# `FakeProviderRepository` (no Hilt, no Compose, no backend). The
-# user-visible strings are tested in the Compose acceptance tests in
-# `src/androidTest/.../instrumented/`, not here.
-#
-# Update this file together with `strings.xml` and the screen
-# whenever copy or behavior changes.
-#
-# How we drive progress: every scenario starts marked `@wip`
-# (skipped). Each commit removes the `@wip` from exactly one
-# scenario, makes its assertions green, and leaves the rest at
-# `@wip`. When the last `@wip` is removed the feature is done.
 
 Feature: Search providers by category
 

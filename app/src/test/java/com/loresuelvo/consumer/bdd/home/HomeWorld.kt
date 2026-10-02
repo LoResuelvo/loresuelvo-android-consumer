@@ -24,15 +24,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the consumer-home BDD specs. Owns a
- * [StandardTestDispatcher] shared by the [HomeViewModel] and the
- * observation scope, so step defs can deterministically drive and
- * inspect the flow without Hilt, Compose, or a backend.
- *
- * The world is reconstructed per scenario by Cucumber JVM (one step
- * def instance per scenario); no state leaks across scenarios.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class HomeWorld : AutoCloseable {
 
@@ -64,8 +55,6 @@ class HomeWorld : AutoCloseable {
 
         categoryRepo = FakeCategoryRepository(categoriesById.values.toList())
         // Defaults to `Success(emptyList())` so the pre-existing
-        // "home shows the first 6 categories" scenario keeps
-        // passing; the US-54 dedicated world overrides this seed.
         serviceProposalRepo = FakeServiceProposalRepository(emptyList())
         turnosRepo = FakeTurnosRepository(emptyList())
 

@@ -20,18 +20,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [CategoriesViewModel] — the fine-grained twin
- * of the BDD scenario 02-UXUI. Covers the success / failure /
- * filter / retry-across-failure flows without Hilt.
- *
- * Scheduler note: a single [TestCoroutineScheduler] drives both
- * the VM's `viewModelScope` (via `Dispatchers.Main` set to a
- * [StandardTestDispatcher] backed by the same scheduler) and
- * the explicit `pump()` calls below. `runTest` would create a
- * second scheduler and the launched coroutine would never
- * drain.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CategoriesViewModelTest {
 

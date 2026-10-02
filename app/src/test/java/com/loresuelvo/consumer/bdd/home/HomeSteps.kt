@@ -6,17 +6,6 @@ import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.junit.Assert.assertEquals
 
-/**
- * Step defs for `features/home/home.feature`. Each step is
- * intentionally thin: the heavy lifting lives in [HomeWorld]
- * (which pins `Dispatchers.Main` and drives the `HomeViewModel`
- * through a `StandardTestDispatcher`).
- *
- * Cucumber instantiates this class with its zero-arg constructor
- * (DefaultObjectFactory). The [HomeWorld] is owned per scenario
- * via a field initializer; `close()` runs from the JVM shutdown
- * hook.
- */
 class HomeSteps {
 
     private val world: HomeWorld = HomeWorld()

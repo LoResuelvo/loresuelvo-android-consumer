@@ -177,7 +177,6 @@ class SendMediaMessageUseCaseTest {
 
     @Test
     fun oversized_audio_returns_payload_too_large_without_calling_repo() = runTest {
-        // Scenario 09-MM: a recorded audio clip larger than the
         // domain-defined `MAX_AUDIO_BYTES` is rejected by the
         // use case so the backend never sees the request.
         val oversized = sampleAudio.copy(

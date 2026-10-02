@@ -23,19 +23,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the US-54 BDD spec 16-VSP ("consult the
- * work-order detail"). Drives the
- * [WorkOrderDetailViewModel] against a fake
- * [WorkOrderDetailRepository] seeded with a single accepted
- * proposal so the step defs can deterministically mount the VM
- * and observe the resolved [WorkOrderDetailUiState].
- *
- * US-27 widens this world: the production adapter now consumes
- * `GET /work-orders/{workOrderID}`, but the BDD does not need
- * the wire surface — seeding the port's `WorkOrderDetail`
- * directly is the cheapest way to keep the step defs stable.
- */
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class WorkOrderDetailWorld : AutoCloseable {
 
@@ -69,14 +56,6 @@ class WorkOrderDetailWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * "que existe una orden de trabajo con un tiempo estimado
-     * para realizar el servicio" — scenario 16-VSP. Seeds a
-     * single accepted work order so the detail surface renders
-     * every agreed-terms field. US-27 drops the
-     * `estimatedDurationMinutes` pin (A2) so the seed only
-     * carries what the new endpoint surfaces.
-     */
     fun seedAcceptedProposalWithNinetyMinutesEstimate() {
         repository.set(
             WorkOrderDetail(
@@ -105,12 +84,6 @@ class WorkOrderDetailWorld : AutoCloseable {
         }
     }
 
-    /**
-     * "el usuario consulta el detalle de la orden de trabajo" —
-     * scenario 16-VSP. Drives [WorkOrderDetailViewModel.load] against
-     * the seeded repo; the BDD's `Then` step observes the
-     * resolved [WorkOrderDetailUiState.Ready].
-     */
     fun openWorkOrder() {
         viewModel.load(PROPOSAL_ID)
         scheduler.advanceUntilIdle()
@@ -123,11 +96,6 @@ class WorkOrderDetailWorld : AutoCloseable {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Port-level fake. Holds a single `WorkOrderDetail` the
-     * scenarios seed; returns [GetWorkOrderOutcome.Found] when
-     * the id matches and [GetWorkOrderOutcome.NotFound] otherwise.
-     */
     private class FakeWorkOrderDetailRepository : WorkOrderDetailRepository {
         private var current: WorkOrderDetail? = null
 
@@ -144,8 +112,6 @@ class WorkOrderDetailWorld : AutoCloseable {
                 ?.let { GetWorkOrderOutcome.Found(it) }
                 ?: GetWorkOrderOutcome.NotFound
 
-        // US-30 stub: this world only seeds the read-only `getWorkOrderDetail`
-        //  flow. The calify-provider-service BDD suite (commit 23+) replaces
         //  this fake with a dedicated one that queues submission outcomes.
         override suspend fun submitReview(
             workOrderId: String,
@@ -163,11 +129,6 @@ class WorkOrderDetailWorld : AutoCloseable {
     }
 }
 
-/**
- * Stand-in [CheckoutSessionRepository] for the US-54 BDD world —
- * every checkout call is a no-op (returns [CheckoutSessionOutcome.Server]
- * so the VM surfaces a typed error rather than crashing).
- */
 private object NoOpWorkOrderCheckoutRepository : CheckoutSessionRepository {
     override suspend fun startServiceProposalCheckout(
         serviceProposalId: Int,

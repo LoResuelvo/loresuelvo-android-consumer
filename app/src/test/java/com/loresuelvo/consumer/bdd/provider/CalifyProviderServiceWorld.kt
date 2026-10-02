@@ -25,28 +25,6 @@ import kotlinx.coroutines.test.TestCoroutineScheduler
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 
-/**
- * Per-scenario world for the `calify-provider-service.feature`
- * BDD specs (US-30). Drives
- * [com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel]
- * against a port-level fake [WorkOrderDetailRepository] so the
- * step defs can mount the VM with a seeded
- * [com.loresuelvo.consumer.domain.workorder.WorkOrderDetail]
- * and observe the resolved [WorkOrderDetailUiState] (and the
- * review-composer sub-state).
- *
- * Each step def seeds one of the predefined work orders
- * ([seedPaidWorkOrderWithoutReview],
- * [seedPaidWorkOrderWithReview], etc.) and drives the VM via
- * [openWorkOrder] / [tapCalificar] / [selectStars] /
- * [typeComment] / [submitRating]. Observation capture:
- * [observedStates] (the VM's `StateFlow` history) and
- * [lastReadyState] (the most recent [WorkOrderDetailUiState.Ready]).
- *
- * AutoCloseable so each scenario tears down cleanly: the
- * supervisor is cancelled, the captured emissions are cleared,
- * and [Dispatchers.resetMain] restores the production dispatcher.
- */
 class CalifyProviderServiceWorld : AutoCloseable {
 
     private val scheduler = TestCoroutineScheduler()
@@ -87,29 +65,12 @@ class CalifyProviderServiceWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Seeds a paid work order without a review so the screen
-     * surfaces the "Calificar servicio" CTA (scenarios 01-CT /
-     * 02-CT / 05-CT / 06-CT / 11-CT). Mirrors the real consumer
-     * flow: "tengo una orden completamente pagada" implies
-     * the work-order detail is already on screen, so we
-     * pre-load it through [openWorkOrder]. Scenarios that need
-     * the VM state to NOT have been touched yet can opt out by
-     * calling [seedPaidWorkOrderWithoutReviewData] (placeholder,
-     * not currently needed) instead.
-     */
     fun seedPaidWorkOrderWithoutReview(id: String = "wo-100") {
         fakeRepo.seed(paidWorkOrder(id, review = null))
         lastWorkOrderId = id
         openWorkOrder()
     }
 
-    /**
-     * Seeds a paid work order with a review already on file so
-     * the screen renders the read-only review and HIDES the
-     * composer CTA (scenario 07-CT). Pre-loads the detail so
-     * the subsequent `When` step lands on a Ready state.
-     */
     fun seedPaidWorkOrderWithReview(id: String = "wo-101") {
         val review = WorkOrderReview(rating = 5, description = "Excelente trabajo")
         fakeRepo.seed(paidWorkOrder(id, review = review))
@@ -117,13 +78,6 @@ class CalifyProviderServiceWorld : AutoCloseable {
         openWorkOrder()
     }
 
-    /**
-     * Seeds an `awaiting_payment` work order so the screen
-     * surfaces the "Pagar saldo restante" CTA only (scenario
-     * 10-CT — the "Calificar servicio" CTA must stay hidden
-     * because the order is not fully paid). Pre-loads the
-     * detail.
-     */
     fun seedAwaitingPaymentWorkOrder(id: String = "wo-102") {
         fakeRepo.seed(
             paidWorkOrder(id, paidOnMillis = null, review = null).copy(
@@ -164,26 +118,11 @@ class CalifyProviderServiceWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Types the [text] inside the comment field. The text is
-     * stored verbatim — the 500-char cap is enforced at the
-     * UI level via the `maxLength` filter, NOT in the VM
-     * (mirrors the typed flow; the BDD asserts the visible
-     * `submitting = false` flag plus the canSubmit gating).
-     */
     fun typeComment(text: String) {
         viewModel.onDescriptionChange(text)
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Taps "Enviar". The next [SubmitWorkOrderReviewOutcome]
-     * the VM receives is whatever was queued on the fake
-     * repo (enqueued via [enqueueServerFailure] in the
-     * failure-path scenario 11-CT) or, when nothing is
-     * queued, a happy-path `Submitted` carrying the typed
-     * rating / description (scenarios 05-CT / 06-CT).
-     */
     fun submitRating() {
         val next = fakeRepo.queued
             ?: SubmitWorkOrderReviewOutcome.Submitted(
@@ -208,13 +147,6 @@ class CalifyProviderServiceWorld : AutoCloseable {
         scheduler.advanceUntilIdle()
     }
 
-    /**
-     * Returns the last submission the VM forwarded to the
-     * rate-provider port, or `null` if no submit call has
-     * landed yet. Step defs use this to assert that the typed
-     * rating + description match what the screen collected
-     * (US-30 scenarios 05-CT / 06-CT).
-     */
     fun recordedSubmission(): Submission? = fakeRepo.lastSubmission
 
     /**
@@ -288,14 +220,6 @@ class CalifyProviderServiceWorld : AutoCloseable {
         estimatedDurationMinutes = 90,
     )
 
-    /**
-     * Port-level fake. Records the last submission the VM
-     * forwarded so the BDD can assert the call site, and returns
-     * the queued outcome for the next [submitReview] call. When
-     * no outcome is queued, the fake returns a typed
-     * `Server(0, "no outcome queued")` so a misuse trips a
-     * clear assertion rather than a silent default.
-     */
     private class FakeRepo : WorkOrderDetailRepository {
         private var seeded: WorkOrderDetail? = null
         /**
@@ -351,15 +275,6 @@ class CalifyProviderServiceWorld : AutoCloseable {
         val description: String,
     )
 
-    /**
-     * Stand-in for the `StartWorkOrderCheckoutUseCase` port.
-     * The rate-provider BDD never exercises the checkout
-     * surface — submitting a review does not require a
-     * payment intent — so the fake collapses to a typed
-     * `Server(0, "no-op")` outcome. A misuse that accidentally
-     * invokes a checkout call lands in [assertionFailure]
-     * below.
-     */
     private object NoOpWorkOrderCheckoutRepository : CheckoutSessionRepository {
         override suspend fun startServiceProposalCheckout(
             serviceProposalId: Int,

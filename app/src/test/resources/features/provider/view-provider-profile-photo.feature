@@ -1,21 +1,4 @@
 # language: es
-#
-# Especificación ejecutable para la historia de usuario "Ver la foto
-# de perfil del prestador". Cubre los tres lugares donde el
-# consumidor ve la foto de perfil del prestador con el que
-# interactúa: la lista de prestadores (filtro por rubro), el header
-# del chat dentro de una conversación, y la ventana de chats que
-# lista todas las conversaciones activas.
-#
-# Cada escenario arranca marcado como `@wip` (salteado). Cada commit
-# remueve el `@wip` de exactamente un escenario, deja sus
-# aserciones en verde y conserva el resto en `@wip`. Cuando se
-# remueve el último `@wip`, la feature está completa. El runner de
-# Cucumber JVM filtra `@wip` mediante la system property
-# `cucumber.filter.tags` configurada en `app/build.gradle.kts`.
-#
-# Actualizar este archivo junto con `strings.xml` y las pantallas
-# cada vez que cambia el copy o el comportamiento visible.
 
 Característica: Ver la foto de perfil del prestador
 

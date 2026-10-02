@@ -1,7 +1,4 @@
 # language: es
-#
-# Especificación de US-50.2 para reproducir videos en el chat.
-# Se publica primero como @wip y se desmarca luego de validar la implementación.
 
 Característica: Reproducir videos dentro del chat
 
