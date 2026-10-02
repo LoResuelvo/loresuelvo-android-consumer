@@ -6,7 +6,7 @@ import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +30,7 @@ import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileViewModel
 @Composable
 internal fun WelcomeRoute() {
     val viewModel: WelcomeViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     WelcomeScreen(
@@ -48,7 +48,7 @@ internal fun CompleteProfileRoute(
     navController: NavHostController,
 ) {
     val viewModel: CompleteProfileViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val photoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri -> uri?.let(viewModel::onProfilePhotoSelected) }
@@ -86,7 +86,7 @@ internal fun CompleteProfileRoute(
 @Composable
 internal fun ConsumerProfileRoute() {
     val viewModel: ConsumerProfileViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val authorizationClient = remember(context) { Identity.getAuthorizationClient(context) }
     val authorizationRequest = remember {
@@ -151,7 +151,7 @@ internal fun ProviderProfileRoute(
 ) {
     val viewModel: com.loresuelvo.consumer.ui.screens.providerprofile.ProviderProfileViewModel =
         hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(providerId) {
         viewModel.load(providerId)

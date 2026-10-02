@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -15,9 +15,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.flow.firstOrNull
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -120,7 +120,7 @@ fun LoResuelvoNav() {
      * ServiceAgreement, Chat, Professionals, or WorkOrderDetail.
      */
     val sessionViewModel: SessionViewModel = hiltViewModel()
-    val sessionState by sessionViewModel.uiState.collectAsState()
+    val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
 
     if (sessionState.loading || sessionState.error == SessionError.Restoration) {
         SessionRestorationScreen(
@@ -315,8 +315,8 @@ private fun ProfessionalsRoute(
     androidx.compose.runtime.LaunchedEffect(categoryId, categoryName) {
         viewModel.loadProviders(categoryId, categoryName)
     }
-    val state by viewModel.uiState.collectAsState()
-    val contactState by contactViewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val contactState by contactViewModel.uiState.collectAsStateWithLifecycle()
 
     androidx.compose.runtime.LaunchedEffect(contactViewModel) {
         contactViewModel.events.collect { event ->
@@ -381,9 +381,9 @@ private fun HomeRoute(
     val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel =
         hiltViewModel()
     val context = LocalContext.current
-    val sessionState by sessionViewModel.uiState.collectAsState()
-    val homeState by homeViewModel.uiState.collectAsState()
-    val detailState by detailViewModel.uiState.collectAsState()
+    val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
+    val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
+    val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -486,7 +486,7 @@ private fun CategoriesRoute(
     navController: androidx.navigation.NavHostController,
 ) {
     val viewModel: CategoriesViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     CategoriesScreen(
         state = state,
@@ -508,9 +508,9 @@ private fun MisServiciosRoute(
     navController: androidx.navigation.NavHostController,
 ) {
     val viewModel: MisServiciosViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel = hiltViewModel()
-    val detailState by detailViewModel.uiState.collectAsState()
+    val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(detailViewModel) {

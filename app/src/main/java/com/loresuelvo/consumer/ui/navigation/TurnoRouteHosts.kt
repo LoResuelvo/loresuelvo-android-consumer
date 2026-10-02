@@ -3,13 +3,13 @@ package com.loresuelvo.consumer.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosScreen
 import com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel
@@ -21,7 +21,7 @@ internal fun TurnosRoute(
     navController: NavHostController,
 ) {
     val viewModel: TurnosViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, viewModel) {
@@ -64,7 +64,7 @@ internal fun WorkOrderDetailRoute(
 ) {
     val viewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
         hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(workOrderId, provider) {

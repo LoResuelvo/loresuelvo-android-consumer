@@ -7,7 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,9 +19,9 @@ import com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen
 import com.loresuelvo.consumer.ui.screens.assistant.AssistantViewModel
 import com.loresuelvo.consumer.ui.screens.messages.MessagesScreen
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 /** Route hosts for messages, assistant and conversation media effects. */
 
@@ -31,7 +31,7 @@ internal fun MessagesRoute(
 ) {
     val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel =
         hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -62,7 +62,7 @@ internal fun AssistantRoute(
     navController: NavHostController,
 ) {
     val viewModel: AssistantViewModel = hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -103,8 +103,8 @@ internal fun ConversationRoute(
     val proposalSummaryViewModel:
         com.loresuelvo.consumer.ui.screens.chat.ConversationProposalSummaryViewModel =
         hiltViewModel()
-    val state by viewModel.uiState.collectAsState()
-    val proposalSummaryState by proposalSummaryViewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val proposalSummaryState by proposalSummaryViewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(conversationId) {
         viewModel.load(conversationId)
