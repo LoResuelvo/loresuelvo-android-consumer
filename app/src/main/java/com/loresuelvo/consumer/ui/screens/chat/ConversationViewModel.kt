@@ -3,7 +3,6 @@ package com.loresuelvo.consumer.ui.screens.chat
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.loresuelvo.consumer.data.api.WebSocketClient
 import com.loresuelvo.consumer.data.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
@@ -18,6 +17,7 @@ import com.loresuelvo.consumer.data.media.AudioRecorder
 import com.loresuelvo.consumer.data.media.AudioPlayer
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.validationError
+import com.loresuelvo.consumer.domain.realtime.RealtimeClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,7 +37,7 @@ class ConversationViewModel @Inject constructor(
     private val mediaMetadataRetriever: MediaMetadataRetrieverReader,
     private val audioRecorder: AudioRecorder,
     private val audioPlayer: AudioPlayer,
-    private val webSocketClient: WebSocketClient,
+    private val webSocketClient: RealtimeClient,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ConversationUiState>(

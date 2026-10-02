@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.data.api.dto.WsEventDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
+import com.loresuelvo.consumer.domain.realtime.RealtimeClient
 import com.loresuelvo.consumer.domain.realtime.WsEvent
 import javax.inject.Inject
 import javax.inject.Named
@@ -33,13 +34,13 @@ class WebSocketClient @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val backendApi: BackendApi,
     @Named("wsUrl") private val wsUrl: String,
-) {
+) : RealtimeClient {
     private val _events = MutableSharedFlow<WsEvent>(
         replay = 0,
         extraBufferCapacity = 64,
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
     )
-    val events: SharedFlow<WsEvent> = _events.asSharedFlow()
+    override val events: SharedFlow<WsEvent> = _events.asSharedFlow()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val json = Json {
@@ -58,7 +59,7 @@ class WebSocketClient @Inject constructor(
     @Volatile
     private var stopped = false
 
-    fun start() {
+    override fun start() {
         // Idempotent: callers (currently the conversation
         // `ConversationViewModel.init {}`) invoke this on every
         // screen entry. After the first call the connection stays
@@ -68,7 +69,7 @@ class WebSocketClient @Inject constructor(
         scope.launch { connect() }
     }
 
-    fun stop() {
+    override fun stop() {
         stopped = true
         reconnectJob?.cancel()
         webSocket?.close(1000, "client stopping")
