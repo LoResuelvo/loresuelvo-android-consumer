@@ -1,88 +1,67 @@
-# android-testing-gates
+---
+name: android-testing-gates
+description: Run and interpret Android unit, build, lint, and instrumented validation gates before pushing, releasing, or merging changes.
+metadata:
+  short-description: Validate Android changes before handoff
+---
 
-Load this skill before a PR, release, merge to `main`, or when diagnosing test
-execution time. Do not load it for a small local iteration; use the BDD/TDD
-skill instead.
+# Android testing gates
 
-## Test layers
+Load this skill before pushing or merging an Android change, or when diagnosing
+test execution. Use focused tests during iteration and the complete gates
+before handoff.
 
-- `make test`: JVM unit tests and Cucumber acceptance scenarios; no device required.
-- `make instrumented`: Compose/Espresso tests under `androidTest` using the
-  `pixel2Api35` Gradle Managed Device by default.
-- `make build`: debug APK compilation and generated code validation.
-- `make lint`: Android Lint.
-- `make test-all-once`: JVM tests plus instrumented tests in one Gradle invocation.
-- `make ci`: build, lint, and the complete test gate.
+## Standard gates
 
-## Required gates
-
-Before a PR:
+This repository does not provide a `Makefile`; use the Gradle tasks below:
 
 ```bash
-make lint
-make test
-make build
+./gradlew :app:testDevDebugUnitTest --no-daemon
+./gradlew :app:assembleDevDebug --no-daemon
+./gradlew :app:lintDevDebug --no-daemon
 ```
 
-Run `make instrumented` when a user flow, navigation graph, Activity, or
-instrumented test changed.
-
-Before merging to `main`:
+Run connected instrumented tests when a user flow, Compose screen, navigation
+graph, Activity, or instrumented test changed:
 
 ```bash
-make ci
+./gradlew :app:connectedDevDebugAndroidTest --no-daemon
 ```
 
-Stop at the first failure, fix it, and rerun only the affected gate first.
-Do not merge with a failing instrumented test.
+Use the managed-device task configured by the project when available. For a
+physical device or manually started emulator, verify `adb devices` first and
+report device lifecycle or package-variant failures separately from code
+failures.
 
-## Focused commands
+## Focused validation
 
 ```bash
 ./gradlew :app:testDevDebugUnitTest \
-  --tests "*CompleteProfileViewModelTest*"
-
-./gradlew :app:pixel2Api35DevDebugAndroidTest \
-  --tests "*CompleteProfileScreenInstrumentedTest*"
+  --tests "*CompleteProfileViewModelTest*" \
+  --no-daemon
 ```
 
-For a physical device or manually started emulator, use
-`INSTRUMENTED_DEVICE=connected make instrumented`. For local API testing with
-a physical device, prefer `adb reverse tcp:8080 tcp:8080` and rebuild `devDebug`
-after changing `API_URL`.
+Run focused tests after a fix, then rerun the complete affected gate. Do not
+add sleeps or inflate timeouts to hide nondeterminism; prefer deterministic
+fakes, Compose idling, and coroutine test schedulers.
 
-GitHub Actions uses `INSTRUMENTED_DEVICE=connected` against a prewarmed Pixel 2
-API 35 AVD with the `ci-clean` snapshot. Regenerate it from the manual
-`Bootstrap CI AVD` workflow when the emulator configuration changes.
+## Failure handling
 
-## Performance diagnosis
+- Stop at the first actionable failure, identify whether it is code,
+  configuration, or device state, and rerun the smallest affected gate.
+- Do not claim a gate passed when the process was interrupted or the device
+  suite was stopped.
+- Do not merge or release with a failing relevant instrumented test unless the
+  failure is explicitly documented as an external environment blocker and the
+  owner has accepted that risk.
+- Keep secrets, tokens, and payloads out of logs and tests.
 
-Measure layers separately:
+## Final checklist
 
-```bash
-time make test
-time make instrumented
-time make test-all-once
-```
-
-Do not add arbitrary sleeps or increase timeouts to hide slow tests. Prefer
-Compose idling, coroutine test schedulers, deterministic fakes, and targeted
-test filters.
-
-## Common failures
-
-- Managed Device startup failure: verify that the Android 35 `aosp`
-  `x86_64` system image is installed and that hardware virtualization is
-  available.
-- Hilt startup failure: verify `HiltTestRunner`, `@HiltAndroidTest`, and the
-  `HiltAndroidRule` order.
-- `MockWebServer` port conflict: shut down the server in teardown.
-- Local HTTP blocked: use the `dev` network-security overlay only.
-
-## Review checklist
-
-- No production secrets or token/payload logging.
-- JVM tests do not depend on a device or real backend.
-- Instrumented tests use deterministic fakes when testing UI wiring.
+- Unit tests pass for the changed behavior.
+- `assembleDevDebug` passes.
+- `lintDevDebug` passes.
+- Instrumented tests were run when UI/navigation wiring changed, or the
+  environment blocker is recorded.
 - Generated files and debug artifacts are absent from the diff.
 - `git diff --check` is clean.
