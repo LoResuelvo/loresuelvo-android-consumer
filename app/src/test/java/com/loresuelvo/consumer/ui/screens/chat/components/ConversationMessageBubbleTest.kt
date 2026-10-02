@@ -137,7 +137,7 @@ class ConversationMessageBubbleTest {
     }
 
     @Test
-    fun video_message_renders_player_metadata_and_caption_without_starting_it() {
+    fun video_message_renders_play_overlay_duration_and_caption() {
         composeTestRule.setContent {
             ConversationMessageBubble(message = videoMessage())
         }
@@ -146,7 +146,7 @@ class ConversationMessageBubbleTest {
             .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_TAG)
             .assertIsDisplayed()
         composeTestRule
-            .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_PROGRESS_TAG)
+            .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_PLAY_TAG)
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_DURATION_TAG)
@@ -154,6 +154,24 @@ class ConversationMessageBubbleTest {
         composeTestRule
             .onNodeWithText("Mirá la pérdida")
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun video_message_play_overlay_opens_fullscreen_callback() {
+        var openedVideoId: String? = null
+
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = videoMessage(),
+                onVideoClick = { messageId -> openedVideoId = messageId },
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_VIDEO_PLAY_TAG)
+            .performClick()
+
+        assertEquals("video-msg-1", openedVideoId)
     }
 
     @Test

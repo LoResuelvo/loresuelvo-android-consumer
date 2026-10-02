@@ -42,6 +42,8 @@ data class ConversationScreenActions(
         val onPauseAudio: (String) -> Unit = {},
         val onImageClick: (String) -> Unit = {},
         val onFullscreenImageDismiss: () -> Unit = {},
+        val onVideoClick: (String) -> Unit = {},
+        val onFullscreenVideoDismiss: () -> Unit = {},
     )
 
     data class Errors(

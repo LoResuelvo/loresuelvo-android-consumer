@@ -47,11 +47,10 @@ import com.loresuelvo.consumer.ui.screens.chat.AudioPlaybackState
 fun ConversationMessageBubble(
     message: ConversationMessage,
     audioPlayback: AudioPlaybackState = AudioPlaybackState(),
-    selectedVideoMessageId: String? = null,
     onPlayAudio: (String) -> Unit = {},
     onPauseAudio: (String) -> Unit = {},
     onImageClick: (String) -> Unit = {},
-    onSelectVideo: (String) -> Unit = {},
+    onVideoClick: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val isConsumer = message.sender is ConversationSender.Consumer
@@ -238,8 +237,7 @@ fun ConversationMessageBubble(
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         ConversationVideoPlayer(
                             media = media,
-                            isSelected = selectedVideoMessageId == message.id,
-                            onSelect = { onSelectVideo(message.id) },
+                            onOpenFullscreen = { onVideoClick(message.id) },
                         )
                         if (message.content.isNotBlank()) {
                             Text(

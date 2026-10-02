@@ -81,6 +81,7 @@ sealed interface ConversationUiState {
         val sendingMedia: Boolean = false,
         val transientMediaError: SendMessageOutcome.Failure? = null,
         val fullscreenImage: MediaReference.Image? = null,
+        val fullscreenVideo: MediaReference.Video? = null,
     ) : ConversationUiState
 
     data class Error(val failure: ConversationDetailOutcome.Failure) : ConversationUiState

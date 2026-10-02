@@ -212,6 +212,13 @@ fun ConversationScreen(
                 onDismiss = actions.playback.onFullscreenImageDismiss,
             )
         }
+
+        (state as? ConversationUiState.Ready)?.fullscreenVideo?.let { video ->
+            FullScreenVideoViewer(
+                video = video,
+                onDismiss = actions.playback.onFullscreenVideoDismiss,
+            )
+        }
     }
 }
 

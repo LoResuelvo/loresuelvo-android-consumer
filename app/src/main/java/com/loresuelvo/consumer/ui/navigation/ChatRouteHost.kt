@@ -213,6 +213,8 @@ internal fun ConversationRoute(
                 onPauseAudio = viewModel::onPauseAudio,
                 onImageClick = viewModel::onImageClick,
                 onFullscreenImageDismiss = viewModel::onFullscreenImageDismiss,
+                onVideoClick = viewModel::onVideoClick,
+                onFullscreenVideoDismiss = viewModel::onFullscreenVideoDismiss,
             ),
             errors = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Errors(
                 onRetry = { viewModel.load(conversationId) },

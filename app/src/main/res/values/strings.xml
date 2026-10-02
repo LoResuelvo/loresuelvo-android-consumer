@@ -162,6 +162,10 @@
     <string name="conversation_media_preview_discard">Descartar</string>
     <string name="conversation_stop_audio_recording_content_description">Detener grabación de audio</string>
     <string name="conversation_fullscreen_image_close_hint">Toca para cerrar</string>
+    <string name="conversation_video_play">Reproducir video</string>
+    <string name="conversation_video_close">Cerrar video</string>
+    <string name="conversation_video_error">No se pudo reproducir el video</string>
+    <string name="conversation_video_retry">Reintentar</string>
     <string name="conversation_media_preview_image_content_description">Vista previa de la imagen adjunta</string>
     <string name="conversation_media_preview_video_content_description">Vista previa del video adjunto</string>
     <string name="conversation_media_preview_video_metadata">%1$s · %2$d×%3$d</string>

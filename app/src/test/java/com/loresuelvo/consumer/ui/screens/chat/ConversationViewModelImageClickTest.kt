@@ -150,6 +150,30 @@ class ConversationViewModelImageClickTest {
         updatedOnEpochMillis = 1_700_000_000_000L,
     )
 
+    private fun receivedVideoMessage(
+        id: String = "video-msg-1",
+    ) = ConversationMessage(
+        id = id,
+        sender = ConversationSender.Provider,
+        content = "Mirá la pérdida",
+        createdOnEpochMillis = 1_700_000_000_000L,
+        media = MediaReference.Video(
+            id = "video-file-id",
+            url = "https://cdn.loresuelvo.test/evidence.mp4",
+            mimeType = "video/mp4",
+            originalName = "evidence.mp4",
+            durationMillis = 20_000L,
+            width = 1280,
+            height = 720,
+            videoCodec = "h264",
+            audioCodec = "aac",
+        ),
+    )
+
+    private fun detailWithVideo() = detailWithImage().copy(
+        messages = listOf(receivedVideoMessage()),
+    )
+
     private fun givenConversationIsLoaded() {
         coEvery {
             getConversationById("1")
@@ -242,5 +266,44 @@ class ConversationViewModelImageClickTest {
             viewModel.uiState.value as ConversationUiState.Ready
 
         assertNull(state.fullscreenImage)
+    }
+
+    @Test
+    fun onVideoClick_sets_fullscreen_video_in_state() = runTest {
+        coEvery {
+            getConversationById("1")
+        } returns ConversationDetailOutcome.Success(detailWithVideo())
+
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onVideoClick("video-msg-1")
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertNotNull(
+            "expected fullscreenVideo to be set after tapping the video bubble",
+            state.fullscreenVideo,
+        )
+        assertEquals("evidence.mp4", state.fullscreenVideo?.originalName)
+    }
+
+    @Test
+    fun onFullscreenVideoDismiss_clears_fullscreen_video() = runTest {
+        coEvery {
+            getConversationById("1")
+        } returns ConversationDetailOutcome.Success(detailWithVideo())
+
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        viewModel.onVideoClick("video-msg-1")
+        viewModel.onFullscreenVideoDismiss()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ConversationUiState.Ready
+
+        assertNull(state.fullscreenVideo)
     }
 }

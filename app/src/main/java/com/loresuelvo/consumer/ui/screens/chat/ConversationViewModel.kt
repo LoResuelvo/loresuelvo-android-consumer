@@ -570,6 +570,40 @@ class ConversationViewModel @Inject constructor(
     }
 
     /**
+     * Opens the fullscreen video viewer for [messageId]. The inline
+     * conversation bubble stays a paused preview; playback starts only in
+     * the dedicated viewer so the chat remains lightweight and predictable.
+     */
+    fun onVideoClick(messageId: String) {
+        val currentState = _uiState.value
+
+        if (currentState !is ConversationUiState.Ready) {
+            return
+        }
+
+        val media = currentState.detail.messages
+            .firstOrNull { it.id == messageId }
+            ?.media as? MediaReference.Video
+            ?: return
+
+        _uiState.value = currentState.copy(
+            fullscreenVideo = media,
+        )
+    }
+
+    fun onFullscreenVideoDismiss() {
+        val currentState = _uiState.value
+
+        if (currentState !is ConversationUiState.Ready || currentState.fullscreenVideo == null) {
+            return
+        }
+
+        _uiState.value = currentState.copy(
+            fullscreenVideo = null,
+        )
+    }
+
+    /**
      * Stage a [MediaUpload] for confirmation. The canonical
      * attach surface for non-`Uri` callers (the BDD world, future
      * programmatic attach scenarios, and the audio recorder

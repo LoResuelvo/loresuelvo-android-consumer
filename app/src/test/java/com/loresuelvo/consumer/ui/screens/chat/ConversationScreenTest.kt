@@ -17,6 +17,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
+import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_TOP_BAR_BACK_TAG
@@ -76,11 +77,13 @@ class ConversationScreenTest {
         sending: Boolean = false,
         transientError: SendMessageOutcome.Failure? = null,
         detail: ConversationDetail = detail(),
+        fullscreenVideo: MediaReference.Video? = null,
     ) = ConversationUiState.Ready(
         detail = detail,
         promptInput = promptInput,
         sending = sending,
         transientError = transientError,
+        fullscreenVideo = fullscreenVideo,
     )
 
     // ---- Loading ---------------------------------------------------------
@@ -258,5 +261,42 @@ class ConversationScreenTest {
         composeTestRule
             .onAllNodesWithTag(CONVERSATION_TOP_BAR_PENDING_TAG)
             .assertCountEquals(0)
+    }
+
+    @Test
+    fun ready_state_fullscreen_video_renders_and_dismisses() {
+        var dismissed = false
+        val video = MediaReference.Video(
+            id = "video-file-id",
+            url = "https://cdn.loresuelvo.test/evidence.mp4",
+            mimeType = "video/mp4",
+            originalName = "evidence.mp4",
+            durationMillis = 20_000L,
+            width = 1280,
+            height = 720,
+            videoCodec = "h264",
+            audioCodec = "aac",
+        )
+
+        composeTestRule.setContent {
+            ConversationScreen(
+                state = readyState(fullscreenVideo = video),
+                actions = ConversationScreenActions(
+                    playback = ConversationScreenActions.Playback(
+                        onFullscreenVideoDismiss = { dismissed = true },
+                    ),
+                ),
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_FULLSCREEN_VIDEO_TAG)
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_FULLSCREEN_VIDEO_CLOSE_TAG)
+            .performClick()
+
+        assertTrue(dismissed)
     }
 }
