@@ -1,9 +1,8 @@
 package com.loresuelvo.consumer.di
 
 import com.loresuelvo.consumer.data.media.AndroidMediaReader
-import com.loresuelvo.consumer.data.media.MediaReader
-import com.loresuelvo.consumer.data.media.AndroidAudioRecorder
-import com.loresuelvo.consumer.data.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.AudioRecorder
+import com.loresuelvo.consumer.platform.media.MediaReader
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

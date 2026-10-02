@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.loresuelvo.consumer.data.media.MediaOutputUriFactory
 import com.loresuelvo.consumer.ui.navigation.Route
 
 /**

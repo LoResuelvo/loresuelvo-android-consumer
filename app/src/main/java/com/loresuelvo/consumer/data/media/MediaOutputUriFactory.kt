@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.media
 import android.content.Context
 import android.net.Uri
 import androidx.core.content.FileProvider
+import com.loresuelvo.consumer.platform.media.CameraOutputUriFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -11,7 +12,7 @@ import javax.inject.Singleton
 @Singleton
 class MediaOutputUriFactory @Inject constructor(
     @ApplicationContext private val context: Context,
-) {
+) : CameraOutputUriFactory {
     /**
      * Builds the destination [File] the camera will write the
      * captured photo to and ensures the parent directory exists.
@@ -34,7 +35,7 @@ class MediaOutputUriFactory @Inject constructor(
      * and lets the `connectedDevDebugAndroidTest` suite verify
      * the cross-process provider grant.
      */
-    fun createCameraOutputUri(): Uri {
+    override fun createCameraOutputUri(): Uri {
         val file = buildCameraFile()
         val authority = "${context.packageName}${AUTHORITY_SUFFIX}"
         return FileProvider.getUriForFile(context, authority, file)

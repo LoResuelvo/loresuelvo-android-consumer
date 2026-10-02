@@ -5,6 +5,8 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
+import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader as PlatformMetadataReader
+import com.loresuelvo.consumer.platform.media.MediaReader as PlatformMediaReader
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -37,8 +39,8 @@ import kotlinx.coroutines.withContext
 @Singleton
 class AndroidMediaReader @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val metadataReader: MediaMetadataRetrieverReader,
-) : MediaReader {
+    private val metadataReader: PlatformMetadataReader,
+) : PlatformMediaReader {
 
     constructor(context: Context) : this(
         context,

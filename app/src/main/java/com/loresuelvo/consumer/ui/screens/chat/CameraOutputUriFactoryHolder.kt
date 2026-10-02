@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
 import androidx.lifecycle.ViewModel
-import com.loresuelvo.consumer.data.media.MediaOutputUriFactory
+import com.loresuelvo.consumer.platform.media.CameraOutputUriFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -20,5 +20,5 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class CameraOutputUriFactoryHolder @Inject constructor(
-    val factory: MediaOutputUriFactory,
+    val factory: CameraOutputUriFactory,
 ) : ViewModel()

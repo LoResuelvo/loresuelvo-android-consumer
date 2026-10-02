@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.data.media
 
 import android.media.MediaPlayer
+import com.loresuelvo.consumer.platform.media.AudioPlayer as PlatformAudioPlayer
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
  * current playback state through StateFlow so the UI/ViewModel
  * can render play state and progress.
  */
-class AndroidAudioPlayer @Inject constructor() : AudioPlayer {
+class AndroidAudioPlayer @Inject constructor() : PlatformAudioPlayer {
 
     private var mediaPlayer: MediaPlayer? = null
     private var progressJob: Job? = null

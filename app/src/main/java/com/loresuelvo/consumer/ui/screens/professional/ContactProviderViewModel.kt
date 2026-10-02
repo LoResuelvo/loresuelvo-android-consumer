@@ -3,7 +3,7 @@ package com.loresuelvo.consumer.ui.screens.professional
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.loresuelvo.consumer.data.media.MediaReader
+import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.domain.jobrequest.ALLOWED_IMAGE_MIME_TYPES
 import com.loresuelvo.consumer.domain.jobrequest.CreateJobRequestData
