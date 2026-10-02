@@ -1,5 +1,7 @@
 package com.loresuelvo.consumer.domain.diagnosis
 
+import com.loresuelvo.consumer.domain.file.PendingMedia
+
 /**
  * Outcome of [DiagnosisRepository.sendPrompt]. Sealed so callers
  * handle every branch explicitly (mirrors
@@ -16,7 +18,7 @@ sealed interface SendDiagnosisPromptOutcome {
         data class Network(
             val cause: Throwable,
 
-            val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
+            val partiallyUploadedAttachments: List<PendingMedia> = emptyList(),
 
             val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
@@ -28,14 +30,14 @@ sealed interface SendDiagnosisPromptOutcome {
         data class Server(
             val code: Int,
             val message: String,
-            val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
+            val partiallyUploadedAttachments: List<PendingMedia> = emptyList(),
             val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
 
         /** 401: Auth0 session expired or invalid. */
         data class Unauthorized(
             val message: String,
-            val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
+            val partiallyUploadedAttachments: List<PendingMedia> = emptyList(),
             val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
     }

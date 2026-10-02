@@ -749,7 +749,7 @@ class ConversationViewModelTest {
         val entry = pending.single()
 
         assertEquals(PendingMediaKind.AUDIO, entry.kind)
-        assertEquals(audioUri, entry.localUri)
+        assertEquals(audioUri.toString(), entry.localUri)
         assertEquals("audio/mp4", entry.mimeType)
         assertEquals("nota-voz.webm", entry.originalName)
         assertEquals(audioBytes.size.toLong(), entry.sizeBytes)
@@ -839,7 +839,7 @@ class ConversationViewModelTest {
         val entry = pending.single()
 
         assertEquals(PendingMediaKind.AUDIO, entry.kind)
-        assertEquals(audioUri, entry.localUri)
+        assertEquals(audioUri.toString(), entry.localUri)
         assertEquals("audio/mp4", entry.mimeType)
         assertEquals("nota-voz.webm", entry.originalName)
         assertEquals(audioBytes.size.toLong(), entry.sizeBytes)
@@ -876,7 +876,7 @@ class ConversationViewModelTest {
         val audioBytes = byteArrayOf(10, 20, 30)
 
         val pending = PendingMedia(
-            localUri = Uri.parse("content://test/audio/nota.webm"),
+            localUri = "content://test/audio/nota.webm",
             mimeType = "audio/mp4",
             originalName = "nota.webm",
             sizeBytes = audioBytes.size.toLong(),
@@ -918,7 +918,7 @@ class ConversationViewModelTest {
                 originalName = "nota.webm",
                 durationMillis = 5_000L,
             ),
-            sourceUri = pending.localUri,
+            sourceUri = Uri.parse(pending.localUri),
         )
 
         viewModel.onConfirmMediaSend()

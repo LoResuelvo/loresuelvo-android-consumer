@@ -161,7 +161,7 @@ class ConversationViewModelAttachImageTest {
             pending.size,
         )
         val entry = pending.single()
-        assertEquals(uri, entry.localUri)
+        assertEquals(uri.toString(), entry.localUri)
         assertEquals(imageMime, entry.mimeType)
         assertEquals(imageName, entry.originalName)
         assertEquals(imageBytes.size.toLong(), entry.sizeBytes)

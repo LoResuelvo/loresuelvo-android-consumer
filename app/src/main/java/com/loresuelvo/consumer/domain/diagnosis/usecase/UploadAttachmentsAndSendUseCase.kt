@@ -7,8 +7,8 @@ import com.loresuelvo.consumer.domain.file.FilePurpose
 import com.loresuelvo.consumer.domain.file.FileRepository
 import com.loresuelvo.consumer.domain.file.PresignUploadOutcome
 import com.loresuelvo.consumer.domain.file.PresignUploadRequest
+import com.loresuelvo.consumer.domain.file.PendingMedia
 import com.loresuelvo.consumer.domain.file.UploadBytesOutcome
-import com.loresuelvo.consumer.ui.screens.chat.PendingMedia
 import javax.inject.Inject
 import javax.inject.Singleton
 

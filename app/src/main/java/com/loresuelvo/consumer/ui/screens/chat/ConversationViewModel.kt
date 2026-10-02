@@ -546,7 +546,7 @@ class ConversationViewModel @Inject constructor(
         }
         val pending = when (media) {
             is MediaUpload.Image -> PendingMedia(
-                localUri = sourceUri,
+                localUri = sourceUri?.toString(),
                 mimeType = media.mimeType,
                 originalName = media.originalName,
                 sizeBytes = media.bytes.size.toLong(),
@@ -555,7 +555,7 @@ class ConversationViewModel @Inject constructor(
                 durationMillis = 0L,
             )
             is MediaUpload.Audio -> PendingMedia(
-                localUri = sourceUri,
+                localUri = sourceUri?.toString(),
                 mimeType = media.mimeType,
                 originalName = media.originalName,
                 sizeBytes = media.bytes.size.toLong(),
@@ -564,7 +564,7 @@ class ConversationViewModel @Inject constructor(
                 durationMillis = media.durationMillis,
             )
             is MediaUpload.Video -> PendingMedia(
-                localUri = sourceUri,
+                localUri = sourceUri?.toString(),
                 mimeType = media.mimeType,
                 originalName = media.originalName,
                 sizeBytes = media.bytes.size.toLong(),

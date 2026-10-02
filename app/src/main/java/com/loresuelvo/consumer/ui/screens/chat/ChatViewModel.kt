@@ -177,7 +177,7 @@ class ChatViewModel @Inject constructor(
             "AI chat only supports image attachments; got ${media::class.simpleName}"
         }
         val pending = PendingMedia(
-            localUri = sourceUri,
+            localUri = sourceUri?.toString(),
             mimeType = media.mimeType,
             originalName = media.originalName,
             sizeBytes = media.bytes.size.toLong(),
