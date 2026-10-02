@@ -11,31 +11,6 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Adapter that fulfils [WorkOrderDetailRepository] against the
- * dedicated `GET /work-orders/{workOrderID}` endpoint (US-27
- * `visualize-turns-detail`).
- *
- * The legacy adapter reused the proposal list endpoint to avoid
- * a second round trip; the dedicated endpoint now exists so this
- * adapter swaps the call. The [GetWorkOrderOutcome] surface stays
- * identical so the screen / use case / VM are untouched.
- *
- * Error mapping:
- *  - `404 Not Found` → [GetWorkOrderOutcome.NotFound] (the screen
- *    renders its not-found copy; same UX as the legacy
- *    `Success(emptyList())` outcome).
- *  - Other non-2xx → [GetWorkOrderOutcome.Failure.Server] so the
- *    screen renders its retry CTA.
- *  - `IOException` (no network, timeout, DNS failure) →
- *    [GetWorkOrderOutcome.Failure.Network] via
- *    [toApiError].
- *  - `401 Unauthorized` (the JWT expired) → mapped through the
- *    same path as any other `Server(code = 401, message = ...)`;
- *    the session layer observes the auth event out of band.
- *
- * Implementations never throw.
- */
 @Singleton
 class ApiWorkOrderDetailRepository @Inject constructor(
     private val backendApi: BackendApi,
@@ -95,7 +70,6 @@ class ApiWorkOrderDetailRepository @Inject constructor(
             }
         }
 
-    // Wires `POST /work-orders/{workOrderID}/review` (US-30
     //  `calify-provider-service`). The 2xx response carries the
     //  freshly stored [com.loresuelvo.consumer.data.api.dto.ReviewDto],
     //  which mirrors the `review` block of `GET /work-orders/{id}`.

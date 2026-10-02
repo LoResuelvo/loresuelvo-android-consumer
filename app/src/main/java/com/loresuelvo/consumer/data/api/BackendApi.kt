@@ -212,8 +212,6 @@ interface BackendApi {
         @Body body: CreateAiJobRequestRequestDto,
     ): JobRequestDto
 
-    // ---- Consumer ↔ provider conversations (added for US-17 / 03-IC) --
-
     /**
      * `GET /conversations` — the consumer's conversation list,
      * ordered by `updated_on` descending. Each element carries
@@ -333,8 +331,6 @@ interface BackendApi {
     @POST("ws-tickets")
     suspend fun getWsTicket(): WsTicketResponseDto
 
-    // ---- Service proposals (US-54, scenario 01-VSP) -------------
-
     /**
      * `GET /service-proposals` — the consumer's full list of
      * provider-issued service proposals, regardless of status.
@@ -374,26 +370,11 @@ interface BackendApi {
     @GET("work-orders")
     suspend fun getWorkOrders(): List<TurnoDto>
 
-    /**
-     * `GET /work-orders/{workOrderID}` — the work-order detail
-     * endpoint backing the `WorkOrderDetailScreen`
-     * (US-27 `visualize-turns-detail`). The wire shape is
-     * conditional on `status` (see
-     * `data/api/dto/WorkOrderDetailDto.kt` for the full
-     * mapping). The companion DTOs (`CompletionReportDto`,
-     * `CompletionReportPhotoDto`, `ReviewDto`,
-     * `WorkOrderDetailCounterpartDto`) decode the nested blocks
-     * through the standard `kotlinx.serialization` machinery.
-     *
-     * Requires a valid Auth0 JWT (the `AuthInterceptor` injects
-     * the bearer token automatically).
-     */
+
     @GET("work-orders/{workOrderID}")
     suspend fun getWorkOrder(
         @Path("workOrderID") workOrderID: String,
     ): com.loresuelvo.consumer.data.api.dto.WorkOrderDetailDto
-
-    // ---- Payment / checkout (US-21 confirm-agreement flow) ----
 
     /**
      * `POST /service-proposals/{serviceProposalID}/checkout-sessions`
@@ -418,76 +399,20 @@ interface BackendApi {
         @Path("serviceProposalID") serviceProposalID: Int,
     ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
 
-    /**
-     * `POST /work-orders/{workOrderID}/checkout-sessions` —
-     * start (or reuse) a Mercado Pago Checkout Pro session for
-     * the remaining balance of an `awaiting_payment` work order
-     * (US-27 `visualize-turns-detail`, scenario 09-VTD). The
-     * consumer opens the returned `checkout_url` in a Custom
-     * Tab; once the webhook reports an approved payment the
-     * backend flips the work order to `paid` and the detail
-     * screen surfaces the paid-on row + review block.
-     *
-     * Idempotent: same semantics as
-     * [startServiceProposalCheckout]. A `409 Conflict` maps to
-     * [com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome.AlreadyPaid].
-     *
-     * Requires Auth0 bearer auth.
-     */
+
     @POST("work-orders/{workOrderID}/checkout-sessions")
     suspend fun startWorkOrderCheckout(
         @Path("workOrderID") workOrderID: Int,
     ): com.loresuelvo.consumer.data.api.dto.CheckoutSessionDto
 
-    /**
-     * `POST /work-orders/{workOrderID}/reviews` — file the
-     * consumer's rating and optional comment for a paid work
-     * order (US-30 `calify-provider-service`). The backend
-     * validates:
-     *
-     *  - work order exists and is in `paid` state;
-     *  - `rating` is in `1..5`;
-     *  - `description` is ≤500 chars;
-     *  - the consumer has not already filed a review (a second
-     *    submission for the same work order returns
-     *    `409 Conflict` and the adapter maps it to
-     *    [com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.AlreadyReviewed]).
-     *
-     * On a 2xx the endpoint echoes back the freshly stored
-     * [com.loresuelvo.consumer.data.api.dto.ReviewDto] (same
-     * shape as the `review` block of
-     * `GET /work-orders/{workOrderID}`). The adapter maps it
-     * 1:1 into the [com.loresuelvo.consumer.domain.workorder.WorkOrderReview]
-     * domain type so the VM merges it into the cached
-     * `WorkOrderDetail` via `copy(review = …)`.
-     *
-     * Note: the path segment is plural (`reviews`) to match
-     * the backend REST convention — sub-resources under a
-     * parent resource are exposed as collections. This
-     * diverges from the early draft in US-30 which used the
-     * singular form; the route keeps the singular ID
-     * (`workOrderID`) inside the curly braces.
-     *
-     * Requires Auth0 bearer auth.
-     */
+
     @POST("work-orders/{workOrderID}/reviews")
     suspend fun submitWorkOrderReview(
         @Path("workOrderID") workOrderID: String,
         @Body body: com.loresuelvo.consumer.data.api.dto.SubmitReviewRequestDto,
     ): com.loresuelvo.consumer.data.api.dto.ReviewDto
 
-    /**
-     * `GET /payment-intents/{paymentIntentID}` — read the current
-     * status of a payment intent. Used by the post-redirect
-     * polling loop (US-21 confirmation flow + US-28 service-balance
-     * flow). The endpoint is safe to call repeatedly — it is
-     * idempotent and the returned status reflects the last
-     * verified payment event processed by the backend webhook.
-     * `404 Not Found` is mapped to
-     * [com.loresuelvo.consumer.domain.payment.GetPaymentIntentOutcome.NotFound].
-     *
-     * Requires Auth0 bearer auth.
-     */
+
     @GET("payment-intents/{paymentIntentID}")
     suspend fun getPaymentIntent(
         @Path("paymentIntentID") paymentIntentID: String,

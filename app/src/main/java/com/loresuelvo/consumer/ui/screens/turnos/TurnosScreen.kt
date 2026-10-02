@@ -29,19 +29,6 @@ import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.ui.components.turnocard.TurnoCard
 
-/**
- * State-driven surface for the "Mis Turnos" screen
- * (`Route.Turnos`).
- *
- * Landed incrementally per scenario:
- *  - 01-VT → Loading branch + top app bar.
- *  - 02-VT → Ready(non-empty) branch with a list of [TurnoCard]s.
- *  - 03-VT → Ready(empty) branch with the empty-state copy.
- *  - 13-VT → Error(Network) branch with the connection-lost copy
- *    + retry CTA.
- *  - 14-VT → Error(Server) branch with the typed server copy +
- *    retry CTA.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TurnosScreen(

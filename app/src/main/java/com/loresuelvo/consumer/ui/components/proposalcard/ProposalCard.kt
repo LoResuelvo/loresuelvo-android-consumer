@@ -31,24 +31,6 @@ import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 
-/**
- * Compact horizontal summary card for a single [ServiceProposal].
- * Used both in the Home dashboard's "Mis Servicios" row and in the
- * dedicated MisServicios list (US-54 scenario 08-VSP).
- *
- * Layout (top to bottom):
- *  - Row 1: avatar (circular, 56dp) + name / category column
- *    + status badge (pill, top-right corner).
- *  - Row 2: amount (formatted with thousands separator) on the
- *    left, "Ver solicitud →" CTA on the right.
- *
- * The whole card is clickable so the consumer can tap anywhere
- * on it (not just the CTA) to open the detail bottom sheet.
- *
- * Colours come from [MaterialTheme.colorScheme] so the card
- * follows the LoResuelvo brand (primary = teal-dark, tertiary =
- * amber for "Pendiente", etc.) without hard-coding hex values.
- */
 @Composable
 fun ProposalCard(
     proposal: ServiceProposal,

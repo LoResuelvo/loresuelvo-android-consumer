@@ -12,36 +12,6 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
 
-/**
- * DTO → domain translation for the `GET /work-orders/{workOrderID}`
- * endpoint (US-27 `visualize-turns-detail`).
- *
- * Mapping rules:
- * - `Long` ids on the wire become `String` in the domain (stable
- *   `LazyColumn` keys, no overflow concerns).
- * - `scheduled_on` / `accepted_on` / `paid_on` /
- *   `completion_report.reported_on` arrive as ISO-8601 strings
- *   with a trailing `Z`; the mapper parses them via
- *   `parseIsoTimestampMillisOrZero`. On a malformed timestamp the
- *   mapper collapses to `0L` (or `null` for optional fields).
- * - `status` is normalised lowercase and mapped to
- *   [TurnoStatus]. Known values:
- *   - `scheduled`         → [TurnoStatus.Confirmed]
- *   - `awaiting_payment`  → [TurnoStatus.AwaitingPayment]
- *   - `paid`              → [TurnoStatus.Paid]
- *   - unknown statuses collapse to `null` from the single
- *     mapper so the caller (the repository adapter) decides
- *     whether to surface the failure.
- * - `provider.role` (always `"provider"`) is decoded but
- *   intentionally NOT mapped (the domain type does not need
- *   the role).
- *
- * `consumer_id` and `provider_id` are surfaced on the wire but
- * not mapped today: the consumer-facing detail screen renders
- * the `WorkOrderDetailCounterpart` block which already carries
- * the provider identity. A future US can surface them if the
- * consumer starts querying work-orders they didn't author.
- */
 internal fun WorkOrderDetailDto.toDomain(
     fallbackProvider: WorkOrderDetailCounterpart? = null,
 ): WorkOrderDetail? {
@@ -49,7 +19,6 @@ internal fun WorkOrderDetailDto.toDomain(
         "scheduled" -> TurnoStatus.Confirmed
         "awaiting_payment" -> TurnoStatus.AwaitingPayment
         "paid" -> TurnoStatus.Paid
-        // TODO(US-27 follow-up): map `finished` / `cancelled`
         // once the dedicated endpoint widens to surface them.
         else -> return null
     }

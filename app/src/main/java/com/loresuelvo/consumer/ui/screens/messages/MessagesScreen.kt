@@ -26,33 +26,6 @@ import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
 import com.loresuelvo.consumer.ui.screens.messages.components.ConversationRow
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
-/**
- * State-driven surface for the consumer's conversations list
- * (`Route.Messages`). Replaces the previous placeholder scaffold.
- *
- * The composable is intentionally pure with respect to navigation:
- * it only renders the current [MessagesListUiState] and forwards
- * the [onRetryClick] / [onConversationClick] callbacks. The Hilt
- * bridge (`MessagesRoute` in `LoResuelvoNav`) is the only place
- * that instantiates the [MessagesListViewModel] via
- * `hiltViewModel()`.
- *
- * State rendering:
- *  - [MessagesListUiState.Loading] → centred spinner.
- *  - [MessagesListUiState.Ready] with empty list → empty-state card
- *    explaining "you have no conversations yet" (WhatsApp-style
- *    "start a conversation" hint).
- *  - [MessagesListUiState.Ready] with non-empty list → vertical
- *    `LazyColumn` of [ConversationRow]s.
- *  - [MessagesListUiState.Error] → centred card with a typed copy
- *    (network / server / unauthorized) and a "Reintentar" button
- *    that triggers [onRetryClick].
- *
- * Pull-to-refresh and per-row navigation land in follow-up
- * commits (the user said "WhatsApp-style" rows but the scenario
- * 03-IC scope is "see the provider as a contact in my list" —
- * row tap is for 04-IC / 05-IC).
- */
 @Composable
 fun MessagesScreen(
     state: MessagesListUiState,
@@ -63,7 +36,6 @@ fun MessagesScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            // 08-UXUI: see HomeScreen — the outer `Scaffold`
             // no longer consumes the top inset, so each
             // bottom-nav screen must apply
             // `statusBarsPadding()` itself.

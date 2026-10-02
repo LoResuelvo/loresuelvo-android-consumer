@@ -41,7 +41,6 @@ fun LoResuelvoNavHost(
             composable(Route.CompleteProfile.path) { content.session.completeProfile() }
             composable(Route.Home.path) { content.discovery.home() }
             composable(Route.MyProfile.path) { content.account.myProfile() }
-            // 02-UXUI: dedicated screen for every category published
             // by the platform, reachable from the Home "Ver todas"
             // link. Hidden from the bottom nav.
             composable(Route.Categories.path) { content.discovery.categories() }
@@ -90,23 +89,16 @@ fun LoResuelvoNavHost(
                 val conversationId = entry.arguments?.getString("conversationId").orEmpty()
                 content.chat.conversation(conversationId)
             }
-            // Bottom-bar destinations (US-18).
             composable(Route.Messages.path) { content.chat.messages() }
             composable(Route.Assistant.path) { content.chat.assistant() }
-            // US-54 scenario 03-VSP: every proposal regardless of
             // status, reached from the Home "Ver todas" link.
             composable(Route.MisServicios.path) { content.work.misServicios() }
-            // visualize-turns.feature scenario 01-VT: dedicated
             // Mis Turnos screen, reached from the Home "Ver
             // todas" link.
             composable(Route.Turnos.path) { content.work.turnos() }
-            // US-54 scenario 16-VSP + US-56 (`visualize-turns-detail`):
             // work-order detail. Reached from the "Ver orden de
-            // trabajo" CTA on [ProposalDetailScreen] (US-54) and
             // from the "Mis Turnos" list / Home preview card
-            // (US-56). The arg is the dedicated work-order id
             // since the backend `GET /work-orders/{id}` endpoint
-            // exists; the upstream US-54 code that surfaced this
             // route keyed on the proposal id is being migrated
             // commit by commit.
             composable(
@@ -156,7 +148,6 @@ fun LoResuelvoNavHost(
                 content.work.workOrderDetail(workOrderId, provider)
             }
 
-            // US-21: Service-agreement confirmation. The host is
             // responsible for starting the VM's `load(...)` from
             // the previous screen (the proposal detail bottom
             // sheet). The route has no args: the VM is keyed on a
@@ -165,7 +156,6 @@ fun LoResuelvoNavHost(
                 content.payment.serviceAgreement(navController)
             }
 
-            // US-21 / US-28: post-redirect payment result.
             //
             // Mercado Pago returns the consumer to one of the public payment
             // result URLs. The payment intent is correlated through the

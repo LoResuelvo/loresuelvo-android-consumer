@@ -28,27 +28,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 
-/**
- * Bottom sheet that surfaces the attach sources (gallery, camera,
- * audio recording) when the user taps the `+` button on the
- * conversation input bar. 01-MM only wires the gallery option —
- * camera (02-MM) and audio (03-MM) entries are rendered as
- * disabled affordances so the layout is forward-compatible, but
- * their `onClick` callbacks are deliberately left as `null` so a
- * future commit wires them in instead of leaking an
- * "almost-impl" through the production code path.
- *
- * The host (the conversation route) owns the visibility state
- * (a `remember { mutableStateOf(false) }`); this composable is
- * pure — when [show] flips to `false`, the sheet slides off and
- * the composition is removed.
- *
- * Stateless: every entry routes the user's tap through a
- * nullable callback. When a callback is null, the row is
- * rendered with `onClick = null` (effectively disabled) so the
- * testTags remain in the tree and the BDD can assert the visual
- * contract even before the next scenario lands the impl.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaAttachSheet(
@@ -78,7 +57,6 @@ fun MediaAttachSheet(
                 onClick = onGalleryClick,
                 testTag = MEDIA_ATTACH_GALLERY_ROW_TAG,
             )
-            // Camera (02-MM) is wired. Audio (03-MM) is still a
             // placeholder — rendered disabled until the
             // recording flow lands.
             MediaAttachEntry(

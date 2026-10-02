@@ -12,30 +12,6 @@ import com.loresuelvo.consumer.ui.screens.chat.PendingMedia
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Orchestrator for 06-AIP. When the consumer taps "Diagnosticar"
- * with one or more images staged, this use case uploads each
- * attachment through the [FileRepository] presign → upload →
- * confirm pipeline and then dispatches the prompt with the
- * joined `image_file_ids[]`.
- *
- * Failure semantics:
- *  - Any single step failure short-circuits the pipeline. No
- *    partial uploads reach the chat message endpoint — the user
- *    retries the whole batch.
- *  - `presign` / `uploadBytes` / `confirm` failures are mapped
- *    to the closest [SendDiagnosisPromptOutcome.Failure] variant
- *    so the VM renders the same error surface as the
- *    prompt-only path (Network / Server / Unauthorized).
- *  - The dispatch step's own failures (the message endpoint
- *    rejecting the joined IDs) propagate unchanged.
- *
- * Why not a separate "upload" use case: scenario 06-AIP treats
- * "upload" + "send prompt" as a single atomic user action. A
- * two-phase flow (upload → display IDs → "Send" tap) would force
- * the VM to re-derive `image_file_ids[]` after a config change,
- * which the current state machine doesn't carry.
- */
 @Singleton
 class UploadAttachmentsAndSendUseCase @Inject constructor(
     private val fileRepository: FileRepository,
@@ -47,7 +23,6 @@ class UploadAttachmentsAndSendUseCase @Inject constructor(
         attachments: List<PendingMedia>,
     ): SendDiagnosisPromptOutcome {
         // Pair each uploaded result with its source attachment
-        // so a post-upload send failure (10-AIP) can surface
         // the bytes that already live on the storage backend via
         // [SendDiagnosisPromptOutcome.Failure.partiallyUploadedAttachments].
         val uploaded = mutableListOf<Pair<String, PendingMedia>>()

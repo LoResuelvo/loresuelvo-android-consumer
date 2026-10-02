@@ -5,17 +5,7 @@
     <!-- Permiso para grabar audio desde el micrófono. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
-    <!--
-      Camera capture for the chat media attach flow (02-MM).
-      The system camera app writes the captured photo to a
-      `FileProvider`-backed URI in the app's cache directory;
-      the manifest declares the provider with the
-      `${applicationId}.fileprovider` authority and the
-      `file_paths.xml` resource grants access to `cacheDir/camera/`.
-      No runtime CAMERA permission is required because the
-      consumer app does not read the camera sensor directly —
-      it delegates to the system camera via `TakePicture`.
-    -->
+
     <queries>
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />

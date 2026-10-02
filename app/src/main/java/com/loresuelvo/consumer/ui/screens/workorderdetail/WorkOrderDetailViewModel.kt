@@ -19,40 +19,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the consumer work-order detail screen
- * ([WorkOrderDetailScreen], US-54 scenario 16-VSP, US-27
- * `visualize-turns-detail`). Looks up the
- * [com.loresuelvo.consumer.domain.workorder.WorkOrderDetail]
- * tied to the work-order id via
- * [GetWorkOrderDetailUseCase] and exposes a sealed
- * [WorkOrderDetailUiState].
- *
- * The host
- * ([com.loresuelvo.consumer.ui.navigation.WorkOrderDetailRoute])
- * feeds the work-order id into [load] on first composition and
- * on manual retry from the [WorkOrderDetailUiState.Error]
- * surface. The VM is Hilt-scoped to the route entry, so
- * navigating to a different work order triggers a fresh
- * instance and a fresh round trip.
- *
- * **Pay flow** (US-27 scenario 09-VTD): tapping the
- * "Pagar saldo restante" CTA calls [payNow], which delegates to
- * [StartWorkOrderCheckoutUseCase] and surfaces the resulting
- * checkout URL on [checkoutUrl] (the route handler opens it in
- * a Custom Tab) or an error on [payError].
- *
- * **Rate flow** (US-30 `calify-provider-service`, scenarios
- * 01-CT / 02-CT): when the work order is `paid` and the cached
- * [com.loresuelvo.consumer.domain.workorder.WorkOrderDetail.review]
- * is `null`, the screen surfaces a "Calificar servicio" CTA.
- * Tapping it calls [openReviewComposer], which flips the
- * composer state to [ReviewComposerState.Editing]. The submit /
- * cancel / rating-input flow is delegated through
- * [RateProviderUseCase] (commit W: wire submit) and renders the
- * success / error states inside the composer — see
- * [ReviewComposerState] for the full UDF contract.
- */
 @HiltViewModel
 class WorkOrderDetailViewModel @Inject constructor(
     private val getWorkOrderDetail: GetWorkOrderDetailUseCase,
@@ -99,18 +65,7 @@ class WorkOrderDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Starts a Mercado Pago checkout session for the work
-     * order's remaining balance. Emits the resulting checkout
-     * URL on [checkoutUrl] (the route handler opens it in a
-     * Custom Tab) or surfaces an error message on [payError].
-     *
-     * The intent id is taken from the work-order id (the route
-     * arg). US-27 scenario 09-VTD asserts the call lands in
-     * [CheckoutSessionOutcome.Created]; [Network] / [Server] /
-     * [AlreadyPaid] surface an error message that the screen
-     * consumes via [payError].
-     */
+
     fun payNow(workOrderId: String) {
         viewModelScope.launch {
             val outcome = startWorkOrderCheckout(workOrderId.toIntOrNull() ?: return@launch)
@@ -139,14 +94,7 @@ class WorkOrderDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Opens the rating composer for the work order currently in
-     * [WorkOrderDetailUiState.Ready] (US-30 scenario 02-CT). The
-     * host wires this to the "Calificar servicio" CTA which only
-     * renders when `status == paid && review == null` so this
-     * method assumes a paid work order is loaded — if not, it
-     * silently no-ops to keep the screen stateless.
-     */
+
     fun openReviewComposer() {
         _uiState.update { current ->
             if (current !is WorkOrderDetailUiState.Ready) return@update current
@@ -202,16 +150,7 @@ class WorkOrderDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Submits the current composer draft through
-     * [RateProviderUseCase] (US-30 scenario 05-CT). On
-     * [com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome.Submitted]
-     * / [AlreadyReviewed] the VM merges the new review into
-     * [WorkOrderDetailUiState.Ready.workOrder] and collapses the
-     * composer; on [Network] / [Server] it leaves the composer
-     * open with the typed failure stamped on
-     * [ReviewComposerState.Editing.error]. Wired in commit W.
-     */
+
     @Suppress("unused") // exercised by the submit-handler commit
     fun submitReview() {
         val state = _uiState.value as? WorkOrderDetailUiState.Ready ?: return

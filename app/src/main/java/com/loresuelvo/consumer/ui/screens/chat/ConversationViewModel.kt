@@ -28,52 +28,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
-/**
- * UDF ViewModel for the consumer ↔ provider conversation detail
- * screen (`Route.Conversation`). Drives `GET /conversations/{id}`
- * through [GetConversationByIdUseCase] and `POST
- * /conversations/{id}/messages` through [SendMessageUseCase],
- * mapping the typed outcomes into the sealed
- * [ConversationUiState].
- *
- * Detail loading:
- *  - `Success(detail)` → [ConversationUiState.Ready] with empty
- *    prompt and `sending = false`.
- *  - `Failure.Network / .Server / .Unauthorized` →
- *    [ConversationUiState.Error] carrying the typed failure.
- *
- * Send flow (mirrors the AI diagnostic's [ChatViewModel]):
- *  - [onPromptChange] mirrors the field on the current
- *    [ConversationUiState.Ready] and clears any prior
- *    `transientError`.
- *  - [onSendClick]:
- *      * Trims the prompt, bails on blank or `sending = true`.
- *      * Snapshots the previous state and clears the prompt +
- *        flips `sending = true` + clears the prior
- *        `transientError` synchronously.
- *      * Fires [sendMessage]; on success, appends the
- *        server-persisted message to `detail.messages` and
- *        clears `lastAttemptedPrompt`; on failure, surfaces the
- *        typed failure in `transientError` and preserves the
- *        prompt in `lastAttemptedPrompt` so [onRetryClick] can
- *        resubmit it.
- *  - [onRetryClick] re-fires `sendMessage` with
- *    `lastAttemptedPrompt`. No-op when no previous failure or a
- *    previous send is in flight.
- *  - [onErrorDismiss] clears `transientError` without re-firing
- *    (the user can still hit the retry CTA — `lastAttemptedPrompt`
- *    is kept).
- *
- * The composer is **never** gated on `ConversationStatus.Pending`
- * (scenario 05-IC: "without restrictions"). The "Pendiente" badge
- * in the top bar is informational only.
- *
- * The conversation id is provided by the host
- * ([com.loresuelvo.consumer.ui.navigation.ConversationRoute])
- * via [load] on first composition (and on screen-level retry).
- * Hilt scopes the VM to the route entry so the same instance
- * survives configuration changes.
- */
 @HiltViewModel
 class ConversationViewModel @Inject constructor(
     private val getConversationById: GetConversationByIdUseCase,
@@ -130,7 +84,7 @@ class ConversationViewModel @Inject constructor(
             }
         }
     }
-    
+
     private fun currentConversationIdMatches(eventConversationId: Long): Boolean {
         val state = _uiState.value
         return state is ConversationUiState.Ready &&
@@ -144,10 +98,8 @@ class ConversationViewModel @Inject constructor(
             // server id is already in the list (race between
             // `sendMessage` Success and the WS echo), skip.
             if (current.detail.messages.any { it.id == message.id }) return@update current
-            // Scenario 09-IC: when the user is at the bottom, the
             // screen renders the new bubble immediately (auto-
             // scroll) so no "new message" indicator is needed.
-            // Scenario 10-IC: when the user is scrolled up reading
             // older messages, surface a "↓ nuevo mensaje" banner
             // by flipping `hasUnreadIncoming` to `true`. The banner
             // CTA (`onUnreadBannerTapped`) clears the flag.
@@ -330,8 +282,6 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    // ---- Media attachment (01-MM onwards) --------------------------
-
     /**
      * Reads the URI the picker returned (gallery / camera /
      * audio) via [MediaReader], packages the result as a
@@ -391,26 +341,7 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Reads the audio Uri the system's voice recorder returned
-     * (03-MM) via [MediaReader], then extracts the recording's
-     * duration via [com.loresuelvo.consumer.data.media.MediaMetadataRetrieverReader]
-     * and stages the `MediaUpload.Audio` payload. The bytes +
-     * duration path is the canonical "audio attach" entry point
-     * — the route's `RecordSound()` launcher simply forwards
-     * the result Uri here without any post-processing.
-     *
-     * Audio-mime routing happens inside [mediaReader]:
-     * image URIs come back as `MediaUpload.Image` (where this
-     * method effectively becomes a no-op staging). Audio URIs
-     * are upgraded with the duration before being handed to the
-     * [onAttachMedia] dispatcher.
-     *
-     * `null` duration (corrupt file, codec not supported, codec
-     * without a duration header) falls back to `0L` so the
-     * preview player can still render — the production code
-     * never crashes on a non-fatal decoder warning.
-     */
+
     fun onAttachAudioFromUri(uri: Uri) {
         val state = _uiState.value
         if (state !is ConversationUiState.Ready) return
@@ -522,20 +453,7 @@ class ConversationViewModel @Inject constructor(
         )
     }
 
-    /**
-     * Opens the fullscreen image viewer for [messageId] (06-MM).
-     *
-     * No-op when:
-     *  - the state isn't `Ready` (initial load / error);
-     *  - the message doesn't exist or isn't an image.
-     *
-     * The viewer is a `Dialog`-style overlay on top of the
-     * conversation screen, so the underlying conversation state
-     * stays untouched — scrolling, audio playback and the
-     * composer all keep working while the image is open. Tapping
-     * outside the image (or the close affordance) calls
-     * [onFullscreenImageDismiss] to clear the field.
-     */
+
     fun onImageClick(messageId: String) {
         val currentState = _uiState.value
 
@@ -603,27 +521,7 @@ class ConversationViewModel @Inject constructor(
         )
     }
 
-    /**
-     * Stage a [MediaUpload] for confirmation. The canonical
-     * attach surface for non-`Uri` callers (the BDD world, future
-     * programmatic attach scenarios, and the audio recorder
-     * flow that hands off a pre-built `MediaUpload.Audio` from
-     * the route's [MediaMetadataRetriever] pass).
-     *
-     * Dispatches by [MediaUpload] subtype so the preview card
-     * knows how to render the staged media:
-     *  - `MediaUpload.Image` → [PendingMediaKind.IMAGE], no
-     *    duration (image bubbles don't have a scrubber).
-     *  - `MediaUpload.Audio` → [PendingMediaKind.AUDIO],
-     *    durationMillis populated from the recorder / metadata
-     *    retriever so the player can drive its progress bar
-     *    (03-MM).
-     *
-     * The host's `onAttachImageFromGallery` reads the picker URI
-     * via [MediaReader] and forwards the result here with the
-     * original `sourceUri` so the preview card can render the
-     * real thumbnail.
-     */
+
     fun onAttachMedia(media: MediaUpload, sourceUri: Uri? = null) {
         val state = _uiState.value
         if (state !is ConversationUiState.Ready) return

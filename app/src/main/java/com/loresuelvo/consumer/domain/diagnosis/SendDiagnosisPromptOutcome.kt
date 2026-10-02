@@ -15,24 +15,9 @@ sealed interface SendDiagnosisPromptOutcome {
         /** Transport-level failure: timeouts, DNS, connection refused. */
         data class Network(
             val cause: Throwable,
-            /**
-             * Attachments the upload pipeline confirmed BEFORE the
-             * message endpoint rejected. Empty for upload-pipeline
-             * failures (08-AIP); non-empty when the prompt endpoint
-             * rejected AFTER the bytes were already on the storage
-             * backend (10-AIP). The VM keeps these in
-             * `state.sentAttachments` so the user can retry the
-             * prompt without re-uploading.
-             */
+
             val partiallyUploadedAttachments: List<com.loresuelvo.consumer.ui.screens.chat.PendingMedia> = emptyList(),
-            /**
-             * File IDs returned by the `presign` step for the
-             * attachments in [partiallyUploadedAttachments],
-             * aligned by index. The VM mirrors these into
-             * `state.sentAttachmentFileIds` so 11-AIP's retry
-             * can replay the prompt endpoint call without
-             * re-running the upload pipeline.
-             */
+
             val partiallyUploadedFileIds: List<String> = emptyList(),
         ) : Failure
 

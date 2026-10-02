@@ -22,28 +22,6 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
-/**
- * Compact summary card rendered above the message list on the
- * consumer ↔ provider conversation screen when the conversation
- * is linked to a service proposal (US-54 scenario 14-VSP).
- *
- * Surfaces the four pinned fields from the scenario:
- *  - monto acordado
- *  - fecha acordada
- *  - descripción del servicio
- *  - estado actual de la propuesta
- *
- * Header labels reuse the `conversation_proposal_summary_*`
- * string ids so the copy can be tweaked in one place per
- * locale. Status copy uses the same wording as the proposal
- * detail status badge so the consumer does not see two different
- * phrasings for the same lifecycle state.
- *
- * The card is **stateless**: every visible value is sourced
- * directly from the [ServiceProposal] the VM carries on its
- * `Ready` state. No user actions originate here — the chat
- * composer below stays the only affordance.
- */
 @Composable
 fun ProposalSummaryCard(
     proposal: ServiceProposal,

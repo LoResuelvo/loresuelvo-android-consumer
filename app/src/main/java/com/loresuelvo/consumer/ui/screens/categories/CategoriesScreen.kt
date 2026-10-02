@@ -35,13 +35,6 @@ import com.loresuelvo.consumer.ui.screens.home.CategoriesState
 import com.loresuelvo.consumer.ui.screens.home.components.CategoryGrid
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
-/**
- * Stateless "all categories" screen reached from the Home
- * "Ver todas" link (scenario 02-UXUI). Reuses the Home
- * [CategoryGrid] without the height cap and exposes a search
- * bar above the grid. Tapping a category forwards
- * `(id, name)` to [onCategoryClick].
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CategoriesScreen(

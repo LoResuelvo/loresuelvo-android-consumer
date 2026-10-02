@@ -17,26 +17,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the service-agreement confirmation screen
- * (US-21). Orchestrates two operations:
- *
- *  1. `load(serviceProposalId)` — fetches the full proposal list
- *     and filters by id (the API does not expose a single-
- *     proposal endpoint today, so we reuse the existing GET
- *     `/service-proposals` like the rest of the consumer app).
- *  2. `confirmAgreement()` — calls the booking-deposit checkout
- *     use case, transitions the state to `StartingCheckout`, and
- *     on success emits a one-shot `OpenCheckout` event the host
- *     uses to open a Custom Tab and navigate to the result
- *     route.
- *
- * Re-entrancy: while the VM is in `StartingCheckout` the CTA is
- * disabled (the screen reads `state is StartingCheckout`), so a
- * rapid double-tap cannot re-issue the same POST. The
- * `currentState` is captured at the call site to avoid races
- * between the disable and the response handler.
- */
 @HiltViewModel
 class ServiceAgreementViewModel @Inject constructor(
     private val serviceProposalRepository: ServiceProposalRepository,

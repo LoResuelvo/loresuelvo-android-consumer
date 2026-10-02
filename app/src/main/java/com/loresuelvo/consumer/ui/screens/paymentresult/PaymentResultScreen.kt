@@ -24,18 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
-/**
- * Renders the post-redirect payment outcome (US-21 confirm-
- * agreement flow + US-28 service-balance flow). Driven by the
- * [PaymentResultViewModel]'s polling loop; the screen is
- * stateless and renders whatever the latest [PaymentResultUiState]
- * says.
- *
- * "Approved" and "Rejected" are terminal — the user gets a
- * clear message and a CTA to go home. "Processing" / "Polling"
- * keeps the spinner visible and an explicit "still checking"
- * copy so the user knows the app is waiting on the bank.
- */
 @Composable
 fun PaymentResultScreen(
     state: PaymentResultUiState,

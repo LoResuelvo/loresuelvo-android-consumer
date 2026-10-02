@@ -15,16 +15,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UDF ViewModel for the "all categories" screen reached from
- * the Home "Ver todas" link (scenario 02-UXUI).
- *
- * Unlike the Home VM, this one does NOT truncate the result to
- * `MAX_CATEGORIES_ON_HOME` so the consumer sees every category
- * the platform publishes. [allCategories] holds the canonical
- * dataset so the search filter can be re-applied on every query
- * change and after a network retry.
- */
 @HiltViewModel
 class CategoriesViewModel @Inject constructor(
     private val getCategories: GetCategoriesUseCase,

@@ -21,19 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 
-/**
- * "↓ nuevo mensaje" banner pinned to the bottom of the chat
- * surface when a provider message arrives while the user is
- * scrolled up reading older messages (scenario 10-IC). Tapping
- * the banner scrolls the list back to the bottom (where the new
- * bubble has landed) and clears the unread flag on the VM.
- *
- * The banner is purely a presentation surface — it reads
- * `hasUnreadIncoming` from the parent and emits a single
- * `onTap` callback. The scroll-to-bottom action lives in the
- * parent (`ReadyState` owns the `LazyListState`) because the
- * banner itself doesn't have access to it.
- */
 @Composable
 fun NewMessageBanner(
     onTap: () -> Unit,

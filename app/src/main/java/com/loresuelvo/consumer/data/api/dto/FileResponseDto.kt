@@ -3,25 +3,6 @@ package com.loresuelvo.consumer.data.api.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/**
- * Response body for `POST /files/{fileID}/confirm` (see
- * `openapi/components/schemas/file-response.yaml`).
- *
- * `type` is the discriminator the backend uses to pick the
- * matching nested metadata block: `image`, `audio`, or `video`.
- * The wire is a `oneOf` whose branches require the nested block
- * for the declared type and forbid the other variants — the
- * backend never sends `audio` and `video` together.
- *
- * `url` is omitted for private files (conversation audio/video,
- * conversation images, job-request images, work-order completion
- * images); it's only populated for public profile photos. Audio
- * is private, so for our 03-MM flow [url] will be `null`.
- *
- * `ignoreUnknownKeys = true` (set in `NetworkModule.provideJson`)
- * makes kotlinx-serialization tolerant to the other variants'
- * nested blocks being absent.
- */
 @Serializable
 data class FileResponseDto(
     @SerialName("id") val id: String,

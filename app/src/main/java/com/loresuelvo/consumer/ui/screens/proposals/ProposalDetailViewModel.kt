@@ -18,12 +18,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the [ProposalDetailScreen] (US-54 scenario
- * 08-VSP). Loads a single proposal by id from the
- * [ServiceProposalRepository] and exposes a [ProposalDetailUiState]
- * for the screen to render.
- */
 @HiltViewModel
 class ProposalDetailViewModel @Inject constructor(
     private val serviceProposalRepository: ServiceProposalRepository,

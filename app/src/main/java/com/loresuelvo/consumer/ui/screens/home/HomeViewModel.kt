@@ -19,36 +19,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * UDF ViewModel for the consumer Home screen. Loads four
- * parallel surfaces on first composition:
- *
- *  - The category grid, via [GetCategoriesUseCase] (pre-US-54).
- *  - The "Propuestas que requieren atención" section (US-54,
- *    scenario 01-VSP), via [GetPendingServiceProposalsUseCase].
- *  - The "Trabajos próximos" section (US-54, scenario 02-VSP),
- *    via [GetAcceptedServiceProposalsUseCase].
- *  - The "Pagos pendientes" + "Mis Turnos" preview sections, via
- *    [GetTurnosUseCase] (visualize-turns.feature scenario 01-VT
- *    + the awaiting-payment follow-up). The same `GET /work-orders`
- *    response feeds both sections; the VM derives one filter for
- *    the upcoming preview (`[ScheduledDateComparator] closest-to-
- *    now` + take `MAX_TURNOS_ON_HOME`) and one for the
- *    awaiting-payment block (`TurnoStatus.AwaitingPayment`).
- *
- * The four round trips are launched in parallel coroutines on
- * `viewModelScope`. The global [HomeUiState] (Loading / Ready /
- * Error) is driven by the categories round trip only: that is
- * the action without which the Home dashboard is not usable, so
- * a categories failure flips the global to [HomeUiState.Error]
- * and the screen surfaces the retry CTA. Each proposals / turnos
- * round trip only mutates its own sub-state, preserving whatever
- * global branch the categories round trip landed in. This split
- * keeps the state machine deadlock-free when the coroutines race:
- * whichever lands first only mutates its slice, never stuck on
- * Loading because the other round trip was slow.
- */
-
-/**
  * Maximum number of categories surfaced on the Home grid. Anything
  * beyond that lives behind the "Ver todas" link (placeholder for now).
  * This is a UI decision, not a domain rule; the use case still returns

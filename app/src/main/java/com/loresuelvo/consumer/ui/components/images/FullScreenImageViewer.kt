@@ -24,24 +24,6 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import com.loresuelvo.consumer.R
 
-/**
- * Fullscreen image viewer for the work-order evidence photos
- * (US-27 `visualize-turns-detail` scenario 06-VTD). Reusable
- * viewer for any URL + filename pair — the existing chat
- * viewers in `ui/screens/chat/FullScreenImageViewer.kt`
- * specialise on `MediaReference.Image` / `ChatImage`; this
- * one is the canonical URL+name overload that callers from any
- * feature can import.
- *
- * Stateless: the host owns the visibility flag. When the host
- * renders this composable, the photo fills the screen on a
- * black scrim; tapping the scrim (or the image itself)
- * triggers [onDismiss].
- *
- * Compose testTags mirror the chat viewer (`*-fullscreen-image`)
- * so any instrumented suite can assert the overlay opens +
- * closes consistently across surfaces.
- */
 @Composable
 fun FullScreenImageViewer(
     imageUrl: String,

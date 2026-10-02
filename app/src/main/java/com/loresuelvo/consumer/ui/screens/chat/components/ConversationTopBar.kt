@@ -35,22 +35,6 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 
-/**
- * Top bar for the consumer ↔ provider conversation detail
- * screen. WhatsApp-style: back button on the left, counterpart
- * (provider) name + category on the centre, and a "Pendiente"
- * badge on the right when the conversation is still awaiting
- * the provider's acceptance.
- *
- * US-27 `visualize-turns-detail` scenario 02-VTD: when the
- * conversation is associated with a work order the trailing
- * edge renders a "Ver orden" icon button — tapping it
- * delegates to [onViewWorkOrder] so the route handler can
- * navigate to `Route.WorkOrderDetail`. Hidden for every
- * pre-acceptance conversation (`workOrderId == null`).
- *
- * Stateless — the parent owns the navigation callbacks.
- */
 @Composable
 fun ConversationTopBar(
     counterpart: ConversationCounterpart,
@@ -62,7 +46,6 @@ fun ConversationTopBar(
     Surface(
         modifier = modifier
             .testTag(CONVERSATION_TOP_BAR_TAG)
-            // 08-UXUI: `ConversationTopBar` is a custom composable
             // (not a Material 3 `TopAppBar`), so it does not inset
             // the status bar automatically. The outer `Scaffold`
             // already consumes the status bar inset for the

@@ -67,7 +67,6 @@ fun MediaPreviewCard(
         ) {
             // Thumbnail placeholder. The project doesn't ship an
             // image loader yet (avoiding the ~1.5 MB Coil
-            // dependency for a 01-MM feature), so the bubble
             // shows an image-icon glyph over a tinted square.
             // A future commit swaps the placeholder for an
             // `AsyncImage(model = pendingMedia.localUri)` once

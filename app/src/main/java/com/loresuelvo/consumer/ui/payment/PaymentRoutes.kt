@@ -21,20 +21,6 @@ import com.loresuelvo.consumer.ui.screens.serviceagreement.ServiceAgreementViewM
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/**
- * Thin routes that bridge Compose Navigation with the US-21
- * (Confirm service agreement) and US-21/US-28 (post-redirect
- * payment result) flows.
- *
- * Each function:
- *  1. Resolves a Hilt-scoped VM via [hiltViewModel].
- *  2. Wires the VM events / polling into the host [NavHostController].
- *  3. Emits the screen state.
- *
- * The deep link is decoded in [decodePaymentIntentFromUri] and
- * parsed by Compose Navigation natively via the `deepLinks` list
- * declared in the `composable` entries.
- */
 object ServiceAgreementRoute {
 
     /**

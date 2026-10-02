@@ -5,24 +5,6 @@ import com.loresuelvo.consumer.domain.payment.PaymentIntent
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 
-/**
- * UDF state for the service-agreement confirmation screen
- * (US-21). The screen has two phases:
- *
- *  1. **Review the agreement** — render the immutable proposal
- *     details (description, amount, scheduled time, deposit
- *     amount when available) and offer a "Confirm" CTA.
- *  2. **Start the deposit checkout** — open a Mercado Pago
- *     Custom Tab with the returned `checkout_url` and capture
- *     the `payment_intent_id` for the post-redirect polling loop.
- *
- * The state machine below mirrors those two phases plus loading
- * and error branches. The error branches share copy with the
- * rest of the consumer app via
- * [com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen]
- * conventions; the CTA labels are in `values/strings.xml` to
- * keep the BDD step regexes language-agnostic.
- */
 sealed interface ServiceAgreementUiState {
     val serviceProposalId: Int
 

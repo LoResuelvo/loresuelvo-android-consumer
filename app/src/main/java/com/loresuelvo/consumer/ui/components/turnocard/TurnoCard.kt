@@ -28,25 +28,6 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
-/**
- * Compact card for a single [Turno] (visualize-turns.feature
- * scenario 04-VT).
- *
- * Layout (top to bottom):
- *  - Row 1: avatar (circular, 56dp) + name / category column
- *    + status badge (pill, top-right corner).
- *  - Row 2: description + amount + scheduled date, left-aligned.
- *
- * The whole card is clickable so the consumer can tap anywhere
- * on it; the card body is non-clickable (avoids accidental
- * taps while scrolling) and the only action surface is the
- * trailing "Ver detalles" / "View details" TextButton at the
- * bottom of the card. Tapping the CTA fires [onDetailsClick].
- *
- * Status labels are pulled from `R.string.turno_status_*` so the
- * i18n contract is honoured (unlike `ProposalCard.StatusBadge`
- * which has hard-coded Spanish literals).
- */
 @Composable
 fun TurnoCard(
     turno: Turno,
@@ -242,7 +223,6 @@ private fun ViewRequestCta(
         )
     }
 }
-
 
 /**
  * Compose testTags for [TurnoCard]. Exported with the

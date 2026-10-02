@@ -1,18 +1,5 @@
 package com.loresuelvo.consumer.domain.payment
 
-/**
- * Status of a [PaymentIntent] as tracked by the backend.
- *
- * Mirrors the enum documented in
- * `openapi/components/schemas/payment-intent.yaml` of the
- * LoResuelvo API. The Android consumer reads this value via
- * `GET /payment-intents/{id}` to drive the US-21 confirmation
- * flow (seña del acuerdo de servicio) and the US-28 final-payment
- * flow. The consumer never writes statuses back to the backend
- * (the API is the source of truth) — these are read-only values
- * used to switch the UI between the `Loading`, `Processing`,
- * `Approved`, `Rejected` and `Expired` states.
- */
 enum class PaymentIntentStatus {
     /**
      * Internal transient state: the intent has been persisted

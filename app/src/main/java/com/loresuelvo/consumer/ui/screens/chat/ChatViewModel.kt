@@ -83,7 +83,6 @@ class ChatViewModel @Inject constructor(
         if (state.sending) return
         if (prompt.isEmpty() && state.pendingAttachments.isEmpty()) return
 
-        // Scenario 06-AIP: route the prompt through the upload
         // orchestrator when there are staged attachments. The
         // orchestrator runs the presign → upload → confirm
         // pipeline per attachment and then dispatches the prompt
@@ -120,7 +119,6 @@ class ChatViewModel @Inject constructor(
         }
 
         when {
-            // 08-AIP retry: the upload pipeline failed; the
             // bytes are still in `pendingAttachments` and need
             // a fresh presign → upload → confirm cycle.
             state.pendingAttachments.isNotEmpty() ->
@@ -129,7 +127,6 @@ class ChatViewModel @Inject constructor(
                     attachments = state.pendingAttachments,
                     conversationId = state.conversationId,
                 )
-            // 11-AIP retry: the upload pipeline succeeded but
             // the prompt endpoint rejected. The cached file IDs
             // bypass the upload orchestrator and replay the
             // chat message call directly.
@@ -151,35 +148,12 @@ class ChatViewModel @Inject constructor(
         _uiState.update { it.copy(transientError = null) }
     }
 
-    /**
-     * Reads the image URI the system's gallery picker returned
-     * via [MediaReader] and appends the staged bytes to
-     * `pendingAttachments`. Mirrors
-     * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel.onAttachImageFromGallery]
-     * in the chat-with-provider surface so the BDD layer drives
-     * the same wire contract on both VMs.
-     *
-     * Read failures land in a follow-up commit (08-AIP) that
-     * introduces a typed `pendingAttachmentError`; for now any
-     * [Throwable] from the picker drops the request silently so
-     * the BDD layer can pin the happy path without an extra
-     * flag.
-     */
+
     fun onAttachImageFromGallery(uri: Uri) {
         readAndAttach(uri)
     }
 
-    /**
-     * Reads the photo URI the system camera returned via
-     * [MediaReader] and appends the staged bytes to
-     * `pendingAttachments`. Mirrors
-     * [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel.onAttachImageFromCamera]
-     * in the chat-with-provider surface. Kept distinct from
-     * [onAttachImageFromGallery] so the route can wire the
-     * `TakePicture` launcher through its own callback and the
-     * BDD layer can pinpoint which source fired (scenario
-     * 02-AIP).
-     */
+
     fun onAttachImageFromCamera(uri: Uri) {
         readAndAttach(uri)
     }
@@ -197,14 +171,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Canonical non-`Uri` entry point used by the BDD world and
-     * any future programmatic attach scenario. Appends an image
-     * to `pendingAttachments` preserving the call order (used
-     * by 03-AIP for multiple images). Audio is rejected for now
-     * — only images travel on the AI chat surface today; a
-     * future scenario can extend the `when` dispatch.
-     */
+
     fun onAttachMedia(media: MediaUpload, sourceUri: Uri? = null) {
         require(media is MediaUpload.Image) {
             "AI chat only supports image attachments; got ${media::class.simpleName}"
@@ -223,12 +190,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Discards the staged attachment at [index] (scenario 04-AIP).
-     * The UI passes the index from the row that the user tapped
-     * "Descartar" on. Out-of-bounds indices are ignored so a stale
-     * recomposition cannot crash the chat.
-     */
+
     fun onRemoveAttachment(index: Int) {
         _uiState.update { current ->
             if (index < 0 || index >= current.pendingAttachments.size) {
@@ -243,11 +205,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Discards every staged attachment (scenario 05-AIP).
-     * No-op when nothing is staged so a stale tap cannot
-     * accidentally land in an invalid state.
-     */
+
     fun onClearAttachments() {
         _uiState.update { current ->
             if (current.pendingAttachments.isEmpty()) {
@@ -371,10 +329,8 @@ class ChatViewModel @Inject constructor(
         uploadedFileIds: List<String> = emptyList(),
     ) {
         _uiState.update {
-            // 08-AIP: an upload-pipeline failure leaves
             // [pendingAttachments] intact so the user can
             // retry without re-picking the images.
-            // 10-AIP: a prompt-send failure AFTER successful
             // uploads moves the uploaded bytes to
             // [sentAttachments] so the optimistic bubble stays
             // visible (with its images) until the user retries
@@ -382,7 +338,6 @@ class ChatViewModel @Inject constructor(
             // the distinction via the populated
             // [SendDiagnosisPromptOutcome.Failure.partiallyUploadedAttachments].
             // The matching `partiallyUploadedFileIds` rides
-            // alongside so 11-AIP's retry can replay the prompt
             // endpoint call without re-running the upload
             // pipeline.
             val newPending = if (uploadedAttachments.isEmpty()) {

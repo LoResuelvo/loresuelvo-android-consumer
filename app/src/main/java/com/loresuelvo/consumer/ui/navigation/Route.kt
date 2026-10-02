@@ -8,13 +8,7 @@ sealed class Route(val path: String) {
     data object Home : Route("home")
     data object MyProfile : Route("my-profile")
 
-    /**
-     * Dedicated screen that lists every service category
-     * available on the platform. Reached from the "Ver todas"
-     * link on the Home category section (scenario 02-UXUI).
-     * Each tile opens the existing
-     * [Professionals] route when tapped.
-     */
+
     data object Categories : Route("categories")
 
     /**
@@ -76,7 +70,6 @@ sealed class Route(val path: String) {
         }
     }
 
-    // ---- Bottom-bar destinations (US-18) ----------------------
     //
     // The path strings here are duplicated in
     // `BottomDestination.Companion` (intentionally, to keep the
@@ -99,20 +92,10 @@ sealed class Route(val path: String) {
      */
     data object Assistant : Route("assistant")
 
-    /**
-     * "Mis Servicios" surface — the consumer-facing list of
-     * every service proposal regardless of status (US-54 scenario
-     * 03-VSP). Reached from the Home "Ver todas" link in the
-     * dedicated Mis Servicios section. Hidden from the bottom
-     * nav (it's a sub-section of Home, not a top-level tab).
-     */
+
     data object MisServicios : Route("mis-servicios")
 
-    /**
-     * "Mis Turnos" surface — visualize-turns.feature scenario
-     * 01-VT. The route lands on a dedicated screen reached from
-     * the Home entry point. Hidden from the bottom nav.
-     */
+
     data object Turnos : Route("turnos")
 
     /**
@@ -147,27 +130,10 @@ sealed class Route(val path: String) {
             append("&providerProfilePhotoUrl=${Uri.encode(provider.profilePhotoUrl.orEmpty())}")
         }
     }
-    /**
-     * US-21 service-agreement confirmation screen. Reached when
-     * the consumer taps the "Confirmar acuerdo" CTA on
-     * [ProposalDetailScreen] (the proposal's bottom sheet). The
-     * route does not carry the `serviceProposalId` because the
-     * host keeps that information in a Hilt-scoped VM keyed off
-     * the [ProposalDetailViewModel] currently driving the sheet.
-     */
+
     data object ServiceAgreement : Route("service-agreement")
 
-    /**
-     * US-21 / US-28 payment result screen.
-     *
-     * The screen is entered from the Mercado Pago return URL. The payment
-     * intent ID is provided by the `external_reference` query parameter
-     * of that URL and is resolved from the incoming Android Intent.
-     *
-     * The redirect path (`success`, `pending` or `failure`) is only the
-     * return destination selected by the payment provider. The actual
-     * payment state is always obtained from the backend.
-     */
+
     data object PaymentResult : Route(
         "payment-result?external_reference={external_reference}"
     ) {

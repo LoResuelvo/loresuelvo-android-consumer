@@ -102,27 +102,6 @@ internal val diagnosisSummaryContentColor: Color
     @ReadOnlyComposable
     get() = MaterialTheme.colorScheme.onSecondaryContainer
 
-/**
- * Inline section rendered just below the chat once the AI
- * concludes the diagnosis. Shaped as part of the conversation
- * rather than its own screen:
- *
- *  ```
- *  Rubro detectado: Plomería
- *  Prestadores recomendados
- *  [card] [card] [next partial]
- *  ```
- *
- * The container used to be a single big `Card` with emerald
- * tint; that visual weight made the section feel like a separate
- * surface. It's now plain text headers flowing straight into a
- * `LazyRow` of compact tiles, so the section reads as another
- * paragraph of the AI's reply.
- *
- * [onContactClick] is the hook for the upcoming US-39 ("Enviar
- * solicitud a prestador"). For now it has a no-op default so
- * callers don't have to thread it before navigation lands.
- */
 @Composable
 fun DiagnosisSummaryCard(
     categoryName: String?,

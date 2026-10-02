@@ -14,21 +14,7 @@ package com.loresuelvo.consumer.domain.diagnosis
  */
 interface DiagnosisRepository {
 
-    /**
-     * Sends the consumer's prompt to the AI diagnosis backend.
-     *
-     *  - [existingConversationId] `null` ⇒ create a new
-     *    conversation (`POST /chatbot/conversations`).
-     *  - [existingConversationId] non-null ⇒ append to the
-     *    conversation (`POST /chatbot/conversations/{id}/messages`).
-     *  - [imageFileIds] are pre-uploaded, backend-confirmed file
-     *    UUIDs the AI will see attached to the message
-     *    (scenario 06-AIP onwards). Empty for text-only
-     *    conversations.
-     *
-     * Returns the full conversation aggregate ([Diagnosis]) on
-     * success, or a typed failure otherwise.
-     */
+
     suspend fun sendPrompt(
         content: String,
         existingConversationId: String? = null,

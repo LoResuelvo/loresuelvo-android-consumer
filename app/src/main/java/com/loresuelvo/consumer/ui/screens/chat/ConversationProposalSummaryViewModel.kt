@@ -12,36 +12,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * ViewModel for the proposal-summary card on the consumer ↔
- * provider conversation screen (US-54 scenario 14-VSP). Looks up
- * the [com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal]
- * tied to the conversation id via
- * [GetServiceProposalByConversationIdUseCase] and exposes a
- * sealed [ConversationProposalSummaryUiState].
- *
- * **Why a dedicated VM, not the existing
- * [ProposalDetailViewModel]?** The proposal detail screen is
- * driven by a modal bottom sheet mounted from MisServicios with a
- * proposal id; the conversation summary is driven by a
- * conversation id, has a different lifecycle (re-mounted on every
- * conversation entry), and renders a different layout (compact
- * card, no photo, no CTA). Sharing the VM would conflate two
- * distinct surfaces.
- *
- * **Failure handling.** A [GetServiceProposalByConversationIdOutcome.Failure]
- * collapses to [ConversationProposalSummaryUiState.Empty] rather
- * than surfacing an error card: the proposal summary is opt-in
- * and the chat must keep working even when the proposal fetch
- * drops. The BDD pins this contract by checking the chat renders
- * normally on failure.
- *
- * The host ([com.loresuelvo.consumer.ui.navigation.ConversationRoute])
- * feeds the conversation id into [load] on first composition. The
- * VM is Hilt-scoped to the route entry, so navigating to a
- * different conversation triggers a fresh instance and a fresh
- * round trip.
- */
 @HiltViewModel
 class ConversationProposalSummaryViewModel @Inject constructor(
     private val getServiceProposalByConversationId: GetServiceProposalByConversationIdUseCase,

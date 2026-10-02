@@ -28,32 +28,6 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 
-/**
- * App-wide WebSocket client for the conversation real-time
- * updates (scenarios 07-10-IC). Opens a single connection against
- * the backend's `/ws` endpoint, authenticates with the
- * short-lived ticket fetched from `POST /ws-tickets`, and emits
- * decoded [WsEvent]s as a [SharedFlow] for any ViewModel that
- * subscribes (typically [com.loresuelvo.consumer.ui.screens.chat.ConversationViewModel]
- * for scenario 07-IC).
- *
- * Lifecycle:
- *  - [start] launches a coroutine that fetches a ticket and
- *    opens the connection.
- *  - On `onClosed` / `onFailure` the client schedules a
- *    reconnect with a 3s delay (matches the webapp's
- *    `WebSocketProvider`). A 4xx ticket-fetch failure stops
- *    retrying (the auth is broken); a 5xx or transport failure
- *    retries indefinitely.
- *  - [stop] closes the connection and cancels the supervisor
- *    scope. Re-calling [start] after [stop] is a no-op (the
- *    client is one-shot per app session).
- *
- * The `events` flow uses `DROP_OLDEST` overflow because the
- * ViewModel-side filter (by `conversationId`) drops everything
- * we don't care about — losing a stale event is preferable to
- * blocking the WebSocket dispatcher thread.
- */
 @Singleton
 class WebSocketClient @Inject constructor(
     private val okHttpClient: OkHttpClient,

@@ -33,7 +33,6 @@ data class ConversationDetail(
     val counterpart: ConversationCounterpart,
     val messages: List<ConversationMessage>,
     val updatedOnEpochMillis: Long,
-    // US-27 `visualize-turns-detail` scenario 02-VTD: stable
     // id of the work order associated with this conversation
     // (emitted by the backend once the provider accepts the
     // originating job-request). `null` for every pre-acceptance

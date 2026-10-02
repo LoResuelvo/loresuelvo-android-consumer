@@ -16,33 +16,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UDF ViewModel for the "Mis Servicios" screen (`Route.MisServicios`).
- *
- * Drives the four proposal-list round trips:
- *
- *  - [GetAllServiceProposalsUseCase] (default, no filter) — US-54
- *    scenarios 03-VSP / 04-VSP.
- *  - [GetPendingServiceProposalsUseCase] — US-54 scenario 05-VSP.
- *  - [GetAcceptedServiceProposalsUseCase] — US-54 scenario 02-VSP
- *    (also used by the Home dashboard) and 06-VSP.
- *  - [GetRejectedServiceProposalsUseCase] — US-54 scenario 07-VSP.
- *
- * The VM is **stateless across config changes** (the AndroidX
- * `ViewModel` survives rotation), so `selectedStatusFilter` lives
- * on the VM and is mirrored into every `MisServiciosUiState`
- * variant so the filter chips can stay highlighted across Loading
- * and Error transitions.
- *
- * [onFilterSelected] is the single entry point the screen uses
- * to switch filters; it always re-fires [load] so the new list
- * (or Error) lands under the new filter label.
- *
- * Per the `MessagesListViewModel` rationale: an empty `Ready`
- * list is intentional — "the consumer has no proposals for this
- * filter" is a presentation concern (the empty card), not a
- * failure branch.
- */
 @HiltViewModel
 class MisServiciosViewModel @Inject constructor(
     private val getAllServiceProposals: GetAllServiceProposalsUseCase,

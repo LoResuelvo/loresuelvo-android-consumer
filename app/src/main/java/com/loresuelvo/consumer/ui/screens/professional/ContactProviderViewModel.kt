@@ -25,32 +25,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/**
- * UDF ViewModel for the contact-provider bottom sheet.
- *
- * State machine:
- *  - `Closed` → user taps "Contactar" on a provider card →
- *    `Open(provider, "", "", false, null)`.
- *  - `Open` → user types in the fields → state mutates with
- *    the new value AND clears any prior error.
- *  - `Open` → user attaches one or more images from the
- *    gallery / camera (scenario 03-UXUI) → staged into
- *    [ContactProviderUiState.Open.attachedImages] after passing
- *    the mime / size / cap validation; rejected batches
- *    surface via `attachmentError`.
- *  - `Open` → user taps "Enviar solicitud" (gated by `canSubmit`)
- *    → `Open(... isSubmitting = true, error = null)` →
- *    `CreateJobRequestUseCase` → on success, `Closed` +
- *    [ContactProviderEvent.NavigateToConversation]; on failure,
- *    `Open(... isSubmitting = false, error = <typed>)`.
- *  - `Open` → user taps "Cancelar" or swipes the modal down →
- *    `Closed`.
- *
- * The events are exposed via a buffered `Channel` so a slow
- * collector cannot drop the navigation event. The host in
- * `LoResuelvoNav` collects them inside a `LaunchedEffect` scoped
- * to the navigation entry, which survives configuration changes.
- */
 @HiltViewModel
 class ContactProviderViewModel @Inject constructor(
     private val createJobRequest: CreateJobRequestUseCase,
@@ -160,16 +134,7 @@ class ContactProviderViewModel @Inject constructor(
         image.mimeType in ALLOWED_IMAGE_MIME_TYPES &&
             image.bytes.size <= MAX_IMAGE_BYTES
 
-    /**
-     * Decodes [uri] via [MediaReader] (the same port the chat
-     * surfaces use) and appends the resulting image to the
-     * staged list. Mirrors the `01-AIP` flow on the AI
-     * diagnostic chat. `null` and unreadable URIs are dropped
-     * silently — the picker contract already filters URIs at
-     * the OS level. Audio / video media are also dropped
-     * (only [MediaUpload.Image] is accepted); the picker
-     * surfaces only image files today.
-     */
+
     fun onAttachImageFromUri(uri: Uri?) {
         if (uri == null) return
         viewModelScope.launch {

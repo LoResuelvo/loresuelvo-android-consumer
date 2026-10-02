@@ -6,40 +6,6 @@ import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 
-/**
- * Debug-only OkHttp interceptor that short-circuits
- * `GET /work-orders` with a hand-crafted JSON payload so the
- * "Mis Turnos" surface can be exercised manually on a real
- * device or emulator without a live backend.
- *
- * **Source set**: `src/debug/` — the file is compiled into every
- * `*Debug` build (devDebug, stagingDebug, prodDebug) but is
- * **absent** from `*Release`. This is the Android-standard
- * convention for debug-only behaviour and avoids the
- * `DuplicateBindings` tax that a Hilt-flavor override would
- * impose.
- *
- * **Wiring**: `NetworkModule.provideOkHttpClient` checks
- * `BuildConfig.DEBUG` and adds this interceptor only when running
- * a debug build. Returning mocked data from a release APK would
- * be a security regression.
- *
- * **Manual testing flow** (visualize-turns.feature scenarios
- * 02-VT..09-VT + visualize-turns-detail.feature 04-VTD /
- * 09-VTD):
- *  1. Build & install `devDebug` APK on a device / emulator.
- *  2. Launch the app, sign in (Auth0 flow, see README).
- *  3. Tap "Mis Turnos" on the Home dashboard.
- *  4. The seeded turnos land in the list covering the full
- *     `TurnoStatus` lifecycle so every status-badge branch is
- *     reachable:
- *      - id 1: Confirmed         (07-VT badge)
- *      - id 2: Pending           (06-VT badge)
- *      - id 3: Finished          (08-VT badge)
- *      - id 4: Cancelled         (09-VT badge)
- *      - id 5: AwaitingPayment   (US-27 04-VTD + 09-VTD badge)
- *      - id 6: Paid              (US-27 05-VTD + 07-VTD badge)
- */
 class FakeTurnosInterceptor : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -65,26 +31,7 @@ class FakeTurnosInterceptor : Interceptor {
     private companion object {
         val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
 
-        /**
-         * Six representative turnos covering the per-scenario
-         * surface the BDD + instrumented suites pin. Statuses
-         * mirror what the dev wants to click through manually:
-         *  - id 1: Confirmed         (07-VT badge)
-         *  - id 2: Pending           (06-VT badge)
-         *  - id 3: Finished          (08-VT badge)
-         *  - id 4: Cancelled         (09-VT badge)
-         *  - id 5: AwaitingPayment   (US-27 04-VTD + 09-VTD)
-         *  - id 6: Paid              (US-27 05-VTD + 07-VTD)
-         *
-         * Wire shape validated against the dev backend's
-         * `GET /work-orders` response (2026-09):
-         * snake_case, ISO-8601 with trailing `Z`. The
-         * `TurnoDtoMapper` collapses:
-         *  - `"scheduled"`        → [TurnoStatus.Confirmed]
-         *  - `"awaiting_payment"` → [TurnoStatus.AwaitingPayment]
-         *  - `"paid"`             → [TurnoStatus.Paid]
-         * (see `TurnoDtoMapper.kt`).
-         */
+
         val MOCK_WORK_ORDERS_JSON: String = """
             [
               {

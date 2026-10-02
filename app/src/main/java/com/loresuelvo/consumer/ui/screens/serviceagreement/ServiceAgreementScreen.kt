@@ -40,22 +40,6 @@ import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/**
- * Confirmation screen for the US-21 service-agreement flow.
- *
- * Renders the agreement the provider sent (description, amount,
- * scheduled time, estimated duration) and offers a "Confirmar
- * acuerdo" CTA. The CTA is disabled while the checkout session is
- * being created (`StartingCheckout`) so a rapid double-tap cannot
- * re-issue the same POST. A confirmation modal asks the consumer
- * to confirm the intent before triggering the seña.
- *
- * On `CheckoutReady` the host opens the returned
- * `checkout_url` in a Custom Tab and navigates to the
- * `Route.PaymentResult` route keyed on the payment intent id —
- * see [ServiceAgreementViewModel.confirmAgreement] for the
- * `OpenCheckout` event.
- */
 @Composable
 fun ServiceAgreementScreen(
     state: ServiceAgreementUiState,

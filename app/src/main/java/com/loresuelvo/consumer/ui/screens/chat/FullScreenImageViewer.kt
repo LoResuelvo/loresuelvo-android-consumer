@@ -26,21 +26,6 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 
-/**
- * Fullscreen image overlay for the conversation screen (06-MM).
- *
- * Stateless — the host (the conversation route) owns the
- * visibility via a `MediaReference.Image?` field on
- * [ConversationUiState.Ready]. When the field flips to non-null,
- * the overlay renders the image over a translucent scrim and
- * intercepts taps on the scrim to dismiss. The image itself is
- * not clickable so a tap on the picture area dismisses too
- * (matches WhatsApp / Telegram behaviour for image previews).
- *
- * Out of scope for this commit: pinch-to-zoom, swipe-down to
- * dismiss, and downloading the image. The 06-MM Gherkin only
- * requires "se abre en pantalla completa".
- */
 @Composable
 fun FullScreenImageViewer(
     image: MediaReference.Image,
