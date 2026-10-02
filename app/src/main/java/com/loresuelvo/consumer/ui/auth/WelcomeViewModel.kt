@@ -3,12 +3,12 @@ package com.loresuelvo.consumer.ui.auth
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
 import com.loresuelvo.consumer.domain.auth.SessionSynchronizationOutcome
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.platform.auth.AuthProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow

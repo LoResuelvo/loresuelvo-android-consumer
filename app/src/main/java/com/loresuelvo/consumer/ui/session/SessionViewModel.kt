@@ -4,12 +4,12 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.BuildConfig
-import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase
+import com.loresuelvo.consumer.platform.auth.AuthProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job

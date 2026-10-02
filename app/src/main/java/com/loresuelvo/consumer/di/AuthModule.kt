@@ -6,7 +6,7 @@ import com.loresuelvo.consumer.data.auth.Auth0AuthProvider
 import com.loresuelvo.consumer.data.auth.Auth0Config
 import com.loresuelvo.consumer.data.auth.Auth0SdkWebAuthLauncher
 import com.loresuelvo.consumer.data.auth.Auth0WebAuthLauncher
-import com.loresuelvo.consumer.domain.auth.AuthProvider
+import com.loresuelvo.consumer.platform.auth.AuthProvider
 import dagger.Binds
 import dagger.Module
 import dagger.Provides

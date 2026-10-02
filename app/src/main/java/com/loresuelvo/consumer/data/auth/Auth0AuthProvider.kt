@@ -4,9 +4,9 @@ import android.content.Context
 import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.result.Credentials
-import com.loresuelvo.consumer.domain.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
 import com.loresuelvo.consumer.domain.auth.LogoutOutcome
+import com.loresuelvo.consumer.platform.auth.AuthProvider
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume

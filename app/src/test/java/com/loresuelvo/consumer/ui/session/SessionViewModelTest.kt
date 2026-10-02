@@ -1,7 +1,7 @@
 package com.loresuelvo.consumer.ui.session
 
 import android.content.Context
-import com.loresuelvo.consumer.domain.auth.AuthProvider
+import com.loresuelvo.consumer.platform.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.LogoutOutcome

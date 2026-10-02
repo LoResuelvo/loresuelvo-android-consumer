@@ -3,7 +3,7 @@ package com.loresuelvo.consumer.ui.auth
 import android.content.Context
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
-import com.loresuelvo.consumer.domain.auth.AuthProvider
+import com.loresuelvo.consumer.platform.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.SessionSynchronizationOutcome
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
