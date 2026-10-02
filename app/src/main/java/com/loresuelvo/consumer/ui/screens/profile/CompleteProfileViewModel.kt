@@ -65,6 +65,9 @@ class CompleteProfileViewModel @Inject constructor(
             is CompleteProfileAction.FloorChanged -> onFloorChange(action.value)
             is CompleteProfileAction.UnitChanged -> onUnitChange(action.value)
             CompleteProfileAction.PickPhotoClicked -> Unit
+            is CompleteProfileAction.ProfilePhotoCropConfirmed ->
+                onProfilePhotoCropConfirmed(action.photo)
+            CompleteProfileAction.CancelProfilePhotoCropClicked -> cancelProfilePhotoCrop()
             CompleteProfileAction.RemovePhotoClicked -> removeProfilePhoto()
             CompleteProfileAction.ContinueClicked -> onContinueClick()
         }
@@ -99,24 +102,44 @@ class CompleteProfileViewModel @Inject constructor(
     }
 
     private fun validateProfilePhoto(photo: MediaUpload.Image) {
-        val error = when {
-            photo.bytes.isEmpty() -> CompleteProfileError.ProfilePhotoEmpty
-            photo.bytes.size > MAX_PROFILE_PHOTO_BYTES -> CompleteProfileError.ProfilePhotoTooLarge
-            photo.mimeType.lowercase() !in ALLOWED_PROFILE_PHOTO_MIME_TYPES ->
-                CompleteProfileError.ProfilePhotoUnsupportedFormat
-            else -> null
-        }
+        val error = profilePhotoValidationError(photo)
         _uiState.update {
             it.copy(
-                profilePhoto = if (error == null) photo else it.profilePhoto,
+                pendingProfilePhoto = if (error == null) photo else it.pendingProfilePhoto,
                 photoLoading = false,
                 error = error,
             )
         }
     }
 
+    /** Commits only the image produced by the circular crop editor. */
+    fun onProfilePhotoCropConfirmed(photo: MediaUpload.Image) {
+        val error = profilePhotoValidationError(photo)
+        _uiState.update {
+            it.copy(
+                profilePhoto = if (error == null) photo else it.profilePhoto,
+                pendingProfilePhoto = if (error == null) null else it.pendingProfilePhoto,
+                error = error,
+            )
+        }
+    }
+
+    private fun profilePhotoValidationError(photo: MediaUpload.Image): CompleteProfileError? {
+        return when {
+            photo.bytes.isEmpty() -> CompleteProfileError.ProfilePhotoEmpty
+            photo.bytes.size > MAX_PROFILE_PHOTO_BYTES -> CompleteProfileError.ProfilePhotoTooLarge
+            photo.mimeType.lowercase() !in ALLOWED_PROFILE_PHOTO_MIME_TYPES ->
+                CompleteProfileError.ProfilePhotoUnsupportedFormat
+            else -> null
+        }
+    }
+
+    private fun cancelProfilePhotoCrop() {
+        _uiState.update { it.copy(pendingProfilePhoto = null, error = null) }
+    }
+
     private fun removeProfilePhoto() {
-        _uiState.update { it.copy(profilePhoto = null, error = null) }
+        _uiState.update { it.copy(profilePhoto = null, pendingProfilePhoto = null, error = null) }
     }
 
     fun onFirstNameChange(value: String) {

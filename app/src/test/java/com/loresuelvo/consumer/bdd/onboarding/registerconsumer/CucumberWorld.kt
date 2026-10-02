@@ -150,6 +150,8 @@ class CucumberWorld : AutoCloseable {
             UploadProfilePhotoOutcome.Success("profile-file-1")
         viewModel.onProfilePhotoSelected(mockk<Uri>())
         scheduler.advanceUntilIdle()
+        viewModel.onAction(CompleteProfileAction.ProfilePhotoCropConfirmed(photo))
+        scheduler.advanceUntilIdle()
     }
 
     fun tapContinue(times: Int = 1) {

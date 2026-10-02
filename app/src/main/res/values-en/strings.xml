@@ -1,11 +1,9 @@
 <resources>
     <string name="app_name">loresuelvo-android-consumer</string>
 
-    <!-- Branding -->
     <string name="app_logo_content_description">LoResuelvo logo</string>
     <string name="brand_name">LoResuelvo</string>
 
-    <!-- Welcome screen -->
     <string name="welcome_login">Log in</string>
     <string name="welcome_badge_verified">Verified professionals</string>
     <string name="welcome_title">Professional solutions for your home</string>
@@ -21,7 +19,6 @@
     <string name="home_logout">Sign out</string>
     <string name="home_logout_error">We couldn\'t sign you out of Auth0. Please try again.</string>
 
-    <!-- Welcome · how it works -->
     <string name="welcome_step1_title">Tell us your problem</string>
     <string name="welcome_step1_description">Describe what\'s happening in your home.</string>
     <string name="welcome_step2_title">AI diagnosis</string>
@@ -29,7 +26,6 @@
     <string name="welcome_step3_title">Verified professional</string>
     <string name="welcome_step3_description">We connect you and get it solved.</string>
 
-    <!-- Welcome · illustrative service categories -->
     <string-array name="welcome_categories">
         <item>Plumbing</item>
         <item>Electrical</item>
@@ -39,8 +35,6 @@
         <item>HVAC</item>
     </string-array>
 
-
-    <!-- CompleteProfile screen -->
     <string name="complete_profile_hero_title">Almost there.</string>
     <string name="complete_profile_hero_subtitle">We need a few details to complete your profile.</string>
     <string name="complete_profile_field_first_name">First name</string>
@@ -55,8 +49,11 @@
     <string name="complete_profile_photo_add">Add photo</string>
     <string name="complete_profile_photo_change">Change photo</string>
     <string name="complete_profile_photo_remove">Remove photo</string>
+    <string name="complete_profile_photo_crop_title">Adjust your photo</string>
+    <string name="complete_profile_photo_crop_hint">Move the image and pinch to choose the circular crop.</string>
+    <string name="complete_profile_photo_crop_cancel">Cancel</string>
+    <string name="complete_profile_photo_crop_confirm">Use this photo</string>
 
-    <!-- CompleteProfile errors -->
     <string name="complete_profile_error_missing_first_name">First name is required</string>
     <string name="complete_profile_error_missing_last_name">Last name is required</string>
     <string name="complete_profile_error_network">We could not reach the server. Check your connection and try again.</string>
@@ -69,14 +66,12 @@
     <string name="complete_profile_error_photo_size">The photo cannot be larger than 5 MiB.</string>
     <string name="complete_profile_error_photo_unreadable">We could not read the photo. Choose another one and try again.</string>
 
-    <!-- Providers screen -->
     <string name="professionals_empty_title">No professionals in %1$s</string>
     <string name="professionals_empty_body">There are no pros available in this category yet. Try another one.</string>
     <string name="professionals_error_title">We couldn\'t load the professionals</string>
     <string name="professionals_error_body">Check your connection and try again.</string>
     <string name="professionals_retry">Retry</string>
     <string name="provider_photo_content_description">%1$s\'s profile photo</string>
-    <!-- Bottom navigation -->
     <string name="bottom_nav_mensajes">Messages</string>
     <string name="bottom_nav_inicio">Home</string>
     <string name="bottom_nav_asistente">AI Assistant</string>
@@ -104,12 +99,10 @@
     <string name="consumer_profile_calendar_error_network">We could not connect Google Calendar. Check your connection.</string>
     <string name="consumer_profile_calendar_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="consumer_profile_calendar_error_server">We could not validate the Google Calendar account. Try again.</string>
-    <!-- Bottom-bar placeholder screens -->
     <string name="messages_screen_placeholder_title">Messages</string>
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>
     <string name="assistant_screen_placeholder_title">AI Assistant</string>
     <string name="assistant_screen_placeholder_body">Your sessions with the assistant will appear here.</string>
-    <!-- AI assistant "Asistente IA" tab — real list surface (added 12-DIA) -->
     <string name="assistant_screen_loading">Loading sessions…</string>
     <string name="assistant_screen_empty_title">No AI sessions yet</string>
     <string name="assistant_screen_empty_body">When you ask the assistant something, it\'ll appear here.</string>
@@ -117,7 +110,6 @@
     <string name="assistant_screen_error_server">We couldn\'t load your sessions. Try again.</string>
     <string name="assistant_screen_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="assistant_screen_error_retry">Retry</string>
-    <!-- Messages list screen (added in 03-IC) -->
     <string name="messages_screen_loading">Loading conversations…</string>
     <string name="messages_screen_empty_title">No conversations yet</string>
     <string name="messages_screen_empty_body">When you contact a provider, it\'ll appear here.</string>
@@ -128,7 +120,6 @@
     <string name="messages_screen_pending_badge">Pending</string>
     <string name="messages_screen_no_preview">(No messages yet)</string>
     <string name="messages_screen_video_preview">Video</string>
-    <!-- Conversation detail screen (added in 05-IC) -->
     <string name="conversation_top_bar_back_content_description">Back</string>
     <string name="conversation_top_bar_view_work_order_content_description">View work order</string>
     <string name="conversation_input_placeholder">Write a message…</string>
@@ -150,7 +141,6 @@
     <string name="conversation_transient_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="conversation_transient_error_retry">Retry</string>
     <string name="conversation_transient_error_dismiss">Dismiss</string>
-    <!-- Conversation · media attach (01-MM onwards) -->
     <string name="conversation_attach_content_description">Attach file</string>
     <string name="conversation_attach_gallery">Gallery</string>
     <string name="conversation_attach_camera">Camera</string>
@@ -174,7 +164,6 @@
     <string name="conversation_transient_media_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="conversation_transient_media_error_payload_too_large">The file exceeds the maximum allowed size.</string>
     <string name="conversation_new_message_banner">New message</string>
-    <!-- Contact provider (job request) -->
     <string name="contact_provider_button_contactar">Contact</string>
     <string name="contact_provider_modal_title">Create work request</string>
     <string name="contact_provider_modal_subtitle">Your first message will start a conversation with the provider.</string>
@@ -184,7 +173,6 @@
     <string name="contact_provider_button_submit">Send request</string>
     <string name="contact_provider_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="contact_provider_error_unauthorized">Your session expired. Please log in again.</string>
-    <!-- Home screen -->
     <string name="home_greeting">Hi,</string>
     <string name="home_greeting_inline">Hi, %1$s</string>
     <string name="home_ai_search_hint">Describe your problem</string>
@@ -200,7 +188,6 @@
     <string name="home_notifications_content_description">Notifications</string>
     <string name="home_search_send_content_description">Send problem</string>
 
-    <!-- Chat screen -->
     <string name="chat_title">Chat with AI</string>
     <string name="chat_back_content_description">Back</string>
     <string name="chat_input_placeholder">Describe your home problem…</string>
@@ -213,12 +200,9 @@
     <string name="chat_error_retry">Retry</string>
     <string name="chat_error_dismiss">Dismiss</string>
     <string name="chat_preliminary_warning">The answers provided are preliminary guidance and do not constitute a definitive technical diagnosis</string>
-    <!-- Initial message (commit 11A) -->
     <string name="chat_initial_message_body">Hi! I\'m the LoResuelvo assistant. I\'ll help you figure out what might be happening in your home and, if needed, recommend professionals. Tell me what\'s going on.</string>
-    <!-- AI diagnosis conclusion card (09-DIA / 10-DIA) -->
     <string name="chat_diagnosis_category_format">Detected category: %1$s</string>
     <string name="chat_diagnosis_providers_title">Recommended providers</string>
-    <!-- Categories screen (02-UXUI) -->
     <string name="categories_title">Categories</string>
     <string name="categories_back_content_description">Back</string>
     <string name="categories_loading">Loading categories…</string>
@@ -229,12 +213,10 @@
     <string name="categories_retry">Retry</string>
     <string name="categories_search_hint">Search category…</string>
     <string name="categories_search_clear_content_description">Clear search</string>
-    <!-- Job request image attachment selector (03-UXUI) -->
     <string name="job_request_image_attach_button">Attach images</string>
     <string name="job_request_image_max_hint">Up to %1$d images allowed</string>
     <string name="job_request_image_limit_reached">You\'ve reached the limit of %1$d images</string>
     <string name="job_request_image_remove_content_description">Remove image</string>
-    <!-- Mis Servicios screen (US-54, scenario 03-VSP) -->
     <string name="mis_servicios_loading">Loading proposals…</string>
     <string name="mis_servicios_empty_title">No provider has sent you a proposal yet.</string>
     <string name="mis_servicios_empty_body">When you contact one, they\'ll send their proposal and you\'ll see it here.</string>
@@ -245,12 +227,10 @@
     <string name="mis_servicios_status_pending">Pending</string>
     <string name="mis_servicios_status_accepted">Accepted</string>
     <string name="mis_servicios_status_rejected">Rejected</string>
-    <!-- Mis Servicios status filter chips (US-54, scenarios 05-VSP / 06-VSP / 07-VSP) -->
     <string name="mis_servicios_filter_all">All</string>
     <string name="mis_servicios_filter_pending">Pending</string>
     <string name="mis_servicios_filter_accepted">Accepted</string>
     <string name="mis_servicios_filter_rejected">Rejected</string>
-    <!-- Proposal detail + card (US-54, scenario 08-VSP) -->
     <string name="proposal_card_view_cta">View proposal</string>
     <string name="proposal_detail_title">Proposal detail</string>
     <string name="proposal_detail_amount">Agreed amount</string>
@@ -288,7 +268,6 @@
     <string name="work_order_error_server">We couldn\'t load the work order. Try again.</string>
     <string name="work_order_error_retry">Retry</string>
 
-    <!-- US-30: Calificar servicio (rate the provider after payment). -->
     <string name="work_order_rate_cta">Rate service</string>
     <string name="work_order_rate_title">How was your experience?</string>
     <string name="work_order_rate_stars_label">Select a rating</string>
@@ -304,7 +283,6 @@
     <string name="work_order_rate_error_unpaid">You can only rate the work order after paying.</string>
     <string name="work_order_rate_rating_required">Select a rating before submitting.</string>
 
-    <!-- US-21: Confirm service agreement (deposit). -->
     <string name="service_agreement_loading">Loading agreement…</string>
     <string name="service_agreement_description">Service description</string>
     <string name="service_agreement_amount">Agreed price</string>
@@ -327,7 +305,6 @@
     <string name="service_agreement_already_paid">This agreement has already been confirmed.</string>
     <string name="service_agreement_return_home">Back to home</string>
 
-    <!-- US-21 / US-28: payment result (post-redirect polling). -->
     <string name="payment_result_loading">Verifying payment…</string>
     <string name="payment_result_processing">The payment is being processed.</string>
     <string name="payment_result_processing_hint">We keep checking until the bank confirms the status.</string>
@@ -341,11 +318,9 @@
     <string name="payment_result_error_network">We couldn\'t connect to verify the payment. Check your connection and try again.</string>
     <string name="payment_result_error_server">We couldn\'t verify the payment. Try again.</string>
     <string name="payment_result_error_retry">Retry</string>
-    <!-- Home entry into Mis Servicios (US-54, scenario 03-VSP) -->
     <string name="home_section_mis_servicios">My Services</string>
     <string name="home_section_mis_servicios_link">See all</string>
 
-    <!-- Mis Turnos screen (visualize-turns.feature, scenario 01-VT) -->
     <string name="home_section_mis_turnos">My Appointments</string>
     <string name="home_section_mis_turnos_link">See all</string>
     <string name="home_section_pending_payments">Pending payments</string>
@@ -372,7 +347,6 @@
     <string name="turnos_calendar_reauthorize">Reauthorize</string>
     <string name="turno_today_label">(today)</string>
     <string name="turno_details_cta">View details</string>
-    <!-- US-16: public provider profile, reputation and work history -->
     <string name="provider_profile_title">Provider profile</string>
     <string name="provider_profile_back_content_description">Back</string>
     <string name="provider_profile_loading">Loading profile…</string>

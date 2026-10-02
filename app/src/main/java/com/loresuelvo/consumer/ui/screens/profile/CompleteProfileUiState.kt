@@ -23,6 +23,7 @@ data class CompleteProfileUiState(
     val floor: String = "",
     val unit: String = "",
     val profilePhoto: MediaUpload.Image? = null,
+    val pendingProfilePhoto: MediaUpload.Image? = null,
     val photoLoading: Boolean = false,
     val loading: Boolean = false,
     val error: CompleteProfileError? = null,
@@ -42,6 +43,8 @@ sealed interface CompleteProfileAction {
     data class FloorChanged(val value: String) : CompleteProfileAction
     data class UnitChanged(val value: String) : CompleteProfileAction
     data object PickPhotoClicked : CompleteProfileAction
+    data class ProfilePhotoCropConfirmed(val photo: MediaUpload.Image) : CompleteProfileAction
+    data object CancelProfilePhotoCropClicked : CompleteProfileAction
     data object RemovePhotoClicked : CompleteProfileAction
     data object ContinueClicked : CompleteProfileAction
 }

@@ -140,6 +140,22 @@ class CompleteProfileViewModelTest {
     }
 
     @Test
+    fun selecting_valid_profile_photo_waits_for_crop_confirmation() = runTest {
+        val photo = MediaUpload.Image(
+            bytes = byteArrayOf(1, 2, 3),
+            mimeType = "image/png",
+            originalName = "avatar.png",
+        )
+        coEvery { mediaReader.read(any()) } returns photo
+
+        viewModel.onProfilePhotoSelected(mockk<Uri>())
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.profilePhoto)
+        assertEquals(photo, viewModel.uiState.value.pendingProfilePhoto)
+    }
+
+    @Test
     fun valid_profile_photo_is_forwarded_in_registration_command() = runTest {
         val photo = MediaUpload.Image(
             bytes = byteArrayOf(1, 2, 3),
@@ -153,6 +169,7 @@ class CompleteProfileViewModelTest {
 
         viewModel.onProfilePhotoSelected(mockk<Uri>())
         advanceUntilIdle()
+        viewModel.onAction(CompleteProfileAction.ProfilePhotoCropConfirmed(photo))
         viewModel.onContinueClick()
         advanceUntilIdle()
 

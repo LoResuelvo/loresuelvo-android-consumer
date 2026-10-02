@@ -1,5 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.profile
 
+import android.graphics.Bitmap
+import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -15,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.ByteArrayOutputStream
 
 /**
  * UI tests for [CompleteProfileScreen]. The screen boundary is intentionally
@@ -135,6 +138,26 @@ class CompleteProfileScreenTest {
     }
 
     @Test
+    fun pending_profile_photo_shows_circular_crop_editor() {
+        setProfileContent(
+            state = completeState().copy(
+                pendingProfilePhoto = MediaUpload.Image(
+                    bytes = testPhotoBytes(),
+                    mimeType = "image/jpeg",
+                    originalName = "avatar.jpg",
+                ),
+            ),
+        )
+
+        composeTestRule
+            .onNodeWithText("Ajustá tu foto")
+            .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag("profile-photo-crop-viewport")
+            .assertExists()
+    }
+
+    @Test
     fun typing_in_street_dispatches_action() {
         var action: CompleteProfileAction? = null
         setProfileContent(
@@ -217,4 +240,13 @@ class CompleteProfileScreenTest {
         loading = loading,
         error = error,
     )
+
+    private fun testPhotoBytes(): ByteArray {
+        val bitmap = Bitmap.createBitmap(160, 100, Bitmap.Config.ARGB_8888)
+        return ByteArrayOutputStream().use { output ->
+            check(bitmap.compress(Bitmap.CompressFormat.JPEG, 90, output))
+            bitmap.recycle()
+            output.toByteArray()
+        }
+    }
 }

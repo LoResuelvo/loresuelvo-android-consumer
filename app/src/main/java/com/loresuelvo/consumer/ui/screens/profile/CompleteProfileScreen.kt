@@ -27,6 +27,7 @@ import com.loresuelvo.consumer.ui.components.buttons.PrimaryButton
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfileForm
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfileHeader
 import com.loresuelvo.consumer.ui.screens.profile.components.ProfilePhotoPicker
+import com.loresuelvo.consumer.ui.screens.profile.components.ProfilePhotoCropper
 import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
 
 /**
@@ -119,5 +120,15 @@ fun CompleteProfileScreen(
                 onAction = onAction,
             )
         }
+    }
+
+    state.pendingProfilePhoto?.let { photo ->
+        ProfilePhotoCropper(
+            photo = photo,
+            onConfirm = { croppedPhoto ->
+                onAction(CompleteProfileAction.ProfilePhotoCropConfirmed(croppedPhoto))
+            },
+            onCancel = { onAction(CompleteProfileAction.CancelProfilePhotoCropClicked) },
+        )
     }
 }
