@@ -59,13 +59,56 @@ jobs:
           EOF
 
       - name: Run staging JVM tests and build artifacts
-        run: ./gradlew :app:testStagingDebugUnitTest :app:assembleStagingDebug :app:bundleProdRelease --no-daemon
+        run: ./gradlew :app:testStagingDebugUnitTest :app:assembleStagingRelease :app:bundleProdRelease --no-daemon
+
+      - name: Sign staging APK
+        env:
+          ANDROID_CONSUMER_STAGING_KEYSTORE_BASE64: ${{ secrets.ANDROID_CONSUMER_STAGING_KEYSTORE_BASE64 }}
+          ANDROID_CONSUMER_STAGING_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_CONSUMER_STAGING_KEYSTORE_PASSWORD }}
+          ANDROID_CONSUMER_STAGING_KEY_ALIAS: ${{ secrets.ANDROID_CONSUMER_STAGING_KEY_ALIAS }}
+          ANDROID_CONSUMER_STAGING_KEY_PASSWORD: ${{ secrets.ANDROID_CONSUMER_STAGING_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -n "$ANDROID_CONSUMER_STAGING_KEYSTORE_BASE64"
+          test -n "$ANDROID_CONSUMER_STAGING_KEYSTORE_PASSWORD"
+          test -n "$ANDROID_CONSUMER_STAGING_KEY_ALIAS"
+          test -n "$ANDROID_CONSUMER_STAGING_KEY_PASSWORD"
+
+          keystore_path="$RUNNER_TEMP/loresuelvo-staging.p12"
+          store_password_path="$RUNNER_TEMP/staging-store-password"
+          key_password_path="$RUNNER_TEMP/staging-key-password"
+
+          printf '%s' "$ANDROID_CONSUMER_STAGING_KEYSTORE_BASE64" | base64 --decode > "$keystore_path"
+          printf '%s' "$ANDROID_CONSUMER_STAGING_KEYSTORE_PASSWORD" > "$store_password_path"
+          printf '%s' "$ANDROID_CONSUMER_STAGING_KEY_PASSWORD" > "$key_password_path"
+          chmod 600 "$keystore_path" "$store_password_path" "$key_password_path"
+
+          apk_path="$(find app/build/outputs/apk/staging/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          test -n "$apk_path"
+
+          apksigner_path="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -x "$apksigner_path"
+
+          signed_apk="$RUNNER_TEMP/staging-signed.apk"
+          "$apksigner_path" sign \
+            --ks "$keystore_path" \
+            --ks-type PKCS12 \
+            --ks-key-alias "$ANDROID_CONSUMER_STAGING_KEY_ALIAS" \
+            --ks-pass "file:$store_password_path" \
+            --key-pass "file:$key_password_path" \
+            --out "$signed_apk" \
+            "$apk_path"
+          mv "$signed_apk" "$apk_path"
+
+          "$apksigner_path" verify --verbose --print-certs "$apk_path"
 
       - name: Upload Staging APK
         uses: actions/upload-artifact@v4
         with:
           name: staging-apk
-          path: app/build/outputs/apk/staging/debug/*.apk
+          path: app/build/outputs/apk/staging/release/*.apk
 
       - name: Upload Production Bundle
         uses: actions/upload-artifact@v4

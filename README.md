@@ -205,7 +205,7 @@ que ejecutar manualmente `Bootstrap CI AVD` e incrementar `cache_version`.
 El workflow [`release.yml`](.github/workflows/release.yml) se ejecuta al
 pushear un tag `v*.*.*`. En un mismo flujo:
 
-1. Ejecuta los tests JVM de staging y construye el APK
+1. Ejecuta los tests JVM de staging y construye el APK Release firmado de
    `com.loresuelvo.consumer.staging`.
 2. Publica automáticamente el APK en Firebase App Distribution para el grupo
    de testers configurado.
@@ -220,6 +220,21 @@ Configuración requerida en GitHub, dentro del Environment `staging`:
   Firebase, no el package name.
 - Variable `FIREBASE_TESTERS_STAGING`: alias del grupo de testers, por ejemplo
   `facultad-staging`.
+
+La firma estable del APK staging se configura como **Organization Secrets**
+disponibles para este repositorio:
+
+- `ANDROID_CONSUMER_STAGING_KEYSTORE_BASE64`: contenido Base64 del keystore
+  PKCS12.
+- `ANDROID_CONSUMER_STAGING_KEYSTORE_PASSWORD`: contraseña del keystore.
+- `ANDROID_CONSUMER_STAGING_KEY_ALIAS`: alias de la clave, normalmente
+  `loresuelvo-staging`.
+- `ANDROID_CONSUMER_STAGING_KEY_PASSWORD`: contraseña de la clave.
+
+El workflow firma el APK antes de publicarlo en Firebase. El certificado de
+esa clave debe coincidir con la huella SHA-256 publicada por la API en
+`https://test.loresuelvo.com.ar/.well-known/assetlinks.json` para el paquete
+`com.loresuelvo.consumer.staging`.
 
 Además, en **Settings → Secrets and variables → Actions → Variables** del
 repositorio, configurar `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING` y

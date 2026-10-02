@@ -31,6 +31,14 @@ Configure the Firebase entries in the `staging` Environment:
   service-account JSON.
 - Variables: `FIREBASE_APP_ID_STAGING` and `FIREBASE_TESTERS_STAGING`.
 
+Configure the stable staging signing key as organization secrets available to
+this repository:
+
+- `ANDROID_CONSUMER_STAGING_KEYSTORE_BASE64`
+- `ANDROID_CONSUMER_STAGING_KEYSTORE_PASSWORD`
+- `ANDROID_CONSUMER_STAGING_KEY_ALIAS`
+- `ANDROID_CONSUMER_STAGING_KEY_PASSWORD`
+
 Configure the Android Auth0 values as repository-level Actions Variables:
 
 - `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING`
@@ -50,8 +58,9 @@ workflow writes the JSON only to `$RUNNER_TEMP`, exposes it through
 1. Commit and push the workflow and app configuration to `main`.
 2. Create an annotated version tag, for example `v0.22.2`.
 3. Push the tag with `git push origin v0.22.2`.
-4. The workflow runs staging JVM tests, builds the staging debug APK, and
-   uploads it to the configured tester group with the Firebase CLI.
+4. The workflow runs staging JVM tests, builds the staging release APK, signs
+   it with the stable staging PKCS12 key, and uploads it to the configured
+   tester group with the Firebase CLI.
 5. The production job runs only after staging and uses the `production`
    Environment gate. The current job exposes the generated production AAB for
    the existing manual production step.
