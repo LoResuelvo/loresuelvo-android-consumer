@@ -12,16 +12,13 @@ import com.loresuelvo.consumer.R
  * en este momento" and pairs with a retry CTA so the consumer can
  * resubmit the last prompt without retyping it.
  *
- * `Network` is reserved for a future stricter copy ("sin
- * conexión"); current 04-DIA groups it under ServiceUnavailable.
- * `Unauthorized` is reserved for Auth0 token expiry flows and is
- * not exercised by 04-DIA — added now to keep the surface area
- * future-proof.
+ * `Network` represents a transport failure and has its own localized
+ * message. `Unauthorized` preserves the provider message so the
+ * session layer can decide how to recover.
  *
  * The mapping to a `@StringRes` is `messageResId()` (used by the
- * Composable); the literal text on the wire (BDD) is
- * `errorLiteral()` which mirrors the value the resource resolves
- * to under the device locale.
+ * Composable); `errorLiteral()` exposes the stable Spanish copy
+ * used by the chat's non-Compose consumers.
  */
 sealed interface ChatError {
     data object ServiceUnavailable : ChatError
@@ -37,10 +34,8 @@ fun ChatError.messageResId(): Int = when (this) {
 }
 
 /**
- * Stable Spanish literal surfaced to the BDD layer so scenario
- * 04-DIA's `Then veo el mensaje del asistente {string}` matches
- * the user-visible text without needing the Android resource
- * graph. Must stay in sync with the resource value at
+ * Stable Spanish literal exposed without requiring the Android
+ * resource graph. It must stay in sync with the resource value at
  * `app/src/main/res/values/strings.xml#chat_error_service_unavailable`.
  */
 fun ChatError.errorLiteral(): String = when (this) {

@@ -4,10 +4,9 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * `video` block nested inside a conversation message (see
- * `openapi/components/schemas/message-video.yaml`). The mapper
- * exposes the block as `MediaReference.Video`; playback remains
- * in the subsequent video-player issue.
+ * `video` block nested inside a conversation message. The mapper
+ * exposes the block as `MediaReference.Video` for rendering and
+ * playback by the conversation UI.
  */
 @Serializable
 data class MessageVideoDto(

@@ -34,9 +34,7 @@ import androidx.compose.ui.unit.dp
  * Composable's [LaunchedEffect] is a thin wrapper that calls
  * [LazyListState.scrollToItem] with the result.
  *
- * Ticket 1 of the chat-UX backlog: auto-scroll on send and on
- * receive (typed message → optimistic bubble, server reply → full
- * history).
+ * Auto-scroll covers both optimistic sends and server replies.
  */
 internal fun messagesListScrollIndex(
     messageCount: Int,
@@ -47,7 +45,7 @@ internal fun messagesListScrollIndex(
 }
 
 /**
- * "Respect reader position" gate (ticket 4 of the chat-UX backlog).
+ * "Respect reader position" gate.
  *
  * Returns `true` iff the [MessagesList] should
  * [androidx.compose.foundation.lazy.LazyListState.scrollToItem] to
@@ -73,9 +71,9 @@ internal fun shouldAutoScroll(target: Int?, isAtBottom: Boolean): Boolean =
  * Conditional items appended in order:
  *
  *  - [TypingIndicatorBubble] when [typingIndicatorVisible] is
- *    `true` (in-flight round-trip, scenario 03-DIA).
- *  - [ChatErrorCard] when [transientError] is non-null (failed
- *    round-trip, scenario 04-DIA). Retry + dismiss callbacks are
+ *    `true` during an in-flight round-trip.
+ *  - [ChatErrorCard] when [transientError] is non-null after a
+ *    failed round-trip. Retry + dismiss callbacks are
  *    forwarded verbatim — both flow back through the
  *    [com.loresuelvo.consumer.ui.screens.chat.ChatViewModel].
  *
@@ -100,7 +98,7 @@ fun MessagesList(
     // final bubble are always on screen **if the user is already
     // at the bottom**. If the user has scrolled up to read older
     // messages, the new bubble just appears below — no yank — so
-    // their reading position is preserved (ticket 4).
+    // their reading position is preserved.
     val isAtBottom by remember {
         derivedStateOf {
             val info = listState.layoutInfo

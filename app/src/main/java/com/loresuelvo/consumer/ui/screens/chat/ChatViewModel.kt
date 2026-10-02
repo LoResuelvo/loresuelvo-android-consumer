@@ -22,40 +22,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * ViewModel for the AI diagnostic chat screen.
- *
- * Commit 04-DIA wires the failure path:
- *
- *  - [onPromptChange] keeps [ChatUiState.promptInput] in sync.
- *  - [onSendClick]:
- *      - Trims the prompt, bails on blank or `sending = true`.
- *      - Captures the prompt in `lastAttemptedPrompt` (used by
- *        [onRetryClick] later).
- *      - Appends the optimistic bubble, clears the input, and
- *        flips `sending = true` + clears any prior `transientError`.
- *      - Delegates to [fireSend] which performs the round-trip
- *        and applies either [applyServerResponse] (Success) or
- *        [applySendFailure] (Failure.Network / .Server /
- *        .Unauthorized → [ChatError]).
- *  - [onRetryClick] resubmits `lastAttemptedPrompt`. No-op when
- *    no error is showing or a previous send is in flight.
- *  - [onErrorDismiss] clears `transientError` without re-firing.
- *  - [loadExisting] (commit 5c) hydrates the chat scroll from a
- *    saved AI session: the Assistant list → tap a row navigates
- *    to `Route.Chat.buildPath(conversationId)` and the route
- *    calls [loadExisting] which fetches the conversation detail
- *    via [loadAiConversation] and populates `state.messages` +
- *    `state.assessment` + `state.recommendedProviders`. A second
- *    call with the same id is a no-op so a recomposition of
- *    the route (e.g. config change) doesn't re-fire the
- *    round-trip. The state machine then transitions cleanly
- *    into the existing send flow — the loaded `state.conversationId`
- *    is what [fireSend] reads so the next prompt appends to the
- *    saved conversation.
- *
- * Idempotency: `lastAttemptedPrompt` is snapshotted from the
- * `state.promptInput.value()` before the optimistic append, so
- * parallel `onSendClick`s can't race on the prompt.
+ * ViewModel for the AI diagnostic chat screen. It owns prompt
+ * input, optimistic sends, retries, attachment uploads, and loading
+ * an existing conversation without repeating the same request.
  */
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -164,9 +133,8 @@ class ChatViewModel @Inject constructor(
                 val media = mediaReader.read(uri)
                 onAttachMedia(media, sourceUri = uri)
             } catch (_: Throwable) {
-                // See `pendingAttachments` Javadoc for the
-                // follow-up commit that introduces a typed
-                // attach error.
+                // Unreadable media is ignored; the caller can retry
+                // the attachment without changing the current chat.
             }
         }
     }

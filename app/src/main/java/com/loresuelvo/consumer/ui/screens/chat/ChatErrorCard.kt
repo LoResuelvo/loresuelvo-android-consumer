@@ -22,9 +22,8 @@ import com.loresuelvo.consumer.R
 /**
  * Inline error card rendered inside the assistant's lane when
  * [com.loresuelvo.consumer.ui.screens.chat.ChatUiState.transientError]
- * is non-null (scenario 04-DIA). Mirrors the webapp's
- * `AiDiagnosisChat.tsx` left-aligned red bubble so Android and web
- * stay in sync.
+ * is non-null. The card remains visible until retry succeeds or
+ * the user dismisses it.
  *
  * Stateless: the caller (`MessagesList`) passes the typed error
  * and the retry / dismiss callbacks. The bubble stays visible

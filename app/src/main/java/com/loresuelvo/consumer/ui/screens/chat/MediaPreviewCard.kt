@@ -65,12 +65,8 @@ fun MediaPreviewCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Thumbnail placeholder. The project doesn't ship an
-            // image loader yet (avoiding the ~1.5 MB Coil
-            // shows an image-icon glyph over a tinted square.
-            // A future commit swaps the placeholder for an
-            // `AsyncImage(model = pendingMedia.localUri)` once
-            // the loader is in place.
+            // The preview uses a lightweight media-type icon and
+            // metadata instead of decoding the pending bytes again.
             Box(
                 modifier = Modifier
                     .size(56.dp)

@@ -12,10 +12,9 @@ import com.loresuelvo.consumer.domain.category.Category
  *  - `COLLECTING_INFORMATION`: AI asked a follow-up question.
  *  - `PROFESSIONAL_REQUIRED`: diagnosis concluded; the user
  *    should be shown the matched providers.
- *  - any other string: a future backend addition. The UI gates
- *    rendering on [isProfessionalRequired] today; new outcomes
- *    won't crash, they'll just stay invisible until a future
- *    commit adds the matching UI surface.
+ *  - any other string: an unsupported or newly introduced outcome.
+ *    The UI gates rendering on [isProfessionalRequired], so unknown
+ *    values remain non-terminal without crashing the client.
  *
  * `problemCategory` is only populated alongside
  * `PROFESSIONAL_REQUIRED`. The category id is threaded into every

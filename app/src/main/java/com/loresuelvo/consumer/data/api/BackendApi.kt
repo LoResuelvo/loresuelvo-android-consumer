@@ -90,7 +90,7 @@ interface BackendApi {
         @Path("providerID") providerID: Int,
     ): com.loresuelvo.consumer.data.api.dto.ProviderProfileDto
 
-    // ---- AI diagnostic chat (added in commit 02-DIA) ---------------
+    // ---- AI diagnostic chat -----------------------------------------
 
     /**
      * `POST /chatbot/conversations` — opens a new conversation with

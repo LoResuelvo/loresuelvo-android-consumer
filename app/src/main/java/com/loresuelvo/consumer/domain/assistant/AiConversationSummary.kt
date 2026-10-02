@@ -22,9 +22,8 @@ package com.loresuelvo.consumer.domain.assistant
  *    and the user wants to see what they actually wrote last.
  *
  * `status` / `responseStatus` / `diagnosisCompleted` from the
- * wire are not surfaced here yet; a future ticket can promote
- * them to surface-level "Continuar chat" vs "Ver resumen"
- * affordances.
+ * wire are intentionally omitted from this row model. The list
+ * currently renders the title, activity timestamp, and preview.
  */
 data class AiConversationSummary(
     val id: String,

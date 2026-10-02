@@ -35,9 +35,8 @@ import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
 /**
- * Compose testTags for the diagnosis summary block. Kept verbatim
- * from the previous versions so the acceptance tests and the BDD
- * fixtures continue to locate the same surfaces.
+ * Compose testTags for the diagnosis summary block. They are stable
+ * so UI tests can locate the same surfaces across recompositions.
  */
 const val CHAT_DIAGNOSIS_SUMMARY_TAG: String = "chat-diagnosis-summary"
 const val CHAT_DIAGNOSIS_CATEGORY_TAG: String = "chat-diagnosis-category"

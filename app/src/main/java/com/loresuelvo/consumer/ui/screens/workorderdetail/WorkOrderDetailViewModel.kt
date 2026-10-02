@@ -106,10 +106,9 @@ class WorkOrderDetailViewModel @Inject constructor(
 
     /**
      * Collapses the composer back to [ReviewComposerState.Hidden]
-     * without submitting (used by the optional "Cancelar" button
-     * inside the form). Wired in commit W (submit handler).
+     * without submitting. Used by the optional "Cancelar" button
+     * inside the form.
      */
-    @Suppress("unused") // exercised by the submit-handler commit
     fun cancelReviewComposer() {
         _uiState.update { current ->
             if (current !is WorkOrderDetailUiState.Ready) return@update current
@@ -118,11 +117,9 @@ class WorkOrderDetailViewModel @Inject constructor(
     }
 
     /**
-     * Records a draft rating (1..5) inside the composer; the host
-     * wires it to the star-row tap handler. Wired in commit W
-     * (submit handler).
+     * Records a draft rating (1..5) inside the composer. The host
+     * forwards the star-row selection to this method.
      */
-    @Suppress("unused") // exercised by the submit-handler commit
     fun onRatingChange(rating: Int) {
         _uiState.update { current ->
             if (current !is WorkOrderDetailUiState.Ready) return@update current
@@ -135,10 +132,9 @@ class WorkOrderDetailViewModel @Inject constructor(
     }
 
     /**
-     * Records a draft description inside the composer (capped at
-     * 500 chars by the host). Wired in commit W.
+     * Records a draft description inside the composer, capped at
+     * 500 characters by the host.
      */
-    @Suppress("unused") // exercised by the submit-handler commit
     fun onDescriptionChange(description: String) {
         _uiState.update { current ->
             if (current !is WorkOrderDetailUiState.Ready) return@update current
@@ -151,7 +147,6 @@ class WorkOrderDetailViewModel @Inject constructor(
     }
 
 
-    @Suppress("unused") // exercised by the submit-handler commit
     fun submitReview() {
         val state = _uiState.value as? WorkOrderDetailUiState.Ready ?: return
         val composer = state.composer as? ReviewComposerState.Editing ?: return

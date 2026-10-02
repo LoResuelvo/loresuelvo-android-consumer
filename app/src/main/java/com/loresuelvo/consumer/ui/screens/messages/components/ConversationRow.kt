@@ -42,11 +42,8 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
  *  - a relative timestamp (today → `HH:mm`; older →
  *    `getRelativeTimeSpanString`) on the trailing edge.
  *
- * Tapping the whole row fires [onClick]. Wired to the host's
- * `navController.navigate(Route.Conversation.buildPath(id))` so
- * the user lands on the chat detail screen (commit 15b wired
- * the navigation; commit 17 — this one — wires the actual
- * `clickable` modifier that was missing).
+ * Tapping the whole row fires [onClick]. The route host decides
+ * which conversation detail destination should be opened.
  */
 @Composable
 fun ConversationRow(

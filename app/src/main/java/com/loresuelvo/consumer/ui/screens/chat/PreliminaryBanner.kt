@@ -16,9 +16,8 @@ import com.loresuelvo.consumer.R
 /**
  * Persistent banner above the chat list that reminds the user
  * that the AI's responses are preliminary guidance, not a
- * definitive technical diagnosis (scenario 05-DIA). Mirrors the
- * webapp's `InfoBanner` placement (above the messages area,
- * below the top bar).
+ * definitive technical diagnosis. It sits above the messages area,
+ * below the top bar.
  *
  * Stateless: the caller ([com.loresuelvo.consumer.ui.screens.chat.ChatScreen])
  * decides when to render via the

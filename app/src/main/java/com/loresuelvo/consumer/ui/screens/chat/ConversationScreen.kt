@@ -358,8 +358,7 @@ const val CONVERSATION_TRANSIENT_MEDIA_ERROR_DISMISS_TAG: String = "conversation
 
 /**
  * Compose testTag prefix for the per-attachment preview card.
- * Indexed (e.g. `conversation-attachment-card-0`) so the BDD step
- * can target the right entry without depending on its display
- * label.
+ * Entries are indexed so tests can target a specific attachment
+ * without depending on its display label.
  */
 const val CONVERSATION_ATTACHMENT_CARD_TAG_PREFIX: String = "conversation-attachment-card"

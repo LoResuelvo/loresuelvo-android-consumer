@@ -76,12 +76,7 @@ sealed class Route(val path: String) {
     // bottom-nav component decoupled from the navigation graph).
     // Keep both in sync when renaming a route.
 
-    /**
-     * Messages list (consumer's conversations with providers).
-     * Reachable from the bottom-bar "Mensajes" tab. The actual
-     * list of conversations is fleshed out in scenario 03-SRP of
-     * the messaging BDD; this commit only registers the route.
-     */
+    /** Messages list of the consumer's conversations with providers. */
     data object Messages : Route("messages")
 
     /**

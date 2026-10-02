@@ -96,11 +96,9 @@ fun LoResuelvoNavHost(
             // Mis Turnos screen, reached from the Home "Ver
             // todas" link.
             composable(Route.Turnos.path) { content.work.turnos() }
-            // work-order detail. Reached from the "Ver orden de
-            // from the "Mis Turnos" list / Home preview card
-            // since the backend `GET /work-orders/{id}` endpoint
-            // route keyed on the proposal id is being migrated
-            // commit by commit.
+            // Work-order detail, reached from the "Mis Turnos" list
+            // or the Home preview card. The route keeps the proposal
+            // id as its stable navigation key.
             composable(
                 route = Route.WorkOrderDetail.path,
                 arguments = listOf(

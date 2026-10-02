@@ -78,7 +78,7 @@ fun LoResuelvoBottomBar(
                         // modifier chain and is clipped by every `clip`
                         // that came before it. Without this clip the
                         // ripple painted a visible square around the
-                        // icon (the bug fixed in this commit).
+                        // icon.
                         .clip(CircleShape)
                         .clickable(onClick = { onNavigate(destination) })
                         .testTag(BOTTOM_BAR_ITEM_TAG_PREFIX + destination.route),

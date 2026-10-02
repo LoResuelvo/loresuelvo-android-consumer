@@ -4,9 +4,8 @@ import com.loresuelvo.consumer.domain.provider.Provider
 
 /**
  * Outcome of [DiagnosisRepository.getAiConversation]. Sealed so
- * the future `ChatViewModel.loadExisting` (board commit 5b) must
- * explicitly handle the happy path and every documented failure
- * branch — same shape as
+ * callers explicitly handle the happy path and every documented
+ * failure branch — same shape as
  * `SendDiagnosisPromptOutcome` and `CreateAiJobRequestOutcome`.
  *
  *  - [Success]: the backend returned the full AI conversation

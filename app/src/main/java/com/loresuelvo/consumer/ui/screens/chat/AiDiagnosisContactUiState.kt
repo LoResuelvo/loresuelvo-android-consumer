@@ -13,10 +13,9 @@ import com.loresuelvo.consumer.domain.provider.Provider
  *    `ChatRoute` as a defensive guard so the user cannot stack
  *    in-flight requests on the backend.
  *
- * Errors from the round-trip are NOT surfaced as a typed UI state
- * today — the chat surface keeps its current state and the user can
- * tap again. A future ticket can promote [Failure] to a typed
- * failure UI (toast / inline error) once the BDD scenarios pin it.
+ * Errors from the round-trip are not represented as a typed UI
+ * state. The chat surface keeps its current state and the user can
+ * tap again.
  */
 sealed interface AiDiagnosisContactUiState {
 

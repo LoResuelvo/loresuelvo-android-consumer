@@ -16,16 +16,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Compose testTag for [AssistantAvatar]. Exposed so the Compose
- * tests can locate the avatar regardless of where it's rendered
- * (header of the empty state, per-message avatar in commit 11C, etc.).
+ * Compose testTag for [AssistantAvatar]. Exposed so Compose tests
+ * can locate the avatar regardless of where it is rendered.
  */
 const val ASSISTANT_AVATAR_TAG: String = "chat-assistant-avatar"
 
 /**
- * Circular brand mark for the assistant. Reused in two places:
- *  1. The empty state header (commit 11G, default `size` 24dp).
- *  2. Per-message avatar on assistant bubbles (commit 11C, 32dp).
+ * Circular brand mark for the assistant. Reused in the empty-state
+ * header and in assistant message bubbles.
  *
  * The icon's size scales with the surface (`size * 0.625f`) so a
  * smaller avatar doesn't render a 20dp icon inside a 24dp circle.
