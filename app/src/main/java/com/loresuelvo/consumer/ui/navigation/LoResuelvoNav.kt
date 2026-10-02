@@ -367,9 +367,7 @@ private fun ProfessionalsRoute(
  * Home screen — entry point of the authenticated consumer. Reads the
  * navigation session (via `SessionViewModel`) and delegates it to the
  * new `HomeScreen` as a plain `displayName`. Category clicks navigate
- * to the [Route.Professionals] route; the rest of the actions are
- * placeholders for upcoming features (AI search, notifications,
- * logout).
+ * to the [Route.Professionals] route and wires the home actions.
  */
 @Composable
 private fun HomeRoute(

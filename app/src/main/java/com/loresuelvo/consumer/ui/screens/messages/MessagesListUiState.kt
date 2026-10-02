@@ -21,9 +21,8 @@ import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
  *  - [Ready] — round-trip succeeded; [conversations] may be empty.
  *  - [Error] — round-trip failed; the carried
  *    [ConversationsOutcome.Failure] subtype lets the screen render
- *    network vs server vs unauthorized strings distinctly. Pull-to-
- *    refresh / retry lands in a follow-up; for now `load()`
- *    exposes the same code path.
+ *    network vs server vs unauthorized strings distinctly. Retry
+ *    uses the same `load()` code path.
  */
 sealed interface MessagesListUiState {
 

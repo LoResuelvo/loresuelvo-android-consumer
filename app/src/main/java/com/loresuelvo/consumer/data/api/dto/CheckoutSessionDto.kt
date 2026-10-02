@@ -30,9 +30,8 @@ data class CheckoutSessionDto(
 /**
  * Wire format for the `pricing` sub-object inside
  * [CheckoutSessionDto]. Mirrors the OpenAPI
- * `ServiceBalancePricing` schema for the booking-deposit scenario
- * (which carries the same fields as the service-balance scenario
- * for the consumer's purpose). All amounts are in cents of
+ * `ServiceBalancePricing` schema for booking deposits and service
+ * balances. All amounts are in cents of
  * [currency]. Time fields are ISO-8601 strings (mapped to
  * epoch millis by [IsoTimestamp]).
  */

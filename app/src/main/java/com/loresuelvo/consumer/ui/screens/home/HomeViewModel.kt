@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Maximum number of categories surfaced on the Home grid. Anything
- * beyond that lives behind the "Ver todas" link (placeholder for now).
+ * beyond that lives behind the "Ver todas" link.
  * This is a UI decision, not a domain rule; the use case still returns
  * the full list.
  */

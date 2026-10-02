@@ -177,9 +177,7 @@ private fun LoadingState() {
 
 /**
  * Shared "non-Ready" surface used both for "no categories
- * published" and "search returned no matches". The two share the
- * same visual treatment today; splitting them is a follow-up if
- * the copy diverges.
+ * published" and "search returned no matches".
  */
 @Composable
 private fun EmptyState() {

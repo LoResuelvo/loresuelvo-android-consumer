@@ -110,10 +110,8 @@ private fun ImageThumbnail(
             .testTag(JOB_REQUEST_IMAGE_THUMBNAIL_TAG),
         contentAlignment = Alignment.Center,
     ) {
-        // Project doesn't ship an image loader yet (the
-        // AsyncImage swap is a follow-up). The placeholder
-        // mirrors the chat's `MediaPreviewCard` shape so the
-        // two surfaces feel consistent.
+        // The placeholder mirrors the chat's `MediaPreviewCard`
+        // shape so the two surfaces feel consistent.
         Icon(
             imageVector = Icons.Outlined.Image,
             contentDescription = image.originalName,

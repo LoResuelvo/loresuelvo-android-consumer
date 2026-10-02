@@ -8,12 +8,6 @@ package com.loresuelvo.consumer.ui.screens.professional
  */
 sealed interface ContactProviderEvent {
 
-    /**
-     * The `POST /job-requests` round-trip succeeded and the
-     * backend returned a `conversation_id`. The host navigates
-     * to `Route.Conversation(conversationId)`. The full chat
-     * surface is a placeholder for now — the actual messages
-     * UI is fleshed out in a follow-up US.
-     */
+    /** The job request succeeded and navigation can open the conversation. */
     data class NavigateToConversation(val conversationId: String) : ContactProviderEvent
 }

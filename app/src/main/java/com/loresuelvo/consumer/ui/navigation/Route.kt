@@ -30,13 +30,7 @@ sealed class Route(val path: String) {
         }
     }
 
-    /**
-     * Provider conversation (1:1 chat between the consumer and
-     * the provider, created by `POST /job-requests`). The host
-     * composable is a placeholder for now — the actual message
-     * UI is fleshed out in a follow-up US (scenarios 03-SRP and
-     * 04-SRP of `contact-provider.feature`).
-     */
+    /** Provider conversation created by `POST /job-requests`. */
     data class Conversation(val conversationId: String) :
         Route("conversation/{conversationId}") {
         companion object {

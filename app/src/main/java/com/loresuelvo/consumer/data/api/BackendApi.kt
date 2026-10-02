@@ -167,8 +167,6 @@ interface BackendApi {
     @GET("chatbot/conversations")
     suspend fun getAiConversations(): List<AiConversationSummaryDto>
 
-    // ---- Job requests (added for US "Contact a provider") -------
-
     /**
      * `POST /job-requests` — submits the consumer's first message
      * to a provider. The body carries the provider id, a title,

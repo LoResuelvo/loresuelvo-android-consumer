@@ -126,8 +126,8 @@ fun HomeScreen(
         // todas" link routes to the full list screen
         // (`Route.Turnos`); the body below it shows the closest-
         // to-now `MAX_TURNOS_ON_HOME` scheduled appointments as
-        // [TurnoCard]s when the round trip succeeded (scenarios
-        // list is empty / loading / errored the shared
+        // [TurnoCard]s when the round trip succeeded. If the
+        // list is empty, loading, or errored, the shared
         // [EducationalEmptyCard] keeps the section visually
         // consistent so the user never sees a blank box.
         SectionTitle(

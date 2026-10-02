@@ -28,8 +28,7 @@ class MessagesListViewModel @Inject constructor(
 
     /**
      * Loads the consumer's conversations list. Public so the
-     * screen can re-trigger it on retry (and, in a follow-up,
-     * pull-to-refresh).
+     * screen can re-trigger it on retry.
      */
     fun load() {
         viewModelScope.launch {

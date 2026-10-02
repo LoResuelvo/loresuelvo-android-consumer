@@ -15,11 +15,8 @@ package com.loresuelvo.consumer.domain.jobrequest
  * so the response can flow through unmodified when a future
  * iteration adds attachments.
  *
- * `status` is currently a free-form string (the backend returns
- * `"pending"` on create). It is NOT modelled as a sealed enum yet
- * because the only known value is `pending`; if the conversation
- * status opens up (e.g. `accepted`, `rejected`) in a future US
- * we'll convert it to a sealed type.
+ * `status` is currently a free-form string; the backend returns
+ * `"pending"` when the request is created.
  */
 data class JobRequest(
     val id: String,
