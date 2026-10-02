@@ -1,0 +1,48 @@
+# Copy this file to local.properties and replace every placeholder.
+# Never commit local.properties: it contains machine-specific paths and credentials.
+
+# Android SDK used by Gradle.
+sdk.dir=/absolute/path/to/Android/Sdk
+
+# Shared build metadata (optional).
+VERSION_CODE=20
+VERSION_NAME=0.22.1
+
+# -----------------------------------------------------------------------------
+# DEV flavor (default: com.loresuelvo.consumer.dev)
+# -----------------------------------------------------------------------------
+AUTH0_DOMAIN=loresuelvo-dev.auth0.com
+AUTH0_CLIENT_ID=<auth0-consumer-dev-client-id>
+AUTH0_SCHEME=com.loresuelvo.consumer
+AUTH0_AUDIENCE=http://localhost:8080
+API_URL=http://10.0.2.2:8080
+PUBLIC_MEDIA_BASE_URL=<dev-public-media-base-url>
+PAYMENT_RETURN_HOST=
+# OAuth client ID of the server/web client in the same Google Cloud project.
+GOOGLE_CALENDAR_SERVER_CLIENT_ID=<dev-google-calendar-server-client-id>
+
+# -----------------------------------------------------------------------------
+# STAGING flavor (default: com.loresuelvo.consumer.staging)
+# -----------------------------------------------------------------------------
+AUTH0_DOMAIN_STAGING=<auth0-staging-domain>
+AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING=<auth0-consumer-staging-client-id>
+AUTH0_SCHEME_ANDROID_CONSUMER_STAGING=com.loresuelvo.consumer.staging
+AUTH0_AUDIENCE_STAGING=<auth0-staging-audience>
+API_URL_STAGING=<staging-api-url>
+PUBLIC_MEDIA_BASE_URL_STAGING=<staging-public-media-base-url>
+PAYMENT_RETURN_HOST_STAGING=test.loresuelvo.com.ar
+# OAuth client ID of the staging server/web client.
+GOOGLE_CALENDAR_SERVER_CLIENT_ID_STAGING=<staging-google-calendar-server-client-id>
+
+# -----------------------------------------------------------------------------
+# PROD flavor (default: com.loresuelvo.consumer)
+# -----------------------------------------------------------------------------
+AUTH0_DOMAIN_PROD=<auth0-prod-domain>
+AUTH0_CLIENT_ID_PROD=<auth0-consumer-prod-client-id>
+AUTH0_SCHEME_PROD=com.loresuelvo.consumer.prod
+AUTH0_AUDIENCE_PROD=<auth0-prod-audience>
+API_URL_PROD=<prod-api-url>
+PUBLIC_MEDIA_BASE_URL_PROD=<prod-public-media-base-url>
+PAYMENT_RETURN_HOST_PROD=loresuelvo.com.ar
+# OAuth client ID of the production server/web client.
+GOOGLE_CALENDAR_SERVER_CLIENT_ID_PROD=<prod-google-calendar-server-client-id>
