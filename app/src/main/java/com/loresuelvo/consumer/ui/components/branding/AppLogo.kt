@@ -2,13 +2,13 @@ package com.loresuelvo.consumer.ui.components.branding
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -19,6 +19,8 @@ import com.loresuelvo.consumer.R
 fun AppLogo(
     size: Dp = 96.dp,
 ) {
+    val density = LocalDensity.current
+
     Box(
         modifier = Modifier
             .size(size)
@@ -30,11 +32,16 @@ fun AppLogo(
             contentScale = ContentScale.Fit,
             modifier = Modifier
                 .matchParentSize()
-                .scale(LOGO_SCALE)
-                .offset(y = LOGO_VERTICAL_OFFSET),
+                .graphicsLayer {
+                    scaleX = LOGO_SCALE
+                    scaleY = LOGO_SCALE
+                    translationY = with(density) {
+                        size.toPx() * LOGO_VERTICAL_CENTER_CORRECTION
+                    }
+                },
         )
     }
 }
 
 private const val LOGO_SCALE = 2.4f
-private val LOGO_VERTICAL_OFFSET = 6.dp
+private const val LOGO_VERTICAL_CENTER_CORRECTION = 0.066f
