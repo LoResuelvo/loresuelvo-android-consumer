@@ -6,8 +6,12 @@ import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.usecase.auth.GetConsumerProfileUseCase
 import com.loresuelvo.consumer.domain.usecase.calendar.ConnectGoogleCalendarUseCase
+import com.loresuelvo.consumer.domain.notifications.NotificationPermissionStatus
+import com.loresuelvo.consumer.domain.usecase.notifications.GetNotificationPermissionStatusUseCase
+import com.loresuelvo.consumer.domain.usecase.notifications.RecordNotificationPermissionDecisionUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -112,5 +116,62 @@ class ConsumerProfileViewModelTest {
         val state = viewModel.uiState.value as ConsumerProfileUiState.Ready
         assertEquals(user, state.user)
         assertTrue(state.calendarConnection is CalendarConnectionUiState.Failed)
+    }
+
+    @Test
+    fun records_notification_permission_granted_and_updates_ui_state() = runTest {
+        val getNotificationPermissionStatus = mockk<GetNotificationPermissionStatusUseCase>()
+        val recordNotificationPermissionDecision = mockk<RecordNotificationPermissionDecisionUseCase>(relaxed = true)
+
+        every { getNotificationPermissionStatus() } returnsMany listOf(
+            NotificationPermissionStatus.UNDECIDED,
+            NotificationPermissionStatus.GRANTED,
+        )
+        coEvery { getConsumerProfile() } returns CurrentUserOutcome.Success(user)
+
+        viewModel = ConsumerProfileViewModel(
+            getConsumerProfile,
+            connectGoogleCalendar,
+            getNotificationPermissionStatus,
+            recordNotificationPermissionDecision,
+        )
+        advanceUntilIdle()
+
+        val initialState = viewModel.uiState.value as ConsumerProfileUiState.Ready
+        assertEquals(NotificationPermissionStatus.UNDECIDED, initialState.notificationPermission)
+
+        viewModel.onNotificationPermissionResult(granted = true)
+        advanceUntilIdle()
+
+        val updatedState = viewModel.uiState.value as ConsumerProfileUiState.Ready
+        assertEquals(NotificationPermissionStatus.GRANTED, updatedState.notificationPermission)
+        io.mockk.verify { recordNotificationPermissionDecision(true) }
+    }
+
+    @Test
+    fun records_notification_permission_denied_and_updates_ui_state() = runTest {
+        val getNotificationPermissionStatus = mockk<GetNotificationPermissionStatusUseCase>()
+        val recordNotificationPermissionDecision = mockk<RecordNotificationPermissionDecisionUseCase>(relaxed = true)
+
+        every { getNotificationPermissionStatus() } returnsMany listOf(
+            NotificationPermissionStatus.UNDECIDED,
+            NotificationPermissionStatus.DENIED,
+        )
+        coEvery { getConsumerProfile() } returns CurrentUserOutcome.Success(user)
+
+        viewModel = ConsumerProfileViewModel(
+            getConsumerProfile,
+            connectGoogleCalendar,
+            getNotificationPermissionStatus,
+            recordNotificationPermissionDecision,
+        )
+        advanceUntilIdle()
+
+        viewModel.onNotificationPermissionResult(granted = false)
+        advanceUntilIdle()
+
+        val updatedState = viewModel.uiState.value as ConsumerProfileUiState.Ready
+        assertEquals(NotificationPermissionStatus.DENIED, updatedState.notificationPermission)
+        io.mockk.verify { recordNotificationPermissionDecision(false) }
     }
 }

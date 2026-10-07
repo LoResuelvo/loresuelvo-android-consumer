@@ -10,6 +10,7 @@ class ConsumerPushNotificationsSteps {
     private val world = ConsumerPushNotificationsWorld()
     private val messages = ConsumerMessageNotificationsWorld()
     private val services = ConsumerServiceNotificationsWorld()
+    private val permissions = ConsumerNotificationPermissionWorld()
     private var registrationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
@@ -58,6 +59,24 @@ class ConsumerPushNotificationsSteps {
 
     @Entonces("el aviso no expone nombres, direcciones ni importes")
     fun serviceNotificationPreservesPrivacy() = services.assertPrivate()
+
+    @Dado("que uso Android 13 o posterior y no decidí el permiso de avisos")
+    fun startWithAndroid13Undecided() = permissions.startWithAndroid13Undecided()
+
+    @Dado("solicité habilitar los avisos desde LoResuelvo")
+    fun requestEnablingNotifications() = permissions.requestEnablingNotifications()
+
+    @Cuando("{string} el permiso de notificaciones del teléfono")
+    fun decideNotificationPermission(decision: String) = permissions.decidePermission(decision)
+
+    @Entonces("puedo seguir consultando mis mensajes y servicios")
+    fun canConsultMessagesAndServices() = permissions.assertCanConsultMessagesAndServices()
+
+    @Entonces("no se vuelve a pedir el permiso automáticamente al abrir LoResuelvo")
+    fun notPromptedAutomatically() = permissions.assertNotPromptedAutomatically()
+
+    @Entonces("puedo abrir los ajustes de notificaciones del teléfono desde la aplicación")
+    fun canOpenNotificationSettings() = permissions.assertCanOpenNotificationSettings()
 
     @After
     fun close() {

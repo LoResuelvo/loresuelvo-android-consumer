@@ -97,6 +97,12 @@
     <string name="consumer_profile_calendar_error_network">No pudimos vincular Google Calendar. Revisá tu conexión.</string>
     <string name="consumer_profile_calendar_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <string name="consumer_profile_calendar_error_server">No pudimos validar la cuenta de Google Calendar. Intentá nuevamente.</string>
+    <string name="consumer_profile_notifications_title">Avisos del teléfono</string>
+    <string name="consumer_profile_notifications_enabled">Los avisos están habilitados en este teléfono.</string>
+    <string name="consumer_profile_notifications_disabled">Los avisos están desactivados. Podés habilitarlos desde los ajustes del sistema.</string>
+    <string name="consumer_profile_notifications_undecided">Recibí novedades sobre tus mensajes y servicios en este teléfono.</string>
+    <string name="consumer_profile_notifications_enable">Habilitar avisos</string>
+    <string name="consumer_profile_notifications_settings">Ajustes de notificaciones</string>
     <string name="messages_screen_placeholder_title">Mensajes</string>
     <string name="messages_screen_placeholder_body">Tus conversaciones con prestadores aparecerán acá.</string>
     <string name="assistant_screen_placeholder_title">Asistente IA</string>

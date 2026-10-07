@@ -3,11 +3,14 @@ package com.loresuelvo.consumer.ui.screens.profile
 import com.loresuelvo.consumer.domain.auth.CurrentUserOutcome
 import com.loresuelvo.consumer.domain.auth.User
 
+import com.loresuelvo.consumer.domain.notifications.NotificationPermissionStatus
+
 sealed interface ConsumerProfileUiState {
     data object Loading : ConsumerProfileUiState
     data class Ready(
         val user: User,
         val calendarConnection: CalendarConnectionUiState = CalendarConnectionUiState.Idle,
+        val notificationPermission: NotificationPermissionStatus = NotificationPermissionStatus.UNDECIDED,
     ) : ConsumerProfileUiState
     data class Error(val failure: ConsumerProfileFailure) : ConsumerProfileUiState
 }

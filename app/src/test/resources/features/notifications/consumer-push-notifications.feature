@@ -36,7 +36,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | un turno dentro de las próximas 24 horas | turno próximo       | la orden del turno       |
       | la finalización reportada por prestador  | servicio finalizado | la orden correspondiente |
 
-  @wip
   Esquema del escenario: 04-CPN Decidir el permiso de avisos sin perder acceso a la aplicación
     Dado que uso Android 13 o posterior y no decidí el permiso de avisos
     Y solicité habilitar los avisos desde LoResuelvo

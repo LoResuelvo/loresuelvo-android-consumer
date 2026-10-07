@@ -99,6 +99,12 @@
     <string name="consumer_profile_calendar_error_network">We could not connect Google Calendar. Check your connection.</string>
     <string name="consumer_profile_calendar_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="consumer_profile_calendar_error_server">We could not validate the Google Calendar account. Try again.</string>
+    <string name="consumer_profile_notifications_title">Device notifications</string>
+    <string name="consumer_profile_notifications_enabled">Notifications are enabled on this device.</string>
+    <string name="consumer_profile_notifications_disabled">Notifications are disabled. You can enable them in system settings.</string>
+    <string name="consumer_profile_notifications_undecided">Get updates about your messages and services on this device.</string>
+    <string name="consumer_profile_notifications_enable">Enable notifications</string>
+    <string name="consumer_profile_notifications_settings">Notification settings</string>
     <string name="messages_screen_placeholder_title">Messages</string>
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>
     <string name="assistant_screen_placeholder_title">AI Assistant</string>

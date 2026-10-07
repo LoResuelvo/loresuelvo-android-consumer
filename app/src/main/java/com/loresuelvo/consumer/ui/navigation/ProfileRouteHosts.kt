@@ -22,6 +22,15 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileEvent
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
+import android.Manifest
+import android.os.Build
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.loresuelvo.consumer.domain.notifications.NotificationPermissionStatus
+import com.loresuelvo.consumer.platform.notifications.NotificationSettingsIntent
+import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileUiState
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileViewModel
 
@@ -108,6 +117,26 @@ internal fun ConsumerProfileRoute() {
         }
     }
 
+    val notificationSettingsIntent = remember { NotificationSettingsIntent() }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        viewModel.onNotificationPermissionResult(granted)
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshNotificationPermission()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     ConsumerProfileScreen(
         state = state,
         onRetryClick = viewModel::load,
@@ -130,6 +159,16 @@ internal fun ConsumerProfileRoute() {
                     }
                     .addOnFailureListener { viewModel.onCalendarAuthorizationCancelled() }
             } ?: viewModel.onCalendarAuthorizationUnavailable()
+        },
+        onNotificationActionClick = {
+            val readyState = state as? ConsumerProfileUiState.Ready
+            if (readyState?.notificationPermission == NotificationPermissionStatus.UNDECIDED &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+            ) {
+                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                context.startActivity(notificationSettingsIntent.create(context))
+            }
         },
     )
 }

@@ -29,6 +29,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.domain.auth.User
+import com.loresuelvo.consumer.domain.notifications.NotificationPermissionStatus
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +38,7 @@ fun ConsumerProfileScreen(
     state: ConsumerProfileUiState,
     onRetryClick: () -> Unit,
     onCalendarConnectClick: () -> Unit = {},
+    onNotificationActionClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -57,7 +59,9 @@ fun ConsumerProfileScreen(
                 modifier = Modifier.padding(padding),
                 user = state.user,
                 calendarConnection = state.calendarConnection,
+                notificationPermission = state.notificationPermission,
                 onCalendarConnectClick = onCalendarConnectClick,
+                onNotificationActionClick = onNotificationActionClick,
             )
         }
     }
@@ -78,7 +82,9 @@ private fun LoadingState(modifier: Modifier = Modifier) {
 private fun ReadyState(
     user: User,
     calendarConnection: CalendarConnectionUiState,
+    notificationPermission: NotificationPermissionStatus,
     onCalendarConnectClick: () -> Unit,
+    onNotificationActionClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val fullName = listOfNotNull(user.firstName, user.lastName)
@@ -142,11 +148,64 @@ private fun ReadyState(
             )
         }
         item {
+            NotificationsCard(
+                status = notificationPermission,
+                onActionClick = onNotificationActionClick,
+            )
+        }
+        item {
             CalendarConnectionCard(
                 status = user.calendarConnectionStatus,
                 actionState = calendarConnection,
                 onConnectClick = onCalendarConnectClick,
             )
+        }
+    }
+}
+
+@Composable
+private fun NotificationsCard(
+    status: NotificationPermissionStatus,
+    onActionClick: () -> Unit,
+) {
+    val title = stringResource(R.string.consumer_profile_notifications_title)
+    val description = when (status) {
+        NotificationPermissionStatus.GRANTED ->
+            stringResource(R.string.consumer_profile_notifications_enabled)
+        NotificationPermissionStatus.DENIED ->
+            stringResource(R.string.consumer_profile_notifications_disabled)
+        NotificationPermissionStatus.UNDECIDED ->
+            stringResource(R.string.consumer_profile_notifications_undecided)
+    }
+    val buttonText = when (status) {
+        NotificationPermissionStatus.UNDECIDED ->
+            stringResource(R.string.consumer_profile_notifications_enable)
+        NotificationPermissionStatus.GRANTED,
+        NotificationPermissionStatus.DENIED ->
+            stringResource(R.string.consumer_profile_notifications_settings)
+    }
+    Card(modifier = Modifier.fillMaxWidth().testTag("consumer-profile-notifications")) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag("consumer-profile-notifications-title"),
+            )
+            Text(
+                description,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.testTag("consumer-profile-notifications-description"),
+            )
+            Button(
+                onClick = onActionClick,
+                modifier = Modifier.testTag("consumer-profile-notifications-action"),
+            ) {
+                Text(buttonText)
+            }
         }
     }
 }
