@@ -26,17 +26,38 @@ import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.data.auth.SessionStoreModule
+import com.loresuelvo.consumer.di.RepositoryModule
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.User
+import com.loresuelvo.consumer.domain.auth.UserRepository
+import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.calendar.CalendarConnectionRepository
+import com.loresuelvo.consumer.domain.conversation.ConversationRepository
+import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
+import com.loresuelvo.consumer.domain.jobrequest.JobRequestRepository
+import com.loresuelvo.consumer.domain.provider.ProviderRepository
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
+import com.loresuelvo.consumer.domain.turno.TurnosRepository
+import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
+import com.loresuelvo.consumer.instrumented.diagnosis.FakeDiagnosisRepository
+import com.loresuelvo.consumer.instrumented.support.WirePinHarness
+import com.loresuelvo.consumer.testdi.FakeCalendarConnectionRepository
+import com.loresuelvo.consumer.testdi.FakeConversationRepository
+import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
+import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
+import com.loresuelvo.consumer.testdi.FakeTurnosRepository
+import com.loresuelvo.consumer.testdi.FakeWorkOrderDetailRepository
 import com.loresuelvo.consumer.ui.screens.auth.WelcomeScreen
+import dagger.Binds
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
+import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import dagger.Module
 import dagger.Provides
@@ -51,7 +72,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @HiltAndroidTest
-@dagger.hilt.android.testing.UninstallModules(SessionStoreModule::class)
+@UninstallModules(RepositoryModule::class, SessionStoreModule::class)
 @RunWith(AndroidJUnit4::class)
 class RegisterWithAuth0InstrumentedTest {
 
@@ -237,4 +258,76 @@ class RegisterWithAuth0InstrumentedTest {
     interface AuthSessionStoreEntryPoint {
         fun authSessionStore(): AuthSessionStore
     }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    abstract class RegisterTestRepositoryModule {
+
+        @Binds
+        @Singleton
+        abstract fun bindCalendarConnectionRepository(
+            repository: FakeCalendarConnectionRepository,
+        ): CalendarConnectionRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindUserRepository(
+            repository: WirePinHarness.SuccessfulFakeUserRepository,
+        ): UserRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindAuthSessionStore(
+            store: com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore,
+        ): AuthSessionStore
+
+        @Binds
+        @Singleton
+        abstract fun bindCategoryRepository(
+            repository: WirePinHarness.StubCategoryRepository,
+        ): CategoryRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindProviderRepository(
+            repository: WirePinHarness.StubProviderRepository,
+        ): ProviderRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindDiagnosisRepository(
+            repository: FakeDiagnosisRepository,
+        ): DiagnosisRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindJobRequestRepository(
+            repository: FakeJobRequestRepository,
+        ): JobRequestRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindConversationRepository(
+            repository: FakeConversationRepository,
+        ): ConversationRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindServiceProposalRepository(
+            repository: FakeServiceProposalRepository,
+        ): ServiceProposalRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindTurnosRepository(
+            repository: FakeTurnosRepository,
+        ): TurnosRepository
+
+        @Binds
+        @Singleton
+        abstract fun bindWorkOrderDetailRepository(
+            repository: FakeWorkOrderDetailRepository,
+        ): WorkOrderDetailRepository
+    }
+
 }
