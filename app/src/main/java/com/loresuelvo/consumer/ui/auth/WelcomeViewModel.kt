@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.platform.auth.AuthProvider
+import com.loresuelvo.consumer.ui.notifications.PushRegistrationRequests
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,6 +34,7 @@ class WelcomeViewModel @Inject constructor(
     private val authProvider: AuthProvider,
     private val syncAuthenticatedSession: SyncAuthenticatedSessionUseCase,
     private val getCategories: GetCategoriesUseCase,
+    private val pushRegistrationRequests: PushRegistrationRequests,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WelcomeUiState())
@@ -85,6 +87,11 @@ class WelcomeViewModel @Inject constructor(
             when (val outcome = launch(activityContext)) {
                 is AuthenticationOutcome.Success -> {
                     val synchronized = syncAuthenticatedSession(outcome.session)
+                    if (synchronized is SessionSynchronizationOutcome.Success) {
+                        // Señal inmediata sin credenciales ni trabajo de red:
+                        // la navegación puede retirar este ViewModel enseguida.
+                        pushRegistrationRequests.request()
+                    }
                     _uiState.update {
                         it.copy(
                             loading = false,

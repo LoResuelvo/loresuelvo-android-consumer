@@ -16,6 +16,7 @@ import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
+import com.loresuelvo.consumer.ui.notifications.PushRegistrationRequests
 import com.loresuelvo.consumer.ui.session.SessionViewModel
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -110,6 +111,7 @@ class AuthenticationSessionWorld : AutoCloseable {
             authProvider,
             SyncAuthenticatedSessionUseCase(userRepository, sessionStore),
             GetCategoriesUseCase(FakeCategoryRepository),
+            PushRegistrationRequests(),
         )
     }
 

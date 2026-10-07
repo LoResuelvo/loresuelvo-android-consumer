@@ -16,6 +16,7 @@ import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCa
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.platform.auth.AuthProvider
 import com.loresuelvo.consumer.ui.auth.WelcomeViewModel
+import com.loresuelvo.consumer.ui.notifications.PushRegistrationRequests
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.concurrent.TimeUnit
@@ -81,6 +82,7 @@ class ConsumerPushNotificationsWorld {
             authProvider,
             SyncAuthenticatedSessionUseCase(ApiUserRepository(api, sessionStore), sessionStore),
             GetCategoriesUseCase(categories),
+            PushRegistrationRequests(),
         )
         viewModelStore.put("welcome", viewModel)
         dispatcher.scheduler.advanceUntilIdle()

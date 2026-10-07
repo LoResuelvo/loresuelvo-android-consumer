@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.ui.auth
 
 import android.content.Context
+import androidx.lifecycle.ViewModelStore
+import com.loresuelvo.consumer.ui.notifications.PushRegistrationRequests
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthenticationOutcome
 import com.loresuelvo.consumer.platform.auth.AuthProvider
@@ -22,6 +24,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -41,6 +45,7 @@ class WelcomeViewModelTest {
     private val getCategories = mockk<GetCategoriesUseCase>()
     private val syncSession = mockk<SyncAuthenticatedSessionUseCase>()
     private val context = mockk<Context>()
+    private val registrationRequests = PushRegistrationRequests()
 
     @Before
     fun setUp() {
@@ -53,7 +58,7 @@ class WelcomeViewModelTest {
     }
 
     private fun createViewModel() =
-        WelcomeViewModel(authProvider, syncSession, getCategories)
+        WelcomeViewModel(authProvider, syncSession, getCategories, registrationRequests)
 
     private val authenticatedSession = AuthSession(
         user = User(displayName = "Ana", email = "ana@example.com"),
@@ -75,6 +80,7 @@ class WelcomeViewModelTest {
         coVerify(exactly = 1) { authProvider.login(context) }
         coVerify(exactly = 0) { authProvider.signup(any()) }
         coVerify(exactly = 1) { syncSession(authenticatedSession) }
+        assertNotNull(registrationRequests.pending.value)
         assertEquals(false, viewModel.uiState.value.loading)
     }
 
@@ -93,6 +99,7 @@ class WelcomeViewModelTest {
         coVerify(exactly = 1) { authProvider.signup(context) }
         coVerify(exactly = 0) { authProvider.login(any()) }
         coVerify(exactly = 1) { syncSession(authenticatedSession) }
+        assertNotNull(registrationRequests.pending.value)
     }
 
     @Test
@@ -109,6 +116,7 @@ class WelcomeViewModelTest {
 
         coVerify(exactly = 1) { authProvider.loginWithGoogle(context) }
         coVerify(exactly = 1) { syncSession(authenticatedSession) }
+        assertNotNull(registrationRequests.pending.value)
     }
 
     @Test
@@ -179,4 +187,60 @@ class WelcomeViewModelTest {
             viewModel.uiState.value.categories,
         )
     }
+
+    @Test
+    fun successful_sync_leaves_a_candidate_after_viewmodel_is_cleared_without_waiting_for_registration() = runTest {
+        coEvery { getCategories() } returns CategoriesOutcome.Success(emptyList())
+        coEvery { authProvider.login(context) } returns AuthenticationOutcome.Success(authenticatedSession)
+        coEvery { syncSession(authenticatedSession) } returns SessionSynchronizationOutcome.Success(authenticatedSession)
+        val viewModel = createViewModel()
+        val store = ViewModelStore()
+        store.put("welcome", viewModel)
+
+        viewModel.login(context)
+        advanceUntilIdle()
+        store.clear()
+
+        assertNotNull(registrationRequests.pending.value)
+        assertEquals(false, viewModel.uiState.value.loading)
+        assertNull(viewModel.uiState.value.error)
+        // La sesión incompleta también es candidata: el consumidor futuro
+        // verifica identidad API; la UI no infiere verificación del perfil.
+        assertEquals(false, authenticatedSession.user.isProfileComplete())
+    }
+
+    @Test
+    fun cancelled_or_failed_authentication_does_not_request_registration() = runTest {
+        coEvery { getCategories() } returns CategoriesOutcome.Success(emptyList())
+        val viewModel = createViewModel()
+        for (outcome in listOf(AuthenticationOutcome.Cancelled, AuthenticationOutcome.Failure.Provider(null))) {
+            coEvery { authProvider.login(context) } returns outcome
+            viewModel.login(context)
+            advanceUntilIdle()
+            assertNull(registrationRequests.pending.value)
+            assertEquals(false, viewModel.uiState.value.loading)
+        }
+        coVerify(exactly = 0) { syncSession(any()) }
+    }
+
+    @Test
+    fun failed_synchronization_does_not_request_registration() = runTest {
+        coEvery { getCategories() } returns CategoriesOutcome.Success(emptyList())
+        coEvery { authProvider.login(context) } returns AuthenticationOutcome.Success(authenticatedSession)
+        val viewModel = createViewModel()
+        val failures = listOf(
+            SessionSynchronizationOutcome.Failure.Network(IOException("offline")),
+            SessionSynchronizationOutcome.Failure.Server(503, "unavailable"),
+            SessionSynchronizationOutcome.Failure.Unauthorized("expired"),
+        )
+        for (failure in failures) {
+            coEvery { syncSession(authenticatedSession) } returns failure
+            viewModel.login(context)
+            advanceUntilIdle()
+            assertNull(registrationRequests.pending.value)
+            assertNotNull(viewModel.uiState.value.error)
+            assertEquals(false, viewModel.uiState.value.loading)
+        }
+    }
+
 }
