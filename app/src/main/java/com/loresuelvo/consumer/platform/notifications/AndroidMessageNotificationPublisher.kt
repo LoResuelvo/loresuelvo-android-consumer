@@ -50,6 +50,7 @@ class AndroidMessageNotificationPublisher @Inject constructor(
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT < 26) return
+        if (manager.getNotificationChannel(CHANNEL) != null) return
         manager.createNotificationChannel(NotificationChannel(
             CHANNEL, context.getString(R.string.notification_messages_channel), NotificationManager.IMPORTANCE_DEFAULT,
         ))

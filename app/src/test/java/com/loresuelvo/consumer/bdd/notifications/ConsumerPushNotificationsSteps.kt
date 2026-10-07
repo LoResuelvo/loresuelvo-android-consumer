@@ -11,6 +11,7 @@ class ConsumerPushNotificationsSteps {
     private val messages = ConsumerMessageNotificationsWorld()
     private val services = ConsumerServiceNotificationsWorld()
     private val permissions = ConsumerNotificationPermissionWorld()
+    private val settings = ConsumerSettingsNotificationsWorld()
     private var registrationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
@@ -77,6 +78,21 @@ class ConsumerPushNotificationsSteps {
 
     @Entonces("puedo abrir los ajustes de notificaciones del teléfono desde la aplicación")
     fun canOpenNotificationSettings() = permissions.assertCanOpenNotificationSettings()
+
+    @Dado("que tengo una sesión activa")
+    fun activeSession() = settings.start()
+
+    @Dado("{string}")
+    fun configureNotificationAdjustment(adjustment: String) = settings.configureAdjustment(adjustment)
+
+    @Cuando("llega un aviso válido de {string}")
+    fun receiveValidNotice(noticeType: String) = settings.receiveValidNotice(noticeType)
+
+    @Entonces("no aparece una notificación del teléfono para ese aviso")
+    fun assertNoSystemNotificationPublished() = settings.assertNoNotificationPublished()
+
+    @Entonces("puedo consultar la novedad dentro de LoResuelvo")
+    fun assertCanConsultNoveltyInsideApp() = settings.assertCanConsultNoveltyInsideApp()
 
     @After
     fun close() {

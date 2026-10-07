@@ -48,7 +48,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | concedo  |
       | rechazo  |
 
-  @wip
   Esquema del escenario: 05-CPN Respetar los ajustes de avisos del teléfono
     Dado que tengo una sesión activa
     Y "<ajuste>"

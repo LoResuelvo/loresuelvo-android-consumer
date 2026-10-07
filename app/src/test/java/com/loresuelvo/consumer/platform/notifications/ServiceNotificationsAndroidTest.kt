@@ -170,4 +170,18 @@ class ServiceNotificationsAndroidTest {
         assertEquals(ServiceNotificationOutcome.Unavailable, receiver.receive(payload))
         assertTrue(shadowOf(manager).allNotifications.isEmpty())
     }
+
+    @Test
+    fun disabled_service_channel_returns_unavailable() {
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            val channel = android.app.NotificationChannel(
+                AndroidServiceNotificationPublisher.CHANNEL,
+                "Servicios",
+                NotificationManager.IMPORTANCE_NONE,
+            )
+            manager.createNotificationChannel(channel)
+            assertEquals(ServiceNotificationOutcome.Unavailable, receiver.receive(payload))
+            assertTrue(shadowOf(manager).allNotifications.isEmpty())
+        }
+    }
 }

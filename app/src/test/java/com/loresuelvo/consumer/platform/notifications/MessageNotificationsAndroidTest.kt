@@ -133,4 +133,17 @@ class MessageNotificationsAndroidTest {
         assertEquals(MessageNotificationOutcome.Unavailable, receiver.receive(payload))
         assertTrue(shadowOf(manager).allNotifications.isEmpty())
     }
+
+    @Test fun disabled_message_channel_returns_unavailable() {
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            val channel = android.app.NotificationChannel(
+                AndroidMessageNotificationPublisher.CHANNEL,
+                "Mensajes",
+                NotificationManager.IMPORTANCE_NONE,
+            )
+            manager.createNotificationChannel(channel)
+            assertEquals(MessageNotificationOutcome.Unavailable, receiver.receive(payload))
+            assertTrue(shadowOf(manager).allNotifications.isEmpty())
+        }
+    }
 }
