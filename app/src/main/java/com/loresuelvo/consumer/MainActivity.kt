@@ -9,6 +9,8 @@ import androidx.core.view.WindowCompat
 import com.loresuelvo.consumer.ui.navigation.LoResuelvoNav
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import com.loresuelvo.consumer.platform.notifications.NavigationIntentDispatcher
 
 /**
  * Single activity host for the consumer app.
@@ -25,6 +27,7 @@ import dagger.hilt.android.AndroidEntryPoint
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject lateinit var navigationIntents: NavigationIntentDispatcher
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,11 +44,7 @@ class MainActivity : ComponentActivity() {
         // App Link / deep link. The intent is dispatched to the
         // application-level channel and will be consumed by
         // LoResuelvoNav once its collector is ready.
-        val app = applicationContext as? LoresuelvoApp
-
-        intent?.let {
-            app?.dispatchNavigationIntent(it)
-        }
+        intent?.let(navigationIntents::dispatch)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -53,8 +52,7 @@ class MainActivity : ComponentActivity() {
 
         setIntent(intent)
 
-        val app = applicationContext as? LoresuelvoApp
-        app?.dispatchNavigationIntent(intent)
+        navigationIntents.dispatch(intent)
     }
 
     override fun onStart() {

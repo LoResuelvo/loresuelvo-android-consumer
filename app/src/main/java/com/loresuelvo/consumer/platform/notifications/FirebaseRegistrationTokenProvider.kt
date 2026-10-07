@@ -35,6 +35,13 @@ class FirebaseRegistrationTokenProvider @Inject constructor(
         }
     }
 
+    fun initializeForReception(): Boolean {
+        if (!isConfigured()) return false
+        return try { matchesConfiguration(getOrInitializeFirebaseApp()) }
+        catch (_: IllegalArgumentException) { false }
+        catch (_: IllegalStateException) { false }
+    }
+
     private fun isConfigured(): Boolean = listOf(
         configuration.applicationId,
         configuration.apiKey,

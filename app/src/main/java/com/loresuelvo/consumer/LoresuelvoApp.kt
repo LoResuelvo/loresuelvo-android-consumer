@@ -3,10 +3,10 @@ package com.loresuelvo.consumer
 import android.app.Application
 import android.content.Intent
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.receiveAsFlow
 import com.loresuelvo.consumer.platform.notifications.RegistrationRuntime
 import javax.inject.Inject
+import com.loresuelvo.consumer.platform.notifications.FirebaseRegistrationTokenProvider
+import com.loresuelvo.consumer.platform.notifications.NavigationIntentDispatcher
 
 /**
  * Application class for the consumer app.
@@ -34,16 +34,16 @@ import javax.inject.Inject
 class LoresuelvoApp : Application() {
     @Inject lateinit var registrationRuntime: RegistrationRuntime
 
+    @Inject lateinit var firebaseTokens: FirebaseRegistrationTokenProvider
+    @Inject lateinit var navigationIntents: NavigationIntentDispatcher
+
     override fun onCreate() {
         super.onCreate()
+        firebaseTokens.initializeForReception()
         registrationRuntime.start()
     }
 
-    private val navControllerChannel = Channel<Intent>(Channel.BUFFERED)
+    val navControllerEvents get() = navigationIntents.events
 
-    val navControllerEvents = navControllerChannel.receiveAsFlow()
-
-    fun dispatchNavigationIntent(intent: Intent) {
-        navControllerChannel.trySend(intent)
-    }
+    fun dispatchNavigationIntent(intent: Intent) { navigationIntents.dispatch(intent) }
 }

@@ -75,6 +75,7 @@ android {
         }
     }
     compileOptions {
+        isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
@@ -260,6 +261,7 @@ gradle.taskGraph.whenReady {
 // ==========================================
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.messaging)
     // Icons & Core

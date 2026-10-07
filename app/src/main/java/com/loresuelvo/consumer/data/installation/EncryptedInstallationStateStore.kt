@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.data.installation
 
 import android.content.SharedPreferences
+import com.loresuelvo.consumer.domain.notifications.NotificationInstallation
+import com.loresuelvo.consumer.domain.notifications.NotificationInstallationReader
 import com.loresuelvo.consumer.domain.installation.InstallationBinding
 import com.loresuelvo.consumer.domain.installation.InstallationIdentity
 import com.loresuelvo.consumer.domain.installation.InstallationStateStore
@@ -13,7 +15,7 @@ import javax.inject.Named
 @Singleton
 class EncryptedInstallationStateStore @Inject constructor(
     @Named("installationPrefs") private val preferences: SharedPreferences,
-) : InstallationStateStore {
+) : InstallationStateStore, NotificationInstallationReader {
     @Synchronized
     override fun prepare(userId: Int, attemptId: String): InstallationBinding {
         val identity = readIdentity() ?: InstallationIdentity(uuid(), uuid())
@@ -28,6 +30,13 @@ class EncryptedInstallationStateStore @Inject constructor(
     override fun confirm(binding: InstallationBinding) {
         if (readBinding(binding.identity)?.id != binding.id) throw IOException("Installation binding changed")
         save(binding.copy(confirmed = true))
+    }
+
+    @Synchronized
+    override fun confirmedInstallation(): NotificationInstallation? {
+        val identity = readIdentity() ?: return null
+        val binding = readBinding(identity)?.takeIf { it.confirmed } ?: return null
+        return NotificationInstallation(identity.id, binding.id, binding.userId)
     }
 
     private fun readIdentity(): InstallationIdentity? {

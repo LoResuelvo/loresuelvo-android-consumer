@@ -41,7 +41,7 @@ import com.loresuelvo.consumer.ui.payment.PaymentResultRoute
 import com.loresuelvo.consumer.ui.payment.ServiceAgreementRoute
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import com.loresuelvo.consumer.LoresuelvoApp
+import com.loresuelvo.consumer.ui.notifications.ConversationNotificationVisibility
 import android.util.Log
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabsIntent
@@ -75,7 +75,7 @@ fun LoResuelvoNav() {
     val currentNavRoute = backStackEntry?.destination?.route
 
     val context = LocalContext.current
-    val app = context.applicationContext as? LoresuelvoApp
+    val navigationIntents: NavigationIntentViewModel = hiltViewModel()
 
     /*
      * External payment App Links are handled here instead of using
@@ -83,8 +83,17 @@ fun LoResuelvoNav() {
      * the Intent to MainActivity, so we only translate the external
      * URL into our internal PaymentResult route.
      */
+    val sessionViewModel: SessionViewModel = hiltViewModel()
     LaunchedEffect(Unit) {
-        app?.navControllerEvents?.collect { intent ->
+        navigationIntents.events.collect { intent ->
+            if (navigationIntents.isMessageNotification(intent)) {
+                val restored = sessionViewModel.uiState.firstOrNull { !it.loading } ?: return@collect
+                if (!restored.authenticated || restored.error != null) return@collect
+                navController.currentBackStackEntryFlow.firstOrNull() ?: return@collect
+                val conversationId = navigationIntents.conversationId(intent) ?: return@collect
+                navController.navigate(Route.Conversation.buildPath(conversationId.toString())) { launchSingleTop = true }
+                return@collect
+            }
             val uri = intent.data ?: return@collect
 
             val paymentResultPath = paymentResultPathFor(uri)
@@ -119,7 +128,6 @@ fun LoResuelvoNav() {
      * It must never replace deeper routes such as PaymentResult,
      * ServiceAgreement, Chat, Professionals, or WorkOrderDetail.
      */
-    val sessionViewModel: SessionViewModel = hiltViewModel()
     val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
 
     if (sessionState.loading || sessionState.error == SessionError.Restoration) {
@@ -129,6 +137,13 @@ fun LoResuelvoNav() {
         )
         return
     }
+
+    ConversationNotificationVisibility(
+        navigationIntents.conversationVisibility,
+        currentNavRoute,
+        backStackEntry?.arguments?.getString("conversationId"),
+        sessionState.authenticated,
+    )
 
     val sessionRoute = when {
         !sessionState.authenticated -> Route.Welcome.path

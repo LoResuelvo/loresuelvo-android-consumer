@@ -10,7 +10,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
     Cuando inicio sesión y LoResuelvo verifica mi cuenta de consumidor
     Entonces este teléfono queda habilitado para recibir avisos de mi cuenta
 
-  @wip
   Esquema del escenario: 02-CPN Recibir mensajes del prestador fuera del chat visible
     Dado que tengo una sesión activa y permití los avisos en este teléfono
     Y estoy "<situacion>"
