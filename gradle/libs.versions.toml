@@ -34,8 +34,11 @@ androidx-browser = "1.8.0"
 # profile photos from `Provider.profilePhotoUrl`.
 coil = "3.0.4"
 playServicesAuth = "21.3.0"
+firebaseBom = "34.19.0"
 
 [libraries]
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }

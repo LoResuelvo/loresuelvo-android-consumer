@@ -55,6 +55,10 @@ class EncryptedAuthSessionStore @Inject constructor(
             .putString(KEY_EMAIL, session.user.email)
             .putString(KEY_PROFILE_PHOTO_URL, session.user.profilePhotoUrl)
             .putString(KEY_ACCESS_TOKEN, session.accessToken)
+            .apply {
+                session.user.backendUserId?.let { putInt(KEY_BACKEND_USER_ID, it) }
+                    ?: remove(KEY_BACKEND_USER_ID)
+            }
             .putString(KEY_ADDRESS_STREET, session.user.address?.street)
             .putString(KEY_ADDRESS_NUMBER, session.user.address?.streetNumber)
             .putString(KEY_ADDRESS_FLOOR, session.user.address?.floor)
@@ -92,6 +96,7 @@ class EncryptedAuthSessionStore @Inject constructor(
                 lastName = preferences.getString(KEY_LAST_NAME, null),
                 email = preferences.getString(KEY_EMAIL, null),
                 profilePhotoUrl = preferences.getString(KEY_PROFILE_PHOTO_URL, null),
+                backendUserId = if (preferences.contains(KEY_BACKEND_USER_ID)) preferences.getInt(KEY_BACKEND_USER_ID, 0) else null,
                 address = readAddress(),
             ),
             accessToken = accessToken,
@@ -116,6 +121,7 @@ class EncryptedAuthSessionStore @Inject constructor(
         const val KEY_EMAIL = "email"
         const val KEY_PROFILE_PHOTO_URL = "profile_photo_url"
         const val KEY_ACCESS_TOKEN = "access_token"
+        const val KEY_BACKEND_USER_ID = "backend_user_id"
         const val KEY_ADDRESS_STREET = "address_street"
         const val KEY_ADDRESS_NUMBER = "address_number"
         const val KEY_ADDRESS_FLOOR = "address_floor"

@@ -141,6 +141,10 @@ android {
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
+            buildConfigField("String", "FIREBASE_APPLICATION_ID", "\"${envVar("FIREBASE_APPLICATION_ID")}\"")
+            buildConfigField("String", "FIREBASE_API_KEY", "\"${envVar("FIREBASE_API_KEY")}\"")
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${envVar("FIREBASE_PROJECT_ID")}\"")
+            buildConfigField("String", "FIREBASE_SENDER_ID", "\"${envVar("FIREBASE_SENDER_ID")}\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -171,6 +175,10 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
+            buildConfigField("String", "FIREBASE_APPLICATION_ID", "\"${envVar("FIREBASE_APPLICATION_ID_STAGING")}\"")
+            buildConfigField("String", "FIREBASE_API_KEY", "\"${envVar("FIREBASE_API_KEY_STAGING")}\"")
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${envVar("FIREBASE_PROJECT_ID_STAGING")}\"")
+            buildConfigField("String", "FIREBASE_SENDER_ID", "\"${envVar("FIREBASE_SENDER_ID_STAGING")}\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
 
@@ -201,6 +209,10 @@ android {
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
+            buildConfigField("String", "FIREBASE_APPLICATION_ID", "\"${envVar("FIREBASE_APPLICATION_ID_PROD")}\"")
+            buildConfigField("String", "FIREBASE_API_KEY", "\"${envVar("FIREBASE_API_KEY_PROD")}\"")
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${envVar("FIREBASE_PROJECT_ID_PROD")}\"")
+            buildConfigField("String", "FIREBASE_SENDER_ID", "\"${envVar("FIREBASE_SENDER_ID_PROD")}\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -248,6 +260,8 @@ gradle.taskGraph.whenReady {
 // ==========================================
 
 dependencies {
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     // Icons & Core
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.core.ktx)

@@ -9,7 +9,7 @@ import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.SyncAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
 import com.loresuelvo.consumer.platform.auth.AuthProvider
-import com.loresuelvo.consumer.ui.notifications.PushRegistrationRequests
+import com.loresuelvo.consumer.domain.installation.InstallationRegistrationRequests
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +34,7 @@ class WelcomeViewModel @Inject constructor(
     private val authProvider: AuthProvider,
     private val syncAuthenticatedSession: SyncAuthenticatedSessionUseCase,
     private val getCategories: GetCategoriesUseCase,
-    private val pushRegistrationRequests: PushRegistrationRequests,
+    private val pushRegistrationRequests: InstallationRegistrationRequests,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WelcomeUiState())
@@ -82,6 +82,7 @@ class WelcomeViewModel @Inject constructor(
         activityContext: Context,
         launch: suspend (Context) -> AuthenticationOutcome,
     ) {
+        pushRegistrationRequests.invalidate()
         viewModelScope.launch {
             _uiState.update { it.copy(loading = true, error = null) }
             when (val outcome = launch(activityContext)) {

@@ -52,6 +52,22 @@ sdkmanager --version
 
 ---
 
+## Firebase Messaging
+
+Configurar `FIREBASE_APPLICATION_ID` (App ID de Firebase), `FIREBASE_API_KEY`,
+`FIREBASE_PROJECT_ID` y `FIREBASE_SENDER_ID` en `local.properties`, propiedades de
+Gradle o variables de entorno, en ese orden de prioridad. Staging y Prod usan
+los sufijos `_STAGING` y `_PROD`; reconstruir el APK después de configurarlos.
+
+La app inicializa Firebase con `FirebaseOptions`, sin requerir `google-services.json`.
+Si faltan valores, el login funciona y el registro queda sin confirmar.
+Las pruebas JVM sustituyen FCM; la validación real requiere configurar Firebase,
+una API accesible y un dispositivo con servicios Google.
+
+Referencia: [configuración de Firebase](https://firebase.google.com/support/guides/init-options).
+
+---
+
 ## Comandos
 
 Todos los targets aceptan `FLAVOR=Dev|Staging|Prod` (default: `Dev`).

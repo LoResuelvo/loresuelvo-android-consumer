@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.ui.session
 
 import android.content.Context
+import com.loresuelvo.consumer.ui.notifications.PushRegistrationRequests
 import com.loresuelvo.consumer.platform.auth.AuthProvider
 import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
@@ -47,6 +48,7 @@ class SessionViewModelTest {
     private val repository = mockk<com.loresuelvo.consumer.domain.auth.UserRepository>()
     private val restore = com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase(repository, sessionStore)
     private val context = mockk<Context>()
+    private val requests = PushRegistrationRequests()
     private val session = AuthSession(User("Ana", "Ana", "Perez"), "token")
     private val sessionFlow = MutableStateFlow<AuthSession?>(session)
 
@@ -75,7 +77,7 @@ class SessionViewModelTest {
     fun restoration_failure_keeps_session_and_retry_recovers_profile() = runTest {
         coEvery { repository.getCurrentUser() } returns
             com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.Failure.Network(java.io.IOException())
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
         org.junit.Assert.assertTrue(viewModel.uiState.value.loading)
         advanceUntilIdle()
         org.junit.Assert.assertEquals(SessionError.Restoration, viewModel.uiState.value.error)
@@ -92,7 +94,7 @@ class SessionViewModelTest {
     fun unauthorized_restoration_returns_to_login() = runTest {
         coEvery { repository.getCurrentUser() } returns
             com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.Failure.Unauthorized("expired")
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.session)
     }
@@ -100,9 +102,11 @@ class SessionViewModelTest {
     @Test
     fun signOut_clears_local_session_synchronously_when_auth0_logout_succeeds() = runTest {
         coEvery { authProvider.logout(context) } returns LogoutOutcome.Success
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
 
+        requests.request()
         viewModel.signOut(context)
+        assertNull(requests.pending.value)
         advanceUntilIdle()
 
         // Local session is gone BEFORE the Auth0 call returns so
@@ -123,9 +127,11 @@ class SessionViewModelTest {
         // sign-out.
         coEvery { authProvider.logout(context) } returns
             LogoutOutcome.Failure.Provider(IllegalStateException("Auth0 unavailable"))
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
 
+        requests.request()
         viewModel.signOut(context)
+        assertNull(requests.pending.value)
         advanceUntilIdle()
 
         verify { sessionStore.clearSession() }
@@ -136,9 +142,11 @@ class SessionViewModelTest {
     @Test
     fun signOut_clears_local_session_when_auth0_logout_is_cancelled() = runTest {
         coEvery { authProvider.logout(context) } returns LogoutOutcome.Cancelled
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
 
+        requests.request()
         viewModel.signOut(context)
+        assertNull(requests.pending.value)
         advanceUntilIdle()
 
         verify { sessionStore.clearSession() }

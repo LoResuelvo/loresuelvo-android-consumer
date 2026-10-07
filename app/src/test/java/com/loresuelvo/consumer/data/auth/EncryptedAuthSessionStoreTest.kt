@@ -157,6 +157,26 @@ class EncryptedAuthSessionStoreTest {
         assertNull(EncryptedAuthSessionStore(prefs).getSession()?.user?.address)
     }
 
+    @Test
+    fun retains_backend_identity_across_restart_and_clears_it_for_provisional_claims() {
+        val prefs = plainSharedPrefs()
+        val session = AuthSession(User("API profile", backendUserId = 17), "dummy-jwt")
+        EncryptedAuthSessionStore(prefs).saveSession(session)
+        val restored = EncryptedAuthSessionStore(prefs)
+        assertEquals(17, restored.getSession()?.user?.backendUserId)
+        restored.saveSession(session.copy(user = User("Provisional claims")))
+        assertNull(EncryptedAuthSessionStore(prefs).getSession()?.user?.backendUserId)
+    }
+
+    @Test
+    fun restores_legacy_session_without_inventing_backend_identity() {
+        val prefs = plainSharedPrefs()
+        prefs.edit().putString("display_name", "Legacy profile")
+            .putString("access_token", "dummy-jwt").commit()
+        assertNotNull(EncryptedAuthSessionStore(prefs).getSession())
+        assertNull(EncryptedAuthSessionStore(prefs).getSession()?.user?.backendUserId)
+    }
+
     private fun plainSharedPrefs() =
         context.getSharedPreferences(
             "test_session_prefs_${System.nanoTime()}",

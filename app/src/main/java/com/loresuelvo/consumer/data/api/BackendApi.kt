@@ -23,11 +23,16 @@ import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.dto.ServiceProposalDto
 import com.loresuelvo.consumer.data.api.dto.TurnoDto
 import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
+import com.loresuelvo.consumer.data.api.dto.RegisterInstallationRequestDto
+import com.loresuelvo.consumer.data.api.dto.InstallationResponseDto
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.Header
+import retrofit2.http.PUT
 
 /**
  * Retrofit-typed contract for the backend's consumer endpoints. The
@@ -39,6 +44,13 @@ import retrofit2.http.Query
  * (registerConsumerRoutes, registerAuthenticatedRoutes).
  */
 interface BackendApi {
+
+    @PUT("installations/{installationId}")
+    suspend fun registerInstallation(
+        @Path("installationId") installationId: String,
+        @Header("Authorization") authorization: String,
+        @Body body: RegisterInstallationRequestDto,
+    ): Response<InstallationResponseDto>
 
     @GET("me")
     suspend fun getCurrentUser(): CurrentUserDto

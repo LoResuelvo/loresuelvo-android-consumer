@@ -5,6 +5,8 @@ import android.content.Intent
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import com.loresuelvo.consumer.platform.notifications.RegistrationRuntime
+import javax.inject.Inject
 
 /**
  * Application class for the consumer app.
@@ -30,6 +32,12 @@ import kotlinx.coroutines.flow.receiveAsFlow
  */
 @HiltAndroidApp
 class LoresuelvoApp : Application() {
+    @Inject lateinit var registrationRuntime: RegistrationRuntime
+
+    override fun onCreate() {
+        super.onCreate()
+        registrationRuntime.start()
+    }
 
     private val navControllerChannel = Channel<Intent>(Channel.BUFFERED)
 
