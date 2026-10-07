@@ -5,7 +5,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
   Quiero enterarme de mis mensajes y servicios desde el teléfono
   Para atenderlos aunque no esté usando LoResuelvo
 
-  @wip
   Escenario: 01-CPN Habilitar los avisos después de verificar mi cuenta
     Dado que todavía no inicié sesión en este teléfono
     Cuando inicio sesión y LoResuelvo verifica mi cuenta de consumidor
