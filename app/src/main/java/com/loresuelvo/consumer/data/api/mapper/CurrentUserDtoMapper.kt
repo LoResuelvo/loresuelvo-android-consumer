@@ -6,6 +6,7 @@ import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.domain.auth.User
 
 internal fun CurrentUserDto.toDomain(): User = User(
+    backendUserId = id,
     displayName = listOf(firstName, lastName)
         .filter { it.isNotBlank() }
         .joinToString(" ")

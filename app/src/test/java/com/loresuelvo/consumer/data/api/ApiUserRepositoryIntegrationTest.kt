@@ -114,6 +114,7 @@ class ApiUserRepositoryIntegrationTest {
         assertEquals("Bearer test-token", recorded.getHeader("Authorization"))
         assertTrue(outcome is CurrentUserOutcome.Success)
         val user = (outcome as CurrentUserOutcome.Success).user
+        assertEquals(7, user.backendUserId)
         assertEquals("Ana Perez", user.displayName)
         assertEquals("Ana", user.firstName)
         assertEquals("Perez", user.lastName)
