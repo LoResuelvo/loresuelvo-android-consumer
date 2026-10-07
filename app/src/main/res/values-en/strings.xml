@@ -365,4 +365,5 @@
     <string name="session_restore_error">We could not restore your account. Check your connection and try again.</string>
     <string name="session_restore_retry">Retry</string>
     <string name="notification_messages_channel">Messages</string>
+    <string name="notification_services_channel">Services</string>
 </resources>

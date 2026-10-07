@@ -24,7 +24,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | sin LoResuelvo en ejecución         | video       |
       | leyendo otra conversación          | texto       |
 
-  @wip
   Esquema del escenario: 03-CPN Recibir las novedades importantes de mis servicios
     Dado que tengo una sesión activa y permití los avisos en este teléfono
     Y no estoy usando LoResuelvo

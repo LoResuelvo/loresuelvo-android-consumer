@@ -94,6 +94,17 @@ fun LoResuelvoNav() {
                 navController.navigate(Route.Conversation.buildPath(conversationId.toString())) { launchSingleTop = true }
                 return@collect
             }
+            if (navigationIntents.isServiceNotification(intent)) {
+                val restored = sessionViewModel.uiState.firstOrNull { !it.loading } ?: return@collect
+                if (!restored.authenticated || restored.error != null) return@collect
+                navController.currentBackStackEntryFlow.firstOrNull() ?: return@collect
+                val target = navigationIntents.serviceDestination(intent) ?: return@collect
+                when (target.destination) {
+                    "service_proposal" -> navController.navigate(Route.MisServicios.path) { launchSingleTop = true }
+                    "work_order" -> navController.navigate(Route.WorkOrderDetail.buildPath(target.resourceId)) { launchSingleTop = true }
+                }
+                return@collect
+            }
             val uri = intent.data ?: return@collect
 
             val paymentResultPath = paymentResultPathFor(uri)

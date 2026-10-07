@@ -9,6 +9,7 @@ import org.junit.Assert.assertNull
 class ConsumerPushNotificationsSteps {
     private val world = ConsumerPushNotificationsWorld()
     private val messages = ConsumerMessageNotificationsWorld()
+    private val services = ConsumerServiceNotificationsWorld()
     private var registrationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
@@ -29,7 +30,10 @@ class ConsumerPushNotificationsSteps {
     }
 
     @Dado("que tengo una sesión activa y permití los avisos en este teléfono")
-    fun activeSessionWithNotificationsAllowed() = messages.start()
+    fun activeSessionWithNotificationsAllowed() {
+        messages.start()
+        services.start()
+    }
 
     @Dado("estoy {string}")
     fun outsideVisibleChat(situation: String) = messages.setSituation(situation)
@@ -42,6 +46,18 @@ class ConsumerPushNotificationsSteps {
 
     @Entonces("el aviso no expone contenido del mensaje ni datos personales")
     fun notificationPreservesPrivacy() = messages.assertPrivate()
+
+    @Dado("no estoy usando LoResuelvo")
+    fun notUsingLoResuelvo() = services.notUsingLoResuelvo()
+
+    @Cuando("llega un aviso de {string} de uno de mis servicios")
+    fun receiveServiceNotice(novelty: String) = services.receive(novelty)
+
+    @Entonces("veo un aviso de {string} que permite abrir {string}")
+    fun seeServiceNotification(notice: String, destination: String) = services.assertPublished(notice, destination)
+
+    @Entonces("el aviso no expone nombres, direcciones ni importes")
+    fun serviceNotificationPreservesPrivacy() = services.assertPrivate()
 
     @After
     fun close() {

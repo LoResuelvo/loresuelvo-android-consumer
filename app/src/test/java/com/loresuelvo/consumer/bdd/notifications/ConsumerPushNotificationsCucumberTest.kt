@@ -8,7 +8,7 @@ import org.junit.runner.RunWith
 @CucumberOptions(
     features = ["classpath:features/notifications/consumer-push-notifications.feature"],
     glue = ["com.loresuelvo.consumer.bdd.notifications"],
-    name = ["^0[12]-CPN .*"],
+    name = ["^0[123]-CPN .*"],
     plugin = ["pretty", "summary"],
 )
 class ConsumerPushNotificationsCucumberTest

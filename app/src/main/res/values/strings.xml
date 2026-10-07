@@ -366,4 +366,5 @@
     <string name="session_restore_error">No pudimos recuperar tu cuenta. Revisá la conexión y volvé a intentar.</string>
     <string name="session_restore_retry">Reintentar</string>
     <string name="notification_messages_channel">Mensajes</string>
+    <string name="notification_services_channel">Servicios</string>
 </resources>
