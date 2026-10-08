@@ -72,7 +72,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | falla la conexión                     |
       | no llega la confirmación del registro |
 
-  @wip
   Escenario: 07-CPN Leer el chat abierto sin un aviso adicional
     Dado que estoy leyendo mi conversación con el prestador
     Y tengo un borrador sin enviar y una posición de lectura elegida

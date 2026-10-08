@@ -13,6 +13,7 @@ class ConsumerPushNotificationsSteps {
     private val permissions = ConsumerNotificationPermissionWorld()
     private val settings = ConsumerSettingsNotificationsWorld()
     private val recovery = ConsumerRecoveryNotificationsWorld()
+    private val visibleChat = ConsumerVisibleChatWorld()
     private var registrationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
@@ -110,9 +111,25 @@ class ConsumerPushNotificationsSteps {
     @Entonces("puedo consultar mis mensajes y servicios durante la recuperación")
     fun canConsultMessagesAndServicesDuringRecovery() = recovery.assertCanConsultMessagesAndServices()
 
+    @Dado("que estoy leyendo mi conversación con el prestador")
+    fun readingConversationWithProvider() = visibleChat.startReadingConversation()
+
+    @Dado("tengo un borrador sin enviar y una posición de lectura elegida")
+    fun draftAndReadingPositionChosen() = visibleChat.setDraftAndReadingPosition()
+
+    @Cuando("llega el aviso de un nuevo mensaje del prestador")
+    fun incomingProviderMessageNotice() = visibleChat.incomingProviderMessageNotice()
+
+    @Entonces("la conversación se actualiza sin una notificación del teléfono ni un popup adicional")
+    fun conversationUpdatedWithoutNotificationOrPopup() = visibleChat.assertUpdatedWithoutNotificationOrPopup()
+
+    @Entonces("conservo mi borrador y mi posición de lectura")
+    fun preserveDraftAndReadingPosition() = visibleChat.assertDraftAndReadingPositionPreserved()
+
     @After
     fun close() {
         if (registrationStarted) world.close()
         recovery.close()
+        visibleChat.close()
     }
 }
