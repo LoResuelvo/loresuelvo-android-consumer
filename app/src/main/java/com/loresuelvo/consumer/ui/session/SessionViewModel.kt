@@ -98,6 +98,7 @@ class SessionViewModel @Inject constructor(
         restorationJob?.cancel()
         sessionStore.clearSession()
         notificationDismissal.dismissAll()
+        _uiState.value = computeState(null)
         // 2. Dispatch the Auth0 SSO logout in the background.
         // Its result is fire-and-forget; we log it for diagnostics
         // but the consumer has already left Home for Welcome.
