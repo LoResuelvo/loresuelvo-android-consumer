@@ -237,6 +237,9 @@ private fun ErrorState(
         is ServiceProposalsOutcome.Failure.Network ->
             stringResource(R.string.proposal_detail_error_network)
 
+        ServiceProposalsOutcome.Failure.AccessDenied ->
+            stringResource(R.string.service_access_denied)
+
         is ServiceProposalsOutcome.Failure.Server ->
             stringResource(R.string.proposal_detail_error_server)
     }
@@ -256,17 +259,19 @@ private fun ErrorState(
             textAlign = TextAlign.Center,
         )
 
-        Button(
-            onClick = onRetry,
-            modifier = Modifier.testTag(
-                PROPOSAL_DETAIL_ERROR_RETRY_TAG,
-            ),
-        ) {
-            Text(
-                stringResource(
-                    R.string.proposal_detail_error_retry,
+        if (failure != ServiceProposalsOutcome.Failure.AccessDenied) {
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.testTag(
+                    PROPOSAL_DETAIL_ERROR_RETRY_TAG,
                 ),
-            )
+            ) {
+                Text(
+                    stringResource(
+                        R.string.proposal_detail_error_retry,
+                    ),
+                )
+            }
         }
     }
 }

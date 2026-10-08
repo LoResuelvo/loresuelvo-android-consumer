@@ -16,6 +16,8 @@ sealed interface ServiceProposalsOutcome {
         /** Transport-level failure: timeouts, DNS, connection refused. */
         data class Network(val cause: Throwable) : Failure
 
+        data object AccessDenied : Failure
+
         /**
          * Any non-2xx response. [code] is the HTTP status, [message]
          * the human-readable text extracted from the error body.

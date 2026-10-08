@@ -84,6 +84,20 @@ class ApiWorkOrderDetailLookupTest {
         assertEquals("Reporte actual", detail.completionReport?.description)
     }
 
+    @Test
+    fun preserves_forbidden_work_order_as_a_distinct_failure() = runBlocking {
+        enqueueCurrentList()
+        server.enqueue(MockResponse().setResponseCode(403))
+
+        val outcome = useCase("88")
+
+        val failure = (outcome as? GetWorkOrderOutcome.Failure)?.failure
+        assertNotNull("A forbidden work order must return a typed failure", failure)
+        assertTrue(
+            failure is com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome.Failure.AccessDenied,
+        )
+    }
+
     private fun enqueueCurrentList() {
         server.enqueue(
             MockResponse()

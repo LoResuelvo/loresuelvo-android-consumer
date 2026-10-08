@@ -479,6 +479,8 @@ private fun ErrorState(failure: ServiceProposalsOutcome.Failure, onRetry: () -> 
     val message = when (failure) {
         is ServiceProposalsOutcome.Failure.Network ->
             stringResource(R.string.work_order_error_network)
+        ServiceProposalsOutcome.Failure.AccessDenied ->
+            stringResource(R.string.service_access_denied)
         is ServiceProposalsOutcome.Failure.Server ->
             stringResource(R.string.work_order_error_server)
     }
@@ -496,11 +498,13 @@ private fun ErrorState(failure: ServiceProposalsOutcome.Failure, onRetry: () -> 
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth(),
         )
-        Button(
-            onClick = onRetry,
-            modifier = Modifier.testTag(WORK_ORDER_ERROR_RETRY_TAG),
-        ) {
-            Text(stringResource(R.string.work_order_error_retry))
+        if (failure != ServiceProposalsOutcome.Failure.AccessDenied) {
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.testTag(WORK_ORDER_ERROR_RETRY_TAG),
+            ) {
+                Text(stringResource(R.string.work_order_error_retry))
+            }
         }
     }
 }

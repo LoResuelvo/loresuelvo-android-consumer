@@ -18,42 +18,38 @@ import java.io.File
 class ConsumerExactNavigationRobolectricTest {
 
     @Test
-    fun scenario09_runs_all_eight_examples() {
-        val report = File("build/reports/cucumber/us20-exact-navigation.json")
+    fun scenarios09And10_runAllExamplesInOneCucumberSession() {
+        val report = File("build/reports/cucumber/us20-exact-notification-resolution.json")
         assertTrue(report.parentFile?.mkdirs() == true || report.parentFile?.isDirectory == true)
         report.delete()
 
-        val result = Main.run(
-            arrayOf(
-                "--glue",
-                "com.loresuelvo.consumer.bdd.notifications",
-                "--plugin",
-                "summary",
-                "--plugin",
-                "json:${report.absolutePath}",
-                "--name",
-                "^09-CPN Abrir el destino exacto desde un aviso vigente$",
-                "classpath:features/notifications/consumer-push-notifications.feature",
-            ),
-            Thread.currentThread().contextClassLoader,
+        val arguments = arrayOf(
+            "--glue",
+            "com.loresuelvo.consumer.bdd.notifications",
+            "--plugin",
+            "summary",
+            "--plugin",
+            "json:${report.absolutePath}",
+            "--tags",
+            "@US-20",
+            "--name",
+            "^(09-CPN Abrir el destino exacto desde un aviso vigente|10-CPN Resolver un aviso que no puedo abrir)$",
+            "classpath:features/notifications/consumer-push-notifications.feature",
         )
 
+        val result = Main.run(arguments, Thread.currentThread().contextClassLoader)
         assertEquals(0, result.toInt())
-        val exactExampleCount = if (report.isFile) {
-            countExactExamples(report)
-        } else {
-            0
-        }
-        assertEquals(8, exactExampleCount)
+        assertEquals(8, countExamples(report, "09-CPN Abrir el destino exacto desde un aviso vigente"))
+        assertEquals(4, countExamples(report, "10-CPN Resolver un aviso que no puedo abrir"))
     }
 
-    private fun countExactExamples(report: File): Int {
+    private fun countExamples(report: File, scenarioPrefix: String): Int {
         val features = JSONArray(report.readText())
         return (0 until features.length())
             .flatMap { featureIndex ->
                 val elements = features.getJSONObject(featureIndex).optJSONArray("elements") ?: JSONArray()
                 (0 until elements.length()).map(elements::getJSONObject)
             }
-            .count { it.optString("name").startsWith("09-CPN Abrir el destino exacto desde un aviso vigente") }
+            .count { it.optString("name").startsWith(scenarioPrefix) }
     }
 }

@@ -322,6 +322,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
+    androidTestImplementation(libs.androidx.uiautomator)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     // Hilt testing (added in Fase 1)
     androidTestImplementation(libs.hilt.android.testing)

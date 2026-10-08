@@ -45,10 +45,7 @@ class FakeDiagnosisRepository : DiagnosisRepository {
             kotlinx.coroutines.awaitCancellation()
         }
         val outcome = nextOutcomeRef.getAndSet(null)
-            ?: error(
-                "FakeDiagnosisRepository: no outcome queued. " +
-                    "Call enqueueOutcome(...) before the next send.",
-            )
+            ?: kotlinx.coroutines.awaitCancellation()
         return outcome
     }
 

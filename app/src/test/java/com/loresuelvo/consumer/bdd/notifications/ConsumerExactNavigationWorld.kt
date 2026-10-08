@@ -63,16 +63,20 @@ import com.loresuelvo.consumer.platform.notifications.ServiceNotificationNavigat
 import com.loresuelvo.consumer.platform.notifications.VisibleConversationStore
 import com.loresuelvo.consumer.ui.navigation.NavigationIntentViewModel
 import com.loresuelvo.consumer.ui.navigation.Route
+import com.loresuelvo.consumer.ui.navigation.SessionRouteMapper
 import com.loresuelvo.consumer.ui.navigation.navigateFromNotification
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel
+import com.loresuelvo.consumer.ui.session.SessionUiState
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import java.io.IOException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -102,6 +106,11 @@ class ConsumerExactNavigationWorld {
     private var navViewModelStore: ViewModelStore? = null
     private var navLifecycleOwner: NavigationLifecycleOwner? = null
     private var noticeKind: String = ""
+    private var resolutionSituation: String? = null
+    private var resolutionRoute: String? = null
+    private var resolutionSessionRoute: String? = null
+    private var resolutionViewModel: WorkOrderDetailViewModel? = null
+    private var resolutionState: WorkOrderDetailUiState? = null
 
     fun startNotice(aviso: String) {
         noticeKind = aviso
@@ -116,6 +125,23 @@ class ConsumerExactNavigationWorld {
         createNavigationHost()
     }
 
+    fun startResolutionNotice(situation: String) {
+        startNotice("servicio finalizado")
+        refreshCurrentAccountData()
+        resolutionSituation = situation
+        when (situation) {
+            "perdí la conexión" -> workOrderRepository.detailFailure =
+                ServiceProposalsOutcome.Failure.Network(IOException("Connection failed"))
+            "el recurso ya no está disponible" -> workOrderRepository.details = mapOf(
+                "99" to sampleWorkOrder("202", "Estado de otra cuenta", TurnoStatus.Confirmed),
+            )
+            "ya no tengo acceso al recurso" -> workOrderRepository.detailFailure =
+                ServiceProposalsOutcome.Failure.AccessDenied
+            "mi sesión ya no está activa" -> sessions.clearSession()
+            else -> error("Unknown notice situation: $situation")
+        }
+    }
+
     fun setAppState(estado: String) {
         when (estado) {
             "abierta" -> requireNotNull(navController)
@@ -128,6 +154,68 @@ class ConsumerExactNavigationWorld {
     fun tapNotice() {
         val route = routeForNextDelivery()
         navController().navigateFromNotification(route)
+    }
+
+    fun tapResolutionNotice() {
+        val deliveredIntent = dispatchNextNotice()
+        resolutionRoute = navigationIntents.routeFor(deliveredIntent)
+        resolutionSessionRoute = SessionRouteMapper.routeFor(
+            SessionUiState(loading = false, session = sessions.getSession()),
+        )
+        val route = resolutionRoute ?: return
+        navController().navigateFromNotification(route)
+        val workOrderId = requireNotNull(navController().currentBackStackEntry)
+            .arguments?.getString(Route.WorkOrderDetail.ARG_WORK_ORDER_ID).orEmpty()
+        resolutionViewModel = createWorkOrderViewModel()
+        resolutionViewModel?.load(workOrderId)
+        drainMainLooper()
+        resolutionState = resolutionViewModel?.uiState?.value
+    }
+
+    fun assertResolutionResult(result: String) {
+        when (result) {
+            "se informa el problema y puedo reintentar" -> {
+                assertTrue(resolutionState is WorkOrderDetailUiState.Error)
+                val error = (resolutionState as WorkOrderDetailUiState.Error).failure
+                assertTrue(error is ServiceProposalsOutcome.Failure.Network)
+                workOrderRepository.detailFailure = null
+                resolutionViewModel?.load("88")
+                drainMainLooper()
+                resolutionState = resolutionViewModel?.uiState?.value
+                val recovered = resolutionState as? WorkOrderDetailUiState.Ready
+                assertEquals("Estado actual de la orden 88", recovered?.workOrder?.description)
+            }
+            "se informa que no está disponible y puedo volver" -> {
+                assertTrue(resolutionState === WorkOrderDetailUiState.NotFound)
+                returnToHome()
+            }
+            "se informa que no tengo acceso y puedo volver" -> {
+                val error = (resolutionState as? WorkOrderDetailUiState.Error)?.failure
+                assertTrue("The access denial must remain visible as a failure", error != null)
+                assertEquals(ServiceProposalsOutcome.Failure.AccessDenied, error)
+                returnToHome()
+            }
+            "se solicita iniciar sesión sin abrir el aviso viejo" -> {
+                assertNull(resolutionRoute)
+                assertNull(resolutionState)
+                assertNull(sessions.getSession())
+                assertEquals(Route.Welcome.path, resolutionSessionRoute)
+                assertFalse(navController().currentBackStackEntry?.destination?.route == Route.WorkOrderDetail.path)
+            }
+            else -> error("Unknown notice resolution: $result")
+        }
+    }
+
+    fun assertResolutionPrivacy() {
+        val ready = resolutionState as? WorkOrderDetailUiState.Ready
+        if (resolutionSituation == "perdí la conexión") {
+            assertEquals("88", ready?.workOrderId)
+            assertEquals("Estado actual de la orden 88", ready?.workOrder?.description)
+            assertEquals("Prestador actual", ready?.workOrder?.provider?.name)
+        } else {
+            assertNull("A failed or unauthorized lookup must not expose a work order", ready)
+        }
+        assertFalse(ready?.workOrder?.description == "Estado de otra cuenta")
     }
 
     fun assertDestination(destino: String) {
@@ -251,11 +339,15 @@ class ConsumerExactNavigationWorld {
     )
 
     private fun routeForNextDelivery(): String {
-        dispatcher.dispatch(currentNoticeIntent)
-        val deliveredIntent = runBlocking { dispatcher.events.first() }
+        val deliveredIntent = dispatchNextNotice()
         return requireNotNull(navigationIntents.routeFor(deliveredIntent)) {
             "Notice intent must resolve to an authenticated destination"
         }
+    }
+
+    private fun dispatchNextNotice(): Intent {
+        dispatcher.dispatch(currentNoticeIntent)
+        return runBlocking { dispatcher.events.first() }
     }
 
     private fun createNoticeIntent(aviso: String): Intent {
@@ -412,14 +504,7 @@ class ConsumerExactNavigationWorld {
         val workOrderId = requireNotNull(navController().currentBackStackEntry)
             .arguments?.getString(Route.WorkOrderDetail.ARG_WORK_ORDER_ID)
         assertEquals("88", workOrderId)
-        val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
-                workOrderRepository,
-                GetTurnosUseCase(turnosRepository),
-            ),
-            startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(checkoutRepository),
-            rateProvider = RateProviderUseCase(workOrderRepository),
-        )
+        val viewModel = createWorkOrderViewModel()
         viewModel.load(workOrderId.orEmpty())
         drainMainLooper()
         val state = viewModel.uiState.value
@@ -436,6 +521,20 @@ class ConsumerExactNavigationWorld {
             assertEquals(TurnoStatus.AwaitingPayment, ready.workOrder.status)
             assertEquals("Informe actual de finalización", ready.workOrder.completionReport?.description)
         }
+    }
+
+    private fun createWorkOrderViewModel() = WorkOrderDetailViewModel(
+        getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            workOrderRepository,
+            GetTurnosUseCase(turnosRepository),
+        ),
+        startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(checkoutRepository),
+        rateProvider = RateProviderUseCase(workOrderRepository),
+    )
+
+    private fun returnToHome() {
+        assertTrue(navController().popBackStack())
+        assertEquals(Route.Home.path, navController().currentBackStackEntry?.destination?.route)
     }
 
     private fun drainMainLooper() {
@@ -560,6 +659,7 @@ class ConsumerExactNavigationWorld {
 
     private inner class CurrentWorkOrderRepository : WorkOrderDetailRepository {
         var details: Map<String, WorkOrderDetail> = emptyMap()
+        var detailFailure: ServiceProposalsOutcome.Failure? = null
 
         override suspend fun getWorkOrderDetail(
             workOrderId: String,
@@ -567,6 +667,7 @@ class ConsumerExactNavigationWorld {
         ): GetWorkOrderOutcome {
             if (provider == null) return GetWorkOrderOutcome.NotFound
             val detail = details[workOrderId] ?: return GetWorkOrderOutcome.NotFound
+            detailFailure?.let { return GetWorkOrderOutcome.Failure(it) }
             return GetWorkOrderOutcome.Found(detail.copy(provider = provider))
         }
 

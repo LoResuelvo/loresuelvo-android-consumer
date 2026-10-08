@@ -63,6 +63,7 @@ fun HomeScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .testTag(HOME_SCREEN_TAG)
             .background(MaterialTheme.colorScheme.background)
             // configured to consume only the nav bar inset so
             // screens with their own `topBar` (Chat,
@@ -450,6 +451,7 @@ private fun AwaitingPaymentRow(
 
 const val HOME_TURNOS_ROW_TAG: String = "home-turnos-row"
 const val HOME_PENDING_PAYMENTS_ROW_TAG: String = "home-pending-payments-row"
+const val HOME_SCREEN_TAG: String = "home-screen"
 
 const val HOME_MIS_SERVICIOS_EMPTY_CARD_TAG: String = "home-mis-servicios-empty-card"
 const val HOME_TURNOS_LINK_TAG: String = "home-turnos-link"

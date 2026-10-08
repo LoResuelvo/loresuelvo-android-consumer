@@ -274,6 +274,7 @@
     <string name="work_order_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="work_order_error_server">No pudimos cargar la orden de trabajo. Reintentá.</string>
     <string name="work_order_error_retry">Reintentar</string>
+    <string name="service_access_denied">No tenés acceso a este servicio.</string>
 
     <string name="work_order_rate_cta">Calificar servicio</string>
     <string name="work_order_rate_title">¿Cómo fue tu experiencia?</string>

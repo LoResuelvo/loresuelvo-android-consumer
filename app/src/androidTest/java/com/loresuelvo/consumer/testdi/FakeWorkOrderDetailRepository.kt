@@ -23,6 +23,8 @@ class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepos
             message = "no outcome queued",
         )
 
+    var failure: ServiceProposalsOutcome.Failure? = null
+
     var lastSubmission: Submission? = null
         private set
     var lastRequestedWorkOrderId: String? = null
@@ -57,6 +59,7 @@ class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepos
         provider: WorkOrderDetailCounterpart?,
     ): GetWorkOrderOutcome {
         lastRequestedWorkOrderId = workOrderId
+        failure?.let { return GetWorkOrderOutcome.Failure(it) }
         if (provider == null) {
             return GetWorkOrderOutcome.Failure(
                 ServiceProposalsOutcome.Failure.Server(0, "provider metadata missing"),

@@ -273,6 +273,7 @@
     <string name="work_order_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="work_order_error_server">We couldn\'t load the work order. Try again.</string>
     <string name="work_order_error_retry">Retry</string>
+    <string name="service_access_denied">You do not have access to this service.</string>
 
     <string name="work_order_rate_cta">Rate service</string>
     <string name="work_order_rate_title">How was your experience?</string>

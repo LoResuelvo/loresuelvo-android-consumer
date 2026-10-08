@@ -18,6 +18,7 @@ class ConsumerPushNotificationsSteps {
     private val exactNavigation by lazy { ConsumerExactNavigationWorld() }
     private var registrationStarted = false
     private var exactNavigationStarted = false
+    private var resolutionStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
     fun startWithoutSession() {
@@ -87,9 +88,6 @@ class ConsumerPushNotificationsSteps {
     @Dado("que tengo una sesión activa")
     fun activeSession() = settings.start()
 
-    @Dado("{string}")
-    fun configureNotificationAdjustment(adjustment: String) = settings.configureAdjustment(adjustment)
-
     @Cuando("llega un aviso válido de {string}")
     fun receiveValidNotice(noticeType: String) = settings.receiveValidNotice(noticeType)
 
@@ -144,11 +142,24 @@ class ConsumerPushNotificationsSteps {
         exactNavigation.startNotice(aviso)
     }
 
+    @Dado("que recibí un aviso y {string}")
+    fun noticeThatCannotBeOpened(situation: String) {
+        exactNavigationStarted = true
+        resolutionStarted = true
+        exactNavigation.startResolutionNotice(situation)
+    }
+
     @Dado("LoResuelvo está {string}")
     fun appStateIs(estado: String) = exactNavigation.setAppState(estado)
 
     @Cuando("toco ese aviso")
-    fun tapNotice() = exactNavigation.tapNotice()
+    fun tapNotice() {
+        if (resolutionStarted) {
+            exactNavigation.tapResolutionNotice()
+        } else {
+            exactNavigation.tapNotice()
+        }
+    }
 
     @Entonces("veo {string} correspondiente al aviso con información actual de mi cuenta")
     fun seeDestinationWithAccountInfo(destino: String) = exactNavigation.assertDestination(destino)
@@ -156,11 +167,29 @@ class ConsumerPushNotificationsSteps {
     @Entonces("puedo volver a la aplicación sin abrir pantallas repetidas")
     fun canReturnWithoutDuplicateScreens() = exactNavigation.assertCanGoBackWithoutRepeatedScreens()
 
+    @Entonces("{string}")
+    fun noticeResolutionMatches(result: String) {
+        if (resolutionStarted) {
+            exactNavigation.assertResolutionResult(result)
+        } else {
+            settings.configureAdjustment(result)
+        }
+    }
+
+    @Entonces("el resultado del aviso es {string}")
+    fun noticeResolutionMatchesLegacy(result: String) = exactNavigation.assertResolutionResult(result)
+
+    @Entonces("no veo información privada de otra cuenta ni datos inventados")
+    fun noticeResolutionPreservesPrivacy() = exactNavigation.assertResolutionPrivacy()
+
     @After
     fun close() {
         if (registrationStarted) world.close()
         recovery.close()
         visibleChat.close()
         if (exactNavigationStarted) exactNavigation.close()
+        registrationStarted = false
+        exactNavigationStarted = false
+        resolutionStarted = false
     }
 }

@@ -105,7 +105,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | servicio finalizado | cerrada | la orden correspondiente |
       | servicio finalizado | abierta | la orden correspondiente |
 
-  @wip
   Esquema del escenario: 10-CPN Resolver un aviso que no puedo abrir
     Dado que recibí un aviso y "<situacion>"
     Cuando toco ese aviso

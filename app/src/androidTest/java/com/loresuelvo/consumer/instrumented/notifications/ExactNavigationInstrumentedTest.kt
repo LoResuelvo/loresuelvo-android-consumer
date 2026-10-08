@@ -19,12 +19,14 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
+import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso.pressBack as pressSystemBack
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
 import androidx.test.rule.GrantPermissionRule
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.UiDevice
 import dagger.hilt.EntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import com.loresuelvo.consumer.MainActivity
@@ -74,7 +76,7 @@ import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
 import com.loresuelvo.consumer.testdi.FakeTurnosRepository
 import com.loresuelvo.consumer.testdi.FakeWorkOrderDetailRepository
 import com.loresuelvo.consumer.ui.screens.chat.CONVERSATION_SCREEN_TAG
-import com.loresuelvo.consumer.ui.screens.home.HOME_TURNOS_LINK_TAG
+import com.loresuelvo.consumer.ui.screens.home.HOME_SCREEN_TAG
 import com.loresuelvo.consumer.ui.screens.misservicios.MIS_SERVICIOS_SCREEN_TAG
 import com.loresuelvo.consumer.ui.screens.paymentresult.PAYMENT_RESULT_SCREEN_TAG
 import com.loresuelvo.consumer.ui.screens.proposals.PROPOSAL_DETAIL_READY_TAG
@@ -95,6 +97,7 @@ import dagger.hilt.android.testing.UninstallModules
 import dagger.hilt.components.SingletonComponent
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -119,6 +122,9 @@ class ExactNavigationInstrumentedTest {
 
     private lateinit var scenario: ActivityScenario<MainActivity>
     private lateinit var scenarioStartIntent: Intent
+    private val device: UiDevice by lazy {
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+    }
 
     private val sessions: AuthSessionStore by lazy {
         EntryPointAccessors.fromApplication(
@@ -510,15 +516,19 @@ class ExactNavigationInstrumentedTest {
     }
 
     private fun pressBack() {
-        pressSystemBack()
+        scenario.onActivity { activity ->
+            assertEquals(Lifecycle.State.RESUMED, activity.lifecycle.currentState)
+        }
+        assertEquals(context.packageName, device.currentPackageName)
+        assertTrue(device.pressBack())
         compose.waitForIdle()
     }
 
     private fun awaitHome() {
         compose.waitUntil(10_000) {
-            compose.onAllNodesWithTag(HOME_TURNOS_LINK_TAG).fetchSemanticsNodes().isNotEmpty()
+            compose.onAllNodesWithTag(HOME_SCREEN_TAG).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithTag(HOME_TURNOS_LINK_TAG).assertIsDisplayed()
+        compose.onNodeWithTag(HOME_SCREEN_TAG).assertIsDisplayed()
     }
 
     private fun testTurno(id: String, status: TurnoStatus, providerName: String) = Turno(

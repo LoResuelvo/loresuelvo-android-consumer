@@ -182,6 +182,28 @@ class WorkOrderDetailScreenTest {
             .assertIsDisplayed()
     }
 
+    @Test
+    fun forbidden_work_order_does_not_offer_retry_or_server_error_copy() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.testTag("host")) {
+                    WorkOrderDetailScreen(
+                        state = WorkOrderDetailUiState.Error(
+                            ServiceProposalsOutcome.Failure.AccessDenied,
+                        ),
+                        onRetry = {},
+                        onBackClick = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithTag(WORK_ORDER_ERROR_TAG).assertIsDisplayed()
+        composeTestRule.onAllNodesWithTag(WORK_ORDER_ERROR_RETRY_TAG).assertCountEquals(0)
+        composeTestRule.onNodeWithText(localizedString(R.string.service_access_denied))
+            .assertIsDisplayed()
+    }
+
     private fun workOrder(
         estimatedDurationMinutes: Int? = 90,
     ): WorkOrderDetail = WorkOrderDetail(

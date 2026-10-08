@@ -50,8 +50,10 @@ class ApiServiceProposalRepository @Inject constructor(
                 ServiceProposalsOutcome.Failure.Network(error.networkCause)
             is ApiError.Unauthorized ->
                 ServiceProposalsOutcome.Failure.Server(401, error.errorMessage)
-            is ApiError.Server ->
-                ServiceProposalsOutcome.Failure.Server(error.code, error.errorMessage)
+            is ApiError.Server -> when (error.code) {
+                403 -> ServiceProposalsOutcome.Failure.AccessDenied
+                else -> ServiceProposalsOutcome.Failure.Server(error.code, error.errorMessage)
+            }
             is ApiError.Unknown ->
                 ServiceProposalsOutcome.Failure.Server(0, error.message ?: "Unknown error")
         }

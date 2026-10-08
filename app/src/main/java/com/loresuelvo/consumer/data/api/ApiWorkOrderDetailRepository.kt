@@ -45,6 +45,9 @@ class ApiWorkOrderDetailRepository @Inject constructor(
             when (val error = e.toApiError()) {
                 is ApiError.Server -> when (error.code) {
                     404 -> GetWorkOrderOutcome.NotFound
+                    403 -> GetWorkOrderOutcome.Failure(
+                        ServiceProposalsOutcome.Failure.AccessDenied,
+                    )
                     else -> GetWorkOrderOutcome.Failure(
                         ServiceProposalsOutcome.Failure.Server(
                             code = error.code,

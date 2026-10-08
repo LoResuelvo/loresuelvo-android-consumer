@@ -147,11 +147,7 @@ fun LoResuelvoNav() {
         sessionState.authenticated,
     )
 
-    val sessionRoute = when {
-        !sessionState.authenticated -> Route.Welcome.path
-        !sessionState.profileCompleted -> Route.CompleteProfile.path
-        else -> Route.Home.path
-    }
+    val sessionRoute = SessionRouteMapper.routeFor(sessionState)
 
     val lastAppliedSessionRoute = remember {
         mutableStateOf<String?>(null)
