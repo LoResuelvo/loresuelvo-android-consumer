@@ -79,7 +79,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
     Entonces la conversación se actualiza sin una notificación del teléfono ni un popup adicional
     Y conservo mi borrador y mi posición de lectura
 
-  @wip
   Esquema del escenario: 08-CPN Evitar avisos repetidos o fuera de tiempo
     Dado que tengo una sesión activa y permití los avisos
     Cuando llega "<aviso>"

@@ -10,16 +10,43 @@ import javax.inject.Singleton
 class StoredNotificationEvents @Inject constructor(
     @Named("installationPrefs") private val preferences: SharedPreferences,
 ) : NotificationEventStore {
+
+    private val inMemoryEvents: MutableSet<String> = LinkedHashSet()
+
+    init {
+        synchronized(this) {
+            inMemoryEvents.addAll(persistedEntries())
+        }
+    }
+
     @Synchronized
-    override fun contains(bindingId: String, eventId: String): Boolean =
-        entries().contains("$bindingId|$eventId")
+    override fun contains(bindingId: String, eventId: String): Boolean {
+        val key = "$bindingId|$eventId"
+        if (inMemoryEvents.contains(key)) return true
+        val disk = persistedEntries()
+        inMemoryEvents.addAll(disk)
+        return inMemoryEvents.contains(key)
+    }
 
     @Synchronized
     override fun remember(bindingId: String, eventId: String): Boolean {
-        val bounded = (entries() + "$bindingId|$eventId").takeLast(128)
-        return preferences.edit().putString("notification_events", bounded.joinToString("\n")).commit()
+        val key = "$bindingId|$eventId"
+        inMemoryEvents.add(key)
+        val bounded = (persistedEntries() + key).distinct().takeLast(128)
+        val persisted = preferences.edit().putString(KEY_EVENTS, bounded.joinToString("\n")).commit()
+        if (persisted) {
+            inMemoryEvents.clear()
+            inMemoryEvents.addAll(bounded)
+        }
+        return persisted
     }
 
-    private fun entries(): List<String> = preferences.getString("notification_events", "").orEmpty()
-        .split('\n').filter { it.isNotBlank() }
+    private fun persistedEntries(): List<String> =
+        preferences.getString(KEY_EVENTS, "").orEmpty()
+            .split('\n')
+            .filter { it.isNotBlank() }
+
+    companion object {
+        private const val KEY_EVENTS = "notification_events"
+    }
 }

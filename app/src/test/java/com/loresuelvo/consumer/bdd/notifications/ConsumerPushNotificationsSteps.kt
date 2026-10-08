@@ -14,6 +14,7 @@ class ConsumerPushNotificationsSteps {
     private val settings = ConsumerSettingsNotificationsWorld()
     private val recovery = ConsumerRecoveryNotificationsWorld()
     private val visibleChat = ConsumerVisibleChatWorld()
+    private val deduplication = ConsumerDeduplicationNotificationsWorld()
     private var registrationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
@@ -125,6 +126,15 @@ class ConsumerPushNotificationsSteps {
 
     @Entonces("conservo mi borrador y mi posición de lectura")
     fun preserveDraftAndReadingPosition() = visibleChat.assertDraftAndReadingPositionPreserved()
+
+    @Dado("que tengo una sesión activa y permití los avisos")
+    fun activeSessionAndNotificationsAllowed() = deduplication.start()
+
+    @Cuando("llega {string}")
+    fun receiveDeduplicationNotice(notice: String) = deduplication.receiveNotice(notice)
+
+    @Entonces("no aparece una nueva notificación ni vuelve a sonar una anterior")
+    fun assertNoNewNotificationNorResound() = deduplication.assertNoNewNotificationNorResound()
 
     @After
     fun close() {
