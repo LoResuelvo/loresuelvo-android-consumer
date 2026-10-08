@@ -17,10 +17,12 @@ class ConsumerPushNotificationsSteps {
     private val deduplication = ConsumerDeduplicationNotificationsWorld()
     private val exactNavigation by lazy { ConsumerExactNavigationWorld() }
     private val logout by lazy { ConsumerSessionLogoutWorld() }
+    private val accountSwitch by lazy { ConsumerAccountSwitchWorld() }
     private var registrationStarted = false
     private var exactNavigationStarted = false
     private var resolutionStarted = false
     private var logoutStarted = false
+    private var accountSwitchStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
     fun startWithoutSession() {
@@ -205,6 +207,27 @@ class ConsumerPushNotificationsSteps {
     @Entonces("los avisos posteriores de esa sesión no se muestran ni abren datos privados")
     fun assertSubsequentNoticesNotShownAndNoPrivateData() = logout.assertSubsequentNoticesNotShownAndNoPrivateData()
 
+    @Dado("que cerré sesión sin conexión e ingresé con otra cuenta de consumidor")
+    fun switchAccountOffline() {
+        accountSwitchStarted = true
+        accountSwitch.switchAccountOffline()
+    }
+
+    @Dado("la nueva cuenta quedó habilitada para recibir avisos en este teléfono")
+    fun enableNotificationsForNewAccount() = accountSwitch.enableNotificationsForNewAccount()
+
+    @Dado("reinicié LoResuelvo")
+    fun restartLoResuelvo() = accountSwitch.restartLoResuelvo()
+
+    @Cuando("llega un aviso pendiente de la cuenta anterior")
+    fun receivePendingNoticeFromPreviousAccount() = accountSwitch.receivePendingNoticeFromPreviousAccount()
+
+    @Entonces("no se muestra ese aviso ni permite entrar a la cuenta anterior")
+    fun assertNoticeNotShownAndCannotEnterPreviousAccount() = accountSwitch.assertNoticeNotShownAndCannotEnterPreviousAccount()
+
+    @Entonces("sigo pudiendo recibir avisos de mi cuenta actual")
+    fun assertCanReceiveNoticesForCurrentAccount() = accountSwitch.assertCanReceiveNoticesForCurrentAccount()
+
     @After
     fun close() {
         if (registrationStarted) world.close()
@@ -212,9 +235,11 @@ class ConsumerPushNotificationsSteps {
         visibleChat.close()
         if (exactNavigationStarted) exactNavigation.close()
         if (logoutStarted) logout.close()
+        if (accountSwitchStarted) accountSwitch.close()
         registrationStarted = false
         exactNavigationStarted = false
         resolutionStarted = false
         logoutStarted = false
+        accountSwitchStarted = false
     }
 }

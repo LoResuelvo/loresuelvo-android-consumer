@@ -129,7 +129,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | con conexión |
       | sin conexión |
 
-  @wip
   Escenario: 12-CPN Recibir solamente avisos de la cuenta actual después de reiniciar
     Dado que cerré sesión sin conexión e ingresé con otra cuenta de consumidor
     Y la nueva cuenta quedó habilitada para recibir avisos en este teléfono
