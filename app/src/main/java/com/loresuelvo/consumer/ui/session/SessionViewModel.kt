@@ -59,6 +59,9 @@ class SessionViewModel @Inject constructor(
             val current = sessionStore.sessionFlow.value
             val failure = outcome is CurrentUserOutcome.Failure.Network ||
                 outcome is CurrentUserOutcome.Failure.Server
+            if (!failure && current?.user?.backendUserId != null && current.user.backendUserId > 0) {
+                pushRegistrationRequests.request()
+            }
             _uiState.value = SessionUiState(
                 loading = false,
                 session = current,

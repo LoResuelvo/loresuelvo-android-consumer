@@ -81,13 +81,14 @@ class SessionViewModelTest {
         org.junit.Assert.assertTrue(viewModel.uiState.value.loading)
         advanceUntilIdle()
         org.junit.Assert.assertEquals(SessionError.Restoration, viewModel.uiState.value.error)
-        org.junit.Assert.assertEquals(session, sessionFlow.value)
-        val user = session.user.copy(address = com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress("Street", "1"))
+        org.junit.Assert.assertNull(requests.pending.value)
+        val user = session.user.copy(backendUserId = 17, address = com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress("Street", "1"))
         coEvery { repository.getCurrentUser() } returns com.loresuelvo.consumer.domain.auth.CurrentUserOutcome.Success(user)
         viewModel.retryRestoration()
         advanceUntilIdle()
         assertNull(viewModel.uiState.value.error)
         org.junit.Assert.assertTrue(viewModel.uiState.value.profileCompleted)
+        org.junit.Assert.assertNotNull(requests.pending.value)
     }
 
     @Test

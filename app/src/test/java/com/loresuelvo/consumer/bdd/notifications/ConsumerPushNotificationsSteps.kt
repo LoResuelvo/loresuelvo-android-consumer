@@ -12,6 +12,7 @@ class ConsumerPushNotificationsSteps {
     private val services = ConsumerServiceNotificationsWorld()
     private val permissions = ConsumerNotificationPermissionWorld()
     private val settings = ConsumerSettingsNotificationsWorld()
+    private val recovery = ConsumerRecoveryNotificationsWorld()
     private var registrationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
@@ -94,8 +95,24 @@ class ConsumerPushNotificationsSteps {
     @Entonces("puedo consultar la novedad dentro de LoResuelvo")
     fun assertCanConsultNoveltyInsideApp() = settings.assertCanConsultNoveltyInsideApp()
 
+    @Dado("que tengo una sesión verificada de consumidor")
+    fun startWithVerifiedSession() = recovery.startWithVerifiedSession()
+
+    @Dado("{string} al habilitar los avisos")
+    fun interruptionWhenEnabling(interruption: String) = recovery.interruptionWhenEnabling(interruption)
+
+    @Cuando("vuelvo a usar LoResuelvo con conexión disponible")
+    fun resumeWithConnectionAvailable() = recovery.resumeWithConnectionAvailable()
+
+    @Entonces("el teléfono queda habilitado para recibir próximos avisos de mi cuenta")
+    fun phoneRegisteredAfterRecovery() = recovery.assertPhoneRegistered()
+
+    @Entonces("puedo consultar mis mensajes y servicios durante la recuperación")
+    fun canConsultMessagesAndServicesDuringRecovery() = recovery.assertCanConsultMessagesAndServices()
+
     @After
     fun close() {
         if (registrationStarted) world.close()
+        recovery.close()
     }
 }

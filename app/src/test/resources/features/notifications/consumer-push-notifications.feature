@@ -61,7 +61,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | deshabilité el canal de servicios        | propuesta recibida  |
       | deshabilité las notificaciones de la app | servicio finalizado |
 
-  @wip
   Esquema del escenario: 06-CPN Recuperar la recepción después de una interrupción
     Dado que tengo una sesión verificada de consumidor
     Y "<interrupcion>" al habilitar los avisos
