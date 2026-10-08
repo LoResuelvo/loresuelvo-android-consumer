@@ -17,10 +17,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class AndroidMessageNotificationPublisher @Inject constructor(
+class AndroidMessageNotificationPublisher internal constructor(
     @ApplicationContext private val context: Context,
     private val authorize: AuthorizeMessageNotificationUseCase,
+    private val channelId: String,
 ) : MessageNotificationPublisher, NotificationAvailability {
+    @Inject
+    constructor(
+        @ApplicationContext context: Context,
+        authorize: AuthorizeMessageNotificationUseCase,
+    ) : this(context, authorize, CHANNEL)
+
     private val manager get() = context.getSystemService(NotificationManager::class.java)
 
     override fun messagesAllowed(): Boolean {
@@ -33,9 +40,9 @@ class AndroidMessageNotificationPublisher @Inject constructor(
         if (!authorize(notification) || !messagesAllowed()) return false
         val intent = MessageNotificationIntent().create(context, notification)
         val pending = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        val publicVersion = NotificationCompat.Builder(context, CHANNEL)
+        val publicVersion = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification_message).setContentTitle(context.getString(R.string.app_name)).build()
-        val visible = NotificationCompat.Builder(context, CHANNEL)
+        val visible = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_notification_message)
             .setContentTitle(notification.title).setContentText(notification.body)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(publicVersion)
@@ -46,13 +53,13 @@ class AndroidMessageNotificationPublisher @Inject constructor(
     }
 
     private fun channelAllowed(): Boolean = Build.VERSION.SDK_INT < 26 ||
-        manager.getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
+        manager.getNotificationChannel(channelId)?.importance != NotificationManager.IMPORTANCE_NONE
 
     private fun createChannel() {
         if (Build.VERSION.SDK_INT < 26) return
-        if (manager.getNotificationChannel(CHANNEL) != null) return
+        if (manager.getNotificationChannel(channelId) != null) return
         manager.createNotificationChannel(NotificationChannel(
-            CHANNEL, context.getString(R.string.notification_messages_channel), NotificationManager.IMPORTANCE_DEFAULT,
+            channelId, context.getString(R.string.notification_messages_channel), NotificationManager.IMPORTANCE_DEFAULT,
         ))
     }
 

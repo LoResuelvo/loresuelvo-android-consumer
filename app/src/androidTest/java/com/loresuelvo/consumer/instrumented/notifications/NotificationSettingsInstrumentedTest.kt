@@ -1,11 +1,14 @@
 package com.loresuelvo.consumer.instrumented.notifications
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
+import androidx.test.rule.GrantPermissionRule
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.data.installation.EncryptedInstallationStateStore
 import com.loresuelvo.consumer.data.notifications.MessageNotificationDecoder
@@ -43,14 +46,22 @@ import com.loresuelvo.consumer.testdi.FakeTurnosRepository
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.UUID
 
 @SdkSuppress(minSdkVersion = 33)
 @RunWith(AndroidJUnit4::class)
 class NotificationSettingsInstrumentedTest {
+
+    @get:Rule
+    val notificationPermission: GrantPermissionRule =
+        GrantPermissionRule.grant(Manifest.permission.POST_NOTIFICATIONS)
 
     private lateinit var context: Context
     private lateinit var manager: NotificationManager
@@ -59,11 +70,15 @@ class NotificationSettingsInstrumentedTest {
     private lateinit var fakeConversations: FakeConversationRepository
     private lateinit var fakeTurnos: FakeTurnosRepository
     private lateinit var binding: com.loresuelvo.consumer.domain.installation.InstallationBinding
+    private lateinit var messageChannelId: String
+    private lateinit var serviceChannelId: String
 
     @Before
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
         manager = context.getSystemService(NotificationManager::class.java)
+        messageChannelId = "test.messages.${UUID.randomUUID()}"
+        serviceChannelId = "test.services.${UUID.randomUUID()}"
 
         val sessionPrefs = context.getSharedPreferences("test_settings_sessions", Context.MODE_PRIVATE)
         val installPrefs = context.getSharedPreferences("test_settings_installations", Context.MODE_PRIVATE)
@@ -92,40 +107,48 @@ class NotificationSettingsInstrumentedTest {
         fakeTurnos = FakeTurnosRepository()
     }
 
+    @After
+    fun tearDown() {
+        manager.deleteNotificationChannel(messageChannelId)
+        manager.deleteNotificationChannel(serviceChannelId)
+    }
+
     @Test
     fun message_notification_publisher_respects_disabled_channel() {
+        assertTrue(NotificationManagerCompat.from(context).areNotificationsEnabled())
         val authorize = AuthorizeMessageNotificationUseCase(sessions, installations, NotificationClock { 0 })
-        val publisher = AndroidMessageNotificationPublisher(context, authorize)
+        val publisher = AndroidMessageNotificationPublisher(context, authorize, messageChannelId)
 
         val channel = NotificationChannel(
-            AndroidMessageNotificationPublisher.CHANNEL,
+            messageChannelId,
             "Mensajes",
             NotificationManager.IMPORTANCE_NONE,
         )
         manager.createNotificationChannel(channel)
 
-        val isChannelBlocked = manager.getNotificationChannel(AndroidMessageNotificationPublisher.CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE
-        if (isChannelBlocked) {
-            assertFalse(publisher.messagesAllowed())
-        }
+        val storedChannel = manager.getNotificationChannel(messageChannelId)
+        assertNotNull("Test message channel must exist", storedChannel)
+        assertEquals(NotificationManager.IMPORTANCE_NONE, storedChannel!!.importance)
+        assertFalse(publisher.messagesAllowed())
     }
 
     @Test
     fun service_notification_publisher_respects_disabled_channel() {
+        assertTrue(NotificationManagerCompat.from(context).areNotificationsEnabled())
         val authorize = AuthorizeServiceNotificationUseCase(sessions, installations, NotificationClock { 0 })
-        val publisher = AndroidServiceNotificationPublisher(context, authorize)
+        val publisher = AndroidServiceNotificationPublisher(context, authorize, serviceChannelId)
 
         val channel = NotificationChannel(
-            AndroidServiceNotificationPublisher.CHANNEL,
+            serviceChannelId,
             "Servicios",
             NotificationManager.IMPORTANCE_NONE,
         )
         manager.createNotificationChannel(channel)
 
-        val isChannelBlocked = manager.getNotificationChannel(AndroidServiceNotificationPublisher.CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE
-        if (isChannelBlocked) {
-            assertFalse(publisher.servicesAllowed())
-        }
+        val storedChannel = manager.getNotificationChannel(serviceChannelId)
+        assertNotNull("Test service channel must exist", storedChannel)
+        assertEquals(NotificationManager.IMPORTANCE_NONE, storedChannel!!.importance)
+        assertFalse(publisher.servicesAllowed())
     }
 
     @Test
