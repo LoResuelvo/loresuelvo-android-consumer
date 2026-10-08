@@ -7,6 +7,7 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 sealed interface WorkOrderDetailUiState {
     data object Loading : WorkOrderDetailUiState
     data class Ready(
+        val workOrderId: String,
         val workOrder: WorkOrderDetail,
         val composer: ReviewComposerState = ReviewComposerState.Hidden,
     ) : WorkOrderDetailUiState

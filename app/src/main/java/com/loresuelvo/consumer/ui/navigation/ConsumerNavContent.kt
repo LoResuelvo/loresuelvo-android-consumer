@@ -43,7 +43,7 @@ data class ChatNavContent(
 )
 
 data class WorkNavContent(
-    val misServicios: @Composable () -> Unit,
+    val misServicios: @Composable (proposalId: String?) -> Unit,
     val turnos: @Composable () -> Unit,
     val workOrderDetail: @Composable (
         workOrderId: String,

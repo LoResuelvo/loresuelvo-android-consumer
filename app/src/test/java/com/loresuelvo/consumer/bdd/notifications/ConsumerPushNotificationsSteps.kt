@@ -15,7 +15,9 @@ class ConsumerPushNotificationsSteps {
     private val recovery = ConsumerRecoveryNotificationsWorld()
     private val visibleChat = ConsumerVisibleChatWorld()
     private val deduplication = ConsumerDeduplicationNotificationsWorld()
+    private val exactNavigation by lazy { ConsumerExactNavigationWorld() }
     private var registrationStarted = false
+    private var exactNavigationStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
     fun startWithoutSession() {
@@ -136,10 +138,29 @@ class ConsumerPushNotificationsSteps {
     @Entonces("no aparece una nueva notificación ni vuelve a sonar una anterior")
     fun assertNoNewNotificationNorResound() = deduplication.assertNoNewNotificationNorResound()
 
+    @Dado("que tengo un aviso vigente de {string} de mi cuenta actual")
+    fun activeNoticeForCurrentAccount(aviso: String) {
+        exactNavigationStarted = true
+        exactNavigation.startNotice(aviso)
+    }
+
+    @Dado("LoResuelvo está {string}")
+    fun appStateIs(estado: String) = exactNavigation.setAppState(estado)
+
+    @Cuando("toco ese aviso")
+    fun tapNotice() = exactNavigation.tapNotice()
+
+    @Entonces("veo {string} correspondiente al aviso con información actual de mi cuenta")
+    fun seeDestinationWithAccountInfo(destino: String) = exactNavigation.assertDestination(destino)
+
+    @Entonces("puedo volver a la aplicación sin abrir pantallas repetidas")
+    fun canReturnWithoutDuplicateScreens() = exactNavigation.assertCanGoBackWithoutRepeatedScreens()
+
     @After
     fun close() {
         if (registrationStarted) world.close()
         recovery.close()
         visibleChat.close()
+        if (exactNavigationStarted) exactNavigation.close()
     }
 }

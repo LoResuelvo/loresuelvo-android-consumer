@@ -9,6 +9,7 @@ import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,9 @@ class WorkOrderDetailViewModel @Inject constructor(
     private val startWorkOrderCheckout: StartWorkOrderCheckoutUseCase,
     private val rateProvider: RateProviderUseCase,
 ) : ViewModel() {
+
+    private var loadJob: Job? = null
+    private var loadGeneration = 0L
 
     private val _uiState = MutableStateFlow<WorkOrderDetailUiState>(WorkOrderDetailUiState.Loading)
     val uiState: StateFlow<WorkOrderDetailUiState> = _uiState.asStateFlow()
@@ -53,11 +57,17 @@ class WorkOrderDetailViewModel @Inject constructor(
      * non-existent provider field from the dedicated detail JSON.
      */
     fun load(workOrderId: String, provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart? = null) {
-        viewModelScope.launch {
+        val requestGeneration = ++loadGeneration
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { WorkOrderDetailUiState.Loading }
             val outcome = getWorkOrderDetail(workOrderId, provider)
+            if (requestGeneration != loadGeneration) return@launch
             val next = when (outcome) {
-                is GetWorkOrderOutcome.Found -> WorkOrderDetailUiState.Ready(outcome.workOrder)
+                is GetWorkOrderOutcome.Found -> WorkOrderDetailUiState.Ready(
+                    workOrderId = workOrderId,
+                    workOrder = outcome.workOrder,
+                )
                 is GetWorkOrderOutcome.NotFound -> WorkOrderDetailUiState.NotFound
                 is GetWorkOrderOutcome.Failure -> WorkOrderDetailUiState.Error(outcome.failure)
             }
@@ -152,7 +162,7 @@ class WorkOrderDetailViewModel @Inject constructor(
         val composer = state.composer as? ReviewComposerState.Editing ?: return
         val rating = composer.ratingDraft ?: return
         if (composer.submitting) return
-        val workOrderId = state.workOrder.proposalId
+        val workOrderId = state.workOrderId
 
         _uiState.update {
             state.copy(

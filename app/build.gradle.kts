@@ -315,6 +315,7 @@ dependencies {
     testImplementation(libs.okhttp.mockwebserver)
     testImplementation(libs.cucumber.java)
     testImplementation(libs.cucumber.junit)
+    testImplementation(libs.androidx.navigation.testing)
 
     // UI Testing (Capa de Aceptación/UI - src/androidTest)
     androidTestImplementation(platform(libs.androidx.compose.bom))

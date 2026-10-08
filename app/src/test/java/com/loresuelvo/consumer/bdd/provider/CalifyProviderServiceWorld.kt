@@ -4,7 +4,6 @@ import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
 import com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
-import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
@@ -15,6 +14,7 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
 import com.loresuelvo.consumer.ui.screens.workorderdetail.ReviewComposerState
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel
+import com.loresuelvo.consumer.testsupport.workOrderDetailUseCaseForTest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +53,7 @@ class CalifyProviderServiceWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(fakeRepo),
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(fakeRepo),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
                 NoOpWorkOrderCheckoutRepository,
             ),

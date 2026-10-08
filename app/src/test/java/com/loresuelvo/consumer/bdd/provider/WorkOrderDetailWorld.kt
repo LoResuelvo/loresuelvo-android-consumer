@@ -4,7 +4,6 @@ import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
 import com.loresuelvo.consumer.domain.payment.CheckoutSessionRepository
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
-import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
@@ -13,6 +12,7 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel
+import com.loresuelvo.consumer.testsupport.workOrderDetailUseCaseForTest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +44,7 @@ class WorkOrderDetailWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(repository),
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(repository),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpWorkOrderCheckoutRepository),
             rateProvider = RateProviderUseCase(repository),
         )

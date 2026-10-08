@@ -86,23 +86,14 @@ fun LoResuelvoNav() {
     val sessionViewModel: SessionViewModel = hiltViewModel()
     LaunchedEffect(Unit) {
         navigationIntents.events.collect { intent ->
-            if (navigationIntents.isMessageNotification(intent)) {
+            if (navigationIntents.isMessageNotification(intent) ||
+                navigationIntents.isServiceNotification(intent)
+            ) {
                 val restored = sessionViewModel.uiState.firstOrNull { !it.loading } ?: return@collect
                 if (!restored.authenticated || restored.error != null) return@collect
                 navController.currentBackStackEntryFlow.firstOrNull() ?: return@collect
-                val conversationId = navigationIntents.conversationId(intent) ?: return@collect
-                navController.navigate(Route.Conversation.buildPath(conversationId.toString())) { launchSingleTop = true }
-                return@collect
-            }
-            if (navigationIntents.isServiceNotification(intent)) {
-                val restored = sessionViewModel.uiState.firstOrNull { !it.loading } ?: return@collect
-                if (!restored.authenticated || restored.error != null) return@collect
-                navController.currentBackStackEntryFlow.firstOrNull() ?: return@collect
-                val target = navigationIntents.serviceDestination(intent) ?: return@collect
-                when (target.destination) {
-                    "service_proposal" -> navController.navigate(Route.MisServicios.path) { launchSingleTop = true }
-                    "work_order" -> navController.navigate(Route.WorkOrderDetail.buildPath(target.resourceId)) { launchSingleTop = true }
-                }
+                val route = navigationIntents.routeFor(intent) ?: return@collect
+                navController.navigateFromNotification(route)
                 return@collect
             }
             val uri = intent.data ?: return@collect
@@ -256,7 +247,9 @@ fun LoResuelvoNav() {
                         assistant = { AssistantRoute(navController) },
                     ),
                     work = WorkNavContent(
-                        misServicios = { MisServiciosRoute(navController) },
+                        misServicios = { proposalId ->
+                            MisServiciosRoute(navController, proposalId)
+                        },
                         turnos = { TurnosRoute(navController) },
                         workOrderDetail = { workOrderId, provider ->
                             WorkOrderDetailRoute(
@@ -530,12 +523,19 @@ private fun CategoriesRoute(
 @Composable
 private fun MisServiciosRoute(
     navController: androidx.navigation.NavHostController,
+    proposalId: String?,
 ) {
     val viewModel: MisServiciosViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel = hiltViewModel()
     val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+
+    LaunchedEffect(proposalId) {
+        if (!proposalId.isNullOrBlank()) {
+            detailViewModel.load(proposalId)
+        }
+    }
 
     LaunchedEffect(detailViewModel) {
         detailViewModel.checkoutUrl.collect { url ->

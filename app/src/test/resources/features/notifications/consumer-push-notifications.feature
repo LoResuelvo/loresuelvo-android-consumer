@@ -88,7 +88,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | un aviso que ya recibí                   |
       | un aviso cuyo plazo para mostrarse venció |
 
-  @wip
   Esquema del escenario: 09-CPN Abrir el destino exacto desde un aviso vigente
     Dado que tengo un aviso vigente de "<aviso>" de mi cuenta actual
     Y LoResuelvo está "<estado>"

@@ -48,7 +48,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(workOrder()),
+                        state = readyState(workOrder()),
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -83,7 +83,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(workOrder(estimatedDurationMinutes = null)),
+                        state = readyState(workOrder(estimatedDurationMinutes = null)),
                         onRetry = {},
                         onBackClick = {},
                     )
@@ -241,7 +241,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(status = TurnoStatus.Confirmed),
                         ),
                         onRetry = {},
@@ -264,7 +264,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.AwaitingPayment,
                                 completionReport = sampleCompletionReport(),
@@ -298,7 +298,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.AwaitingPayment,
                                 completionReport = sampleCompletionReport(),
@@ -326,7 +326,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.Paid,
                                 paidOnEpochMillis = 1_788_500_000_000L,
@@ -360,7 +360,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.Paid,
                                 paidOnEpochMillis = 1_788_500_000_000L,
@@ -384,7 +384,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.AwaitingPayment,
                                 completionReport = sampleCompletionReport(),
@@ -416,7 +416,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             // status = Confirmed (scheduled) with
                             // a populated completionReport that
                             // the screen must still ignore.
@@ -443,7 +443,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.Paid,
                                 paidOnEpochMillis = 1_788_500_000_000L,
@@ -469,7 +469,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.AwaitingPayment,
                                 completionReport = sampleCompletionReport(),
@@ -492,7 +492,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.Paid,
                                 paidOnEpochMillis = 1_788_500_000_000L,
@@ -522,7 +522,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.Paid,
                                 paidOnEpochMillis = 1_788_500_000_000L,
@@ -568,7 +568,7 @@ class WorkOrderDetailScreenTest {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     WorkOrderDetailScreen(
-                        state = WorkOrderDetailUiState.Ready(
+                        state = readyState(
                             workOrderForRender(
                                 status = TurnoStatus.Paid,
                                 paidOnEpochMillis = 1_788_500_000_000L,
@@ -593,3 +593,13 @@ class WorkOrderDetailScreenTest {
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).assertIsDisplayed()
     }
 }
+
+private fun readyState(
+    workOrder: WorkOrderDetail,
+    composer: ReviewComposerState = ReviewComposerState.Hidden,
+): WorkOrderDetailUiState.Ready =
+    WorkOrderDetailUiState.Ready(
+        workOrderId = "screen-test-order",
+        workOrder = workOrder,
+        composer = composer,
+    )

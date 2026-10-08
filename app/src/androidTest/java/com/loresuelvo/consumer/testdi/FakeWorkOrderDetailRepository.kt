@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.testdi
 
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
@@ -10,7 +11,12 @@ import javax.inject.Singleton
 
 @Singleton
 class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepository {
-    private var seed: WorkOrderDetail? = null
+    private data class Seed(
+        val workOrderId: String,
+        val workOrder: WorkOrderDetail,
+    )
+
+    private var seed: Seed? = null
     private var nextSubmitOutcome: SubmitWorkOrderReviewOutcome =
         SubmitWorkOrderReviewOutcome.Server(
             code = 0,
@@ -18,6 +24,8 @@ class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepos
         )
 
     var lastSubmission: Submission? = null
+        private set
+    var lastRequestedWorkOrderId: String? = null
         private set
 
     data class Submission(
@@ -27,11 +35,11 @@ class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepos
     )
 
     /**
-     * Stamps the [WorkOrderDetail] the next [getWorkOrderDetail]
-     * call returns. Pass `null` to force [NotFound] (the default).
+     * Stamps the [WorkOrderDetail] returned for [workOrderId]. Pass
+     * `null` to force [NotFound] after provider metadata is resolved.
      */
-    fun set(workOrder: WorkOrderDetail?) {
-        seed = workOrder
+    fun set(workOrderId: String, workOrder: WorkOrderDetail?) {
+        seed = workOrder?.let { Seed(workOrderId, it) }
     }
 
     /**
@@ -48,13 +56,15 @@ class FakeWorkOrderDetailRepository @Inject constructor() : WorkOrderDetailRepos
         workOrderId: String,
         provider: WorkOrderDetailCounterpart?,
     ): GetWorkOrderOutcome {
-        val current = seed ?: return GetWorkOrderOutcome.NotFound
-        if (provider == null) return GetWorkOrderOutcome.NotFound
-        return if (current.proposalId == workOrderId) {
-            GetWorkOrderOutcome.Found(current)
-        } else {
-            GetWorkOrderOutcome.NotFound
+        lastRequestedWorkOrderId = workOrderId
+        if (provider == null) {
+            return GetWorkOrderOutcome.Failure(
+                ServiceProposalsOutcome.Failure.Server(0, "provider metadata missing"),
+            )
         }
+        val current = seed ?: return GetWorkOrderOutcome.NotFound
+        if (current.workOrderId != workOrderId) return GetWorkOrderOutcome.NotFound
+        return GetWorkOrderOutcome.Found(current.workOrder.copy(provider = provider))
     }
 
     override suspend fun submitReview(

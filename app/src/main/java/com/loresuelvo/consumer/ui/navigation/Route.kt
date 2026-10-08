@@ -84,6 +84,13 @@ sealed class Route(val path: String) {
 
     data object MisServicios : Route("mis-servicios")
 
+    data object MisServiciosProposal : Route("mis-servicios/proposal/{proposalId}") {
+        const val ARG_PROPOSAL_ID: String = "proposalId"
+
+        fun buildPath(proposalId: String): String =
+            "mis-servicios/proposal/${Uri.encode(proposalId)}"
+    }
+
 
     data object Turnos : Route("turnos")
 

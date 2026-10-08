@@ -92,7 +92,20 @@ fun LoResuelvoNavHost(
             composable(Route.Messages.path) { content.chat.messages() }
             composable(Route.Assistant.path) { content.chat.assistant() }
             // status, reached from the Home "Ver todas" link.
-            composable(Route.MisServicios.path) { content.work.misServicios() }
+            composable(Route.MisServicios.path) { content.work.misServicios(null) }
+            composable(
+                route = Route.MisServiciosProposal.path,
+                arguments = listOf(
+                    navArgument(Route.MisServiciosProposal.ARG_PROPOSAL_ID) {
+                        type = NavType.StringType
+                    },
+                ),
+            ) { entry ->
+                val proposalId = entry.arguments
+                    ?.getString(Route.MisServiciosProposal.ARG_PROPOSAL_ID)
+                    .orEmpty()
+                content.work.misServicios(proposalId)
+            }
             // Mis Turnos screen, reached from the Home "Ver
             // todas" link.
             composable(Route.Turnos.path) { content.work.turnos() }

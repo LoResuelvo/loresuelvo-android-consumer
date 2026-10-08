@@ -8,7 +8,7 @@ import com.loresuelvo.consumer.domain.payment.PaymentIntent
 import com.loresuelvo.consumer.domain.payment.PaymentIntentStatus
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
-import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
+import com.loresuelvo.consumer.testsupport.workOrderDetailUseCaseForTest
 import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
@@ -18,8 +18,12 @@ import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
 import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -52,7 +56,7 @@ class WorkOrderDetailViewModelTest {
     fun load_emits_Ready_with_the_work_order_when_repository_succeeds() = runTest(dispatcher) {
         val detail = sampleWorkOrder(status = TurnoStatus.Confirmed)
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.Found(detail)),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
@@ -71,7 +75,7 @@ class WorkOrderDetailViewModelTest {
     @Test
     fun load_emits_NotFound_when_repository_returns_not_found() = runTest(dispatcher) {
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.NotFound),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
@@ -86,7 +90,7 @@ class WorkOrderDetailViewModelTest {
     @Test
     fun load_emits_Error_when_repository_returns_failure() = runTest(dispatcher) {
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(
                     GetWorkOrderOutcome.Failure(
                         com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome.Failure.Server(
@@ -107,10 +111,39 @@ class WorkOrderDetailViewModelTest {
     }
 
     @Test
+    fun load_ignores_cancelled_older_request_when_it_finishes_after_newer_request() = runTest(dispatcher) {
+        val currentWorkOrder = sampleWorkOrder(proposalId = "current-order")
+        val repository = ReentrantLoadRepository(
+            staleOutcome = GetWorkOrderOutcome.Found(
+                sampleWorkOrder(proposalId = "stale-order"),
+            ),
+            currentOutcome = GetWorkOrderOutcome.Found(currentWorkOrder),
+        )
+        val viewModel = WorkOrderDetailViewModel(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(repository),
+            startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
+            rateProvider = noOpRateProvider,
+        )
+
+        viewModel.load("stale-order", currentWorkOrder.provider)
+        repository.staleRequestStarted.await()
+        viewModel.load("current-order", currentWorkOrder.provider)
+
+        val currentState = viewModel.uiState.value as WorkOrderDetailUiState.Ready
+        assertEquals("current-order", currentState.workOrderId)
+        repository.releaseStaleRequest.complete(Unit)
+        runCurrent()
+
+        val finalState = viewModel.uiState.value
+        assertTrue("expected current Ready to survive an older completion, got $finalState", finalState is WorkOrderDetailUiState.Ready)
+        assertEquals("current-order", (finalState as WorkOrderDetailUiState.Ready).workOrderId)
+    }
+
+    @Test
     fun payNow_emits_checkout_url_when_outcome_is_Created() = runTest(dispatcher) {
         val checkout = createdCheckout("https://mp.test/checkout/42")
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.Found(sampleWorkOrder())),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
@@ -139,7 +172,7 @@ class WorkOrderDetailViewModelTest {
     @Test
     fun payNow_emits_pay_error_when_outcome_is_AlreadyPaid() = runTest(dispatcher) {
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.Found(sampleWorkOrder())),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
@@ -164,7 +197,7 @@ class WorkOrderDetailViewModelTest {
     @Test
     fun payNow_emits_pay_error_when_outcome_is_Network() = runTest(dispatcher) {
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.Found(sampleWorkOrder())),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
@@ -196,7 +229,7 @@ class WorkOrderDetailViewModelTest {
         // non-numeric id, the VM must NOT throw — it just no-ops
         // and the screen's pay CTA stays in its current state.
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.Found(sampleWorkOrder())),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
@@ -228,7 +261,7 @@ class WorkOrderDetailViewModelTest {
         // null URL in the Custom Tab launch.
         val brokenCheckout = createdCheckout(url = null)
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(
                 FakeRepository(GetWorkOrderOutcome.Found(sampleWorkOrder())),
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(
@@ -272,6 +305,42 @@ class WorkOrderDetailViewModelTest {
                 code = 0,
                 message = "submitReview not configured for this view-model test",
             )
+    }
+
+    private class ReentrantLoadRepository(
+        private val staleOutcome: GetWorkOrderOutcome,
+        private val currentOutcome: GetWorkOrderOutcome,
+    ) : WorkOrderDetailRepository {
+        val staleRequestStarted = CompletableDeferred<Unit>()
+        val releaseStaleRequest = CompletableDeferred<Unit>()
+
+        override suspend fun getWorkOrderDetail(
+            workOrderId: String,
+            provider: WorkOrderDetailCounterpart?,
+        ): GetWorkOrderOutcome {
+            if (workOrderId != "stale-order") return currentOutcome
+            staleRequestStarted.complete(Unit)
+            return try {
+                withContext(NonCancellable) { releaseStaleRequest.await() }
+                staleOutcome
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                GetWorkOrderOutcome.Failure(
+                    com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome.Failure.Server(
+                        code = 0,
+                        message = "cancelled request was converted to a failure",
+                    ),
+                )
+            }
+        }
+
+        override suspend fun submitReview(
+            workOrderId: String,
+            rating: Int,
+            description: String,
+        ): SubmitWorkOrderReviewOutcome = SubmitWorkOrderReviewOutcome.Server(
+            code = 0,
+            message = "submitReview not configured for reentrant-load test",
+        )
     }
 
     private class FakeCheckoutRepository(
@@ -461,7 +530,7 @@ class WorkOrderDetailViewModelTest {
             ),
         )
         val viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = GetWorkOrderDetailUseCase(repo),
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(repo),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
             rateProvider = RateProviderUseCase(repo),
         )
@@ -571,14 +640,36 @@ class WorkOrderDetailViewModelTest {
 
         val recorded = repo.lastSubmission
         assertNotNull(recorded)
-        // The submit handler uses the work-order id from the
-        // loaded [WorkOrderDetail] — same pattern the rest of
-        // the screen uses for self-identifying calls
-        // (`payNow`, `load`). The fixture's `proposalId` is
-        // the source of truth.
-        assertEquals("wo-1", recorded!!.workOrderId)
+        assertEquals("wo-100", recorded!!.workOrderId)
         assertEquals(5, recorded.rating)
         assertEquals("Excelente trabajo", recorded.description)
+    }
+
+    @Test
+    fun submitReview_uses_loaded_work_order_id_when_proposal_id_is_different() = runTest(dispatcher) {
+        val resourceId = "88"
+        val detail = sampleWorkOrder(proposalId = "101", status = TurnoStatus.Paid)
+        val repo = RecordingRateProviderRepository(
+            GetWorkOrderOutcome.Found(
+                detail.copy(
+                    paidOnEpochMillis = 1_788_500_000_000L,
+                    review = null,
+                ),
+            ),
+        )
+        val viewModel = WorkOrderDetailViewModel(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(repo),
+            startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
+            rateProvider = RateProviderUseCase(repo),
+        )
+        viewModel.load(resourceId, detail.provider)
+        viewModel.openReviewComposer()
+        viewModel.onRatingChange(5)
+        repo.enqueue(SubmitWorkOrderReviewOutcome.Submitted(WorkOrderReview(5, "Excelente")))
+
+        viewModel.submitReview()
+
+        assertEquals(resourceId, repo.lastSubmission?.workOrderId)
     }
 
     @Test

@@ -4,10 +4,14 @@ import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -50,6 +54,7 @@ import com.loresuelvo.consumer.testdi.FakeJobRequestRepository
 import com.loresuelvo.consumer.testdi.FakeServiceProposalRepository
 import com.loresuelvo.consumer.testdi.FakeTurnosRepository
 import com.loresuelvo.consumer.testdi.FakeWorkOrderDetailRepository
+import com.loresuelvo.consumer.ui.screens.proposals.PROPOSAL_DETAIL_READY_TAG
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -151,15 +156,21 @@ class ServiceNotificationInstrumentedTest {
         sessions.clearSession()
     }
 
-    @Test fun tapping_proposal_notification_opens_mis_servicios() {
+    @Test fun tapping_proposal_notification_opens_exact_proposal_detail() {
         assertEquals(ServiceNotificationOutcome.Published, receiver.receive(proposalPayload))
         val notification = context.getSystemService(NotificationManager::class.java).activeNotifications.single().notification
         assertTrue(notification.contentIntent.isImmutable)
         scenario.onActivity { activity ->
             activity.startIntentSender(notification.contentIntent.intentSender, null, 0, 0, 0)
         }
-        compose.waitUntil(10_000) { compose.onAllNodesWithText("Juan Carlos").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("Juan Carlos").assertIsDisplayed()
+        compose.waitUntil(10_000) {
+            compose.onAllNodesWithTag(PROPOSAL_DETAIL_READY_TAG).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag(PROPOSAL_DETAIL_READY_TAG).assertIsDisplayed()
+        compose.onAllNodes(
+            hasText("Reparación de cañería")
+                .and(hasAnyAncestor(hasTestTag(PROPOSAL_DETAIL_READY_TAG))),
+        ).assertCountEquals(1)
     }
 
     @Test fun provider_events_are_rejected_and_never_publish() {

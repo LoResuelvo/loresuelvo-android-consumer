@@ -34,4 +34,10 @@ class NavigationIntentViewModel @Inject constructor(
     catch (_: IOException) { null }
     catch (_: GeneralSecurityException) { null }
     catch (_: SecurityException) { null }
+
+    fun routeFor(intent: Intent): String? = when {
+        isMessageNotification(intent) -> conversationId(intent)?.let(NotificationRouteMapper::message)
+        isServiceNotification(intent) -> serviceDestination(intent)?.let(NotificationRouteMapper::service)
+        else -> null
+    }
 }

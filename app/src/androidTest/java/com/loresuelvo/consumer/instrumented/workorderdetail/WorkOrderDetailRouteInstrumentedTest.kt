@@ -99,7 +99,7 @@ class WorkOrderDetailRouteInstrumentedTest {
     @Before
     fun setUp() {
         WirePinHarness.harnessSetup(hiltRule, composeTestRule)
-        workOrderDetailRepo.set(paidWorkOrder())
+        workOrderDetailRepo.set("wo-100", paidWorkOrder())
         WirePinHarness.persistAuthSession(composeTestRule)
         composeTestRule.activityRule.scenario.recreate()
         composeTestRule.waitForIdle()

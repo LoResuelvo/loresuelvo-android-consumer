@@ -4,6 +4,7 @@ import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -12,9 +13,8 @@ import javax.inject.Singleton
  * the [BackendApi] (Retrofit-typed) `GET /work-orders` call to
  * the domain's [TurnosOutcome] hierarchy.
  *
- * Like the other `ApiXxxRepository` adapters, it never throws
- * on HTTP / network failures: every exception is translated to
- * a typed failure via `toApiError`, so the
+ * Like the other `ApiXxxRepository` adapters, it translates
+ * HTTP / network failures to a typed failure via `toApiError`, so the
  * [com.loresuelvo.consumer.ui.screens.turnos.TurnosViewModel]
  * handles each branch explicitly (Loading / Ready / Error).
  */
@@ -28,6 +28,8 @@ class ApiTurnosRepository @Inject constructor(
             TurnosOutcome.Success(
                 backendApi.getWorkOrders().toDomain(),
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Throwable) {
             mapToFailure(e)
         }

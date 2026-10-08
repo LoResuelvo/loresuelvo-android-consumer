@@ -44,7 +44,7 @@ class VisualizeTurnsDetailWorld : AutoCloseable {
         Dispatchers.setMain(dispatcher)
 
         viewModel = WorkOrderDetailViewModel(
-            getWorkOrderDetail = com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase(
+            getWorkOrderDetail = com.loresuelvo.consumer.testsupport.workOrderDetailUseCaseForTest(
                 repository,
             ),
             startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(

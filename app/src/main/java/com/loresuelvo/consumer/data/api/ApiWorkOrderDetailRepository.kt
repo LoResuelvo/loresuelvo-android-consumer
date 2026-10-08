@@ -8,6 +8,7 @@ import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -38,6 +39,8 @@ class ApiWorkOrderDetailRepository @Inject constructor(
             } else {
                 GetWorkOrderOutcome.Found(detail)
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Throwable) {
             when (val error = e.toApiError()) {
                 is ApiError.Server -> when (error.code) {
@@ -86,7 +89,7 @@ class ApiWorkOrderDetailRepository @Inject constructor(
     //   - `401 Unauthorized` → [Server(code = 401, …)]; the
     //     session layer observes the auth event out of band.
     //
-    //  Never throws.
+    //  Never throws for API or network failures.
     override suspend fun submitReview(
         workOrderId: String,
         rating: Int,
@@ -100,6 +103,8 @@ class ApiWorkOrderDetailRepository @Inject constructor(
             ),
         )
         SubmitWorkOrderReviewOutcome.Submitted(dto.toDomain())
+    } catch (cancelled: CancellationException) {
+        throw cancelled
     } catch (e: Throwable) {
         when (val error = e.toApiError()) {
             is ApiError.Server -> when (error.code) {
