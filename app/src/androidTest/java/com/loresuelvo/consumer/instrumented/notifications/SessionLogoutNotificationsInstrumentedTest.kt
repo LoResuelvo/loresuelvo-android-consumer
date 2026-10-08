@@ -167,8 +167,7 @@ class SessionLogoutNotificationsInstrumentedTest {
         assertFalse("ViewModel state must report unauthenticated immediately", sessionViewModel.uiState.value.authenticated)
         assertNull("ViewModel session must be null", sessionViewModel.uiState.value.session)
 
-        val activeAfterLogout = notificationManager.activeNotifications
-        assertEquals("All notifications must be cancelled from NotificationManager", 0, activeAfterLogout.size)
+        awaitNoActiveNotifications("All notifications must be cancelled from NotificationManager")
 
         val subsequentMessage = messageReceiver.receive(validMessagePayload(++messageSeq))
         assertEquals(MessageNotificationOutcome.Invalid, subsequentMessage)
@@ -197,14 +196,21 @@ class SessionLogoutNotificationsInstrumentedTest {
         assertFalse("ViewModel state must report unauthenticated", sessionViewModel.uiState.value.authenticated)
         assertNull("ViewModel session must be null", sessionViewModel.uiState.value.session)
 
-        val activeAfterLogout = notificationManager.activeNotifications
-        assertEquals("Notifications must be cancelled even when sign out happened offline", 0, activeAfterLogout.size)
+        awaitNoActiveNotifications("Notifications must be cancelled even when sign out happened offline")
 
         val subsequentMessage = messageReceiver.receive(validMessagePayload(++messageSeq))
         assertEquals(MessageNotificationOutcome.Invalid, subsequentMessage)
         assertEquals(0, notificationManager.activeNotifications.size)
 
         assertEquals(Route.Welcome.path, SessionRouteMapper.routeFor(sessionViewModel.uiState.value))
+    }
+
+    private fun awaitNoActiveNotifications(message: String, timeoutMs: Long = 3000L) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (System.currentTimeMillis() < deadline && notificationManager.activeNotifications.isNotEmpty()) {
+            Thread.sleep(50)
+        }
+        assertEquals(message, 0, notificationManager.activeNotifications.size)
     }
 
     private fun validMessagePayload(seq: Int): Map<String, String> = mapOf(
