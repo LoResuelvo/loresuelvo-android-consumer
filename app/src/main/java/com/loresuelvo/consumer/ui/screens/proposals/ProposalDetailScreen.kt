@@ -32,6 +32,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
+import androidx.activity.compose.BackHandler
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
@@ -45,6 +46,8 @@ fun ProposalDetailScreen(
     onDismiss: () -> Unit,
     onPayNow: (proposalId: String) -> Unit = {},
 ) {
+    BackHandler(onBack = onDismiss)
+
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )

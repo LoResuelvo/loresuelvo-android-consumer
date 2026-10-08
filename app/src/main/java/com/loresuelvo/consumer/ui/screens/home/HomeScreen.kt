@@ -23,12 +23,9 @@ import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -226,37 +223,27 @@ fun HomeScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProposalDetailBottomSheet(
     detailState: ProposalDetailUiState,
     actions: HomeScreenActions.Proposals.Detail,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(detailState) {
         visible = detailState is ProposalDetailUiState.Ready ||
             detailState is ProposalDetailUiState.Error
     }
     if (!visible) return
-    ModalBottomSheet(
-        onDismissRequest = {
+    ProposalDetailScreen(
+        state = detailState,
+        onRetry = actions.onRetry,
+        onViewConversation = actions.onViewConversation,
+        onPayNow = actions.onPayNow,
+        onDismiss = {
             visible = false
             actions.onDismiss()
         },
-        sheetState = sheetState,
-    ) {
-        ProposalDetailScreen(
-            state = detailState,
-            onRetry = actions.onRetry,
-            onViewConversation = actions.onViewConversation,
-            onPayNow = actions.onPayNow,
-            onDismiss = {
-                visible = false
-                actions.onDismiss()
-            },
-        )
-    }
+    )
 }
 
 @Composable

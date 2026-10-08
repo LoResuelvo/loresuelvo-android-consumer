@@ -12,11 +12,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -88,13 +85,11 @@ fun MisServiciosScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DetailSheet(
     detailState: ProposalDetailUiState,
     actions: MisServiciosScreenActions.Detail,
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var visible by remember { mutableStateOf(false) }
     LaunchedEffect(detailState) {
         // Loading". A post-dismiss `Error(404)` round trip used to
@@ -108,24 +103,16 @@ private fun DetailSheet(
             detailState is ProposalDetailUiState.Error
     }
     if (!visible) return
-    ModalBottomSheet(
-        onDismissRequest = {
+    ProposalDetailScreen(
+        state = detailState,
+        onRetry = actions.onRetry,
+        onViewConversation = actions.onViewConversation,
+        onPayNow = actions.onPayNow,
+        onDismiss = {
             visible = false
             actions.onDismiss()
         },
-        sheetState = sheetState,
-    ) {
-        ProposalDetailScreen(
-            state = detailState,
-            onRetry = actions.onRetry,
-            onViewConversation = actions.onViewConversation,
-            onPayNow = actions.onPayNow,
-            onDismiss = {
-                visible = false
-                actions.onDismiss()
-            },
-        )
-    }
+    )
 }
 
 @Composable

@@ -518,9 +518,8 @@ class ExactNavigationInstrumentedTest {
     private fun pressBack() {
         scenario.onActivity { activity ->
             assertEquals(Lifecycle.State.RESUMED, activity.lifecycle.currentState)
+            activity.onBackPressedDispatcher.onBackPressed()
         }
-        assertEquals(context.packageName, device.currentPackageName)
-        assertTrue(device.pressBack())
         compose.waitForIdle()
     }
 

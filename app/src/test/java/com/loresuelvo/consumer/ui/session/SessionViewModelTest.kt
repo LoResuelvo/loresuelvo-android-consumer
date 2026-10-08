@@ -7,6 +7,7 @@ import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import com.loresuelvo.consumer.domain.auth.User
+import com.loresuelvo.consumer.domain.notifications.NotificationDismissal
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -49,6 +50,7 @@ class SessionViewModelTest {
     private val restore = com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase(repository, sessionStore)
     private val context = mockk<Context>()
     private val requests = PushRegistrationRequests()
+    private val notificationDismissal = mockk<NotificationDismissal>(relaxed = true)
     private val session = AuthSession(User("Ana", "Ana", "Perez"), "token")
     private val sessionFlow = MutableStateFlow<AuthSession?>(session)
 
@@ -103,7 +105,7 @@ class SessionViewModelTest {
     @Test
     fun signOut_clears_local_session_synchronously_when_auth0_logout_succeeds() = runTest {
         coEvery { authProvider.logout(context) } returns LogoutOutcome.Success
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests, notificationDismissal)
 
         requests.request()
         viewModel.signOut(context)
@@ -114,6 +116,7 @@ class SessionViewModelTest {
         // the smart-router observes the change before
         // `signOut` returns to the click handler.
         verify { sessionStore.clearSession() }
+        verify { notificationDismissal.dismissAll() }
         coVerify { authProvider.logout(context) }
         assertNull(viewModel.uiState.value.session)
     }
@@ -128,7 +131,7 @@ class SessionViewModelTest {
         // sign-out.
         coEvery { authProvider.logout(context) } returns
             LogoutOutcome.Failure.Provider(IllegalStateException("Auth0 unavailable"))
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests, notificationDismissal)
 
         requests.request()
         viewModel.signOut(context)
@@ -136,6 +139,7 @@ class SessionViewModelTest {
         advanceUntilIdle()
 
         verify { sessionStore.clearSession() }
+        verify { notificationDismissal.dismissAll() }
         coVerify { authProvider.logout(context) }
         assertNull(viewModel.uiState.value.session)
     }
@@ -143,7 +147,7 @@ class SessionViewModelTest {
     @Test
     fun signOut_clears_local_session_when_auth0_logout_is_cancelled() = runTest {
         coEvery { authProvider.logout(context) } returns LogoutOutcome.Cancelled
-        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests)
+        val viewModel = SessionViewModel(sessionStore, authProvider, restore, requests, notificationDismissal)
 
         requests.request()
         viewModel.signOut(context)
@@ -151,6 +155,7 @@ class SessionViewModelTest {
         advanceUntilIdle()
 
         verify { sessionStore.clearSession() }
+        verify { notificationDismissal.dismissAll() }
         coVerify { authProvider.logout(context) }
         assertNull(viewModel.uiState.value.session)
     }

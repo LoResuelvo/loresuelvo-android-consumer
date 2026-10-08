@@ -117,7 +117,6 @@ Característica: Recibir avisos de mensajes y novedades como consumidor
       | ya no tengo acceso al recurso    | se informa que no tengo acceso y puedo volver       |
       | mi sesión ya no está activa      | se solicita iniciar sesión sin abrir el aviso viejo |
 
-  @wip
   Esquema del escenario: 11-CPN Dejar de recibir avisos al cerrar sesión
     Dado que tengo avisos visibles de mi cuenta
     Y el teléfono está "<conexion>"

@@ -11,6 +11,7 @@ import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.platform.auth.AuthProvider
 import com.loresuelvo.consumer.domain.installation.InstallationRegistrationRequests
+import com.loresuelvo.consumer.domain.notifications.NotificationDismissal
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Job
@@ -25,6 +26,7 @@ class SessionViewModel @Inject constructor(
     private val authProvider: AuthProvider,
     private val restoreSession: RestoreAuthenticatedSessionUseCase,
     private val pushRegistrationRequests: InstallationRegistrationRequests,
+    private val notificationDismissal: NotificationDismissal = NotificationDismissal { },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -95,6 +97,7 @@ class SessionViewModel @Inject constructor(
         // smart-router re-routes to Welcome synchronously.
         restorationJob?.cancel()
         sessionStore.clearSession()
+        notificationDismissal.dismissAll()
         // 2. Dispatch the Auth0 SSO logout in the background.
         // Its result is fire-and-forget; we log it for diagnostics
         // but the consumer has already left Home for Welcome.

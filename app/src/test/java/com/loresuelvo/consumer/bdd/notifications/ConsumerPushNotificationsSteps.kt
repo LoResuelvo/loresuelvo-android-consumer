@@ -16,9 +16,11 @@ class ConsumerPushNotificationsSteps {
     private val visibleChat = ConsumerVisibleChatWorld()
     private val deduplication = ConsumerDeduplicationNotificationsWorld()
     private val exactNavigation by lazy { ConsumerExactNavigationWorld() }
+    private val logout by lazy { ConsumerSessionLogoutWorld() }
     private var registrationStarted = false
     private var exactNavigationStarted = false
     private var resolutionStarted = false
+    private var logoutStarted = false
 
     @Dado("que todavía no inicié sesión en este teléfono")
     fun startWithoutSession() {
@@ -182,14 +184,37 @@ class ConsumerPushNotificationsSteps {
     @Entonces("no veo información privada de otra cuenta ni datos inventados")
     fun noticeResolutionPreservesPrivacy() = exactNavigation.assertResolutionPrivacy()
 
+    @Dado("que tengo avisos visibles de mi cuenta")
+    fun startWithVisibleNotices() {
+        logoutStarted = true
+        logout.startWithVisibleNotices()
+    }
+
+    @Dado("el teléfono está {string}")
+    fun setPhoneConnection(conexion: String) = logout.setConnection(conexion)
+
+    @Cuando("confirmo el cierre de sesión")
+    fun confirmSessionLogout() = logout.confirmLogout()
+
+    @Entonces("la sesión local se cierra inmediatamente")
+    fun assertLocalSessionClosedImmediately() = logout.assertLocalSessionClosedImmediately()
+
+    @Entonces("desaparecen los avisos de mi cuenta en este teléfono")
+    fun assertVisibleNoticesDisappear() = logout.assertVisibleNoticesDisappeared()
+
+    @Entonces("los avisos posteriores de esa sesión no se muestran ni abren datos privados")
+    fun assertSubsequentNoticesNotShownAndNoPrivateData() = logout.assertSubsequentNoticesNotShownAndNoPrivateData()
+
     @After
     fun close() {
         if (registrationStarted) world.close()
         recovery.close()
         visibleChat.close()
         if (exactNavigationStarted) exactNavigation.close()
+        if (logoutStarted) logout.close()
         registrationStarted = false
         exactNavigationStarted = false
         resolutionStarted = false
+        logoutStarted = false
     }
 }
