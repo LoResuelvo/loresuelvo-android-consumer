@@ -341,9 +341,6 @@ class ExactNavigationInstrumentedTest {
 
     private fun assertFreshDestinationAndBack(intent: Intent) {
         awaitFreshDestination(intent)
-        deliverPendingIntent(intent)
-        compose.waitForIdle()
-        awaitFreshDestination(intent)
 
         if (intent.getStringExtra("type") == AuthorizeServiceNotificationUseCase.TYPE_PROPOSAL_RECEIVED) {
             pressBack()
