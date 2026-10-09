@@ -1,41 +1,49 @@
 package com.loresuelvo.consumer.platform.notifications
 
-import android.app.Application
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import com.google.firebase.FirebaseApp
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import io.mockk.verify
 import org.junit.After
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Assert.*
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
-import org.robolectric.annotation.Config
 
-@RunWith(RobolectricTestRunner::class)
-@Config(application = Application::class, sdk = [34])
 class FirebaseReceptionBootstrapTest {
-    private val context: Context = ApplicationProvider.getApplicationContext()
-    @Before fun setUp() = clearFirebaseApps()
-    @After fun tearDown() = clearFirebaseApps()
+    private val context = mockk<Context>()
 
-    @Test fun missing_configuration_does_not_create_default_firebase_app() {
-        val provider = FirebaseRegistrationTokenProvider(context, FirebaseRegistrationConfiguration("", "", "", ""))
+    @Before fun setUp() = mockkStatic(FirebaseApp::class)
+
+    @After fun tearDown() = unmockkStatic(FirebaseApp::class)
+
+    @Test fun missing_firebase_options_does_not_create_default_firebase_app() {
+        every { FirebaseApp.getApps(context) } returns emptyList()
+        every { FirebaseApp.initializeApp(context) } returns null
+        val provider = FirebaseRegistrationTokenProvider(context)
+
         assertFalse(provider.initializeForReception())
-        assertTrue(FirebaseApp.getApps(context).isEmpty())
+        verify(exactly = 1) { FirebaseApp.initializeApp(context) }
     }
 
-    @Test fun configured_cold_boot_creates_and_reuses_default_app_without_requesting_token() {
-        assertTrue(FirebaseApp.getApps(context).isEmpty())
-        val config = FirebaseRegistrationConfiguration("1:123456789:android:abc123", "test-api-key", "test-project", "123456789")
-        assertTrue(FirebaseRegistrationTokenProvider(context, config).initializeForReception())
-        assertEquals(config.applicationId, FirebaseApp.getInstance().options.applicationId)
-        assertTrue(FirebaseRegistrationTokenProvider(context, config).initializeForReception())
-        assertEquals(1, FirebaseApp.getApps(context).size)
-        assertFalse(FirebaseRegistrationTokenProvider(context, config.copy(projectId = "other-project")).initializeForReception())
+    @Test fun generated_firebase_options_initialize_the_default_app() {
+        val configuredApp = mockk<FirebaseApp>()
+        every { FirebaseApp.getApps(context) } returns emptyList()
+        every { FirebaseApp.initializeApp(context) } returns configuredApp
+
+        assertTrue(FirebaseRegistrationTokenProvider(context).initializeForReception())
+        verify(exactly = 1) { FirebaseApp.initializeApp(context) }
     }
 
-    private fun clearFirebaseApps() {
-        FirebaseApp.getApps(context).toList().forEach { it.delete() }
+    @Test fun existing_default_firebase_app_is_reused() {
+        val defaultApp = mockk<FirebaseApp>()
+        every { defaultApp.name } returns FirebaseApp.DEFAULT_APP_NAME
+        every { FirebaseApp.getApps(context) } returns listOf(defaultApp)
+
+        assertTrue(FirebaseRegistrationTokenProvider(context).initializeForReception())
+        verify(exactly = 0) { FirebaseApp.initializeApp(context) }
     }
 }

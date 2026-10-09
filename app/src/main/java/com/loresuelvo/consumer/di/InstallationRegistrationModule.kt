@@ -13,7 +13,6 @@ import com.loresuelvo.consumer.domain.installation.InstallationRepository
 import com.loresuelvo.consumer.domain.installation.InstallationStateStore
 import com.loresuelvo.consumer.domain.installation.PushRegistrationTokenProvider
 import com.loresuelvo.consumer.domain.usecase.installation.RegisterInstallationUseCase
-import com.loresuelvo.consumer.platform.notifications.FirebaseRegistrationConfiguration
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,14 +34,6 @@ import retrofit2.Retrofit
 object InstallationRegistrationModule {
     @Provides @Singleton @Named("registrationScope")
     fun provideRegistrationScope() = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    @Provides @Singleton
-    fun provideFirebaseConfiguration() = FirebaseRegistrationConfiguration(
-        applicationId = BuildConfig.FIREBASE_APPLICATION_ID,
-        apiKey = BuildConfig.FIREBASE_API_KEY,
-        projectId = BuildConfig.FIREBASE_PROJECT_ID,
-        senderId = BuildConfig.FIREBASE_SENDER_ID,
-    )
 
     @Provides @Singleton
     fun provideRegistrationLocale(@ApplicationContext context: Context) = RegistrationLocaleProvider {

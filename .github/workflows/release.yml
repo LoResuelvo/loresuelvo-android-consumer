@@ -60,7 +60,37 @@ jobs:
           EOF
 
       - name: Run staging JVM tests and build artifacts
-        run: ./gradlew :app:testStagingDebugUnitTest :app:assembleStagingRelease :app:bundleProdRelease --no-daemon
+        env:
+          GOOGLE_SERVICES_JSON_STAGING: ${{ secrets.GOOGLE_SERVICES_JSON_STAGING }}
+          GOOGLE_SERVICES_JSON_PROD: ${{ secrets.GOOGLE_SERVICES_JSON_PROD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          staging_firebase_config_path="app/src/staging/google-services.json"
+          prod_firebase_config_path="app/src/prod/google-services.json"
+          firebase_config_paths=()
+          cleanup_firebase_configs() {
+            for firebase_config_path in "${firebase_config_paths[@]}"; do
+              rm -f "$firebase_config_path"
+            done
+          }
+          trap cleanup_firebase_configs EXIT
+
+          test -n "$GOOGLE_SERVICES_JSON_STAGING"
+          mkdir -p "$(dirname "$staging_firebase_config_path")"
+          umask 077
+          firebase_config_paths+=("$staging_firebase_config_path")
+          printf '%s' "$GOOGLE_SERVICES_JSON_STAGING" > "$staging_firebase_config_path"
+          chmod 600 "$staging_firebase_config_path"
+
+          if [[ -n "$GOOGLE_SERVICES_JSON_PROD" ]]; then
+            mkdir -p "$(dirname "$prod_firebase_config_path")"
+            firebase_config_paths+=("$prod_firebase_config_path")
+            printf '%s' "$GOOGLE_SERVICES_JSON_PROD" > "$prod_firebase_config_path"
+            chmod 600 "$prod_firebase_config_path"
+          fi
+
+          ./gradlew :app:testStagingDebugUnitTest :app:assembleStagingRelease :app:bundleProdRelease --no-daemon
 
       - name: Sign staging APK
         env:

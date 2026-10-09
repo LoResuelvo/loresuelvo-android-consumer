@@ -21,6 +21,13 @@ plugins {
     // failure during `kaptGenerateStubs*`.
 }
 
+if (fileTree(projectDir) { include("google-services.json", "src/**/google-services.json") }.files.isNotEmpty()) {
+    apply(plugin = "com.google.gms.google-services")
+    tasks.withType<com.google.gms.googleservices.GoogleServicesTask>().configureEach {
+        onlyIf { googleServicesJsonFiles.get().any { it.isFile } }
+    }
+}
+
 // ==========================================
 // Lectura segura de variables de entorno
 // Prioridad: local.properties (dev) > gradle.properties global (CI) > default
@@ -142,10 +149,6 @@ android {
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
-            buildConfigField("String", "FIREBASE_APPLICATION_ID", "\"${envVar("FIREBASE_APPLICATION_ID")}\"")
-            buildConfigField("String", "FIREBASE_API_KEY", "\"${envVar("FIREBASE_API_KEY")}\"")
-            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${envVar("FIREBASE_PROJECT_ID")}\"")
-            buildConfigField("String", "FIREBASE_SENDER_ID", "\"${envVar("FIREBASE_SENDER_ID")}\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -176,10 +179,6 @@ android {
             buildConfigField("String", "AUTH0_SCHEME", "\"$auth0Scheme\"")
             buildConfigField("String", "AUTH0_AUDIENCE", "\"$auth0Audience\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
-            buildConfigField("String", "FIREBASE_APPLICATION_ID", "\"${envVar("FIREBASE_APPLICATION_ID_STAGING")}\"")
-            buildConfigField("String", "FIREBASE_API_KEY", "\"${envVar("FIREBASE_API_KEY_STAGING")}\"")
-            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${envVar("FIREBASE_PROJECT_ID_STAGING")}\"")
-            buildConfigField("String", "FIREBASE_SENDER_ID", "\"${envVar("FIREBASE_SENDER_ID_STAGING")}\"")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
 
@@ -210,10 +209,6 @@ android {
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
             buildConfigField("boolean", "MOCK_TURNOS", "false")
-            buildConfigField("String", "FIREBASE_APPLICATION_ID", "\"${envVar("FIREBASE_APPLICATION_ID_PROD")}\"")
-            buildConfigField("String", "FIREBASE_API_KEY", "\"${envVar("FIREBASE_API_KEY_PROD")}\"")
-            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"${envVar("FIREBASE_PROJECT_ID_PROD")}\"")
-            buildConfigField("String", "FIREBASE_SENDER_ID", "\"${envVar("FIREBASE_SENDER_ID_PROD")}\"")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme

@@ -54,17 +54,18 @@ sdkmanager --version
 
 ## Firebase Messaging
 
-Configurar `FIREBASE_APPLICATION_ID` (App ID de Firebase), `FIREBASE_API_KEY`,
-`FIREBASE_PROJECT_ID` y `FIREBASE_SENDER_ID` en `local.properties`, propiedades de
-Gradle o variables de entorno, en ese orden de prioridad. Staging y Prod usan
-los sufijos `_STAGING` y `_PROD`; reconstruir el APK después de configurarlos.
+Descargá el `google-services.json` de cada aplicación Android desde Firebase
+Console y guardalo en el source set correspondiente:
 
-La app inicializa Firebase con `FirebaseOptions`, sin requerir `google-services.json`.
-Si faltan valores, el login funciona y el registro queda sin confirmar.
-Las pruebas JVM sustituyen FCM; la validación real requiere configurar Firebase,
-una API accesible y un dispositivo con servicios Google.
+- `app/src/dev/google-services.json`: `com.loresuelvo.consumer.dev`.
+- `app/src/staging/google-services.json`: `com.loresuelvo.consumer.staging`.
+- `app/src/prod/google-services.json`: `com.loresuelvo.consumer`.
 
-Referencia: [configuración de Firebase](https://firebase.google.com/support/guides/init-options).
+El plugin oficial de Google Services genera la configuración que usa Firebase
+Messaging. Los JSON están ignorados por Git. Sin ellos, los builds de CI y las
+pruebas JVM siguen funcionando; la app no inicializa FCM y el registro queda sin
+confirmar. Para probar notificaciones en un dispositivo, configurá el JSON del
+flavor, una API accesible y un dispositivo con servicios Google.
 
 ---
 
@@ -258,9 +259,21 @@ repositorio, configurar `AUTH0_CLIENT_ID_ANDROID_CONSUMER_STAGING` y
 No deben quedar solamente dentro del Environment `staging`, porque el
 workflow de CI no usa ese Environment.
 
-El JSON de la cuenta de servicio no se commitea y no hace falta
-`google-services.json` para subir APKs mediante la CLI de Firebase. El
-workflow lo escribe temporalmente en el runner usando
+En el Environment `staging`, configurar el secret `GOOGLE_SERVICES_JSON_STAGING`
+con el contenido completo del `google-services.json` de
+`com.loresuelvo.consumer.staging`. El workflow lo escribe temporalmente para
+compilar staging y lo elimina al terminar el build.
+
+Para incluir Firebase Messaging en el AAB de producción, configurar además el
+secret de repositorio `GOOGLE_SERVICES_JSON_PROD` con el JSON de
+`com.loresuelvo.consumer`. Es opcional para generar el AAB; si falta, el AAB se
+compila sin configuración de Firebase Messaging. El workflow limpia ambos
+archivos temporales al terminar el build.
+
+El JSON de la cuenta de servicio no se commitea. La CLI de App Distribution no
+requiere el `google-services.json` del cliente Android; el build de staging sí
+lo usa y el workflow lo elimina tras compilar. El JSON de la cuenta de servicio
+se escribe temporalmente en el runner y se expone mediante
 `GOOGLE_APPLICATION_CREDENTIALS`.
 
 Para publicar una versión:
