@@ -158,7 +158,7 @@ class NotificationSettingsInstrumentedTest {
         var publishedMsg = false
         val messageUseCase = ReceiveMessageNotificationUseCase(
             authorize = authorizeMessage,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = NotificationAvailability { false },
             events = messageEvents,
             publisher = { publishedMsg = true; true },

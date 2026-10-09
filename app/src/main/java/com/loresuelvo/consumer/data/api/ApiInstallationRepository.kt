@@ -1,11 +1,15 @@
 package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.dto.InstallationResponseDto
+import com.loresuelvo.consumer.data.api.dto.RemoveInstallationRequestDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.data.api.mapper.toRegistrationRequest
 import com.loresuelvo.consumer.domain.installation.InstallationBinding
 import com.loresuelvo.consumer.domain.installation.InstallationRegistrationResult
 import com.loresuelvo.consumer.domain.installation.InstallationRepository
+import com.loresuelvo.consumer.domain.installation.InstallationRemovalRepository
+import com.loresuelvo.consumer.domain.installation.PendingInstallationRemoval
+import com.loresuelvo.consumer.domain.installation.InstallationRemovalResult
 import com.loresuelvo.consumer.domain.installation.RegistrationOutcome
 import java.io.IOException
 import javax.inject.Inject
@@ -17,7 +21,33 @@ import retrofit2.Response
 @Singleton
 class ApiInstallationRepository @Inject constructor(
     @Named("installationApi") private val api: BackendApi,
-) : InstallationRepository {
+) : InstallationRepository, InstallationRemovalRepository {
+
+    override suspend fun remove(
+        removal: PendingInstallationRemoval,
+        accessToken: String,
+    ): InstallationRemovalResult = try {
+        val response = api.removeInstallation(
+            removal.identity.id,
+            "Bearer $accessToken",
+            RemoveInstallationRequestDto(removal.identity.secret, removal.bindingId),
+        )
+        when {
+            response.code() == 204 -> InstallationRemovalResult.Removed
+            response.code() == 409 -> InstallationRemovalResult.Superseded
+            response.code() == 401 -> InstallationRemovalResult.Unauthorized
+            response.code() == 403 -> InstallationRemovalResult.Forbidden
+            response.isSuccessful -> InstallationRemovalResult.UnexpectedFailure(
+                IllegalStateException("Unexpected installation removal status ${response.code()}"),
+            )
+            else -> InstallationRemovalResult.ServerFailure(response.code())
+        }
+    } catch (error: IOException) {
+        InstallationRemovalResult.NetworkFailure(error)
+    } catch (error: SerializationException) {
+        InstallationRemovalResult.UnexpectedFailure(error)
+    }
+
     override suspend fun register(
         binding: InstallationBinding,
         token: String,

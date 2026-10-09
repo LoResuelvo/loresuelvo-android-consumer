@@ -168,7 +168,7 @@ class ConsumerAccountSwitchWorld {
         val authorizeMessage = AuthorizeMessageNotificationUseCase(sessions, installations, clock)
         val messageUseCase = ReceiveMessageNotificationUseCase(
             authorize = authorizeMessage,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = NotificationAvailability { true },
             events = messageEvents,
             publisher = messagePublisher,

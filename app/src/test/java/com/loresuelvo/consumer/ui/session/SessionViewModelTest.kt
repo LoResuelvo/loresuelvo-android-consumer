@@ -8,6 +8,7 @@ import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.notifications.NotificationDismissal
+import com.loresuelvo.consumer.domain.installation.InstallationLogoutHandler
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -23,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 
@@ -118,6 +120,32 @@ class SessionViewModelTest {
         verify { sessionStore.clearSession() }
         verify { notificationDismissal.dismissAll() }
         coVerify { authProvider.logout(context) }
+        assertNull(viewModel.uiState.value.session)
+    }
+
+    @Test
+    fun signOut_captures_installation_cleanup_before_clearing_the_session() = runTest {
+        coEvery { authProvider.logout(context) } returns LogoutOutcome.Success
+        var capturedSession: AuthSession? = null
+        var sessionDuringCapture: AuthSession? = null
+        val cleanup = InstallationLogoutHandler { current ->
+            capturedSession = current
+            sessionDuringCapture = sessionFlow.value
+        }
+        val viewModel = SessionViewModel(
+            sessionStore,
+            authProvider,
+            restore,
+            requests,
+            notificationDismissal,
+            cleanup,
+        )
+
+        viewModel.signOut(context)
+
+        assertEquals(session, capturedSession)
+        assertEquals(session, sessionDuringCapture)
+        assertNull(sessionStore.sessionFlow.value)
         assertNull(viewModel.uiState.value.session)
     }
 

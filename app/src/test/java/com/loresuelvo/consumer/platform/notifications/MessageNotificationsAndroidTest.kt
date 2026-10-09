@@ -14,6 +14,11 @@ import com.loresuelvo.consumer.domain.auth.AuthSession
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.notifications.*
 import com.loresuelvo.consumer.domain.usecase.notifications.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
@@ -45,7 +50,7 @@ class MessageNotificationsAndroidTest {
         installations = EncryptedInstallationStateStore(installationPrefs)
         val binding = installations.prepare(17, "login")
         installations.confirm(binding)
-        visibility = VisibleConversationStore()
+        visibility = VisibleConversationStore(sessions)
         authorize = AuthorizeMessageNotificationUseCase(sessions, installations, NotificationClock { 1000 })
         val publisher = AndroidMessageNotificationPublisher(context, authorize)
         receiver = ConsumerMessageReceiver(MessageNotificationDecoder(), ReceiveMessageNotificationUseCase(
@@ -93,14 +98,57 @@ class MessageNotificationsAndroidTest {
         visibility.show(42)
         assertEquals(MessageNotificationOutcome.VisibleConversation, receiver.receive(payload))
         visibility.show(99)
-        assertEquals(MessageNotificationOutcome.Published, receiver.receive(payload))
+        assertEquals(MessageNotificationOutcome.Duplicate, receiver.receive(payload))
         val events = StoredNotificationEvents(context.getSharedPreferences("message_installations", 0))
         val publisher = AndroidMessageNotificationPublisher(context, authorize)
         val recreated = ConsumerMessageReceiver(MessageNotificationDecoder(), ReceiveMessageNotificationUseCase(
-            authorize, VisibleConversationStore(), publisher, events, publisher,
+            authorize, VisibleConversationStore(sessions), publisher, events, publisher,
         ))
         assertEquals(MessageNotificationOutcome.Duplicate, recreated.receive(payload))
-        assertEquals(1, shadowOf(manager).allNotifications.size)
+        assertTrue(shadowOf(manager).allNotifications.isEmpty())
+    }
+
+    @Test fun visible_message_requests_chat_refresh_without_late_system_alert() = runBlocking {
+        visibility.show(42)
+        val refresh = async(start = CoroutineStart.UNDISPATCHED) { visibility.refreshRequests.first() }
+
+        assertEquals(MessageNotificationOutcome.VisibleConversation, receiver.receive(payload))
+        assertEquals(ConversationRefreshRequest(42, "message:51:17", 17), refresh.await())
+        assertTrue(shadowOf(manager).allNotifications.isEmpty())
+
+        visibility.show(99)
+        assertEquals(MessageNotificationOutcome.Duplicate, receiver.receive(payload))
+        assertTrue(shadowOf(manager).allNotifications.isEmpty())
+    }
+
+    @Test fun visible_refresh_is_buffered_until_the_chat_collector_starts() = runBlocking {
+        visibility.show(42)
+
+        assertEquals(MessageNotificationOutcome.VisibleConversation, receiver.receive(payload))
+        assertEquals(
+            ConversationRefreshRequest(42, "message:51:17", 17),
+            withTimeoutOrNull(250) { visibility.refreshRequests.first() },
+        )
+        assertEquals(MessageNotificationOutcome.Duplicate, receiver.receive(payload))
+        assertTrue(shadowOf(manager).allNotifications.isEmpty())
+    }
+
+    @Test fun replayed_refresh_is_scoped_to_account_and_cleared_when_chat_is_left() = runBlocking {
+        val accountA = sessions.getSession()!!
+        visibility.show(42)
+        assertEquals(MessageNotificationOutcome.VisibleConversation, receiver.receive(payload))
+        val request = visibility.refreshRequests.first()
+        assertEquals(17, request.recipientUserId)
+        assertFalse(request.toString().contains(payload.getValue("body")))
+
+        sessions.saveSession(AuthSession(User("Other account", backendUserId = 29), "other-token"))
+        assertFalse(visibility.isCurrent(request))
+        visibility.show(null)
+        sessions.saveSession(accountA)
+        visibility.show(42)
+
+        assertNull(withTimeoutOrNull(100) { visibility.refreshRequests.first() })
+        assertTrue(shadowOf(manager).allNotifications.isEmpty())
     }
 
     @Test fun rejected_publication_does_not_consume_redelivery() {

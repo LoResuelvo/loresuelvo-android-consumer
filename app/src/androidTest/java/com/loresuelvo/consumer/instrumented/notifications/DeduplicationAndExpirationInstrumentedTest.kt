@@ -96,7 +96,7 @@ class DeduplicationAndExpirationInstrumentedTest {
         val publisher = AndroidMessageNotificationPublisher(context, authorize)
         val useCase = ReceiveMessageNotificationUseCase(
             authorize = authorize,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = publisher,
             events = events,
             publisher = publisher,
@@ -184,7 +184,7 @@ class DeduplicationAndExpirationInstrumentedTest {
         val messagePublisher = AndroidMessageNotificationPublisher(context, authorizeMessage)
         val messageUseCase = ReceiveMessageNotificationUseCase(
             authorize = authorizeMessage,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = messagePublisher,
             events = events,
             publisher = messagePublisher,
@@ -251,7 +251,7 @@ class DeduplicationAndExpirationInstrumentedTest {
         val publisher = AndroidMessageNotificationPublisher(context, authorize)
         val firstUseCase = ReceiveMessageNotificationUseCase(
             authorize = authorize,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = publisher,
             events = firstStore,
             publisher = publisher,
@@ -281,7 +281,7 @@ class DeduplicationAndExpirationInstrumentedTest {
         val secondStore = StoredNotificationEvents(eventPrefs)
         val secondUseCase = ReceiveMessageNotificationUseCase(
             authorize = authorize,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = publisher,
             events = secondStore,
             publisher = publisher,

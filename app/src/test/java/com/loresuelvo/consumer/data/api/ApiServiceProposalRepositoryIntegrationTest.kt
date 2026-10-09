@@ -1,8 +1,13 @@
 package com.loresuelvo.consumer.data.api
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
+import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -23,6 +28,8 @@ class ApiServiceProposalRepositoryIntegrationTest {
 
     private lateinit var server: MockWebServer
     private lateinit var repository: ApiServiceProposalRepository
+    private lateinit var authSessionStore: TestAuthSessionStore
+    @Volatile private var sessionBeforeAuth: AuthSession? = null
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
@@ -32,8 +39,17 @@ class ApiServiceProposalRepositoryIntegrationTest {
     fun setUp() {
         server = MockWebServer()
         server.start()
+        authSessionStore = TestAuthSessionStore()
 
         val client = OkHttpClient.Builder()
+            .addInterceptor(okhttp3.Interceptor { chain ->
+                sessionBeforeAuth?.let { replacement ->
+                    authSessionStore.saveSession(replacement)
+                    sessionBeforeAuth = null
+                }
+                chain.proceed(chain.request())
+            })
+            .addInterceptor(AuthInterceptor(authSessionStore))
             .connectTimeout(2, TimeUnit.SECONDS)
             .readTimeout(2, TimeUnit.SECONDS)
             .writeTimeout(2, TimeUnit.SECONDS)
@@ -47,7 +63,7 @@ class ApiServiceProposalRepositoryIntegrationTest {
             )
             .build()
         val backendApi = retrofit.create(BackendApi::class.java)
-        repository = ApiServiceProposalRepository(backendApi = backendApi)
+        repository = ApiServiceProposalRepository(backendApi, authSessionStore)
     }
 
     @After
@@ -170,10 +186,9 @@ class ApiServiceProposalRepositoryIntegrationTest {
 
     @Test
     fun get_service_proposals_401_returns_Server_failure_401() = runBlocking {
-        // The bearer token is rejected; the data layer collapses
-        // `ApiError.Unauthorized` to a typed `Failure.Server` with
-        // code 401 so callers can branch on the code without
-        // importing the transport hierarchy.
+        authSessionStore.saveSession(
+            AuthSession(User(displayName = "Consumidora"), accessToken = "session-token"),
+        )
         server.enqueue(
             MockResponse()
                 .setResponseCode(401)
@@ -182,9 +197,34 @@ class ApiServiceProposalRepositoryIntegrationTest {
         )
 
         val outcome = repository.getServiceProposals()
+        val request = server.takeRequest(1, TimeUnit.SECONDS)
 
+        assertEquals("Bearer session-token", request?.getHeader("Authorization"))
         assertTrue(outcome is ServiceProposalsOutcome.Failure.Server)
         assertEquals(401, (outcome as ServiceProposalsOutcome.Failure.Server).code)
+        assertEquals(null, authSessionStore.getSession())
+    }
+
+    @Test
+    fun get_service_proposals_uses_captured_session_if_account_changes_before_auth_interceptor() = runBlocking {
+        authSessionStore.saveSession(
+            AuthSession(User(displayName = "Cuenta A"), accessToken = "token-a"),
+        )
+        sessionBeforeAuth = AuthSession(
+            User(displayName = "Cuenta B"),
+            accessToken = "token-b",
+        )
+        server.enqueue(MockResponse().setResponseCode(401))
+
+        val outcome = repository.getServiceProposals()
+
+        val request = server.takeRequest(1, TimeUnit.SECONDS)
+        assertEquals("GET", request?.method)
+        assertEquals("/service-proposals", request?.path)
+        assertEquals("Bearer token-a", request?.getHeader("Authorization"))
+        assertTrue(outcome is ServiceProposalsOutcome.Failure.Server)
+        assertEquals(401, (outcome as ServiceProposalsOutcome.Failure.Server).code)
+        assertEquals("token-b", authSessionStore.getSession()?.accessToken)
     }
 
     @Test
@@ -198,5 +238,13 @@ class ApiServiceProposalRepositoryIntegrationTest {
             outcome is ServiceProposalsOutcome.Failure.Network,
         )
         assertTrue((outcome as ServiceProposalsOutcome.Failure.Network).cause is IOException)
+    }
+
+    private class TestAuthSessionStore : AuthSessionStore {
+        private val current = MutableStateFlow<AuthSession?>(null)
+        override val sessionFlow: StateFlow<AuthSession?> = current
+        override fun getSession(): AuthSession? = current.value
+        override fun saveSession(session: AuthSession) { current.value = session }
+        override fun clearSession() { current.value = null }
     }
 }

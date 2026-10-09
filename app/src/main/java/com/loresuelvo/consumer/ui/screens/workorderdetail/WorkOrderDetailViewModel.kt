@@ -3,6 +3,8 @@ package com.loresuelvo.consumer.ui.screens.workorderdetail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
+import com.loresuelvo.consumer.domain.realtime.RealtimeClient
+import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.GetWorkOrderDetailUseCase
 import com.loresuelvo.consumer.domain.usecase.workorder.RateProviderUseCase
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -25,10 +28,13 @@ class WorkOrderDetailViewModel @Inject constructor(
     private val getWorkOrderDetail: GetWorkOrderDetailUseCase,
     private val startWorkOrderCheckout: StartWorkOrderCheckoutUseCase,
     private val rateProvider: RateProviderUseCase,
+    private val realtimeClient: RealtimeClient = RealtimeClient.None,
 ) : ViewModel() {
 
     private var loadJob: Job? = null
     private var loadGeneration = 0L
+    private var activeWorkOrderId: String? = null
+    private var activeProvider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart? = null
 
     private val _uiState = MutableStateFlow<WorkOrderDetailUiState>(WorkOrderDetailUiState.Loading)
     val uiState: StateFlow<WorkOrderDetailUiState> = _uiState.asStateFlow()
@@ -47,6 +53,22 @@ class WorkOrderDetailViewModel @Inject constructor(
     )
     val payError: SharedFlow<String> = _payError.asSharedFlow()
 
+    init {
+        viewModelScope.launch {
+            realtimeClient.events.collect { event ->
+                val workOrderId = activeWorkOrderId
+                if (
+                    workOrderId != null &&
+                    event is WsEvent.NotificationCreated &&
+                    event.resourceType == WsEvent.WORK_ORDER_RESOURCE &&
+                    event.resourceId == workOrderId
+                ) {
+                    load(workOrderId, activeProvider)
+                }
+            }
+        }
+    }
+
     /**
      * Loads the work order for [workOrderId]. Re-entrant so the
      * host can re-fire on retry (mirrors the
@@ -57,6 +79,8 @@ class WorkOrderDetailViewModel @Inject constructor(
      * non-existent provider field from the dedicated detail JSON.
      */
     fun load(workOrderId: String, provider: com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart? = null) {
+        activeWorkOrderId = workOrderId
+        activeProvider = provider
         val requestGeneration = ++loadGeneration
         loadJob?.cancel()
         loadJob = viewModelScope.launch {

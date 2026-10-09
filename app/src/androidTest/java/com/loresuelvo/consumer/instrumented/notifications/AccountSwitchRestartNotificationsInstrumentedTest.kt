@@ -178,7 +178,7 @@ class AccountSwitchRestartNotificationsInstrumentedTest {
         val messagePublisher = AndroidMessageNotificationPublisher(context, authorizeMessage)
         val messageUseCase = ReceiveMessageNotificationUseCase(
             authorize = authorizeMessage,
-            visibility = VisibleConversationStore(),
+            visibility = VisibleConversationStore(sessions),
             availability = messagePublisher,
             events = messageEvents,
             publisher = messagePublisher,

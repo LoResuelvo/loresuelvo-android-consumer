@@ -16,4 +16,10 @@ interface AuthSessionStore {
     fun saveSession(session: AuthSession)
 
     fun clearSession()
+
+    fun clearSessionIfTokenMatches(accessToken: String): Boolean {
+        if (getSession()?.accessToken != accessToken) return false
+        clearSession()
+        return true
+    }
 }

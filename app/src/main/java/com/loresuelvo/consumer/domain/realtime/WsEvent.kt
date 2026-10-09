@@ -2,20 +2,21 @@ package com.loresuelvo.consumer.domain.realtime
 
 import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 
-data class WsEvent(
-    val type: String,
-    val conversationId: Long,
-    val message: ConversationMessage,
-) {
+sealed interface WsEvent {
+    data class ConversationMessageCreated(
+        val conversationId: Long,
+        val message: ConversationMessage,
+    ) : WsEvent
+
+    data class NotificationCreated(
+        val resourceType: String,
+        val resourceId: String,
+    ) : WsEvent
+
     companion object {
-        /**
-         * WebSocket discriminator the backend emits when a new
-         * message is appended to a conversation. The constant is
-         * here (not in the data layer) so the mapper and any
-         * future event consumer can compare against a stable
-         * name without re-importing the wire constant.
-         */
-        const val CONVERSATION_MESSAGE_CREATED: String =
-            "conversation.message.created"
+        const val CONVERSATION_MESSAGE_CREATED = "conversation.message.created"
+        const val NOTIFICATION_CREATED = "notification.created"
+        const val SERVICE_PROPOSAL_RESOURCE = "service_proposal"
+        const val WORK_ORDER_RESOURCE = "work_order"
     }
 }

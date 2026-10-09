@@ -325,8 +325,7 @@ class SendMessagesWorld : AutoCloseable {
     ) {
         val id = conversationId.toLongOrNull()
             ?: error("providerSendsViaWebSocket requires a numeric conversation id, got $conversationId")
-        val event = WsEvent(
-            type = WsEvent.CONVERSATION_MESSAGE_CREATED,
+        val event = WsEvent.ConversationMessageCreated(
             conversationId = id,
             message = ConversationMessage(
                 id = messageId,

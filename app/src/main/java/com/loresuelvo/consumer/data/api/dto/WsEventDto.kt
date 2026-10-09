@@ -32,8 +32,15 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WsEventDto(
     @SerialName("type") val type: String,
-    @SerialName("conversation_id") val conversationId: Long,
-    @SerialName("message") val message: WsEventMessageDto,
+    @SerialName("conversation_id") val conversationId: Long? = null,
+    @SerialName("message") val message: WsEventMessageDto? = null,
+    @SerialName("notification") val notification: WsNotificationDto? = null,
+)
+
+@Serializable
+data class WsNotificationDto(
+    @SerialName("resource_type") val resourceType: String,
+    @SerialName("resource_id") val resourceId: Long,
 )
 
 /**

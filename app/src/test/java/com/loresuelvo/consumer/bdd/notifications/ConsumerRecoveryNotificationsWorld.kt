@@ -79,6 +79,10 @@ class ConsumerRecoveryNotificationsWorld {
             requests = requests,
             sessions = sessionStore,
             register = useCase,
+            store = store,
+            removals = com.loresuelvo.consumer.domain.installation.InstallationRemovalRepository { _, _ ->
+                com.loresuelvo.consumer.domain.installation.InstallationRemovalResult.Removed
+            },
             locale = RegistrationLocaleProvider { "es" },
             scope = scope,
         )

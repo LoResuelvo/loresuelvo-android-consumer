@@ -20,7 +20,7 @@ class ConsumerMessageNotificationsWorld {
     private val published = mutableListOf<MessageNotification>()
     private val sessionPreferences = preferences()
     private val installationPreferences = preferences()
-    private val visibility = VisibleConversationStore()
+    private lateinit var visibility: VisibleConversationStore
     private lateinit var sessions: EncryptedAuthSessionStore
     private lateinit var installations: EncryptedInstallationStateStore
     private lateinit var service: ConsumerFirebaseMessagingService
@@ -29,6 +29,7 @@ class ConsumerMessageNotificationsWorld {
 
     fun start() {
         sessions = EncryptedAuthSessionStore(sessionPreferences)
+        visibility = VisibleConversationStore(sessions)
         sessions.saveSession(AuthSession(User("Private consumer", email = "private@example.test", backendUserId = 17), "private-jwt"))
         installations = EncryptedInstallationStateStore(installationPreferences)
         val binding = installations.prepare(17, "initial-login")

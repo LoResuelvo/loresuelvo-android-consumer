@@ -44,8 +44,10 @@ class EncryptedAuthSessionStore @Inject constructor(
         _sessionFlow.update { it ?: readSession() }
     }
 
+    @Synchronized
     override fun getSession(): AuthSession? = readSession()
 
+    @Synchronized
     override fun persistSession(session: AuthSession) {
         preferences
             .edit()
@@ -66,11 +68,13 @@ class EncryptedAuthSessionStore @Inject constructor(
             .commit()
     }
 
+    @Synchronized
     override fun saveSession(session: AuthSession) {
         persistSession(session)
         _sessionFlow.value = session
     }
 
+    @Synchronized
     override fun clearSession() {
         preferences
             .edit()
@@ -78,6 +82,13 @@ class EncryptedAuthSessionStore @Inject constructor(
             .commit()
 
         _sessionFlow.value = null
+    }
+
+    @Synchronized
+    override fun clearSessionIfTokenMatches(accessToken: String): Boolean {
+        if (readSession()?.accessToken != accessToken) return false
+        clearSession()
+        return true
     }
 
     private fun readSession(): AuthSession? {

@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import kotlinx.coroutines.CancellationException
@@ -21,21 +22,29 @@ import javax.inject.Singleton
 @Singleton
 class ApiTurnosRepository @Inject constructor(
     private val backendApi: BackendApi,
+    private val authSessionStore: AuthSessionStore,
 ) : TurnosRepository {
 
-    override suspend fun getTurnos(): TurnosOutcome =
-        try {
+    override suspend fun getTurnos(): TurnosOutcome {
+        val accessToken = authSessionStore.getSession()?.accessToken
+        val authContext = RequestAuthContext(accessToken)
+        return try {
             TurnosOutcome.Success(
-                backendApi.getWorkOrders().toDomain(),
+                backendApi.getWorkOrders(authContext).toDomain(),
             )
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Throwable) {
-            mapToFailure(e)
+            val error = e.toApiError()
+            if (error is ApiError.Unauthorized && accessToken != null) {
+                authSessionStore.clearSessionIfTokenMatches(accessToken)
+            }
+            mapToFailure(error)
         }
+    }
 
-    private fun mapToFailure(e: Throwable): TurnosOutcome.Failure =
-        when (val error = e.toApiError()) {
+    private fun mapToFailure(error: ApiError): TurnosOutcome.Failure =
+        when (error) {
             is ApiError.Network ->
                 TurnosOutcome.Failure.Network(error.networkCause)
             is ApiError.Unauthorized ->

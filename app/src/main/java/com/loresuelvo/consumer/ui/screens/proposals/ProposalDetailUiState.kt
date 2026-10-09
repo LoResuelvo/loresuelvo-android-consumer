@@ -15,5 +15,6 @@ sealed interface ProposalDetailUiState {
     data object Idle : ProposalDetailUiState
     data object Loading : ProposalDetailUiState
     data class Ready(val proposal: ServiceProposal) : ProposalDetailUiState
+    data object Unavailable : ProposalDetailUiState
     data class Error(val failure: ServiceProposalsOutcome.Failure) : ProposalDetailUiState
 }

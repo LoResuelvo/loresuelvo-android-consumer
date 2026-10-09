@@ -170,7 +170,7 @@ class WebSocketClientTest {
         }
 
         assertEquals(1, received.size)
-        val event = received[0]
+        val event = received[0] as WsEvent.ConversationMessageCreated
         assertEquals(1L, event.conversationId)
         assertEquals(ConversationSender.Provider, event.message.sender)
         assertEquals("hola", event.message.content)
@@ -211,7 +211,7 @@ class WebSocketClientTest {
         }
         // We only see the valid one; the unknown type was dropped.
         assertEquals(1, received.size)
-        assertEquals("alive", received[0].message.content)
+        assertEquals("alive", (received[0] as WsEvent.ConversationMessageCreated).message.content)
 
         job.cancel()
     }
@@ -243,7 +243,7 @@ class WebSocketClientTest {
             while (received.isEmpty()) delay(20)
         }
         assertEquals(1, received.size)
-        assertEquals("alive", received[0].message.content)
+        assertEquals("alive", (received[0] as WsEvent.ConversationMessageCreated).message.content)
 
         job.cancel()
     }

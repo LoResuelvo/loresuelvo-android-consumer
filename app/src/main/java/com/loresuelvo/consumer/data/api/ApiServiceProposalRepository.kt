@@ -2,10 +2,12 @@ package com.loresuelvo.consumer.data.api
 
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
 /**
  * Default implementation of the [ServiceProposalRepository] port.
@@ -18,12 +20,9 @@ import javax.inject.Singleton
  * (and ultimately [com.loresuelvo.consumer.ui.screens.home.HomeViewModel])
  * handle each branch explicitly (Loading / Ready / Error).
  *
- * `ApiError.Unauthorized` collapses to `Failure.Server(401, …)`
- * for symmetry with the other repositories: the domain does not
- * need to expose the transport-level distinction, and the Home
- * dashboard does not need to clear the local session — the smart
- * router in `LoResuelvoNav` reacts to session changes
- * independently.
+ * Unauthorized resource lookups clear the same local session that
+ * supplied the request bearer, allowing the root router to return
+ * to Welcome without clearing a replacement account.
  *
  * The list-level mapper drops proposals whose wire status is
  * unknown (see [toDomain]); those never cross the repository
@@ -33,19 +32,29 @@ import javax.inject.Singleton
 @Singleton
 class ApiServiceProposalRepository @Inject constructor(
     private val backendApi: BackendApi,
+    private val authSessionStore: AuthSessionStore,
 ) : ServiceProposalRepository {
 
-    override suspend fun getServiceProposals(): ServiceProposalsOutcome =
-        try {
+    override suspend fun getServiceProposals(): ServiceProposalsOutcome {
+        val accessToken = authSessionStore.getSession()?.accessToken
+        val authContext = RequestAuthContext(accessToken)
+        return try {
             ServiceProposalsOutcome.Success(
-                backendApi.getServiceProposals().toDomain(),
+                backendApi.getServiceProposals(authContext).toDomain(),
             )
+        } catch (cancelled: CancellationException) {
+            throw cancelled
         } catch (e: Throwable) {
-            mapToFailure(e)
+            val error = e.toApiError()
+            if (error is ApiError.Unauthorized && accessToken != null) {
+                authSessionStore.clearSessionIfTokenMatches(accessToken)
+            }
+            mapToFailure(error)
         }
+    }
 
-    private fun mapToFailure(e: Throwable): ServiceProposalsOutcome.Failure =
-        when (val error = e.toApiError()) {
+    private fun mapToFailure(error: ApiError): ServiceProposalsOutcome.Failure =
+        when (error) {
             is ApiError.Network ->
                 ServiceProposalsOutcome.Failure.Network(error.networkCause)
             is ApiError.Unauthorized ->

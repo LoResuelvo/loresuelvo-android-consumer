@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.data.api
 import com.loresuelvo.consumer.data.api.dto.SubmitReviewRequestDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.workorder.GetWorkOrderOutcome
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
@@ -15,14 +16,17 @@ import javax.inject.Singleton
 @Singleton
 class ApiWorkOrderDetailRepository @Inject constructor(
     private val backendApi: BackendApi,
+    private val authSessionStore: AuthSessionStore,
 ) : WorkOrderDetailRepository {
 
     override suspend fun getWorkOrderDetail(
         workOrderId: String,
         provider: WorkOrderDetailCounterpart?,
-    ): GetWorkOrderOutcome =
-        try {
-            val dto = backendApi.getWorkOrder(workOrderId)
+    ): GetWorkOrderOutcome {
+        val accessToken = authSessionStore.getSession()?.accessToken
+        val authContext = RequestAuthContext(accessToken)
+        return try {
+            val dto = backendApi.getWorkOrder(workOrderId, authContext)
             val detail = dto.toDomain(provider)
             if (detail == null) {
                 // The mapper returns null for unknown statuses;
@@ -42,7 +46,11 @@ class ApiWorkOrderDetailRepository @Inject constructor(
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (e: Throwable) {
-            when (val error = e.toApiError()) {
+            val error = e.toApiError()
+            if (error is ApiError.Unauthorized && accessToken != null) {
+                authSessionStore.clearSessionIfTokenMatches(accessToken)
+            }
+            when (error) {
                 is ApiError.Server -> when (error.code) {
                     404 -> GetWorkOrderOutcome.NotFound
                     403 -> GetWorkOrderOutcome.Failure(
@@ -75,6 +83,7 @@ class ApiWorkOrderDetailRepository @Inject constructor(
                     )
             }
         }
+    }
 
     //  `calify-provider-service`). The 2xx response carries the
     //  freshly stored [com.loresuelvo.consumer.data.api.dto.ReviewDto],

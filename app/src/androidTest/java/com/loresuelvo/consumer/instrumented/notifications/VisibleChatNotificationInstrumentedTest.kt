@@ -78,7 +78,7 @@ class VisibleChatNotificationInstrumentedTest {
     private lateinit var sessions: EncryptedAuthSessionStore
     private lateinit var installations: EncryptedInstallationStateStore
     private lateinit var binding: InstallationBinding
-    private val visibility = VisibleConversationStore()
+    private lateinit var visibility: VisibleConversationStore
 
     @Before
     fun setUp() {
@@ -92,6 +92,7 @@ class VisibleChatNotificationInstrumentedTest {
         installPrefs.edit().clear().commit()
 
         sessions = EncryptedAuthSessionStore(sessionPrefs)
+        visibility = VisibleConversationStore(sessions)
         sessions.saveSession(
             AuthSession(
                 User(
@@ -267,8 +268,7 @@ class VisibleChatNotificationInstrumentedTest {
         compose.waitForIdle()
 
         realtimeEvents.tryEmit(
-            WsEvent(
-                type = WsEvent.CONVERSATION_MESSAGE_CREATED,
+            WsEvent.ConversationMessageCreated(
                 conversationId = 42L,
                 message = ConversationMessage(
                     id = "51",

@@ -20,6 +20,8 @@ import com.loresuelvo.consumer.domain.installation.InstallationBinding
 import com.loresuelvo.consumer.domain.installation.InstallationConfirmation
 import com.loresuelvo.consumer.domain.installation.InstallationRegistrationResult
 import com.loresuelvo.consumer.domain.installation.InstallationRepository
+import com.loresuelvo.consumer.domain.installation.InstallationRemovalRepository
+import com.loresuelvo.consumer.domain.installation.InstallationRemovalResult
 import com.loresuelvo.consumer.domain.installation.PushRegistrationTokenProvider
 import com.loresuelvo.consumer.domain.installation.PushTokenOutcome
 import com.loresuelvo.consumer.domain.installation.RegistrationOutcome
@@ -99,6 +101,8 @@ class RegistrationRecoveryInstrumentedTest {
             requests = requests,
             sessions = sessions,
             register = useCase,
+            store = installations,
+            removals = InstallationRemovalRepository { _, _ -> InstallationRemovalResult.Removed },
             locale = RegistrationLocaleProvider { "es" },
             scope = scope,
         )

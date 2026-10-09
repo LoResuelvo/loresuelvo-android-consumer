@@ -84,6 +84,10 @@ fun ProposalDetailScreen(
                     )
                 }
 
+                is ProposalDetailUiState.Unavailable -> {
+                    UnavailableState(onBack = onDismiss)
+                }
+
                 is ProposalDetailUiState.Error -> {
                     ErrorState(
                         failure = state.failure,
@@ -91,6 +95,28 @@ fun ProposalDetailScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun UnavailableState(onBack: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 24.dp)
+            .testTag(PROPOSAL_DETAIL_UNAVAILABLE_TAG),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.proposal_detail_unavailable),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        Button(onClick = onBack) {
+            Text(stringResource(R.string.proposal_detail_back))
         }
     }
 }
@@ -325,6 +351,9 @@ const val PROPOSAL_DETAIL_ERROR_TAG: String =
 
 const val PROPOSAL_DETAIL_ERROR_RETRY_TAG: String =
     "proposal-detail-error-retry"
+
+const val PROPOSAL_DETAIL_UNAVAILABLE_TAG: String =
+    "proposal-detail-unavailable"
 
 const val PROPOSAL_DETAIL_VIEW_CONVERSATION_TAG: String =
     "proposal-detail-view-conversation"

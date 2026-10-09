@@ -9,7 +9,12 @@ import com.loresuelvo.consumer.domain.conversation.ConversationMessage
 import com.loresuelvo.consumer.domain.conversation.ConversationSender
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
+import com.loresuelvo.consumer.domain.auth.AuthSession
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.realtime.WsEvent
+import com.loresuelvo.consumer.domain.notifications.ConversationRefreshRequest
+import com.loresuelvo.consumer.platform.notifications.VisibleConversationStore
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMediaMessageUseCase
 import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
@@ -29,6 +34,7 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -56,9 +62,11 @@ class ConversationViewModelTest {
     private val mediaMetadataRetriever = mockk<MediaMetadataRetrieverReader>()
     private val audioRecorder = mockk<AudioRecorder>()
     private val webSocketClient = mockk<WebSocketClient>(relaxed = true)
+    private val authSessionStore = mockk<AuthSessionStore>()
     private lateinit var webSocketEvents: MutableSharedFlow<WsEvent>
     private lateinit var viewModel: ConversationViewModel
     private lateinit var audioPlayer: FakeAudioPlayer
+    private lateinit var visibility: VisibleConversationStore
     
     private fun detail(
         id: String = "1",
@@ -88,6 +96,7 @@ class ConversationViewModelTest {
             audioRecorder,
             audioPlayer,
             webSocketClient,
+            visibility,
         )
     }
 
@@ -96,6 +105,9 @@ class ConversationViewModelTest {
         Dispatchers.setMain(testDispatcher)
 
         audioPlayer = FakeAudioPlayer()
+        every { authSessionStore.getSession() } returns
+            AuthSession(User("Consumer", backendUserId = 17), "session-token")
+        visibility = VisibleConversationStore(authSessionStore)
 
         webSocketEvents = MutableSharedFlow(
             replay = 0,
@@ -278,8 +290,7 @@ class ConversationViewModelTest {
         conversationId: Long = 1,
         messageId: String = "100",
         content: String = "Hola desde el provider",
-    ) = WsEvent(
-        type = WsEvent.CONVERSATION_MESSAGE_CREATED,
+    ) = WsEvent.ConversationMessageCreated(
         conversationId = conversationId,
         message = ConversationMessage(
             id = messageId,
@@ -310,6 +321,74 @@ class ConversationViewModelTest {
         assertEquals("100", state.detail.messages[0].id)
         assertEquals(ConversationSender.Provider, state.detail.messages[0].sender)
         assertEquals("¡Hola!", state.detail.messages[0].content)
+    }
+
+    @Test
+    fun visible_fcm_refresh_preserves_draft_and_reader_position() = runTest {
+        val initial = detail(
+            id = "1",
+            messages = listOf(
+                ConversationMessage("1", ConversationSender.Consumer, "first", 1L),
+            ),
+        )
+        val refreshed = detail(
+            id = "1",
+            messages = listOf(
+                ConversationMessage("1", ConversationSender.Consumer, "first", 1L),
+                ConversationMessage("2", ConversationSender.Provider, "new from server", 2L),
+            ),
+        )
+        var reads = 0
+        coEvery { getConversationById("1") } coAnswers {
+            ConversationDetailOutcome.Success(if (reads++ == 0) initial else refreshed)
+        }
+        viewModel = createViewModel()
+        visibility.show(1)
+        viewModel.load("1")
+        advanceUntilIdle()
+        viewModel.onPromptChange("draft to keep")
+        viewModel.onScrollPositionChanged(false)
+
+        assertTrue(visibility.requestRefreshIfVisible(1, "message:2:17", 17))
+        advanceUntilIdle()
+
+        val ready = viewModel.uiState.value as ConversationUiState.Ready
+        assertEquals(2, ready.detail.messages.size)
+        assertEquals("new from server", ready.detail.messages.last().content)
+        assertEquals("draft to keep", ready.promptInput)
+        assertFalse(ready.isAtBottom)
+        assertTrue(ready.hasUnreadIncoming)
+        coVerify(exactly = 2) { getConversationById("1") }
+    }
+
+    @Test
+    fun visible_fcm_refresh_during_initial_load_fetches_the_authoritative_state_again() = runTest {
+        val initial = detail(id = "1")
+        val refreshed = detail(
+            id = "1",
+            messages = listOf(
+                ConversationMessage("2", ConversationSender.Provider, "new from server", 2L),
+            ),
+        )
+        val initialRead = CompletableDeferred<ConversationDetailOutcome>()
+        var reads = 0
+        coEvery { getConversationById("1") } coAnswers {
+            if (reads++ == 0) initialRead.await() else ConversationDetailOutcome.Success(refreshed)
+        }
+        viewModel = createViewModel()
+        visibility.show(1)
+        viewModel.load("1")
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is ConversationUiState.Loading)
+        assertTrue(visibility.requestRefreshIfVisible(1, "message:2:17", 17))
+        advanceUntilIdle()
+        initialRead.complete(ConversationDetailOutcome.Success(initial))
+        advanceUntilIdle()
+
+        val ready = viewModel.uiState.value as ConversationUiState.Ready
+        assertEquals("new from server", ready.detail.messages.single().content)
+        coVerify(exactly = 2) { getConversationById("1") }
     }
 
     @Test
@@ -366,8 +445,7 @@ class ConversationViewModelTest {
         // The WS echoes the same message with sender=consumer.
         // Must NOT be appended (already present).
         webSocketEvents.tryEmit(
-            WsEvent(
-                type = WsEvent.CONVERSATION_MESSAGE_CREATED,
+            WsEvent.ConversationMessageCreated(
                 conversationId = 1,
                 message = ConversationMessage(
                     id = "10",

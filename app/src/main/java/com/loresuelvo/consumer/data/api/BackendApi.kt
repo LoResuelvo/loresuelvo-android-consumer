@@ -25,6 +25,7 @@ import com.loresuelvo.consumer.data.api.dto.TurnoDto
 import com.loresuelvo.consumer.data.api.dto.WsTicketResponseDto
 import com.loresuelvo.consumer.data.api.dto.RegisterInstallationRequestDto
 import com.loresuelvo.consumer.data.api.dto.InstallationResponseDto
+import com.loresuelvo.consumer.data.api.dto.RemoveInstallationRequestDto
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -33,6 +34,8 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.Header
 import retrofit2.http.PUT
+import retrofit2.http.HTTP
+import retrofit2.http.Tag
 
 /**
  * Retrofit-typed contract for the backend's consumer endpoints. The
@@ -51,6 +54,13 @@ interface BackendApi {
         @Header("Authorization") authorization: String,
         @Body body: RegisterInstallationRequestDto,
     ): Response<InstallationResponseDto>
+
+    @HTTP(method = "DELETE", path = "installations/{installationId}", hasBody = true)
+    suspend fun removeInstallation(
+        @Path("installationId") installationId: String,
+        @Header("Authorization") authorization: String,
+        @Body body: RemoveInstallationRequestDto,
+    ): Response<Unit>
 
     @GET("me")
     suspend fun getCurrentUser(): CurrentUserDto
@@ -149,10 +159,9 @@ interface BackendApi {
      * `DiagnosisDtoMapper.toDomain()` handles the response
      * without a new wire-type declaration.
      *
-     * Requires a valid Auth0 JWT (the [AuthInterceptor] injects
-     * the bearer token from
-     * [com.loresuelvo.consumer.domain.auth.AuthSessionStore]
-     * automatically when a session is present). Non-2xx throws
+     * Requires a valid Auth0 JWT. The repository pins the captured
+     * session on the request so a later account switch cannot change
+     * its bearer. Non-2xx throws
      * [retrofit2.HttpException], mapped by the data layer to
      * [com.loresuelvo.consumer.domain.api.ApiError].
      */
@@ -364,7 +373,9 @@ interface BackendApi {
      * [com.loresuelvo.consumer.domain.api.ApiError].
      */
     @GET("service-proposals")
-    suspend fun getServiceProposals(): List<ServiceProposalDto>
+    suspend fun getServiceProposals(
+        @Tag authContext: RequestAuthContext,
+    ): List<ServiceProposalDto>
 
     /**
      * `GET /work-orders` — the consumer's full list of scheduled
@@ -378,12 +389,15 @@ interface BackendApi {
      * the bearer token automatically).
      */
     @GET("work-orders")
-    suspend fun getWorkOrders(): List<TurnoDto>
+    suspend fun getWorkOrders(
+        @Tag authContext: RequestAuthContext,
+    ): List<TurnoDto>
 
 
     @GET("work-orders/{workOrderID}")
     suspend fun getWorkOrder(
         @Path("workOrderID") workOrderID: String,
+        @Tag authContext: RequestAuthContext,
     ): com.loresuelvo.consumer.data.api.dto.WorkOrderDetailDto
 
     /**

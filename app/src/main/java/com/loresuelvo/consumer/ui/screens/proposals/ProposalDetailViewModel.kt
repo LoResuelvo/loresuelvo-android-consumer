@@ -3,6 +3,8 @@ package com.loresuelvo.consumer.ui.screens.proposals
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.domain.payment.CheckoutSessionOutcome
+import com.loresuelvo.consumer.domain.realtime.RealtimeClient
+import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.usecase.payment.StartServiceProposalCheckoutUseCase
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
@@ -12,6 +14,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +25,7 @@ import kotlinx.coroutines.launch
 class ProposalDetailViewModel @Inject constructor(
     private val serviceProposalRepository: ServiceProposalRepository,
     private val startServiceProposalCheckout: StartServiceProposalCheckoutUseCase,
+    private val realtimeClient: RealtimeClient = RealtimeClient.None,
 ) : ViewModel() {
 
     private val _uiState =
@@ -57,6 +61,23 @@ class ProposalDetailViewModel @Inject constructor(
 
     private var loadJob: Job? = null
     private var paymentJob: Job? = null
+    private var activeProposalId: String? = null
+
+    init {
+        viewModelScope.launch {
+            realtimeClient.events.collect { event ->
+                val proposalId = activeProposalId
+                if (
+                    proposalId != null &&
+                    event is WsEvent.NotificationCreated &&
+                    event.resourceType == WsEvent.SERVICE_PROPOSAL_RESOURCE &&
+                    event.resourceId == proposalId
+                ) {
+                    load(proposalId)
+                }
+            }
+        }
+    }
 
     fun load(proposalId: String) {
         if (proposalId.isBlank()) {
@@ -64,6 +85,7 @@ class ProposalDetailViewModel @Inject constructor(
             return
         }
 
+        activeProposalId = proposalId
         loadJob?.cancel()
 
         loadJob = viewModelScope.launch {
@@ -82,17 +104,19 @@ class ProposalDetailViewModel @Inject constructor(
                         if (match != null) {
                             ProposalDetailUiState.Ready(match)
                         } else {
-                            ProposalDetailUiState.Error(
-                                ServiceProposalsOutcome.Failure.Server(
-                                    code = 404,
-                                    message = "Proposal $proposalId not found",
-                                ),
-                            )
+                            ProposalDetailUiState.Unavailable
                         }
                     }
 
-                    is ServiceProposalsOutcome.Failure ->
-                        ProposalDetailUiState.Error(outcome)
+                    is ServiceProposalsOutcome.Failure -> when (outcome) {
+                        is ServiceProposalsOutcome.Failure.Server ->
+                            if (outcome.code == 404) {
+                                ProposalDetailUiState.Unavailable
+                            } else {
+                                ProposalDetailUiState.Error(outcome)
+                            }
+                        else -> ProposalDetailUiState.Error(outcome)
+                    }
                 }
             }
         }
@@ -162,6 +186,7 @@ class ProposalDetailViewModel @Inject constructor(
     }
 
     fun reset() {
+        activeProposalId = null
         loadJob?.cancel()
         paymentJob?.cancel()
         _uiState.value = ProposalDetailUiState.Idle

@@ -18,12 +18,16 @@ import com.loresuelvo.consumer.platform.media.AudioPlayer
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.validationError
 import com.loresuelvo.consumer.domain.realtime.RealtimeClient
+import com.loresuelvo.consumer.domain.realtime.WsEvent
+import com.loresuelvo.consumer.domain.notifications.ConversationVisibility
+import com.loresuelvo.consumer.domain.notifications.ConversationRefreshRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -38,18 +42,24 @@ class ConversationViewModel @Inject constructor(
     private val audioRecorder: AudioRecorder,
     private val audioPlayer: AudioPlayer,
     private val webSocketClient: RealtimeClient,
+    private val conversationVisibility: ConversationVisibility = ConversationVisibility.None,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ConversationUiState>(
         ConversationUiState.Loading,
     )
     val uiState: StateFlow<ConversationUiState> = _uiState.asStateFlow()
+    private var refreshJob: kotlinx.coroutines.Job? = null
+    private var loadJob: kotlinx.coroutines.Job? = null
+    private var activeConversationId: String? = null
+    private var pendingRefreshRequest: ConversationRefreshRequest? = null
 
     init {
         webSocketClient.start()
 
         viewModelScope.launch {
             webSocketClient.events
+                .filterIsInstance<WsEvent.ConversationMessageCreated>()
                 .filter { event ->
                     currentConversationIdMatches(event.conversationId)
                 }
@@ -60,6 +70,12 @@ class ConversationViewModel @Inject constructor(
                 .collect { event ->
                     appendIncomingMessage(event.message)
                 }
+        }
+
+        viewModelScope.launch {
+            conversationVisibility.refreshRequests.collect { request ->
+                if (conversationVisibility.isCurrent(request)) refreshVisibleConversation(request)
+            }
         }
 
         viewModelScope.launch {
@@ -112,13 +128,61 @@ class ConversationViewModel @Inject constructor(
         }
     }
 
+    private fun refreshVisibleConversation(request: ConversationRefreshRequest) {
+        val conversationIdText = request.conversationId.toString()
+        if (!conversationVisibility.isCurrent(request)) return
+        val activeId = activeConversationId
+        if (activeId != null && activeId != conversationIdText) return
+        if (activeId == null || _uiState.value !is ConversationUiState.Ready) {
+            pendingRefreshRequest = request
+            return
+        }
+        if (currentConversationId() != conversationIdText) return
+        pendingRefreshRequest = null
+        refreshJob?.cancel()
+        refreshJob = viewModelScope.launch {
+            val refreshed = (getConversationById(conversationIdText) as? ConversationDetailOutcome.Success)
+                ?.detail ?: return@launch
+            _uiState.update { current ->
+                if (current !is ConversationUiState.Ready || current.detail.id != conversationIdText) {
+                    return@update current
+                }
+                val currentIds = current.detail.messages.mapTo(mutableSetOf()) { it.id }
+                val refreshedIds = refreshed.messages.mapTo(mutableSetOf()) { it.id }
+                val remainingLocalMessages = current.detail.messages.filterNot { it.id in refreshedIds }
+                val newProviderMessage = refreshed.messages.any {
+                    it.sender == com.loresuelvo.consumer.domain.conversation.ConversationSender.Provider &&
+                        it.id !in currentIds
+                }
+                current.copy(
+                    detail = refreshed.copy(messages = refreshed.messages + remainingLocalMessages),
+                    hasUnreadIncoming = current.hasUnreadIncoming || (!current.isAtBottom && newProviderMessage),
+                )
+            }
+        }
+    }
+
+    private fun currentConversationId(): String? =
+        (_uiState.value as? ConversationUiState.Ready)?.detail?.id
+
     /**
      * Loads the conversation detail for [conversationId]. Public
      * so the host can re-trigger on retry (and the host invokes
      * it once on first composition with the nav argument).
      */
     fun load(conversationId: String) {
-        viewModelScope.launch {
+        activeConversationId = conversationId
+        val pendingRefresh = pendingRefreshRequest
+        if (
+            pendingRefresh == null ||
+            pendingRefresh.conversationId.toString() != conversationId ||
+            !conversationVisibility.isCurrent(pendingRefresh)
+        ) {
+            pendingRefreshRequest = null
+        }
+        loadJob?.cancel()
+        refreshJob?.cancel()
+        loadJob = viewModelScope.launch {
             _uiState.update { ConversationUiState.Loading }
             val next = when (val outcome = getConversationById(conversationId)) {
                 is ConversationDetailOutcome.Success ->
@@ -130,7 +194,17 @@ class ConversationViewModel @Inject constructor(
                 is ConversationDetailOutcome.Failure ->
                     ConversationUiState.Error(outcome)
             }
+            if (activeConversationId != conversationId) return@launch
             _uiState.update { next }
+            val pendingRefresh = pendingRefreshRequest
+            if (
+                pendingRefresh?.conversationId?.toString() == conversationId &&
+                conversationVisibility.isCurrent(pendingRefresh)
+            ) {
+                refreshVisibleConversation(pendingRefresh)
+            } else if (pendingRefresh != null) {
+                pendingRefreshRequest = null
+            }
         }
     }
 

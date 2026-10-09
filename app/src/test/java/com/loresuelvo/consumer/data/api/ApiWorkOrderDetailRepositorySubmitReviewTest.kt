@@ -4,6 +4,8 @@ import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFact
 import com.loresuelvo.consumer.data.api.dto.SubmitReviewRequestDto
 import com.loresuelvo.consumer.domain.workorder.SubmitWorkOrderReviewOutcome
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetailRepository
+import com.loresuelvo.consumer.domain.auth.AuthSessionStore
+import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
@@ -27,6 +29,7 @@ class ApiWorkOrderDetailRepositorySubmitReviewTest {
 
     private lateinit var server: MockWebServer
     private lateinit var repository: WorkOrderDetailRepository
+    private val authSessionStore: AuthSessionStore = mockk(relaxed = true)
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
@@ -49,7 +52,7 @@ class ApiWorkOrderDetailRepositorySubmitReviewTest {
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
         val backendApi = retrofit.create(BackendApi::class.java)
-        repository = ApiWorkOrderDetailRepository(backendApi = backendApi)
+        repository = ApiWorkOrderDetailRepository(backendApi, authSessionStore)
     }
 
     @After

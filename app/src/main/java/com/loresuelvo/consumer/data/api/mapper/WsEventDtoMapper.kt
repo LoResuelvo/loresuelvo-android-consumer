@@ -18,17 +18,24 @@ import com.loresuelvo.consumer.domain.realtime.WsEvent
  * path — same field names, same parser, same semantics.
  */
 internal fun WsEventDto.toDomain(): WsEvent? {
-    if (type != WsEvent.CONVERSATION_MESSAGE_CREATED) return null
-    val domainMessage = ConversationMessageDto(
-        id = message.id,
-        senderRole = message.senderRole,
-        content = message.content,
-        createdOn = message.createdOn,
-        video = message.video,
-    ).toDomain()
-    return WsEvent(
-        type = type,
-        conversationId = conversationId,
-        message = domainMessage,
-    )
+    return when (type) {
+        WsEvent.CONVERSATION_MESSAGE_CREATED -> {
+            val conversationId = conversationId ?: return null
+            val message = message ?: return null
+            val domainMessage = ConversationMessageDto(
+                id = message.id,
+                senderRole = message.senderRole,
+                content = message.content,
+                createdOn = message.createdOn,
+                video = message.video,
+            ).toDomain()
+            WsEvent.ConversationMessageCreated(conversationId, domainMessage)
+        }
+        WsEvent.NOTIFICATION_CREATED -> {
+            val notification = notification ?: return null
+            if (notification.resourceType.isBlank() || notification.resourceId <= 0L) return null
+            WsEvent.NotificationCreated(notification.resourceType, notification.resourceId.toString())
+        }
+        else -> null
+    }
 }

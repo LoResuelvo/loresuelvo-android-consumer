@@ -17,10 +17,19 @@ class ReceiveMessageNotificationUseCase(
     @Synchronized
     operator fun invoke(notification: MessageNotification): MessageNotificationOutcome {
         if (!authorize(notification) || !safeMessageText(notification)) return MessageNotificationOutcome.Invalid
-        if (visibility.visibleConversation() == notification.conversationId) return MessageNotificationOutcome.VisibleConversation
-        if (!availability.messagesAllowed()) return MessageNotificationOutcome.Unavailable
         if (events.contains(notification.bindingId, notification.eventId)) return MessageNotificationOutcome.Duplicate
         if (!authorize(notification)) return MessageNotificationOutcome.Invalid
+        if (
+            visibility.requestRefreshIfVisible(
+                notification.conversationId,
+                notification.eventId,
+                notification.recipientId,
+            )
+        ) {
+            events.remember(notification.bindingId, notification.eventId)
+            return MessageNotificationOutcome.VisibleConversation
+        }
+        if (!availability.messagesAllowed()) return MessageNotificationOutcome.Unavailable
         if (!publisher.publish(notification)) return MessageNotificationOutcome.Unavailable
         events.remember(notification.bindingId, notification.eventId)
         return MessageNotificationOutcome.Published

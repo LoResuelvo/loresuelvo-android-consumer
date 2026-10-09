@@ -91,7 +91,7 @@ class WelcomeViewModel @Inject constructor(
                     if (synchronized is SessionSynchronizationOutcome.Success) {
                         // Señal inmediata sin credenciales ni trabajo de red:
                         // la navegación puede retirar este ViewModel enseguida.
-                        pushRegistrationRequests.request()
+                        pushRegistrationRequests.requestNewAuthentication()
                     }
                     _uiState.update {
                         it.copy(

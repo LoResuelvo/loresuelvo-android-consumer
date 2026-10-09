@@ -5,14 +5,19 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.realtime.RealtimeClient
+import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.usecase.payment.StartServiceProposalCheckoutUseCase
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -27,9 +32,8 @@ import org.junit.Test
  *
  *  - Success path with a matching id lands in [ProposalDetailUiState.Ready]
  *    carrying the matching proposal.
- *  - Success path without a matching id lands in [ProposalDetailUiState.Error]
- *    carrying a 404 (`Server`-typed failure so the screen can
- *    surface the retry CTA).
+ *  - A missing proposal lands in [ProposalDetailUiState.Unavailable]
+ *    so the consumer can return to the proposal list.
  *  - Network failure propagates verbatim so the screen renders the
  *    "no internet" copy.
  *  - Server failure propagates verbatim.
@@ -93,7 +97,28 @@ class ProposalDetailViewModelTest {
     }
 
     @Test
-    fun success_without_matching_id_transitions_to_Error_with_404() = runTest {
+    fun notification_for_loaded_proposal_refreshes_its_rest_state() = runTest {
+        val realtime = TestRealtimeClient()
+        coEvery { serviceProposalRepository.getServiceProposals() } returnsMany listOf(
+            ServiceProposalsOutcome.Success(listOf(proposal("2", ServiceProposalStatus.Pending))),
+            ServiceProposalsOutcome.Success(listOf(proposal("2", ServiceProposalStatus.Accepted))),
+        )
+        val viewModel = ProposalDetailViewModel(
+            serviceProposalRepository,
+            startServiceProposalCheckout,
+            realtime,
+        )
+
+        viewModel.load("2")
+        realtime.emit(WsEvent.NotificationCreated("service_proposal", "2"))
+        runCurrent()
+
+        val state = viewModel.uiState.value as ProposalDetailUiState.Ready
+        assertEquals(ServiceProposalStatus.Accepted, state.proposal.status)
+    }
+
+    @Test
+    fun success_without_matching_id_transitions_to_Unavailable() = runTest {
         coEvery { serviceProposalRepository.getServiceProposals() } returns
             ServiceProposalsOutcome.Success(listOf(proposal(id = "1")))
 
@@ -101,11 +126,18 @@ class ProposalDetailViewModelTest {
         viewModel.load("missing")
 
         val state = viewModel.uiState.value
-        assertTrue("expected Error, was $state", state is ProposalDetailUiState.Error)
-        val error = (state as ProposalDetailUiState.Error).failure
-        assertTrue(error is ServiceProposalsOutcome.Failure.Server)
-        error as ServiceProposalsOutcome.Failure.Server
-        assertEquals(404, error.code)
+        assertEquals(ProposalDetailUiState.Unavailable, state)
+    }
+
+    @Test
+    fun proposal_collection_404_transitions_to_Unavailable() = runTest {
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Failure.Server(404, "missing collection")
+        val viewModel = ProposalDetailViewModel(serviceProposalRepository, startServiceProposalCheckout)
+
+        viewModel.load("2")
+
+        assertEquals(ProposalDetailUiState.Unavailable, viewModel.uiState.value)
     }
 
     @Test
@@ -229,5 +261,13 @@ class ProposalDetailViewModelTest {
                 "was ${viewModel.uiState.value}",
             viewModel.uiState.value is ProposalDetailUiState.Idle,
         )
+    }
+
+    private class TestRealtimeClient : RealtimeClient {
+        private val mutableEvents = MutableSharedFlow<WsEvent>(extraBufferCapacity = 1)
+        override val events: SharedFlow<WsEvent> = mutableEvents
+        override fun start() = Unit
+        override fun stop() = Unit
+        suspend fun emit(event: WsEvent) = mutableEvents.emit(event)
     }
 }

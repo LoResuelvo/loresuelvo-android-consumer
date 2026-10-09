@@ -273,7 +273,7 @@ class ConsumerExactNavigationWorld {
         )
         return NavigationIntentViewModel(
             dispatcher = dispatcher,
-            conversationVisibility = VisibleConversationStore(),
+            conversationVisibility = VisibleConversationStore(sessions),
             notifications = Provider { messageNavigation },
             serviceNotifications = Provider { serviceNavigation },
         )

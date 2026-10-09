@@ -54,7 +54,7 @@ class ConsumerVisibleChatWorld {
     private val dispatcher = StandardTestDispatcher()
     private val sessionPreferences = fakePreferences()
     private val installationPreferences = fakePreferences()
-    private val visibility = VisibleConversationStore()
+    private lateinit var visibility: VisibleConversationStore
     private val publishedNotifications = mutableListOf<MessageNotification>()
     private val webSocketEvents = MutableSharedFlow<WsEvent>(extraBufferCapacity = 10)
 
@@ -67,6 +67,7 @@ class ConsumerVisibleChatWorld {
     fun startReadingConversation() {
         Dispatchers.setMain(dispatcher)
         sessions = EncryptedAuthSessionStore(sessionPreferences)
+        visibility = VisibleConversationStore(sessions)
         sessions.saveSession(
             AuthSession(
                 User("Verified Consumer", backendUserId = 17),
@@ -172,8 +173,7 @@ class ConsumerVisibleChatWorld {
             createdOnEpochMillis = 2000L,
         )
         webSocketEvents.tryEmit(
-            WsEvent(
-                type = WsEvent.CONVERSATION_MESSAGE_CREATED,
+            WsEvent.ConversationMessageCreated(
                 conversationId = 42L,
                 message = incomingMessage,
             )
@@ -213,8 +213,10 @@ class ConsumerVisibleChatWorld {
     }
 
     fun close() {
-        visibility.show(null)
-        Dispatchers.resetMain()
+        if (::visibility.isInitialized) {
+            visibility.show(null)
+            Dispatchers.resetMain()
+        }
     }
 
     private fun fakePreferences(): SharedPreferences {

@@ -249,6 +249,8 @@
     <string name="proposal_detail_error_network">We couldn\'t connect. Check your connection.</string>
     <string name="proposal_detail_error_server">We couldn\'t load the proposal. Try again.</string>
     <string name="proposal_detail_error_retry">Retry</string>
+    <string name="proposal_detail_unavailable">This proposal is no longer available.</string>
+    <string name="proposal_detail_back">Back</string>
     <string name="proposal_detail_pay_now">Pay now</string>
     <string name="work_order_title">Work order</string>
     <string name="work_order_provider">Provider</string>

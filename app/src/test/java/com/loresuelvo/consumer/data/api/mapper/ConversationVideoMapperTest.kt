@@ -58,7 +58,8 @@ class ConversationVideoMapperTest {
         ).toDomain()
 
         assertTrue(event != null)
-        assertTrue(event!!.message.media is MediaReference.Video)
-        assertEquals("video-1", (event.message.media as MediaReference.Video).id)
+        val messageEvent = event as WsEvent.ConversationMessageCreated
+        assertTrue(messageEvent.message.media is MediaReference.Video)
+        assertEquals("video-1", (messageEvent.message.media as MediaReference.Video).id)
     }
 }

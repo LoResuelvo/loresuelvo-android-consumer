@@ -143,6 +143,10 @@ class ConsumerPushNotificationsWorld {
                 },
                 EncryptedInstallationStateStore(installationPreferences), ApiInstallationRepository(installationApi),
             ),
+            EncryptedInstallationStateStore(installationPreferences),
+            com.loresuelvo.consumer.domain.installation.InstallationRemovalRepository { _, _ ->
+                com.loresuelvo.consumer.domain.installation.InstallationRemovalResult.Removed
+            },
             RegistrationLocaleProvider { "es" }, applicationScope,
         )
         RegistrationRuntime(requests, Provider { coordinator }, applicationScope).start()

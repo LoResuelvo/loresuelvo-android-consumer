@@ -157,7 +157,7 @@ class ConsumerSettingsNotificationsWorld {
                 }
                 val receive = ReceiveMessageNotificationUseCase(
                     authorize,
-                    VisibleConversationStore(),
+                    VisibleConversationStore(sessions),
                     availability,
                     StoredNotificationEvents(installationPreferences),
                     publisher,

@@ -22,13 +22,36 @@ class RegisterInstallationUseCase(
         attemptId: String,
         isCurrent: () -> Boolean,
         commitIfCurrent: (() -> Unit) -> Boolean,
+    ): RegistrationOutcome = invoke(
+        session = session,
+        locale = locale,
+        attemptId = attemptId,
+        isNewAuthentication = false,
+        isCurrent = isCurrent,
+        commitIfCurrent = commitIfCurrent,
+    )
+
+    suspend operator fun invoke(
+        session: AuthSession,
+        locale: String,
+        attemptId: String,
+        isNewAuthentication: Boolean,
+        isCurrent: () -> Boolean,
+        commitIfCurrent: (() -> Unit) -> Boolean,
     ): RegistrationOutcome {
         val userId = session.user.backendUserId?.takeIf { it > 0 }
             ?: return RegistrationOutcome.UnverifiedAccount
         if (!isCurrent()) return RegistrationOutcome.Superseded
         return when (val outcome = tokenProvider.token()) {
             is PushTokenOutcome.Available -> registerWithToken(
-                session, userId, outcome.token, locale, attemptId, isCurrent, commitIfCurrent,
+                session,
+                userId,
+                outcome.token,
+                locale,
+                attemptId,
+                isCurrent,
+                commitIfCurrent,
+                isNewAuthentication,
             )
             PushTokenOutcome.ConfigurationUnavailable -> RegistrationOutcome.ConfigurationUnavailable
             is PushTokenOutcome.Failure -> RegistrationOutcome.TokenFailure(outcome.cause)
@@ -43,13 +66,14 @@ class RegisterInstallationUseCase(
         attemptId: String,
         isCurrent: () -> Boolean,
         commitIfCurrent: (() -> Unit) -> Boolean,
+        isNewAuthentication: Boolean,
     ): RegistrationOutcome {
         if (token.isBlank()) {
             return RegistrationOutcome.TokenFailure(IllegalStateException("Empty registration token"))
         }
         if (!isCurrent()) return RegistrationOutcome.Superseded
         return try {
-            val binding = store.prepare(userId, attemptId)
+            val binding = store.prepare(userId, attemptId, isNewAuthentication)
             if (!isCurrent()) return RegistrationOutcome.Superseded
             val response = repository.register(binding, token, locale, session.accessToken)
             if (!isCurrent()) return RegistrationOutcome.Superseded

@@ -3,6 +3,8 @@ package com.loresuelvo.consumer.data.api
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.loresuelvo.consumer.domain.installation.InstallationBinding
 import com.loresuelvo.consumer.domain.installation.InstallationIdentity
+import com.loresuelvo.consumer.domain.installation.InstallationRemovalResult
+import com.loresuelvo.consumer.domain.installation.PendingInstallationRemoval
 import com.loresuelvo.consumer.domain.installation.InstallationRegistrationResult
 import com.loresuelvo.consumer.domain.installation.RegistrationOutcome
 import java.util.concurrent.TimeUnit
@@ -30,6 +32,7 @@ class ApiInstallationRepositoryTest {
         InstallationIdentity("c80869b4-6a8a-4092-bd7b-3c6993437ab0", "4372a7ae-54a5-4f05-b1b0-774f4c66d96a"),
         "7c6dbaca-9042-4b1e-9111-41fd1af965b7", null, 17, "attempt",
     )
+    private val removal = PendingInstallationRemoval(binding.identity, binding.id, binding.userId)
     private val client = OkHttpClient.Builder().readTimeout(100, TimeUnit.MILLISECONDS).build()
     private lateinit var repository: ApiInstallationRepository
 
@@ -100,5 +103,36 @@ class ApiInstallationRepositoryTest {
             server.enqueue(response)
             assertEquals(InstallationRegistrationResult.Failed(RegistrationOutcome.InvalidConfirmation), repository.register(binding, "token", "es", "jwt"))
         }
+    }
+
+    @Test fun removal_uses_captured_authorization_and_exact_secret_binding_body() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(MockResponse().setResponseCode(409))
+
+        assertEquals(InstallationRemovalResult.Removed, repository.remove(removal, "fresh-login-jwt"))
+        assertEquals(InstallationRemovalResult.Superseded, repository.remove(removal, "fresh-login-jwt"))
+
+        repeat(2) {
+            val request = server.takeRequest()
+            assertEquals("DELETE", request.method)
+            assertEquals("/installations/${binding.identity.id}", request.path)
+            assertEquals("Bearer fresh-login-jwt", request.getHeader("Authorization"))
+            val body = json.parseToJsonElement(request.body.readUtf8()).jsonObject
+            assertEquals(setOf("installation_secret", "binding_id"), body.keys)
+            assertEquals(binding.identity.secret, body["installation_secret"]!!.jsonPrimitive.content)
+            assertEquals(binding.id, body["binding_id"]!!.jsonPrimitive.content)
+        }
+    }
+
+    @Test fun removal_keeps_auth_and_network_failures_distinct() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(401))
+        server.enqueue(MockResponse().setResponseCode(403))
+        server.enqueue(MockResponse().setResponseCode(503))
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+
+        assertEquals(InstallationRemovalResult.Unauthorized, repository.remove(removal, "jwt"))
+        assertEquals(InstallationRemovalResult.Forbidden, repository.remove(removal, "jwt"))
+        assertEquals(InstallationRemovalResult.ServerFailure(503), repository.remove(removal, "jwt"))
+        assertTrue(repository.remove(removal, "jwt") is InstallationRemovalResult.NetworkFailure)
     }
 }

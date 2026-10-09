@@ -16,8 +16,17 @@ class PushRegistrationRequests @Inject constructor() : InstallationRegistrationR
 
     @Synchronized
     override fun request() {
+        enqueue(mutablePending.value?.isNewAuthentication ?: false)
+    }
+
+    @Synchronized
+    override fun requestNewAuthentication() {
+        enqueue(true)
+    }
+
+    private fun enqueue(isNewAuthentication: Boolean) {
         generation += 1
-        mutablePending.value = RegistrationCandidate(generation)
+        mutablePending.value = RegistrationCandidate(generation, isNewAuthentication)
     }
 
     @Synchronized

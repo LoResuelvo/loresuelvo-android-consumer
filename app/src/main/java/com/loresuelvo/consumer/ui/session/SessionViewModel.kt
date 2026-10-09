@@ -11,6 +11,7 @@ import com.loresuelvo.consumer.domain.auth.LogoutOutcome
 import com.loresuelvo.consumer.domain.usecase.auth.RestoreAuthenticatedSessionUseCase
 import com.loresuelvo.consumer.platform.auth.AuthProvider
 import com.loresuelvo.consumer.domain.installation.InstallationRegistrationRequests
+import com.loresuelvo.consumer.domain.installation.InstallationLogoutHandler
 import com.loresuelvo.consumer.domain.notifications.NotificationDismissal
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -27,6 +28,7 @@ class SessionViewModel @Inject constructor(
     private val restoreSession: RestoreAuthenticatedSessionUseCase,
     private val pushRegistrationRequests: InstallationRegistrationRequests,
     private val notificationDismissal: NotificationDismissal = NotificationDismissal { },
+    private val installationLogout: InstallationLogoutHandler = InstallationLogoutHandler { },
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(
@@ -93,6 +95,7 @@ class SessionViewModel @Inject constructor(
      */
     fun signOut(activityContext: Context) {
         pushRegistrationRequests.invalidate()
+        sessionStore.sessionFlow.value?.let(installationLogout::onLogout)
         // 1. Clear the local session BEFORE returning so the
         // smart-router re-routes to Welcome synchronously.
         restorationJob?.cancel()

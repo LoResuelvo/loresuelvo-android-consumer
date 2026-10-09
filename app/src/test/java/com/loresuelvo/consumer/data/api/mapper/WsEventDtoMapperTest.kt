@@ -9,6 +9,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 /**
  * Pins the wire → domain translation for [WsEventDto]. Each test
@@ -40,12 +42,14 @@ class WsEventDtoMapperTest {
         message = message,
     )
 
+    private fun WsEvent?.requireMessage() = this as WsEvent.ConversationMessageCreated
+
     @Test
     fun maps_conversation_id_snake_case_to_camelCase() {
         val event = wsEventDto(conversationId = 42L).toDomain()
 
         assertNotNull(event)
-        assertEquals(42L, event!!.conversationId)
+        assertEquals(42L, event.requireMessage().conversationId)
     }
 
     @Test
@@ -53,7 +57,7 @@ class WsEventDtoMapperTest {
         val event = wsEventDto().toDomain()
 
         assertNotNull(event)
-        assertEquals(WsEvent.CONVERSATION_MESSAGE_CREATED, event!!.type)
+        assertTrue(event is WsEvent.ConversationMessageCreated)
     }
 
     @Test
@@ -78,7 +82,7 @@ class WsEventDtoMapperTest {
         ).toDomain()
 
         assertNotNull(event)
-        assertEquals(ConversationSender.Consumer, event!!.message.sender)
+        assertEquals(ConversationSender.Consumer, event.requireMessage().message.sender)
     }
 
     @Test
@@ -93,7 +97,7 @@ class WsEventDtoMapperTest {
         ).toDomain()
 
         assertNotNull(event)
-        assertEquals(ConversationSender.Provider, event!!.message.sender)
+        assertEquals(ConversationSender.Provider, event.requireMessage().message.sender)
     }
 
     @Test
@@ -111,7 +115,7 @@ class WsEventDtoMapperTest {
         // Defensive default: an unknown sender_role renders as
         // Provider so the user can still see the body. Matches
         // the discipline of `ConversationMessageDto.toDomain`.
-        assertEquals(ConversationSender.Provider, event!!.message.sender)
+        assertEquals(ConversationSender.Provider, event.requireMessage().message.sender)
     }
 
     @Test
@@ -129,7 +133,7 @@ class WsEventDtoMapperTest {
         // Long id on the wire → String in the domain (stable
         // LazyColumn keys, no overflow concerns). Mirrors the
         // convention used by `ConversationMessageDto`.
-        assertEquals("42", event!!.message.id)
+        assertEquals("42", event.requireMessage().message.id)
     }
 
     @Test
@@ -146,7 +150,7 @@ class WsEventDtoMapperTest {
         assertNotNull(event)
         assertEquals(
             "¿El jueves por la mañana te queda cómodo?",
-            event!!.message.content,
+            event.requireMessage().message.content,
         )
     }
 
@@ -167,7 +171,7 @@ class WsEventDtoMapperTest {
         // the integration test in commit 13c covers the REST
         // path; here we just pin that the field is parsed and
         // not collapsed to 0L.
-        assertTrue(event!!.message.createdOnEpochMillis != 0L)
+        assertTrue(event.requireMessage().message.createdOnEpochMillis != 0L)
     }
 
     @Test
@@ -182,7 +186,7 @@ class WsEventDtoMapperTest {
         ).toDomain()
 
         assertNotNull(event)
-        assertEquals(0L, event!!.message.createdOnEpochMillis)
+        assertEquals(0L, event.requireMessage().message.createdOnEpochMillis)
     }
 
     @Test
@@ -192,5 +196,17 @@ class WsEventDtoMapperTest {
         // the `type` field, not the message body.
         val event = wsEventDto(type = "future.event.type").toDomain()
         assertNull(event)
+    }
+
+    @Test
+    fun notification_created_frame_without_message_or_conversation_id_decodes() {
+        val frame = """{"type":"notification.created","notification":{"id":92,"user_id":17,"type":"service_proposal.updated","resource_type":"service_proposal","resource_id":84,"read_at":null,"created_at":"2026-10-09T12:00:00Z"}}"""
+        val dto = Json { ignoreUnknownKeys = true }.decodeFromString<WsEventDto>(frame)
+
+        assertEquals("notification.created", dto.type)
+        val event = dto.toDomain() as? WsEvent.NotificationCreated
+        assertNotNull(event)
+        assertEquals("service_proposal", event?.resourceType)
+        assertEquals("84", event?.resourceId)
     }
 }

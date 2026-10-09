@@ -81,6 +81,7 @@ class WelcomeViewModelTest {
         coVerify(exactly = 0) { authProvider.signup(any()) }
         coVerify(exactly = 1) { syncSession(authenticatedSession) }
         assertNotNull(registrationRequests.pending.value)
+        assertTrue(registrationRequests.pending.value?.isNewAuthentication == true)
         assertEquals(false, viewModel.uiState.value.loading)
     }
 

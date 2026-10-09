@@ -6,6 +6,8 @@ import com.loresuelvo.consumer.domain.payment.CheckoutPricing
 import com.loresuelvo.consumer.domain.payment.CheckoutSession
 import com.loresuelvo.consumer.domain.payment.PaymentIntent
 import com.loresuelvo.consumer.domain.payment.PaymentIntentStatus
+import com.loresuelvo.consumer.domain.realtime.RealtimeClient
+import com.loresuelvo.consumer.domain.realtime.WsEvent
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
 import com.loresuelvo.consumer.testsupport.workOrderDetailUseCaseForTest
@@ -22,6 +24,8 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.resetMain
@@ -85,6 +89,31 @@ class WorkOrderDetailViewModelTest {
         viewModel.load("missing")
 
         assertEquals(WorkOrderDetailUiState.NotFound, viewModel.uiState.value)
+    }
+
+    @Test
+    fun notification_for_loaded_work_order_refreshes_its_rest_state() = runTest(dispatcher) {
+        val realtime = TestRealtimeClient()
+        val repository = SequencedRepository(
+            listOf(
+                GetWorkOrderOutcome.Found(sampleWorkOrder(status = TurnoStatus.Confirmed)),
+                GetWorkOrderOutcome.Found(sampleWorkOrder(status = TurnoStatus.Paid)),
+            ),
+        )
+        val viewModel = WorkOrderDetailViewModel(
+            getWorkOrderDetail = workOrderDetailUseCaseForTest(repository),
+            startWorkOrderCheckout = StartWorkOrderCheckoutUseCase(NoOpCheckoutRepository),
+            rateProvider = noOpRateProvider,
+            realtimeClient = realtime,
+        )
+
+        viewModel.load("wo-1", sampleWorkOrder().provider)
+        realtime.emit(WsEvent.NotificationCreated("work_order", "wo-1"))
+        runCurrent()
+
+        val state = viewModel.uiState.value as WorkOrderDetailUiState.Ready
+        assertEquals(TurnoStatus.Paid, state.workOrder.status)
+        assertEquals(2, repository.detailRequests)
     }
 
     @Test
@@ -305,6 +334,35 @@ class WorkOrderDetailViewModelTest {
                 code = 0,
                 message = "submitReview not configured for this view-model test",
             )
+    }
+
+    private class SequencedRepository(
+        private val outcomes: List<GetWorkOrderOutcome>,
+    ) : WorkOrderDetailRepository {
+        var detailRequests = 0
+            private set
+
+        override suspend fun getWorkOrderDetail(
+            workOrderId: String,
+            provider: WorkOrderDetailCounterpart?,
+        ): GetWorkOrderOutcome {
+            detailRequests += 1
+            return outcomes[detailRequests - 1]
+        }
+
+        override suspend fun submitReview(
+            workOrderId: String,
+            rating: Int,
+            description: String,
+        ): SubmitWorkOrderReviewOutcome = SubmitWorkOrderReviewOutcome.Server(500, "unused")
+    }
+
+    private class TestRealtimeClient : RealtimeClient {
+        private val mutableEvents = MutableSharedFlow<WsEvent>(extraBufferCapacity = 1)
+        override val events: SharedFlow<WsEvent> = mutableEvents
+        override fun start() = Unit
+        override fun stop() = Unit
+        suspend fun emit(event: WsEvent) = mutableEvents.emit(event)
     }
 
     private class ReentrantLoadRepository(

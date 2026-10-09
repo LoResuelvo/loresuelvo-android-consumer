@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -31,10 +32,37 @@ class InstallationRegistrationCoordinatorTest {
     }
     private class Bindings : InstallationStateStore {
         val confirmedUsers = mutableListOf<Int>()
-        override fun prepare(userId: Int, attemptId: String) = InstallationBinding(
-            InstallationIdentity("installation", "secret"), "binding-$userId", null, userId, attemptId,
-        )
-        override fun confirm(binding: InstallationBinding) { confirmedUsers += binding.userId }
+        private var current: InstallationBinding? = null
+        private val pending = mutableListOf<PendingInstallationRemoval>()
+        private var nextId = 0
+
+        override fun prepare(userId: Int, attemptId: String) = prepare(userId, attemptId, false)
+        override fun prepare(userId: Int, attemptId: String, newAuthentication: Boolean): InstallationBinding {
+            val existing = current
+            if (existing?.userId == userId && !newAuthentication) return existing
+            return InstallationBinding(
+                InstallationIdentity("installation", "secret"),
+                "binding-${userId}-${nextId++}", existing?.id, userId, attemptId,
+            ).also { current = it }
+        }
+        override fun confirm(binding: InstallationBinding) {
+            confirmedUsers += binding.userId
+            current = binding.copy(confirmed = true)
+            pending.removeAll { it.bindingId == binding.previousId }
+        }
+        override fun beginRemoval(userId: Int): PendingInstallationRemoval? {
+            val binding = current?.takeIf { it.userId == userId } ?: return null
+            current = binding.copy(confirmed = false)
+            return PendingInstallationRemoval(binding.identity, binding.id, userId).also(pending::add)
+        }
+        override fun pendingRemoval() = pending.firstOrNull()
+        override fun pendingRemovals() = pending.toList()
+        override fun completeRemoval(bindingId: String): Boolean {
+            if (!pending.removeAll { it.bindingId == bindingId }) return false
+            if (current?.id == bindingId) current = null
+            return true
+        }
+        fun activeBinding() = current
     }
     private fun confirmation(binding: InstallationBinding) = InstallationRegistrationResult.Confirmed(
         InstallationConfirmation(binding.identity.id, binding.id, "consumer", "es", true),
@@ -58,7 +86,10 @@ class InstallationRegistrationCoordinatorTest {
                         return confirmation(binding)
                     }
                 },
-            ), RegistrationLocaleProvider { "es" }, backgroundScope)
+            ), bindings,
+            com.loresuelvo.consumer.domain.installation.InstallationRemovalRepository { _, _ ->
+                com.loresuelvo.consumer.domain.installation.InstallationRemovalResult.Removed
+            }, RegistrationLocaleProvider { "es" }, backgroundScope)
         coordinator.start()
         sessions.saveSession(first)
         requests.request()
@@ -91,7 +122,10 @@ class InstallationRegistrationCoordinatorTest {
                     if (credentials.size == 1) pendingResponse.await()
                     return confirmation(binding)
                 }
-            }), RegistrationLocaleProvider { "es" }, backgroundScope)
+            }), bindings,
+            com.loresuelvo.consumer.domain.installation.InstallationRemovalRepository { _, _ ->
+                com.loresuelvo.consumer.domain.installation.InstallationRemovalResult.Removed
+            }, RegistrationLocaleProvider { "es" }, backgroundScope)
         coordinator.start()
         sessions.saveSession(first)
         requests.request()
@@ -106,6 +140,73 @@ class InstallationRegistrationCoordinatorTest {
 
         assertEquals(listOf("first-jwt", "second-jwt"), credentials)
         assertEquals(listOf(29), bindings.confirmedUsers)
+    }
+
+    @Test fun offline_logout_cleanup_retries_with_fresh_bearer_without_clearing_new_binding() = runTest {
+        val sessions = Sessions()
+        val requests = PushRegistrationRequests()
+        val bindings = Bindings()
+        val removalCredentials = mutableListOf<String>()
+        val removedIds = mutableListOf<String>()
+        val registrationCredentials = mutableListOf<String>()
+        var removalCalls = 0
+        val coordinator = InstallationRegistrationCoordinator(
+            requests,
+            sessions,
+            RegisterInstallationUseCase(
+                object : PushRegistrationTokenProvider {
+                    override suspend fun token() = PushTokenOutcome.Available("token")
+                },
+                bindings,
+                object : InstallationRepository {
+                    override suspend fun register(
+                        binding: InstallationBinding,
+                        token: String,
+                        locale: String,
+                        accessToken: String,
+                    ): InstallationRegistrationResult {
+                        registrationCredentials += accessToken
+                        return confirmation(binding)
+                    }
+                },
+            ),
+            bindings,
+            InstallationRemovalRepository { removal, accessToken ->
+                removedIds += removal.bindingId
+                removalCredentials += accessToken
+                if (removalCalls++ == 0) InstallationRemovalResult.NetworkFailure(IOException())
+                else InstallationRemovalResult.Superseded
+            },
+            RegistrationLocaleProvider { "es" },
+            backgroundScope,
+        )
+        coordinator.start()
+        sessions.saveSession(first)
+        requests.requestNewAuthentication()
+        runCurrent()
+        val oldBinding = bindings.activeBinding()!!
+        coordinator.onLogout(first)
+        sessions.clearSession()
+        runCurrent()
+
+        assertEquals(listOf(oldBinding.id), removedIds)
+        assertEquals(listOf("first-jwt"), removalCredentials)
+        assertNotNull(bindings.pendingRemoval())
+        assertEquals(false, bindings.activeBinding()?.confirmed)
+
+        sessions.saveSession(AuthSession(first.user, "fresh-jwt"))
+        requests.requestNewAuthentication()
+        runCurrent()
+
+        val newBinding = bindings.activeBinding()!!
+        assertEquals(listOf(oldBinding.id, oldBinding.id), removedIds)
+        assertEquals(listOf("first-jwt", "fresh-jwt"), removalCredentials)
+        assertEquals(listOf("first-jwt", "fresh-jwt"), registrationCredentials)
+        assertNull(bindings.pendingRemoval())
+        assertTrue(newBinding.confirmed)
+        assertFalse(oldBinding.id == newBinding.id)
+        assertFalse(bindings.completeRemoval(oldBinding.id))
+        assertEquals(newBinding.id, bindings.activeBinding()?.id)
     }
 
     @Test fun lazy_storage_construction_failure_is_observable_without_losing_the_candidate() = runTest {

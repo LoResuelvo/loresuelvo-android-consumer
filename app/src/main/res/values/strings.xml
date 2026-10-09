@@ -251,6 +251,8 @@
     <string name="proposal_detail_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="proposal_detail_error_server">No pudimos cargar la propuesta. Reintentá.</string>
     <string name="proposal_detail_error_retry">Reintentar</string>
+    <string name="proposal_detail_unavailable">Esta propuesta ya no está disponible.</string>
+    <string name="proposal_detail_back">Volver</string>
     <string name="work_order_title">Orden de trabajo</string>
     <string name="work_order_provider">Prestador</string>
     <string name="work_order_category_name">Rubro</string>
