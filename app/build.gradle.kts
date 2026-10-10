@@ -53,8 +53,8 @@ fun auth0Domain(name: String, default: String = ""): String =
         .replaceFirst(Regex("^https?://"), "")
         .trimEnd('/')
 
-val configuredVersionCode = envVar("VERSION_CODE", "20").toInt()
-val configuredVersionName = envVar("VERSION_NAME", "0.22.1")
+val configuredVersionCode = envVar("VERSION_CODE", "21").toInt()
+val configuredVersionName = envVar("VERSION_NAME", "0.24.0")
 
 android {
     flavorDimensions += "environment"

@@ -141,6 +141,8 @@
     <string name="conversation_top_bar_view_work_order_content_description">Ver orden de trabajo</string>
     <string name="conversation_input_placeholder">Escribí un mensaje…</string>
     <string name="conversation_loading">Cargando conversación…</string>
+    <string name="conversation_date_today">Hoy</string>
+    <string name="conversation_date_yesterday">Ayer</string>
     <string name="conversation_proposal_summary_title">Propuesta vinculada</string>
     <string name="conversation_proposal_summary_amount">Monto acordado</string>
     <string name="conversation_proposal_summary_date">Fecha acordada</string>

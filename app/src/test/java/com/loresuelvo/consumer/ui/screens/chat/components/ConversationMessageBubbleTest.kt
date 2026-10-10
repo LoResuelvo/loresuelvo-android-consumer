@@ -199,6 +199,24 @@ class ConversationMessageBubbleTest {
     }
 
     @Test
+    fun message_renders_timestamp() {
+        composeTestRule.setContent {
+            ConversationMessageBubble(
+                message = ConversationMessage(
+                    id = "timestamp-msg-1",
+                    sender = ConversationSender.Consumer,
+                    content = "Nos vemos mañana",
+                    createdOnEpochMillis = 1_700_000_000_000L,
+                ),
+            )
+        }
+
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_TIMESTAMP_TAG)
+            .assertIsDisplayed()
+    }
+
+    @Test
     fun audio_message_renders_audio_bubble() {
         composeTestRule.setContent {
             ConversationMessageBubble(

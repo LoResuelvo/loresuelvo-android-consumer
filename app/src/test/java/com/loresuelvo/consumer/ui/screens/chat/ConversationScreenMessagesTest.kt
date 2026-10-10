@@ -21,6 +21,8 @@ import com.loresuelvo.consumer.domain.conversation.SendMessageOutcome
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_BUBBLE_TAG
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.chat.components.CONVERSATION_MESSAGE_AUDIO_PLAY_TAG
+import com.loresuelvo.consumer.ui.screens.chat.CONVERSATION_DATE_SEPARATOR_TAG
+import java.util.Calendar
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -151,6 +153,40 @@ class ConversationScreenMessagesTest {
         composeTestRule
             .onAllNodesWithTag(CONVERSATION_MESSAGE_BUBBLE_TAG)
             .assertCountEquals(0)
+    }
+
+    @Test
+    fun ready_state_groups_messages_by_local_date() {
+        val today = Calendar.getInstance().timeInMillis
+        val yesterday = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, -1)
+        }.timeInMillis
+        val messages = listOf(
+            message(
+                id = "yesterday-message",
+                content = "Mensaje anterior",
+            ).copy(createdOnEpochMillis = yesterday),
+            message(
+                id = "today-message",
+                content = "Mensaje actual",
+            ).copy(createdOnEpochMillis = today),
+        )
+
+        composeTestRule.setContent {
+            ConversationScreen(
+                state = readyState(detail = detail(messages = messages)),
+                onPromptChange = {},
+                onSendClick = {},
+                onBackClick = {},
+                onRetryClick = {},
+                onErrorDismiss = {},
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(CONVERSATION_DATE_SEPARATOR_TAG)
+            .assertCountEquals(2)
     }
 
     @Test

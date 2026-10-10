@@ -295,54 +295,60 @@ private fun ConversationRow(
         }
     }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .testTag("$ASSISTANT_ROW_TAG-${conversation.id}"),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top,
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag("$ASSISTANT_ROW_TAG-${conversation.id}"),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(
-                text = conversation.title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .testTag("$ASSISTANT_ROW_TITLE_TAG-${conversation.id}"),
-            )
-            if (timestampLabel != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
                 Text(
-                    text = timestampLabel,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SubtitleGray,
+                    text = conversation.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
-                        .padding(start = 8.dp)
-                        .testTag("$ASSISTANT_ROW_DATE_TAG-${conversation.id}"),
+                        .weight(1f, fill = false)
+                        .testTag("$ASSISTANT_ROW_TITLE_TAG-${conversation.id}"),
+                )
+                if (timestampLabel != null) {
+                    Text(
+                        text = timestampLabel,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SubtitleGray,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .testTag("$ASSISTANT_ROW_DATE_TAG-${conversation.id}"),
+                    )
+                }
+            }
+            val preview = conversation.lastMessagePreview
+            if (!preview.isNullOrBlank()) {
+                Text(
+                    text = preview,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SubtitleGray,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.testTag("$ASSISTANT_ROW_PREVIEW_TAG-${conversation.id}"),
                 )
             }
         }
-        val preview = conversation.lastMessagePreview
-        if (!preview.isNullOrBlank()) {
-            Text(
-                text = preview,
-                style = MaterialTheme.typography.bodyMedium,
-                color = SubtitleGray,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag("$ASSISTANT_ROW_PREVIEW_TAG-${conversation.id}"),
-            )
-        }
         if (showDivider) {
             HorizontalDivider(
-                modifier = Modifier.testTag(ASSISTANT_ROW_DIVIDER_TAG),
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .testTag(ASSISTANT_ROW_DIVIDER_TAG),
             )
         }
     }

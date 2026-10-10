@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -83,183 +84,221 @@ fun ConversationMessageBubble(
                 .padding(8.dp)
                 .testTag(CONVERSATION_MESSAGE_BUBBLE_TAG),
         ) {
-            when (val media = message.media) {
-                is MediaReference.Image -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable { actions.onImageClick(message.id) }
-                                .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            SubcomposeAsyncImage(
-                                model = media.url,
-                                contentDescription = media.originalName,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize(),
-                                loading = {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(32.dp),
-                                        strokeWidth = 2.dp,
-                                    )
-                                },
-                                error = {
-                                    Icon(
-                                        imageVector = Icons.Filled.BrokenImage,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(32.dp),
-                                    )
-                                },
-                            )
-                        }
-                        if (message.content.isNotBlank()) {
-                            Text(
-                                text = message.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = textColor,
-                                overflow = TextOverflow.Visible,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            )
-                        }
-                    }
-                }
-
-                is MediaReference.Audio -> {
-                    val isCurrentAudio =
-                        audioPlayback.messageId == message.id
-
-                    val isThisPlaying =
-                        isCurrentAudio && audioPlayback.isPlaying
-
-                    val currentPositionMillis =
-                        if (isCurrentAudio) {
-                            audioPlayback.currentPositionMillis
-                        } else {
-                            0L
-                        }
-
-                    val progress = if (media.durationMillis > 0L) {
-                        (
-                            currentPositionMillis.toFloat() /
-                                media.durationMillis.toFloat()
-                        ).coerceIn(0f, 1f)
-                    } else {
-                        0f
-                    }
-
-                    Column(
-                        modifier = Modifier
-                            .testTag(CONVERSATION_MESSAGE_AUDIO_TAG),
-                    ) {
-                        Row(
-                            horizontalArrangement =
-                                Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = if (isThisPlaying) PAUSE_ICON else PLAY_ICON,
-                                color = textColor,
-                                modifier = Modifier
-                                    .testTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
-                                    .clickable {
-                                        if (isThisPlaying) {
-                                            actions.onPauseAudio(message.id)
-                                        } else {
-                                            actions.onPlayAudio(message.id)
-                                        }
-                                    },
-                            )
-
-                            Text(
-                                text = formatAudioDuration(
-                                    currentPositionMillis,
-                                ),
-                                color = textColor,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .testTag(
-                                        CONVERSATION_MESSAGE_AUDIO_ELAPSED_TAG,
-                                    ),
-                            )
-
-                            Text(
-                                text = "/",
-                                color = textColor,
-                            )
-
-                            Text(
-                                text = formatAudioDuration(
-                                    media.durationMillis,
-                                ),
-                                color = textColor,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .testTag(
-                                        CONVERSATION_MESSAGE_AUDIO_DURATION_TAG,
-                                    ),
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(4.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(
-                                    MaterialTheme.colorScheme
-                                        .surfaceVariant,
-                                )
-                                .testTag(
-                                    CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG,
-                                ),
-                        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                when (val media = message.media) {
+                    is MediaReference.Image -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Box(
                                 modifier = Modifier
-                                    .fillMaxHeight()
-                                    .fillMaxWidth(progress)
+                                    .fillMaxWidth()
+                                    .height(180.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .clickable { actions.onImageClick(message.id) }
+                                    .testTag(CONVERSATION_MESSAGE_IMAGE_TAG),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                SubcomposeAsyncImage(
+                                    model = media.url,
+                                    contentDescription = media.originalName,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize(),
+                                    loading = {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(32.dp),
+                                            strokeWidth = 2.dp,
+                                        )
+                                    },
+                                    error = {
+                                        Icon(
+                                            imageVector = Icons.Filled.BrokenImage,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(32.dp),
+                                        )
+                                    },
+                                )
+                            }
+                            if (message.content.isNotBlank()) {
+                                Text(
+                                    text = message.content,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = textColor,
+                                    overflow = TextOverflow.Visible,
+                                    modifier = Modifier.padding(
+                                        horizontal = 8.dp,
+                                        vertical = 4.dp,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+
+                    is MediaReference.Audio -> {
+                        val isCurrentAudio =
+                            audioPlayback.messageId == message.id
+
+                        val isThisPlaying =
+                            isCurrentAudio && audioPlayback.isPlaying
+
+                        val currentPositionMillis =
+                            if (isCurrentAudio) {
+                                audioPlayback.currentPositionMillis
+                            } else {
+                                0L
+                            }
+
+                        val progress = if (media.durationMillis > 0L) {
+                            (
+                                currentPositionMillis.toFloat() /
+                                    media.durationMillis.toFloat()
+                            ).coerceIn(0f, 1f)
+                        } else {
+                            0f
+                        }
+
+                        Column(
+                            modifier = Modifier
+                                .testTag(CONVERSATION_MESSAGE_AUDIO_TAG),
+                        ) {
+                            Row(
+                                horizontalArrangement =
+                                    Arrangement.spacedBy(8.dp),
+                            ) {
+                                Text(
+                                    text = if (isThisPlaying) PAUSE_ICON else PLAY_ICON,
+                                    color = textColor,
+                                    modifier = Modifier
+                                        .testTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
+                                        .clickable {
+                                            if (isThisPlaying) {
+                                                actions.onPauseAudio(message.id)
+                                            } else {
+                                                actions.onPlayAudio(message.id)
+                                            }
+                                        },
+                                )
+
+                                Text(
+                                    text = formatAudioDuration(
+                                        currentPositionMillis,
+                                    ),
+                                    color = textColor,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .testTag(
+                                            CONVERSATION_MESSAGE_AUDIO_ELAPSED_TAG,
+                                        ),
+                                )
+
+                                Text(
+                                    text = "/",
+                                    color = textColor,
+                                )
+
+                                Text(
+                                    text = formatAudioDuration(
+                                        media.durationMillis,
+                                    ),
+                                    color = textColor,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .testTag(
+                                            CONVERSATION_MESSAGE_AUDIO_DURATION_TAG,
+                                        ),
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(4.dp)
+                                    .clip(RoundedCornerShape(2.dp))
                                     .background(
-                                        MaterialTheme.colorScheme.primary,
+                                        MaterialTheme.colorScheme
+                                            .surfaceVariant,
                                     )
                                     .testTag(
-                                        CONVERSATION_MESSAGE_AUDIO_FILL_TAG,
+                                        CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG,
                                     ),
-                            )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxHeight()
+                                        .fillMaxWidth(progress)
+                                        .background(
+                                            MaterialTheme.colorScheme.primary,
+                                        )
+                                        .testTag(
+                                            CONVERSATION_MESSAGE_AUDIO_FILL_TAG,
+                                        ),
+                                )
+                            }
                         }
                     }
-                }
 
-                is MediaReference.Video -> {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ConversationVideoPlayer(
-                            media = media,
-                            onOpenFullscreen = { actions.onVideoClick(message.id) },
+                    is MediaReference.Video -> {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            ConversationVideoPlayer(
+                                media = media,
+                                onOpenFullscreen = { actions.onVideoClick(message.id) },
+                            )
+                            if (message.content.isNotBlank()) {
+                                Text(
+                                    text = message.content,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = textColor,
+                                    overflow = TextOverflow.Visible,
+                                    modifier = Modifier.padding(
+                                        horizontal = 8.dp,
+                                        vertical = 4.dp,
+                                    ),
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+                        Text(
+                            text = message.content,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = textColor,
+                            overflow = TextOverflow.Visible,
                         )
-                        if (message.content.isNotBlank()) {
-                            Text(
-                                text = message.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = textColor,
-                                overflow = TextOverflow.Visible,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            )
-                        }
                     }
                 }
 
-                else -> {
-                    Text(
-                        text = message.content,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = textColor,
-                        overflow = TextOverflow.Visible,
-                    )
-                }
+                ConversationMessageTimestamp(
+                    epochMillis = message.createdOnEpochMillis,
+                    color = textColor,
+                )
             }
         }
     }
+}
+
+@Composable
+private fun ColumnScope.ConversationMessageTimestamp(
+    epochMillis: Long,
+    color: androidx.compose.ui.graphics.Color,
+) {
+    val timestamp = formatConversationMessageTime(epochMillis)
+    if (timestamp.isNotEmpty()) {
+        Text(
+            text = timestamp,
+            style = MaterialTheme.typography.labelSmall,
+            color = color.copy(alpha = 0.72f),
+            modifier = Modifier
+                .align(Alignment.End)
+                .testTag(CONVERSATION_MESSAGE_TIMESTAMP_TAG),
+        )
+    }
+}
+
+internal fun formatConversationMessageTime(epochMillis: Long): String {
+    if (epochMillis <= 0L) return ""
+    return java.text.DateFormat
+        .getTimeInstance(java.text.DateFormat.SHORT, java.util.Locale.getDefault())
+        .format(java.util.Date(epochMillis))
 }
 
 private fun formatAudioDuration(durationMillis: Long): String {
@@ -272,6 +311,9 @@ private fun formatAudioDuration(durationMillis: Long): String {
 
 const val CONVERSATION_MESSAGE_BUBBLE_TAG =
     "conversation-message-bubble"
+
+const val CONVERSATION_MESSAGE_TIMESTAMP_TAG =
+    "conversation-message-timestamp"
 
 const val CONVERSATION_MESSAGE_IMAGE_TAG =
     "conversation-message-image"
