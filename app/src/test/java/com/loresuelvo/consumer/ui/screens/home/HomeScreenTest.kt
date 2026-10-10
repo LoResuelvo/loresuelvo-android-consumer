@@ -6,6 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -19,6 +20,7 @@ import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
@@ -41,6 +43,57 @@ class HomeScreenTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
+
+    @Test
+    fun recent_diagnoses_show_three_rows_and_route_to_the_list_and_session() {
+        var seeAllClicked = false
+        var selectedConversationId: String? = null
+
+        composeTestRule.setContent {
+            MaterialTheme {
+                HomeScreen(
+                    state = HomeUiState.Ready(
+                        categories = CategoriesState.Ready(emptyList()),
+                        pendingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+                        upcomingServiceProposals = ServiceProposalsState.Ready(emptyList()),
+                        awaitingPaymentTurnos = TurnosState.Ready(emptyList()),
+                        turnos = TurnosState.Ready(emptyList()),
+                        recentAiConversations = AiConversationsState.Ready(
+                            listOf(
+                                AiConversationSummary("1", "Plomería", 3L, "Canilla rota"),
+                                AiConversationSummary("2", "Electricidad", 2L, "Cortocircuito"),
+                                AiConversationSummary("3", "Pintura", 1L, "Paredes"),
+                            ),
+                        ),
+                    ),
+                    actions = HomeScreenActions(
+                        diagnostics = HomeScreenActions.Diagnostics(
+                            onSeeAll = { seeAllClicked = true },
+                            onConversationClick = { selectedConversationId = it },
+                        ),
+                    ),
+                )
+            }
+        }
+
+        listOf("1", "2", "3").forEach { conversationId ->
+            composeTestRule
+                .onNodeWithTag("$HOME_DIAGNOSTICS_ROW_TAG-$conversationId")
+                .performScrollTo()
+                .assertIsDisplayed()
+        }
+        composeTestRule
+            .onNodeWithTag(HOME_DIAGNOSTICS_LINK_TAG)
+            .performScrollTo()
+            .performClick()
+        composeTestRule
+            .onNodeWithTag("$HOME_DIAGNOSTICS_ROW_TAG-2")
+            .performScrollTo()
+            .performClick()
+
+        assertEquals(true, seeAllClicked)
+        assertEquals("2", selectedConversationId)
+    }
 
 @Test
     fun tapping_ver_solicitud_invokes_onProposalClicked_with_the_proposal_id() {

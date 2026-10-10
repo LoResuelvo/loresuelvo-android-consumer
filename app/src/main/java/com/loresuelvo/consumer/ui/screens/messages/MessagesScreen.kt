@@ -9,11 +9,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,36 +37,94 @@ fun MessagesScreen(
     state: MessagesListUiState,
     onRetryClick: () -> Unit = {},
     onConversationClick: (conversationId: String) -> Unit = {},
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            // no longer consumes the top inset, so each
-            // bottom-nav screen must apply
-            // `statusBarsPadding()` itself.
             .statusBarsPadding()
             .testTag(MESSAGES_SCREEN_TAG),
-        contentAlignment = Alignment.Center,
     ) {
-        when (state) {
-            is MessagesListUiState.Loading -> LoadingState()
-            is MessagesListUiState.Ready -> {
-                if (state.conversations.isEmpty()) {
-                    EmptyState()
-                } else {
-                    ConversationsList(
-                        conversations = state.conversations,
-                        onConversationClick = onConversationClick,
+        Text(
+            text = stringResource(R.string.messages_screen_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+        )
+        MessagesSearchField(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            when (state) {
+                is MessagesListUiState.Loading -> LoadingState()
+                is MessagesListUiState.Ready -> {
+                    if (state.conversations.isEmpty()) {
+                        if (state.totalConversations > 0 && state.searchQuery.isNotBlank()) {
+                            SearchEmptyState()
+                        } else {
+                            EmptyState()
+                        }
+                    } else {
+                        ConversationsList(
+                            conversations = state.conversations,
+                            onConversationClick = onConversationClick,
+                        )
+                    }
+                }
+                is MessagesListUiState.Error -> ErrorState(
+                    failure = state.failure,
+                    onRetryClick = onRetryClick,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MessagesSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .testTag(MESSAGES_SEARCH_TAG),
+        singleLine = true,
+        placeholder = {
+            Text(text = stringResource(R.string.messages_search_placeholder))
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+            )
+        },
+        trailingIcon = if (query.isNotEmpty()) {
+            {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Clear,
+                        contentDescription = stringResource(
+                            R.string.messages_search_clear_content_description,
+                        ),
                     )
                 }
             }
-            is MessagesListUiState.Error -> ErrorState(
-                failure = state.failure,
-                onRetryClick = onRetryClick,
-            )
-        }
-    }
+        } else {
+            null
+        },
+    )
 }
 
 @Composable
@@ -105,6 +169,30 @@ private fun EmptyState() {
 }
 
 @Composable
+private fun SearchEmptyState() {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 32.dp)
+            .testTag(MESSAGES_SEARCH_EMPTY_TAG),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.messages_search_empty_title),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.messages_search_empty_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = SubtitleGray,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
 private fun ConversationsList(
     conversations: List<com.loresuelvo.consumer.domain.conversation.Conversation>,
     onConversationClick: (conversationId: String) -> Unit,
@@ -115,13 +203,14 @@ private fun ConversationsList(
             .testTag(MESSAGES_LIST_TAG),
         contentPadding = PaddingValues(vertical = 8.dp),
     ) {
-        items(
+        itemsIndexed(
             items = conversations,
-            key = { it.id },
-        ) { conversation ->
+            key = { _, conversation -> conversation.id },
+        ) { index, conversation ->
             ConversationRow(
                 conversation = conversation,
                 onClick = { onConversationClick(conversation.id) },
+                showDivider = index < conversations.lastIndex,
             )
         }
     }
@@ -175,6 +264,8 @@ private fun ErrorState(
 const val MESSAGES_SCREEN_TAG: String = "messages-screen"
 const val MESSAGES_LOADING_TAG: String = "messages-loading"
 const val MESSAGES_EMPTY_TAG: String = "messages-empty"
+const val MESSAGES_SEARCH_TAG: String = "messages-search"
+const val MESSAGES_SEARCH_EMPTY_TAG: String = "messages-search-empty"
 const val MESSAGES_LIST_TAG: String = "messages-list"
 const val MESSAGES_ERROR_TAG: String = "messages-error"
 const val MESSAGES_ERROR_RETRY_TAG: String = "messages-error-retry"

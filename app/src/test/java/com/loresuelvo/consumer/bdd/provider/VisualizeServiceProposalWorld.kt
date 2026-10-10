@@ -3,12 +3,14 @@ package com.loresuelvo.consumer.bdd.provider
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.bdd.diagnosis.FakeAiConversationRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.assistant.GetAiConversationsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
@@ -36,6 +38,7 @@ class VisualizeServiceProposalWorld : AutoCloseable {
     private val categoryRepo = FakeCategoryRepository()
     private val serviceProposalRepo = FakeServiceProposalRepository()
     private lateinit var turnosRepo: FakeTurnosRepository
+    private val aiConversationRepo = FakeAiConversationRepository()
     private lateinit var viewModel: HomeViewModel
 
     private val observedUiStates: MutableList<HomeUiState> = mutableListOf()
@@ -54,6 +57,7 @@ class VisualizeServiceProposalWorld : AutoCloseable {
             getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
             getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
             getTurnos = GetTurnosUseCase(turnosRepo),
+            getAiConversations = GetAiConversationsUseCase(aiConversationRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

@@ -3,10 +3,12 @@ package com.loresuelvo.consumer.bdd.home
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
+import com.loresuelvo.consumer.bdd.diagnosis.FakeAiConversationRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.assistant.GetAiConversationsUseCase
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetPendingServiceProposalsUseCase
@@ -35,6 +37,7 @@ class HomeWorld : AutoCloseable {
     private lateinit var categoryRepo: FakeCategoryRepository
     private lateinit var serviceProposalRepo: FakeServiceProposalRepository
     private lateinit var turnosRepo: FakeTurnosRepository
+    private lateinit var aiConversationRepo: FakeAiConversationRepository
     private lateinit var viewModel: HomeViewModel
 
     private val observedUiStates: MutableList<HomeUiState> = mutableListOf()
@@ -57,12 +60,14 @@ class HomeWorld : AutoCloseable {
         // Defaults to `Success(emptyList())` so the pre-existing
         serviceProposalRepo = FakeServiceProposalRepository(emptyList())
         turnosRepo = FakeTurnosRepository(emptyList())
+        aiConversationRepo = FakeAiConversationRepository()
 
         viewModel = HomeViewModel(
             getCategories = GetCategoriesUseCase(categoryRepo),
             getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepo),
             getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepo),
             getTurnos = GetTurnosUseCase(turnosRepo),
+            getAiConversations = GetAiConversationsUseCase(aiConversationRepo),
         )
 
         scope.launch(start = CoroutineStart.UNDISPATCHED) {

@@ -43,6 +43,9 @@ data class HomeScreenActions(
 
     data class Diagnostics(
         val onSend: () -> Unit = {},
+        val onSeeAll: () -> Unit = {},
+        val onConversationClick: (String) -> Unit = {},
+        val onRetry: () -> Unit = {},
     )
 
     data class Account(

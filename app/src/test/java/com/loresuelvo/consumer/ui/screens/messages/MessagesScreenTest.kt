@@ -19,6 +19,7 @@ import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_PENDING_TAG
+import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_DIVIDER_TAG
 import com.loresuelvo.consumer.ui.screens.messages.components.CONVERSATION_ROW_TAG
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -167,6 +168,47 @@ class MessagesScreenTest {
             .assertIsDisplayed()
         composeTestRule
             .onNodeWithText("Lucía Pérez")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun ready_state_with_list_renders_dividers_between_rows_only() {
+        composeTestRule.setContent {
+            MessagesScreen(
+                state = MessagesListUiState.Ready(
+                    conversations = listOf(
+                        conversation(id = "1"),
+                        conversation(id = "2"),
+                        conversation(id = "3"),
+                    ),
+                ),
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onAllNodesWithTag(CONVERSATION_ROW_DIVIDER_TAG, useUnmergedTree = true)
+            .assertCountEquals(2)
+    }
+
+    @Test
+    fun search_field_and_no_results_state_are_rendered_for_a_filtered_list() {
+        composeTestRule.setContent {
+            MessagesScreen(
+                state = MessagesListUiState.Ready(
+                    conversations = emptyList(),
+                    searchQuery = "Nadie",
+                    totalConversations = 2,
+                ),
+                searchQuery = "Nadie",
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule.onNodeWithTag(MESSAGES_SEARCH_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(MESSAGES_SEARCH_EMPTY_TAG).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithText(localizedString(R.string.messages_search_empty_title))
             .assertIsDisplayed()
     }
 

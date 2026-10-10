@@ -32,6 +32,7 @@ internal fun MessagesRoute(
     val viewModel: com.loresuelvo.consumer.ui.screens.messages.MessagesListViewModel =
         hiltViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -51,6 +52,8 @@ internal fun MessagesRoute(
     MessagesScreen(
         state = state,
         onRetryClick = viewModel::load,
+        searchQuery = searchQuery,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
         onConversationClick = { conversationId ->
             navController.navigate(Route.Conversation.buildPath(conversationId))
         },

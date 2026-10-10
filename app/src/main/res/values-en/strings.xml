@@ -109,6 +109,11 @@
     <string name="consumer_profile_notifications_settings">Notification settings</string>
     <string name="messages_screen_placeholder_title">Messages</string>
     <string name="messages_screen_placeholder_body">Your conversations with providers will appear here.</string>
+    <string name="messages_screen_title">My messages</string>
+    <string name="messages_search_placeholder">Search messages or providers</string>
+    <string name="messages_search_clear_content_description">Clear search</string>
+    <string name="messages_search_empty_title">No conversations found</string>
+    <string name="messages_search_empty_body">Try another name or message.</string>
     <string name="assistant_screen_placeholder_title">AI Assistant</string>
     <string name="assistant_screen_placeholder_body">Your sessions with the assistant will appear here.</string>
     <string name="assistant_screen_loading">Loading sessions…</string>
@@ -189,6 +194,7 @@
     <string name="home_section_categories">What do you need fixed?</string>
     <string name="home_section_categories_link">See all</string>
     <string name="home_section_diagnoses">Recent diagnoses</string>
+    <string name="home_section_diagnoses_link">See all sessions</string>
     <string name="home_diagnoses_empty">No recent diagnoses</string>
     <string name="home_diagnoses_empty_title">Try the AI diagnosis</string>
     <string name="home_diagnoses_empty_body">Tell us what\'s going on and we\'ll suggest the right professional. Takes 30 seconds.</string>

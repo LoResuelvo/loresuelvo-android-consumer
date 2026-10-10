@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -50,6 +52,7 @@ import com.loresuelvo.consumer.ui.theme.SubtitleGray
 fun ConversationRow(
     conversation: Conversation,
     onClick: () -> Unit,
+    showDivider: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val counterpartName = "${conversation.counterpart.name} ${conversation.counterpart.surname}"
@@ -60,54 +63,65 @@ fun ConversationRow(
     }
     val isPending = conversation.status is ConversationStatus.Pending
 
-    Row(
-        modifier = modifier
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-            .testTag(CONVERSATION_ROW_TAG),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        ProviderAvatar(
-            name = conversation.counterpart.name,
-            profilePhotoUrl = conversation.counterpart.profilePhotoUrl,
-        )
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .testTag(CONVERSATION_ROW_TAG),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            ProviderAvatar(
+                name = conversation.counterpart.name,
+                profilePhotoUrl = conversation.counterpart.profilePhotoUrl,
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = counterpartName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (conversation.counterpart.identityVerified) {
+                        ProviderVerificationBadge(
+                            testTag = "$CONVERSATION_ROW_TAG-verified",
+                        )
+                    }
+                    if (isPending) {
+                        Spacer(Modifier.width(8.dp))
+                        PendingBadge()
+                    }
+                }
+                Spacer(Modifier.size(2.dp))
                 Text(
-                    text = counterpartName,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    text = lastMessageText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SubtitleGray,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
                 )
-                if (conversation.counterpart.identityVerified) {
-                    ProviderVerificationBadge(
-                        testTag = "$CONVERSATION_ROW_TAG-verified",
-                    )
-                }
-                if (isPending) {
-                    Spacer(Modifier.width(8.dp))
-                    PendingBadge()
-                }
             }
-            Spacer(Modifier.size(2.dp))
+            Spacer(Modifier.width(8.dp))
             Text(
-                text = lastMessageText,
-                style = MaterialTheme.typography.bodyMedium,
+                text = formatConversationTimestamp(conversation.updatedOnEpochMillis),
+                style = MaterialTheme.typography.labelSmall,
                 color = SubtitleGray,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
             )
         }
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = formatConversationTimestamp(conversation.updatedOnEpochMillis),
-            style = MaterialTheme.typography.labelSmall,
-            color = SubtitleGray,
-        )
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier
+                    .padding(start = 78.dp)
+                    .testTag(CONVERSATION_ROW_DIVIDER_TAG),
+                color = MaterialTheme.colorScheme.outlineVariant,
+            )
+        }
     }
 }
 
@@ -140,6 +154,7 @@ private fun PendingBadge() {
  */
 const val CONVERSATION_ROW_TAG: String = "conversation-row"
 const val CONVERSATION_ROW_PENDING_TAG: String = "conversation-row-pending"
+const val CONVERSATION_ROW_DIVIDER_TAG: String = "conversation-row-divider"
 
 /**
  * Locale-aware timestamp formatter using `android.text.format.DateUtils`,

@@ -33,6 +33,7 @@ class MessagesListViewModelTest {
         id: String = "1",
         providerName: String = "Juan",
         providerSurname: String = "Gómez",
+        updatedOn: Long = 0L,
     ) = Conversation(
         id = id,
         status = ConversationStatus.Pending,
@@ -44,7 +45,7 @@ class MessagesListViewModelTest {
             profilePhotoUrl = null,
         ),
         lastMessage = null,
-        updatedOnEpochMillis = 0L,
+        updatedOnEpochMillis = updatedOn,
     )
 
     @Before
@@ -93,6 +94,38 @@ class MessagesListViewModelTest {
             emptyList<Conversation>(),
             (state as MessagesListUiState.Ready).conversations,
         )
+    }
+
+    @Test
+    fun success_sorts_by_latest_activity_and_search_filters_by_provider() = runTest {
+        coEvery { useCase() } returns ConversationsOutcome.Success(
+            listOf(
+                sampleConversation(
+                    id = "older",
+                    providerName = "Juan",
+                    updatedOn = 10L,
+                ),
+                sampleConversation(
+                    id = "newer",
+                    providerName = "Pedro",
+                    updatedOn = 20L,
+                ),
+            ),
+        )
+
+        viewModel = MessagesListViewModel(useCase)
+        advanceUntilIdle()
+        assertEquals(
+            listOf("newer", "older"),
+            (viewModel.uiState.value as MessagesListUiState.Ready).conversations.map { it.id },
+        )
+
+        viewModel.onSearchQueryChange("Pedro")
+
+        val filtered = viewModel.uiState.value as MessagesListUiState.Ready
+        assertEquals(listOf("newer"), filtered.conversations.map { it.id })
+        assertEquals(2, filtered.totalConversations)
+        assertEquals("Pedro", filtered.searchQuery)
     }
 
     @Test

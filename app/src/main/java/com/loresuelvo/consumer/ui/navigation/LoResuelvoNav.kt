@@ -403,7 +403,7 @@ private fun HomeRoute(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                homeViewModel.loadTurnos()
+                homeViewModel.refresh()
             }
         }
 
@@ -480,6 +480,11 @@ private fun HomeRoute(
             ),
             diagnostics = HomeScreenActions.Diagnostics(
                 onSend = { navController.navigate(Route.Chat.buildPath()) },
+                onSeeAll = { navController.navigate(Route.Assistant.path) },
+                onConversationClick = { conversationId ->
+                    navController.navigate(Route.Chat.buildPath(conversationId))
+                },
+                onRetry = homeViewModel::loadRecentAiConversations,
             ),
             account = HomeScreenActions.Account(
                 onLogout = { sessionViewModel.signOut(context) },

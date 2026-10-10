@@ -28,7 +28,11 @@ sealed interface MessagesListUiState {
 
     data object Loading : MessagesListUiState
 
-    data class Ready(val conversations: List<Conversation>) : MessagesListUiState
+    data class Ready(
+        val conversations: List<Conversation>,
+        val searchQuery: String = "",
+        val totalConversations: Int = conversations.size,
+    ) : MessagesListUiState
 
     data class Error(val failure: ConversationsOutcome.Failure) : MessagesListUiState
 }

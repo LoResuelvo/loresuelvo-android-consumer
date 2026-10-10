@@ -1,6 +1,8 @@
 package com.loresuelvo.consumer.ui.screens.home
 
 import com.loresuelvo.consumer.domain.category.Category
+import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
+import com.loresuelvo.consumer.domain.assistant.AiConversationListOutcome
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.turno.Turno
 
@@ -11,6 +13,7 @@ sealed interface HomeUiState {
     val upcomingServiceProposals: ServiceProposalsState
     val awaitingPaymentTurnos: TurnosState
     val turnos: TurnosState
+    val recentAiConversations: AiConversationsState
 
     data class Loading(
         override val categories: CategoriesState = CategoriesState.Loading,
@@ -18,6 +21,7 @@ sealed interface HomeUiState {
         override val upcomingServiceProposals: ServiceProposalsState = ServiceProposalsState.Loading,
         override val awaitingPaymentTurnos: TurnosState = TurnosState.Loading,
         override val turnos: TurnosState = TurnosState.Loading,
+        override val recentAiConversations: AiConversationsState = AiConversationsState.Loading,
     ) : HomeUiState
 
     data class Ready(
@@ -26,6 +30,7 @@ sealed interface HomeUiState {
         override val upcomingServiceProposals: ServiceProposalsState,
         override val awaitingPaymentTurnos: TurnosState,
         override val turnos: TurnosState,
+        override val recentAiConversations: AiConversationsState = AiConversationsState.Loading,
     ) : HomeUiState
 
     data class Error(
@@ -35,6 +40,7 @@ sealed interface HomeUiState {
         override val upcomingServiceProposals: ServiceProposalsState = ServiceProposalsState.Error,
         override val awaitingPaymentTurnos: TurnosState = TurnosState.Error,
         override val turnos: TurnosState = TurnosState.Error,
+        override val recentAiConversations: AiConversationsState = AiConversationsState.Loading,
     ) : HomeUiState
 }
 
@@ -54,4 +60,10 @@ sealed interface TurnosState {
     data object Loading : TurnosState
     data class Ready(val items: List<Turno>) : TurnosState
     data object Error : TurnosState
+}
+
+sealed interface AiConversationsState {
+    data object Loading : AiConversationsState
+    data class Ready(val items: List<AiConversationSummary>) : AiConversationsState
+    data class Error(val failure: AiConversationListOutcome.Failure) : AiConversationsState
 }

@@ -3,12 +3,16 @@ package com.loresuelvo.consumer.ui.screens.home
 import com.loresuelvo.consumer.domain.category.CategoriesOutcome
 import com.loresuelvo.consumer.domain.category.Category
 import com.loresuelvo.consumer.domain.category.CategoryRepository
+import com.loresuelvo.consumer.domain.assistant.AiConversationListOutcome
+import com.loresuelvo.consumer.domain.assistant.AiConversationRepository
+import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalCounterpart
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalRepository
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.category.GetCategoriesUseCase
+import com.loresuelvo.consumer.domain.usecase.assistant.GetAiConversationsUseCase
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoCounterpart
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
@@ -38,6 +42,7 @@ class HomeViewModelTest {
     private val categoryRepository = mockk<CategoryRepository>()
     private val serviceProposalRepository = mockk<ServiceProposalRepository>()
     private val turnosRepository = mockk<TurnosRepository>()
+    private val aiConversationRepository = mockk<AiConversationRepository>()
 
     @Before
     fun setUp() {
@@ -48,6 +53,8 @@ class HomeViewModelTest {
         // service-proposals stub pattern.
         coEvery { turnosRepository.getTurnos() } returns
             TurnosOutcome.Success(emptyList())
+        coEvery { aiConversationRepository.getConversations() } returns
+            AiConversationListOutcome.Success(emptyList())
     }
 
     @After
@@ -60,6 +67,7 @@ class HomeViewModelTest {
         getPendingServiceProposals = GetPendingServiceProposalsUseCase(serviceProposalRepository),
         getAcceptedServiceProposals = GetAcceptedServiceProposalsUseCase(serviceProposalRepository),
         getTurnos = GetTurnosUseCase(turnosRepository),
+        getAiConversations = GetAiConversationsUseCase(aiConversationRepository),
     )
 
     private fun pendingProposal(
@@ -299,6 +307,43 @@ class HomeViewModelTest {
         val ready = state as HomeUiState.Ready
         assertEquals(ServiceProposalsState.Error, ready.pendingServiceProposals)
         assertEquals(ServiceProposalsState.Error, ready.upcomingServiceProposals)
+    }
+
+    @Test
+    fun recent_ai_conversations_are_sorted_and_capped_at_three() = runTest {
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { aiConversationRepository.getConversations() } returns
+            AiConversationListOutcome.Success(
+                listOf(
+                    AiConversationSummary("old", "Old", 10L, "old preview"),
+                    AiConversationSummary("new", "New", 40L, "new preview"),
+                    AiConversationSummary("middle", "Middle", 30L, "middle preview"),
+                    AiConversationSummary("third", "Third", 20L, "third preview"),
+                ),
+            )
+
+        val state = buildViewModel().uiState.value as HomeUiState.Ready
+
+        val recent = state.recentAiConversations as AiConversationsState.Ready
+        assertEquals(listOf("new", "middle", "third"), recent.items.map { it.id })
+    }
+
+    @Test
+    fun recent_ai_conversations_failure_is_isolated_from_home_content() = runTest {
+        coEvery { categoryRepository.getCategories() } returns
+            CategoriesOutcome.Success(listOf(Category(id = 1, name = "Plomería")))
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(emptyList())
+        coEvery { aiConversationRepository.getConversations() } returns
+            AiConversationListOutcome.Failure.Server(503, "unavailable")
+
+        val state = buildViewModel().uiState.value as HomeUiState.Ready
+
+        assertTrue(state.categories is CategoriesState.Ready)
+        assertTrue(state.recentAiConversations is AiConversationsState.Error)
     }
 
     // ---- Mis Turnos section (visualize-turns.feature) ----
