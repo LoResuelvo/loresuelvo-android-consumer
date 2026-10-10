@@ -31,6 +31,12 @@ class AssistantViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<AssistantUiState>(AssistantUiState.Loading)
     val uiState: StateFlow<AssistantUiState> = _uiState.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    private var cachedConversations: List<com.loresuelvo.consumer.domain.assistant.AiConversationSummary> =
+        emptyList()
+
     init {
         load()
     }
@@ -43,7 +49,49 @@ class AssistantViewModel @Inject constructor(
         _uiState.update { AssistantUiState.Loading }
         viewModelScope.launch {
             val outcome = getConversations()
-            _uiState.update { outcome.toUiState() }
+            if (outcome is com.loresuelvo.consumer.domain.assistant.AiConversationListOutcome.Success) {
+                cachedConversations = outcome.conversations
+                    .sortedByDescending { it.lastMessageAtEpochMillis }
+                _uiState.update { filteredState(cachedConversations, _searchQuery.value) }
+            } else {
+                _uiState.update { outcome.toUiState() }
+            }
+        }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+        _uiState.update { current ->
+            if (current is AssistantUiState.Ready) {
+                filteredState(cachedConversations, query)
+            } else {
+                current
+            }
+        }
+    }
+
+    private fun filteredState(
+        conversations: List<com.loresuelvo.consumer.domain.assistant.AiConversationSummary>,
+        query: String,
+    ): AssistantUiState {
+        val normalizedQuery = query.trim()
+        val filtered = if (normalizedQuery.isBlank()) {
+            conversations
+        } else {
+            conversations.filter { conversation ->
+                conversation.title.contains(normalizedQuery, ignoreCase = true) ||
+                    conversation.lastMessagePreview.orEmpty()
+                        .contains(normalizedQuery, ignoreCase = true)
+            }
+        }
+        return if (filtered.isEmpty() && conversations.isEmpty()) {
+            AssistantUiState.Empty
+        } else {
+            AssistantUiState.Ready(
+                conversations = filtered,
+                searchQuery = query,
+                totalConversations = conversations.size,
+            )
         }
     }
 }

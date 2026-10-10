@@ -2,9 +2,13 @@ package com.loresuelvo.consumer.ui.screens.assistant
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.test.core.app.ApplicationProvider
+import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.assistant.AiConversationSummary
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import org.junit.Rule
@@ -103,5 +107,32 @@ class AssistantScreenRowTest {
         composeTestRule
             .onAllNodesWithTag("$ASSISTANT_ROW_PREVIEW_TAG-2", useUnmergedTree = true)
             .assertCountEquals(0)
+    }
+
+    @Test
+    fun diagnostics_screen_renders_title_search_and_search_empty_state() {
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                AssistantScreen(
+                    state = AssistantUiState.Ready(
+                        conversations = emptyList(),
+                        searchQuery = "electricidad",
+                        totalConversations = 2,
+                    ),
+                    searchQuery = "electricidad",
+                    onRetryClick = {},
+                    onConversationClick = {},
+                )
+            }
+        }
+
+        composeTestRule
+            .onNodeWithText(
+                ApplicationProvider.getApplicationContext<android.content.Context>()
+                    .getString(R.string.assistant_screen_title),
+            )
+            .assertIsDisplayed()
+        composeTestRule.onNodeWithTag(ASSISTANT_SEARCH_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(ASSISTANT_SEARCH_EMPTY_TAG).assertIsDisplayed()
     }
 }

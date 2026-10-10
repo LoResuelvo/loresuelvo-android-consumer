@@ -11,12 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Clear
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -65,34 +72,60 @@ fun AssistantScreen(
     state: AssistantUiState,
     onRetryClick: () -> Unit,
     onConversationClick: (conversationId: String) -> Unit,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            // no longer consumes the top inset, so each
-            // bottom-nav screen must apply
-            // `statusBarsPadding()` itself.
             .statusBarsPadding()
             .testTag(ASSISTANT_SCREEN_TAG),
-        contentAlignment = Alignment.Center,
     ) {
-        when (state) {
-            is AssistantUiState.Loading -> LoadingState()
-            is AssistantUiState.Empty -> EmptyState()
-            is AssistantUiState.Ready -> ConversationsList(
-                conversations = state.conversations,
-                onConversationClick = onConversationClick,
-            )
-            is AssistantUiState.Failure -> ErrorState(
-                failure = state,
-                onRetryClick = onRetryClick,
-            )
+        Text(
+            text = stringResource(R.string.assistant_screen_title),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+        )
+        AssistantSearchField(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+        )
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .weight(1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            when (state) {
+                is AssistantUiState.Loading -> LoadingState()
+                is AssistantUiState.Empty -> EmptyState()
+                is AssistantUiState.Ready -> {
+                    if (state.conversations.isEmpty() &&
+                        state.totalConversations > 0 &&
+                        state.searchQuery.isNotBlank()
+                    ) {
+                        SearchEmptyState()
+                    } else {
+                        ConversationsList(
+                            conversations = state.conversations,
+                            onConversationClick = onConversationClick,
+                        )
+                    }
+                }
+                is AssistantUiState.Failure -> ErrorState(
+                    failure = state,
+                    onRetryClick = onRetryClick,
+                )
+            }
         }
     }
 }
 
 const val ASSISTANT_SCREEN_TAG: String = "assistant-screen"
+const val ASSISTANT_SEARCH_TAG: String = "assistant-search"
+const val ASSISTANT_SEARCH_EMPTY_TAG: String = "assistant-search-empty"
 const val ASSISTANT_LOADING_TAG: String = "assistant-screen-loading"
 const val ASSISTANT_EMPTY_TAG: String = "assistant-screen-empty"
 const val ASSISTANT_LIST_TAG: String = "assistant-screen-list"
@@ -121,6 +154,46 @@ private fun LoadingState() {
 }
 
 @Composable
+private fun AssistantSearchField(
+    query: String,
+    onQueryChange: (String) -> Unit,
+) {
+    OutlinedTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .testTag(ASSISTANT_SEARCH_TAG),
+        shape = RoundedCornerShape(28.dp),
+        singleLine = true,
+        placeholder = {
+            Text(text = stringResource(R.string.assistant_search_placeholder))
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+            )
+        },
+        trailingIcon = if (query.isNotEmpty()) {
+            {
+                IconButton(onClick = { onQueryChange("") }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Clear,
+                        contentDescription = stringResource(
+                            R.string.assistant_search_clear_content_description,
+                        ),
+                    )
+                }
+            }
+        } else {
+            null
+        },
+    )
+}
+
+@Composable
 private fun EmptyState() {
     Column(
         modifier = Modifier
@@ -139,6 +212,32 @@ private fun EmptyState() {
         )
         Text(
             text = stringResource(R.string.assistant_screen_empty_body),
+            style = MaterialTheme.typography.bodyMedium,
+            color = SubtitleGray,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun SearchEmptyState() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .testTag(ASSISTANT_SEARCH_EMPTY_TAG),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.assistant_search_empty_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = stringResource(R.string.assistant_search_empty_body),
             style = MaterialTheme.typography.bodyMedium,
             color = SubtitleGray,
             textAlign = TextAlign.Center,

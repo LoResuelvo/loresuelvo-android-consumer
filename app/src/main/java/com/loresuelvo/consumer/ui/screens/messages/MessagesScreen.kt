@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
@@ -100,6 +101,7 @@ private fun MessagesSearchField(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .testTag(MESSAGES_SEARCH_TAG),
+        shape = RoundedCornerShape(28.dp),
         singleLine = true,
         placeholder = {
             Text(text = stringResource(R.string.messages_search_placeholder))

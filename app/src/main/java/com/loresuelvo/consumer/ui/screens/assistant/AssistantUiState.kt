@@ -31,6 +31,8 @@ sealed interface AssistantUiState {
 
     data class Ready(
         val conversations: List<AiConversationSummary>,
+        val searchQuery: String = "",
+        val totalConversations: Int = conversations.size,
     ) : AssistantUiState
 
     data object Empty : AssistantUiState

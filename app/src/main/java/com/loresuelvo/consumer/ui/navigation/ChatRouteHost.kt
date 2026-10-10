@@ -66,6 +66,7 @@ internal fun AssistantRoute(
 ) {
     val viewModel: AssistantViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {
@@ -85,6 +86,8 @@ internal fun AssistantRoute(
     AssistantScreen(
         state = state,
         onRetryClick = viewModel::retry,
+        searchQuery = searchQuery,
+        onSearchQueryChange = viewModel::onSearchQueryChange,
         onConversationClick = { conversationId ->
             navController.navigate(Route.Chat.buildPath(conversationId = conversationId))
         },

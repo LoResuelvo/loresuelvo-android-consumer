@@ -114,6 +114,11 @@
     <string name="messages_search_empty_body">Probá con otro nombre o mensaje.</string>
     <string name="assistant_screen_placeholder_title">Asistente IA</string>
     <string name="assistant_screen_placeholder_body">Tus sesiones con el asistente aparecerán acá.</string>
+    <string name="assistant_screen_title">Mis diagnósticos</string>
+    <string name="assistant_search_placeholder">Buscar diagnósticos</string>
+    <string name="assistant_search_clear_content_description">Limpiar búsqueda</string>
+    <string name="assistant_search_empty_title">No encontramos diagnósticos</string>
+    <string name="assistant_search_empty_body">Probá con otro título o mensaje.</string>
     <string name="assistant_screen_loading">Cargando sesiones…</string>
     <string name="assistant_screen_empty_title">Aún no tenés sesiones con la IA</string>
     <string name="assistant_screen_empty_body">Cuando le preguntes algo al asistente, va a aparecer acá.</string>
@@ -192,7 +197,7 @@
     <string name="home_section_categories">¿Qué necesitás arreglar?</string>
     <string name="home_section_categories_link">Ver todas</string>
     <string name="home_section_diagnoses">Diagnósticos recientes</string>
-    <string name="home_section_diagnoses_link">Ver todas las sesiones</string>
+    <string name="home_section_diagnoses_link">Ver todos</string>
     <string name="home_diagnoses_empty">Sin diagnósticos recientes</string>
     <string name="home_diagnoses_empty_title">Probá el diagnóstico con IA</string>
     <string name="home_diagnoses_empty_body">Contale qué te pasa y te decimos qué tipo de profesional necesitás. Tarda 30 segundos.</string>

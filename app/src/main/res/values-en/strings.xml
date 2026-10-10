@@ -116,6 +116,11 @@
     <string name="messages_search_empty_body">Try another name or message.</string>
     <string name="assistant_screen_placeholder_title">AI Assistant</string>
     <string name="assistant_screen_placeholder_body">Your sessions with the assistant will appear here.</string>
+    <string name="assistant_screen_title">My diagnoses</string>
+    <string name="assistant_search_placeholder">Search diagnoses</string>
+    <string name="assistant_search_clear_content_description">Clear search</string>
+    <string name="assistant_search_empty_title">No diagnoses found</string>
+    <string name="assistant_search_empty_body">Try another title or message.</string>
     <string name="assistant_screen_loading">Loading sessions…</string>
     <string name="assistant_screen_empty_title">No AI sessions yet</string>
     <string name="assistant_screen_empty_body">When you ask the assistant something, it\'ll appear here.</string>
@@ -194,7 +199,7 @@
     <string name="home_section_categories">What do you need fixed?</string>
     <string name="home_section_categories_link">See all</string>
     <string name="home_section_diagnoses">Recent diagnoses</string>
-    <string name="home_section_diagnoses_link">See all sessions</string>
+    <string name="home_section_diagnoses_link">See all</string>
     <string name="home_diagnoses_empty">No recent diagnoses</string>
     <string name="home_diagnoses_empty_title">Try the AI diagnosis</string>
     <string name="home_diagnoses_empty_body">Tell us what\'s going on and we\'ll suggest the right professional. Takes 30 seconds.</string>
