@@ -5,11 +5,13 @@ import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performTextInput
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -118,6 +120,28 @@ class CompleteProfileScreenTest {
         composeTestRule.onNodeWithTag("first-name").performTextInput("Andres")
 
         assertEquals(CompleteProfileAction.FirstNameChanged("Andres"), action)
+    }
+
+    @Test
+    fun ime_next_moves_focus_through_profile_fields() {
+        setProfileContent(state = completeState())
+
+        composeTestRule.onNodeWithTag("first-name").performClick().performImeAction()
+        composeTestRule.onNodeWithTag("last-name").assertIsFocused()
+
+        composeTestRule.onNodeWithTag("last-name").performImeAction()
+        composeTestRule.onNodeWithTag("street").assertIsFocused()
+
+        composeTestRule.onNodeWithTag("street").performImeAction()
+        composeTestRule.onNodeWithTag("street-number").assertIsFocused()
+
+        composeTestRule.onNodeWithTag("street-number").performImeAction()
+        composeTestRule.onNodeWithTag("floor").assertIsFocused()
+
+        composeTestRule.onNodeWithTag("floor").performImeAction()
+        composeTestRule.onNodeWithTag("unit").assertIsFocused()
+
+        composeTestRule.onNodeWithTag("unit").performImeAction()
     }
 
     @Test

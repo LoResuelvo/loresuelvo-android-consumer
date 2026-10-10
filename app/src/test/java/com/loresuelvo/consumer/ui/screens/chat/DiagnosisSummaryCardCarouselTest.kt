@@ -50,6 +50,7 @@ class DiagnosisSummaryCardCarouselTest {
             categoryId = 1,
             categoryName = "Plomería",
             profilePhotoUrl = null,
+            identityVerified = true,
         ),
         Provider(
             id = 2,
@@ -133,6 +134,27 @@ class DiagnosisSummaryCardCarouselTest {
                 useUnmergedTree = true,
             )
             .assertCountEquals(1)
+    }
+
+    @Test
+    fun verified_provider_card_displays_the_verification_badge() {
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                Box {
+                    DiagnosisSummaryCard(
+                        categoryName = "Plomería",
+                        providers = providers(),
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onNodeWithTag("$CHAT_DIAGNOSIS_PROVIDER_ROW_TAG-1-verified")
+            .assertIsDisplayed()
+        composeTestRule
+            .onAllNodesWithTag("$CHAT_DIAGNOSIS_PROVIDER_ROW_TAG-2-verified")
+            .assertCountEquals(0)
     }
 
     @Test

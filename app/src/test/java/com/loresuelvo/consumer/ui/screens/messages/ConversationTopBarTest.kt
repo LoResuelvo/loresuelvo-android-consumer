@@ -214,4 +214,64 @@ class ConversationTopBarTest {
             .performClick()
         org.junit.Assert.assertTrue(clicked)
     }
+
+    @Test
+    fun tapping_provider_avatar_opens_the_provider_profile() {
+        var selectedProviderId: Long? = null
+        val counterpart = ConversationCounterpart(
+            id = 42L,
+            name = "Juan",
+            surname = "Pérez",
+            categoryName = "Plomería",
+            profilePhotoUrl = null,
+            identityVerified = true,
+        )
+
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                Surface {
+                    ConversationTopBar(
+                        counterpart = counterpart,
+                        status = ConversationStatus.Other("accepted"),
+                        onBackClick = {},
+                        onViewProviderProfile = { selectedProviderId = counterpart.id },
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onNodeWithTag(PROVIDER_AVATAR_TAG)
+            .performClick()
+
+        org.junit.Assert.assertEquals(42L, selectedProviderId)
+    }
+
+    @Test
+    fun header_displays_verification_badge_for_verified_provider() {
+        val counterpart = ConversationCounterpart(
+            id = 42L,
+            name = "Juan",
+            surname = "Pérez",
+            categoryName = "Plomería",
+            profilePhotoUrl = null,
+            identityVerified = true,
+        )
+
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                Surface {
+                    ConversationTopBar(
+                        counterpart = counterpart,
+                        status = ConversationStatus.Other("accepted"),
+                        onBackClick = {},
+                    )
+                }
+            }
+        }
+
+        composeTestRule
+            .onNodeWithTag("conversation-top-bar-provider-avatar-verified")
+            .assertIsDisplayed()
+    }
 }

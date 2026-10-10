@@ -30,6 +30,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import androidx.activity.compose.BackHandler
@@ -171,12 +172,20 @@ private fun ReadyState(
             Column(
                 modifier = Modifier.weight(1f),
             ) {
-                Text(
-                    text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (proposal.counterpart.identityVerified) {
+                        ProviderVerificationBadge()
+                    }
+                }
 
                 Text(
                     text = proposal.counterpart.categoryName,

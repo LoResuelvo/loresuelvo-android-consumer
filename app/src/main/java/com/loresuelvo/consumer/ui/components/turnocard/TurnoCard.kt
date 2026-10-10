@@ -23,6 +23,7 @@ import androidx.compose.foundation.clickable
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.turno.Turno
 import com.loresuelvo.consumer.domain.turno.TurnoStatus
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
@@ -57,12 +58,20 @@ fun TurnoCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(
-                    text = "${turno.counterpart.name} ${turno.counterpart.surname}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "${turno.counterpart.name} ${turno.counterpart.surname}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (turno.counterpart.identityVerified) {
+                        ProviderVerificationBadge()
+                    }
+                }
                 Text(
                     text = turno.counterpart.categoryName,
                     style = MaterialTheme.typography.bodySmall,

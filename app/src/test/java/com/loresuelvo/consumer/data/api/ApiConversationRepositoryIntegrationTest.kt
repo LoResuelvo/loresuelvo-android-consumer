@@ -132,12 +132,52 @@ class ApiConversationRepositoryIntegrationTest {
                     """.trimIndent(),
                 ),
         )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 20,
+                      "name": "Juan",
+                      "surname": "Gómez",
+                      "category": {"id": 1, "name": "Plomería"},
+                      "rating_average": 0.0,
+                      "rating_count": 0,
+                      "identity_verified": true,
+                      "work_orders": []
+                    }
+                    """.trimIndent(),
+                ),
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 30,
+                      "name": "Pedro",
+                      "surname": "Dib",
+                      "category": {"id": 1, "name": "Plomería"},
+                      "rating_average": 0.0,
+                      "rating_count": 0,
+                      "identity_verified": false,
+                      "work_orders": []
+                    }
+                    """.trimIndent(),
+                ),
+        )
 
         val outcome = repository.getConversations()
 
         val recorded = server.takeRequest()
         assertEquals("GET", recorded.method)
         assertEquals("/conversations", recorded.path)
+        assertEquals("/providers/20", server.takeRequest().path)
+        assertEquals("/providers/30", server.takeRequest().path)
 
         assertTrue(outcome is ConversationsOutcome.Success)
         val success = outcome as ConversationsOutcome.Success
@@ -154,6 +194,7 @@ class ApiConversationRepositoryIntegrationTest {
                 surname = "Gómez",
                 categoryName = "Plomería",
                 profilePhotoUrl = "https://cdn.example/juan.jpg",
+                identityVerified = true,
             ),
             first.counterpart,
         )
@@ -283,12 +324,32 @@ class ApiConversationRepositoryIntegrationTest {
                     """.trimIndent(),
                 ),
         )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody(
+                    """
+                    {
+                      "id": 56,
+                      "name": "Florencia",
+                      "surname": "Vega",
+                      "category": {"id": 2, "name": "Electricidad"},
+                      "rating_average": 0.0,
+                      "rating_count": 0,
+                      "identity_verified": true,
+                      "work_orders": []
+                    }
+                    """.trimIndent(),
+                ),
+        )
 
         val outcome = repository.getConversationById("4")
 
         val recorded = server.takeRequest()
         assertEquals("GET", recorded.method)
         assertEquals("/conversations/4", recorded.path)
+        assertEquals("/providers/56", server.takeRequest().path)
 
         assertTrue(outcome is ConversationDetailOutcome.Success)
         val detail = (outcome as ConversationDetailOutcome.Success).detail
@@ -303,6 +364,7 @@ class ApiConversationRepositoryIntegrationTest {
                 surname = "Vega",
                 categoryName = "Electricidad",
                 profilePhotoUrl = "http://example/flor.jpg",
+                identityVerified = true,
             ),
             detail.counterpart,
         )

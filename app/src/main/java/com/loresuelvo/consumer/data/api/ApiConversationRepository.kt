@@ -4,6 +4,8 @@ import android.util.Log
 import com.loresuelvo.consumer.data.api.dto.SendMessageRequestDto
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.domain.api.ApiError
+import com.loresuelvo.consumer.domain.conversation.Conversation
+import com.loresuelvo.consumer.domain.conversation.ConversationDetail
 import com.loresuelvo.consumer.domain.conversation.ConversationDetailOutcome
 import com.loresuelvo.consumer.domain.conversation.ConversationRepository
 import com.loresuelvo.consumer.domain.conversation.ConversationsOutcome
@@ -55,7 +57,7 @@ class ApiConversationRepository @Inject constructor(
 
     override suspend fun getConversations(): ConversationsOutcome = try {
         val dtos = backendApi.getConversations()
-        ConversationsOutcome.Success(dtos.map { it.toDomain() })
+        ConversationsOutcome.Success(dtos.map { it.toDomainWithProviderVerification() })
     } catch (t: Throwable) {
         mapConversationsFailure(t)
     }
@@ -64,10 +66,50 @@ class ApiConversationRepository @Inject constructor(
         conversationId: String,
     ): ConversationDetailOutcome = try {
         val dto = backendApi.getConversationById(conversationId)
-        ConversationDetailOutcome.Success(dto.toDomain())
+        ConversationDetailOutcome.Success(dto.toDomainWithProviderVerification())
     } catch (t: Throwable) {
         mapDetailFailure(t)
     }
+
+    private suspend fun com.loresuelvo.consumer.data.api.dto.ConversationDto
+        .toDomainWithProviderVerification(): Conversation {
+        val conversation = toDomain()
+        if (counterpart.identityVerified != null || counterpart.role?.isProvider() != true) {
+            return conversation
+        }
+
+        val identityVerified = loadProviderVerification(counterpart.id)
+        return conversation.copy(
+            counterpart = conversation.counterpart.copy(
+                identityVerified = identityVerified,
+            ),
+        )
+    }
+
+    private suspend fun com.loresuelvo.consumer.data.api.dto.ConversationDetailDto
+        .toDomainWithProviderVerification(): ConversationDetail {
+        val conversation = toDomain()
+        val counterpartDto = work?.counterpart ?: counterpart
+        if (counterpartDto == null ||
+            counterpartDto.identityVerified != null ||
+            counterpartDto.role?.isProvider() != true
+        ) {
+            return conversation
+        }
+
+        val identityVerified = loadProviderVerification(counterpartDto.id)
+        return conversation.copy(
+            counterpart = conversation.counterpart.copy(
+                identityVerified = identityVerified,
+            ),
+        )
+    }
+
+    private suspend fun loadProviderVerification(providerId: Long): Boolean =
+        runCatching { backendApi.getProviderProfile(providerId.toInt()).identityVerified }
+            .getOrDefault(false)
+
+    private fun String.isProvider(): Boolean = equals("provider", ignoreCase = true)
 
     override suspend fun sendMessage(
         conversationId: String,

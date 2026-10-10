@@ -71,6 +71,8 @@
     <string name="professionals_error_title">We couldn\'t load the professionals</string>
     <string name="professionals_error_body">Check your connection and try again.</string>
     <string name="professionals_retry">Retry</string>
+    <string name="provider_verified_badge_label">Verified</string>
+    <string name="provider_verified_badge_content_description">Verified provider</string>
     <string name="provider_photo_content_description">%1$s\'s profile photo</string>
     <string name="bottom_nav_mensajes">Messages</string>
     <string name="bottom_nav_inicio">Home</string>
@@ -127,6 +129,7 @@
     <string name="messages_screen_no_preview">(No messages yet)</string>
     <string name="messages_screen_video_preview">Video</string>
     <string name="conversation_top_bar_back_content_description">Back</string>
+    <string name="conversation_top_bar_provider_profile_content_description">View provider profile</string>
     <string name="conversation_top_bar_view_work_order_content_description">View work order</string>
     <string name="conversation_input_placeholder">Write a message…</string>
     <string name="conversation_loading">Loading conversation…</string>

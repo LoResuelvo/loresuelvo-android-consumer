@@ -2,6 +2,8 @@ package com.loresuelvo.consumer.ui.screens.profile.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -9,8 +11,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.ui.components.inputs.PrimaryTextField
@@ -35,6 +40,12 @@ fun ProfileForm(
     onAction: (CompleteProfileAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val focusManager = LocalFocusManager.current
+    val nextFieldKeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+    val nextFieldKeyboardActions = KeyboardActions(
+        onNext = { focusManager.moveFocus(FocusDirection.Down) },
+    )
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -47,6 +58,8 @@ fun ProfileForm(
                 label = stringResource(R.string.complete_profile_field_first_name),
                 onValueChange = { onAction(CompleteProfileAction.FirstNameChanged(it)) },
                 testTag = "first-name",
+                keyboardOptions = nextFieldKeyboardOptions,
+                keyboardActions = nextFieldKeyboardActions,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -56,6 +69,8 @@ fun ProfileForm(
                 label = stringResource(R.string.complete_profile_field_last_name),
                 onValueChange = { onAction(CompleteProfileAction.LastNameChanged(it)) },
                 testTag = "last-name",
+                keyboardOptions = nextFieldKeyboardOptions,
+                keyboardActions = nextFieldKeyboardActions,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -65,6 +80,8 @@ fun ProfileForm(
                 label = stringResource(R.string.complete_profile_field_street),
                 onValueChange = { onAction(CompleteProfileAction.StreetChanged(it)) },
                 testTag = "street",
+                keyboardOptions = nextFieldKeyboardOptions,
+                keyboardActions = nextFieldKeyboardActions,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -74,6 +91,8 @@ fun ProfileForm(
                 label = stringResource(R.string.complete_profile_field_street_number),
                 onValueChange = { onAction(CompleteProfileAction.StreetNumberChanged(it)) },
                 testTag = "street-number",
+                keyboardOptions = nextFieldKeyboardOptions,
+                keyboardActions = nextFieldKeyboardActions,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -83,6 +102,8 @@ fun ProfileForm(
                 label = stringResource(R.string.complete_profile_field_floor),
                 onValueChange = { onAction(CompleteProfileAction.FloorChanged(it)) },
                 testTag = "floor",
+                keyboardOptions = nextFieldKeyboardOptions,
+                keyboardActions = nextFieldKeyboardActions,
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -92,6 +113,10 @@ fun ProfileForm(
                 label = stringResource(R.string.complete_profile_field_unit),
                 onValueChange = { onAction(CompleteProfileAction.UnitChanged(it)) },
                 testTag = "unit",
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() },
+                ),
             )
         }
     }

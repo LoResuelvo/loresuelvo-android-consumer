@@ -49,6 +49,7 @@ internal fun TurnosRoute(
                     surname = counterpart.surname,
                     categoryName = counterpart.categoryName,
                     profilePhotoUrl = counterpart.profilePhotoUrl,
+                    identityVerified = counterpart.identityVerified,
                 )
             }
             navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))

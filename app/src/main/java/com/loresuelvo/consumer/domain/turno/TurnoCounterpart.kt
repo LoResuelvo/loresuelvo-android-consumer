@@ -6,4 +6,5 @@ data class TurnoCounterpart(
     val surname: String,
     val categoryName: String,
     val profilePhotoUrl: String?,
+    val identityVerified: Boolean = false,
 )

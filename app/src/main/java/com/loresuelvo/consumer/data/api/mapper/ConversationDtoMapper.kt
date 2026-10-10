@@ -68,6 +68,7 @@ internal fun ConversationCounterpartDto.toDomain(): ConversationCounterpart =
         // not uploaded a photo; the UI falls back to an initial
         // avatar (see `ProviderAvatar`).
         profilePhotoUrl = profilePhotoUrl?.takeIf { it.isNotBlank() },
+        identityVerified = identityVerified == true,
     )
 
 internal fun ConversationMessageDto.toDomain(): ConversationMessage {

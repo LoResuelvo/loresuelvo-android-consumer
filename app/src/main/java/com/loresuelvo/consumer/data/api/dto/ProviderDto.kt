@@ -39,4 +39,5 @@ data class ProviderDto(
     @SerialName("category_name") val categoryName: String,
     @SerialName("category_id") val categoryId: Int? = null,
     @SerialName("profile_photo_url") val profilePhotoUrl: String? = null,
+    @SerialName("identity_verified") val identityVerified: Boolean = false,
 )

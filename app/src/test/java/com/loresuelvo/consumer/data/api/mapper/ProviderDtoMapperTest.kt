@@ -24,6 +24,7 @@ class ProviderDtoMapperTest {
             categoryName = "Electricidad",
             categoryId = null,
             profilePhotoUrl = "http://x/p1.webp",
+            identityVerified = true,
         )
 
         val provider = dto.toDomain(categoryId = 2)
@@ -34,6 +35,7 @@ class ProviderDtoMapperTest {
         assertEquals(2, provider.categoryId)
         assertEquals("Electricidad", provider.categoryName)
         assertEquals("http://x/p1.webp", provider.profilePhotoUrl)
+        assertEquals(true, provider.identityVerified)
     }
 
     @Test

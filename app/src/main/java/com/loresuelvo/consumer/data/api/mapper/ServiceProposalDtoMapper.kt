@@ -60,6 +60,7 @@ internal fun ServiceProposalCounterpartDto.toDomain(): ServiceProposalCounterpar
         surname = surname,
         categoryName = categoryName,
         profilePhotoUrl = profilePhotoUrl,
+        identityVerified = identityVerified,
     )
 
 internal fun List<ServiceProposalDto>.toDomain(): List<ServiceProposal> =

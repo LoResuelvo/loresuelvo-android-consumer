@@ -23,4 +23,5 @@ data class Provider(
     val categoryId: Int,
     val categoryName: String,
     val profilePhotoUrl: String?,
+    val identityVerified: Boolean = false,
 )

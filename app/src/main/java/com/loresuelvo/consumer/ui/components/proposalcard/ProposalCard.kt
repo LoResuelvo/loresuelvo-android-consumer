@@ -27,6 +27,7 @@ import androidx.compose.foundation.BorderStroke
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
@@ -61,12 +62,20 @@ fun ProposalCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                Text(
-                    text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontWeight = FontWeight.SemiBold,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    if (proposal.counterpart.identityVerified) {
+                        ProviderVerificationBadge()
+                    }
+                }
                 Text(
                     text = proposal.counterpart.categoryName,
                     style = MaterialTheme.typography.bodySmall,

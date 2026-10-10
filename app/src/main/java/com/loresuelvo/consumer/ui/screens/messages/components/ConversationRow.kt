@@ -26,6 +26,7 @@ import com.loresuelvo.consumer.domain.conversation.Conversation
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
 /**
@@ -82,6 +83,11 @@ fun ConversationRow(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+                if (conversation.counterpart.identityVerified) {
+                    ProviderVerificationBadge(
+                        testTag = "$CONVERSATION_ROW_TAG-verified",
+                    )
+                }
                 if (isPending) {
                     Spacer(Modifier.width(8.dp))
                     PendingBadge()

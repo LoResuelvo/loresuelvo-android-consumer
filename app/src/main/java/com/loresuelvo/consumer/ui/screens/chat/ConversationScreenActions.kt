@@ -15,6 +15,7 @@ data class ConversationScreenActions(
     data class Navigation(
         val onBack: () -> Unit = {},
         val onViewWorkOrder: ((String) -> Unit)? = null,
+        val onViewProviderProfile: ((Long) -> Unit)? = null,
     )
 
     data class Composer(

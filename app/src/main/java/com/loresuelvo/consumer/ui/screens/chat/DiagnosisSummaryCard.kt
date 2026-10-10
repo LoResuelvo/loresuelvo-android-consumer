@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
 /**
@@ -215,17 +216,29 @@ private fun RecommendedProviderCard(
                 testTag = "$CHAT_DIAGNOSIS_PROVIDER_ROW_TAG-${provider.id}-avatar",
                 size = 40.dp,
             )
-            Text(
-                text = "${provider.name} ${provider.surname}".trim(),
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.testTag(
-                    "$CHAT_DIAGNOSIS_PROVIDER_NAME_TAG-${provider.id}",
-                ),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "${provider.name} ${provider.surname}".trim(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(
+                            "$CHAT_DIAGNOSIS_PROVIDER_NAME_TAG-${provider.id}",
+                        ),
+                )
+                if (provider.identityVerified) {
+                    ProviderVerificationBadge(
+                        testTag = "$CHAT_DIAGNOSIS_PROVIDER_ROW_TAG-${provider.id}-verified",
+                    )
+                }
+            }
             Spacer(Modifier.height(2.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),

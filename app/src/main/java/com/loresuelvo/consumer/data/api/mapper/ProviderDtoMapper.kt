@@ -27,6 +27,7 @@ internal fun ProviderDto.toDomain(categoryId: Int): Provider = Provider(
     categoryId = categoryId,
     categoryName = categoryName,
     profilePhotoUrl = profilePhotoUrl,
+    identityVerified = identityVerified,
 )
 
 internal fun List<ProviderDto>.toDomain(categoryId: Int): List<Provider> =

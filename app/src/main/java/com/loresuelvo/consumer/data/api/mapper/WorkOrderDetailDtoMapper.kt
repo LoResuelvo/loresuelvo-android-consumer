@@ -45,6 +45,7 @@ internal fun WorkOrderDetailCounterpartDto.toDomain(): WorkOrderDetailCounterpar
         surname = surname,
         categoryName = categoryName,
         profilePhotoUrl = profilePhotoUrl,
+        identityVerified = identityVerified,
     )
 
 internal fun CompletionReportDto.toDomain(): CompletionReport =

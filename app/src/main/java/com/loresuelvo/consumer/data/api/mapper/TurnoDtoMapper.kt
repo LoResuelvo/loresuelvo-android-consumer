@@ -31,6 +31,7 @@ internal fun TurnoCounterpartDto.toDomain(): TurnoCounterpart =
         surname = surname,
         categoryName = categoryName,
         profilePhotoUrl = profilePhotoUrl,
+        identityVerified = identityVerified,
     )
 
 internal fun List<TurnoDto>.toDomain(): List<Turno> = mapNotNull { it.toDomain() }

@@ -74,6 +74,7 @@ class MessagesScreenTest {
         lastMessageSender: ConversationSender = ConversationSender.Consumer,
         lastMessageMedia: MediaReference? = null,
         updatedOn: Long = System.currentTimeMillis(),
+        identityVerified: Boolean = false,
     ) = Conversation(
         id = id,
         status = status,
@@ -83,6 +84,7 @@ class MessagesScreenTest {
             surname = providerSurname,
             categoryName = "Plomería",
             profilePhotoUrl = null,
+            identityVerified = identityVerified,
         ),
         lastMessage = lastMessageContent?.let { content ->
             ConversationMessage(
@@ -205,6 +207,25 @@ class MessagesScreenTest {
         composeTestRule
             .onNodeWithText(localizedString(R.string.messages_screen_pending_badge))
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun ready_state_renders_verification_badge_for_verified_conversations() {
+        composeTestRule.setContent {
+            MessagesScreen(
+                state = MessagesListUiState.Ready(
+                    conversations = listOf(
+                        conversation(id = "1", identityVerified = true),
+                        conversation(id = "2"),
+                    ),
+                ),
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule
+            .onAllNodesWithTag("$CONVERSATION_ROW_TAG-verified", useUnmergedTree = true)
+            .assertCountEquals(1)
     }
 
     @Test

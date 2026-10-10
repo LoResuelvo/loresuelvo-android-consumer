@@ -28,6 +28,7 @@ class ConversationDtoMapperTest {
         surname: String = "Gómez",
         categoryName: String = "Plomería",
         profilePhotoUrl: String? = "https://cdn.example/juan.jpg",
+        identityVerified: Boolean = false,
     ) = ConversationCounterpartDto(
         id = id,
         role = role,
@@ -35,6 +36,7 @@ class ConversationDtoMapperTest {
         surname = surname,
         categoryName = categoryName,
         profilePhotoUrl = profilePhotoUrl,
+        identityVerified = identityVerified,
     )
 
     private fun messageDto(
@@ -115,6 +117,7 @@ class ConversationDtoMapperTest {
             surname = "Molina",
             categoryName = "Electricidad",
             profilePhotoUrl = "https://cdn.example/agus.jpg",
+            identityVerified = true,
         )
 
         val mapped = counterpart.toDomain()
@@ -124,6 +127,7 @@ class ConversationDtoMapperTest {
         assertEquals("Molina", mapped.surname)
         assertEquals("Electricidad", mapped.categoryName)
         assertEquals("https://cdn.example/agus.jpg", mapped.profilePhotoUrl)
+        assertTrue(mapped.identityVerified)
     }
 
     @Test

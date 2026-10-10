@@ -31,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.conversation.ConversationCounterpart
 import com.loresuelvo.consumer.domain.conversation.ConversationStatus
@@ -41,8 +42,12 @@ fun ConversationTopBar(
     status: ConversationStatus,
     onBackClick: () -> Unit,
     onViewWorkOrder: (() -> Unit)? = null,
+    onViewProviderProfile: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val providerProfileDescription = stringResource(
+        R.string.conversation_top_bar_provider_profile_content_description,
+    )
     Surface(
         modifier = modifier
             .testTag(CONVERSATION_TOP_BAR_TAG)
@@ -77,19 +82,32 @@ fun ConversationTopBar(
             ProviderAvatar(
                 name = counterpart.name,
                 profilePhotoUrl = counterpart.profilePhotoUrl,
+                onClick = onViewProviderProfile,
+                clickContentDescription = providerProfileDescription,
             )
 
             Spacer(Modifier.width(12.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "${counterpart.name} ${counterpart.surname}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = "${counterpart.name} ${counterpart.surname}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (counterpart.identityVerified) {
+                        ProviderVerificationBadge(
+                            testTag = "$CONVERSATION_TOP_BAR_PROVIDER_AVATAR_TAG-verified",
+                        )
+                    }
+                }
                 Text(
                     text = counterpart.categoryName,
                     style = MaterialTheme.typography.bodySmall,
@@ -146,5 +164,6 @@ private fun PendingPill() {
 const val CONVERSATION_TOP_BAR_TAG: String = "conversation-top-bar"
 const val CONVERSATION_TOP_BAR_BACK_TAG: String = "conversation-top-bar-back"
 const val CONVERSATION_TOP_BAR_PENDING_TAG: String = "conversation-top-bar-pending"
+const val CONVERSATION_TOP_BAR_PROVIDER_AVATAR_TAG: String = "conversation-top-bar-provider-avatar"
 const val CONVERSATION_TOP_BAR_VIEW_WORK_ORDER_TAG: String =
     "conversation-top-bar-view-work-order"

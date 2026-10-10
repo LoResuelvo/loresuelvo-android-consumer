@@ -1,6 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.professional
 
 import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +47,7 @@ import coil3.compose.AsyncImage
 import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
@@ -252,12 +256,20 @@ private fun ProviderCard(
             )
             Spacer(Modifier.size(14.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "${provider.name} ${provider.surname}",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = "${provider.name} ${provider.surname}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    if (provider.identityVerified) {
+                        ProviderVerificationBadge()
+                    }
+                }
                 Text(
                     text = provider.categoryName,
                     style = MaterialTheme.typography.bodyMedium,
@@ -323,6 +335,8 @@ fun ProviderAvatar(
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
     testTag: String = PROVIDER_AVATAR_TAG,
+    onClick: (() -> Unit)? = null,
+    clickContentDescription: String? = null,
 ) {
     val initial = name.firstOrNull()?.uppercase() ?: "?"
     val description = stringResource(
@@ -335,6 +349,23 @@ fun ProviderAvatar(
             .size(size)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primary)
+            .then(
+                if (onClick != null) {
+                    Modifier
+                        .clickable(onClick = onClick)
+                        .then(
+                            if (clickContentDescription != null) {
+                                Modifier.semantics {
+                                    contentDescription = clickContentDescription
+                                }
+                            } else {
+                                Modifier
+                            },
+                        )
+                } else {
+                    Modifier
+                },
+            )
             .testTag(testTag),
         contentAlignment = Alignment.Center,
     ) {

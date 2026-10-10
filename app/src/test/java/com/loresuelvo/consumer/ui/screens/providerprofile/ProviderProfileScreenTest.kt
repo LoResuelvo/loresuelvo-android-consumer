@@ -39,6 +39,7 @@ class ProviderProfileScreenTest {
         }
 
         composeTestRule.onNodeWithText("Juan Gómez").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("provider-verification-badge").assertIsDisplayed()
         composeTestRule.onNodeWithTag(PROVIDER_PROFILE_RATING_STARS_TAG).assertIsDisplayed()
         composeTestRule.onNodeWithText("4,5").assertIsDisplayed()
         composeTestRule.onNodeWithText(
@@ -129,6 +130,23 @@ class ProviderProfileScreenTest {
         composeTestRule.onNodeWithTag(PROVIDER_PROFILE_AMOUNT_TAG).assertDoesNotExist()
         composeTestRule.onNodeWithTag(PROVIDER_PROFILE_CLIENT_TAG).assertDoesNotExist()
         composeTestRule.onNodeWithTag(PROVIDER_PROFILE_EVIDENCE_PHOTOS_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun unverified_profile_does_not_show_verification_badge() {
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                ProviderProfileScreen(
+                    state = ProviderProfileUiState.Ready(
+                        sampleProfile().copy(identityVerified = false),
+                    ),
+                    onRetryClick = {},
+                    onBackClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag("provider-verification-badge").assertDoesNotExist()
     }
 
     private fun sampleProfile() = ProviderProfile(

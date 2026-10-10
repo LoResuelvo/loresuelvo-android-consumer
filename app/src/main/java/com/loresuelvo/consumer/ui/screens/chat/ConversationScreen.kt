@@ -66,6 +66,9 @@ fun ConversationScreen(
                                 ?.let { workOrderId ->
                                     { actions.navigation.onViewWorkOrder?.invoke(workOrderId) }
                                 },
+                            onViewProviderProfile = actions.navigation.onViewProviderProfile?.let {
+                                { it(state.detail.counterpart.id) }
+                            },
                         )
                     },
                     bottomBar = {

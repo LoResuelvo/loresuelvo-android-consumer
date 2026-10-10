@@ -42,6 +42,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.ProviderProfile
 import com.loresuelvo.consumer.domain.provider.ProviderReview
 import com.loresuelvo.consumer.domain.provider.ProviderWorkOrder
+import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
@@ -155,11 +156,19 @@ private fun ProviderHeader(profile: ProviderProfile) {
         )
         Spacer(Modifier.size(16.dp))
         Column {
-            Text(
-                text = "${profile.name} ${profile.surname}".trim(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = "${profile.name} ${profile.surname}".trim(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (profile.identityVerified) {
+                    ProviderVerificationBadge(showLabel = true)
+                }
+            }
             Text(
                 text = profile.category.name,
                 style = MaterialTheme.typography.bodyLarge,

@@ -163,6 +163,11 @@ internal fun ConversationRoute(
                 onViewWorkOrder = { workOrderId ->
                     navController.navigate(Route.WorkOrderDetail.buildPath(workOrderId))
                 },
+                onViewProviderProfile = { providerId ->
+                    navController.navigate(
+                        Route.ProviderProfile.buildPath(providerId.toInt()),
+                    )
+                },
             ),
             composer = com.loresuelvo.consumer.ui.screens.chat.ConversationScreenActions.Composer(
                 onPromptChange = viewModel::onPromptChange,

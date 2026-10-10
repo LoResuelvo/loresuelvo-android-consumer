@@ -24,4 +24,5 @@ data class ServiceProposalCounterpartDto(
     @SerialName("surname") val surname: String,
     @SerialName("category_name") val categoryName: String,
     @SerialName("profile_photo_url") val profilePhotoUrl: String? = null,
+    @SerialName("identity_verified") val identityVerified: Boolean = false,
 )

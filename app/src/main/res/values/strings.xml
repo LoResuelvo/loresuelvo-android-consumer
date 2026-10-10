@@ -69,6 +69,8 @@
     <string name="professionals_error_title">No pudimos cargar los profesionales</string>
     <string name="professionals_error_body">Revisá tu conexión e intentá de nuevo.</string>
     <string name="professionals_retry">Reintentar</string>
+    <string name="provider_verified_badge_label">Verificado</string>
+    <string name="provider_verified_badge_content_description">Prestador verificado</string>
     <string name="provider_photo_content_description">Foto de perfil de %1$s</string>
     <string name="bottom_nav_mensajes">Mensajes</string>
     <string name="bottom_nav_inicio">Inicio</string>
@@ -125,6 +127,7 @@
     <string name="messages_screen_no_preview">(Sin mensajes aún)</string>
     <string name="messages_screen_video_preview">Video</string>
     <string name="conversation_top_bar_back_content_description">Volver</string>
+    <string name="conversation_top_bar_provider_profile_content_description">Ver perfil del prestador</string>
     <string name="conversation_top_bar_view_work_order_content_description">Ver orden de trabajo</string>
     <string name="conversation_input_placeholder">Escribí un mensaje…</string>
     <string name="conversation_loading">Cargando conversación…</string>
