@@ -208,6 +208,23 @@ class ConversationScreenMessagesTest {
     }
 
     @Test
+    fun ready_state_provider_chat_renders_divider_above_composer() {
+        composeTestRule.setContent {
+            ConversationScreen(
+                state = readyState(),
+                onPromptChange = {},
+                onSendClick = {},
+                onBackClick = {},
+                onRetryClick = {},
+                onErrorDismiss = {},
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        composeTestRule.onNodeWithTag(CHAT_INPUT_DIVIDER_TAG).assertIsDisplayed()
+    }
+
+    @Test
     fun ready_state_send_button_fires_onSendClick() {
         var sendClicks = 0
 

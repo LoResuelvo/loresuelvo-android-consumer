@@ -107,6 +107,9 @@ class AssistantScreenRowTest {
         composeTestRule
             .onAllNodesWithTag("$ASSISTANT_ROW_PREVIEW_TAG-2", useUnmergedTree = true)
             .assertCountEquals(0)
+        composeTestRule
+            .onAllNodesWithTag(ASSISTANT_ROW_DIVIDER_TAG, useUnmergedTree = true)
+            .assertCountEquals(1)
     }
 
     @Test

@@ -117,7 +117,7 @@ fun ConversationRow(
         if (showDivider) {
             HorizontalDivider(
                 modifier = Modifier
-                    .padding(start = 78.dp)
+                    .padding(start = 78.dp, end = 16.dp)
                     .testTag(CONVERSATION_ROW_DIVIDER_TAG),
                 color = MaterialTheme.colorScheme.outlineVariant,
             )

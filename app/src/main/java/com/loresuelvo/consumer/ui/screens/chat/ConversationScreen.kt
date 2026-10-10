@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -82,6 +83,12 @@ fun ConversationScreen(
                                             .calculateBottomPadding() > 0.dp) 20.dp else 0.dp,
                                 ),
                         ) {
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant,
+                                modifier = Modifier
+                                    .testTag(CHAT_INPUT_DIVIDER_TAG)
+                                    .padding(horizontal = 16.dp),
+                            )
                             if (state.transientError != null) {
                                 TransientErrorCard(
                                     failure = state.transientError,

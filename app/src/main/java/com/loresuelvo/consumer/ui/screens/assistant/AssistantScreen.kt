@@ -13,8 +13,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -134,6 +135,7 @@ const val ASSISTANT_ROW_TAG: String = "assistant-screen-row"
 const val ASSISTANT_ROW_TITLE_TAG: String = "assistant-screen-row-title"
 const val ASSISTANT_ROW_DATE_TAG: String = "assistant-screen-row-date"
 const val ASSISTANT_ROW_PREVIEW_TAG: String = "assistant-screen-row-preview"
+const val ASSISTANT_ROW_DIVIDER_TAG: String = "assistant-screen-row-divider"
 const val ASSISTANT_RETRY_TAG: String = "assistant-screen-retry"
 
 @Composable
@@ -265,10 +267,14 @@ private fun ConversationsList(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        items(items = conversations, key = { it.id }) { conversation ->
+        itemsIndexed(
+            items = conversations,
+            key = { _, conversation -> conversation.id },
+        ) { index, conversation ->
             ConversationRow(
                 conversation = conversation,
                 onClick = { onConversationClick(conversation.id) },
+                showDivider = index < conversations.lastIndex,
             )
         }
     }
@@ -278,6 +284,7 @@ private fun ConversationsList(
 private fun ConversationRow(
     conversation: AiConversationSummary,
     onClick: () -> Unit,
+    showDivider: Boolean,
 ) {
     val timestampLabel = remember(conversation.lastMessageAtEpochMillis) {
         if (conversation.lastMessageAtEpochMillis > 0L) {
@@ -332,6 +339,11 @@ private fun ConversationRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.testTag("$ASSISTANT_ROW_PREVIEW_TAG-${conversation.id}"),
+            )
+        }
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.testTag(ASSISTANT_ROW_DIVIDER_TAG),
             )
         }
     }
