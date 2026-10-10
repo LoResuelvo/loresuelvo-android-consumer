@@ -265,7 +265,6 @@ private fun ConversationsList(
             .fillMaxHeight()
             .testTag(ASSISTANT_LIST_TAG),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         itemsIndexed(
             items = conversations,
