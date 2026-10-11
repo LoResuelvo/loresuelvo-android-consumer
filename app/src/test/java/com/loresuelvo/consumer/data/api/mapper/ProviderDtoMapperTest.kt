@@ -7,10 +7,7 @@ import org.junit.Test
 
 /**
  * Pins the DTO -> domain translation for providers. The wire format
- * does NOT echo `category_id` (verified against the real backend on
- * 2026-07-27: `GET /providers?category_id=X` returns objects with
- * only `id`, `name`, `surname`, `category_name`, `profile_photo_url`).
- * The mapper therefore receives the queried `categoryId` as a
+ * does NOT echo `category_id`. The mapper therefore receives the queried `categoryId` as a
  * parameter and threads it into every mapped [com.loresuelvo.consumer.domain.provider.Provider].
  */
 class ProviderDtoMapperTest {
@@ -24,6 +21,8 @@ class ProviderDtoMapperTest {
             categoryName = "Electricidad",
             categoryId = null,
             profilePhotoUrl = "http://x/p1.webp",
+            ratingAverage = 4.5,
+            ratingCount = 2,
             identityVerified = true,
         )
 
@@ -35,6 +34,8 @@ class ProviderDtoMapperTest {
         assertEquals(2, provider.categoryId)
         assertEquals("Electricidad", provider.categoryName)
         assertEquals("http://x/p1.webp", provider.profilePhotoUrl)
+        assertEquals(4.5, provider.ratingAverage, 0.0)
+        assertEquals(2, provider.ratingCount)
         assertEquals(true, provider.identityVerified)
     }
 
@@ -48,6 +49,8 @@ class ProviderDtoMapperTest {
                 categoryName = "Electricidad",
                 categoryId = null,
                 profilePhotoUrl = null,
+                ratingAverage = 4.8,
+                ratingCount = 12,
             ),
             ProviderDto(
                 id = 2,
@@ -67,6 +70,8 @@ class ProviderDtoMapperTest {
         // what the wire body carried.
         assertEquals(listOf(7, 7), providers.map { it.categoryId })
         assertEquals(listOf("Electricidad", "Electricidad"), providers.map { it.categoryName })
+        assertEquals(listOf(4.8, 0.0), providers.map { it.ratingAverage })
+        assertEquals(listOf(12, 0), providers.map { it.ratingCount })
         assertNull(providers[0].profilePhotoUrl)
         assertEquals("http://x/p2.webp", providers[1].profilePhotoUrl)
     }

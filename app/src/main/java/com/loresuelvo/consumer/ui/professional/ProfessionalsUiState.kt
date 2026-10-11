@@ -2,6 +2,11 @@ package com.loresuelvo.consumer.ui.professional
 
 import com.loresuelvo.consumer.domain.provider.Provider
 
+enum class ProviderSortOrder {
+    Default,
+    RatingDescending,
+}
+
 /**
  * UDF state for the providers list of a single category. Modelled
  * as a sealed hierarchy so the screen renders exactly one of the
@@ -20,6 +25,14 @@ sealed interface ProfessionalsUiState {
     data class Ready(
         override val categoryName: String,
         val providers: List<Provider>,
+        val sortOrder: ProviderSortOrder = ProviderSortOrder.Default,
+        val minimumRating: Double? = null,
+    ) : ProfessionalsUiState
+
+    data class FilteredEmpty(
+        override val categoryName: String,
+        val sortOrder: ProviderSortOrder,
+        val minimumRating: Double,
     ) : ProfessionalsUiState
 
     data class Empty(override val categoryName: String) : ProfessionalsUiState

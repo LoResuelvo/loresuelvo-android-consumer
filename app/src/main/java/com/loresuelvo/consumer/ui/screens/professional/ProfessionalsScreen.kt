@@ -19,10 +19,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -49,6 +54,7 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
+import com.loresuelvo.consumer.ui.professional.ProviderSortOrder
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 
@@ -103,11 +109,14 @@ fun ProfessionalsScreen(
             is ProfessionalsUiState.Loading -> LoadingView()
             is ProfessionalsUiState.Ready ->
                 ReadyList(
-                    providers = state.providers,
-                    onContactarClick = actions.onContact,
-                    onViewProfileClick = actions.onViewProfile,
+                    state = state,
+                    actions = actions,
                 )
             is ProfessionalsUiState.Empty -> EmptyView(state.categoryName)
+            is ProfessionalsUiState.FilteredEmpty -> FilteredEmptyView(
+                state = state,
+                actions = actions,
+            )
             is ProfessionalsUiState.Error -> ErrorView(actions.onRetry)
         }
     }
@@ -164,20 +173,148 @@ private fun LoadingView(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ReadyList(
-    providers: List<Provider>,
-    onContactarClick: (Provider) -> Unit,
-    onViewProfileClick: (Provider) -> Unit,
+    state: ProfessionalsUiState.Ready,
+    actions: ProfessionalsScreenActions,
 ) {
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(vertical = 8.dp),
-    ) {
-        items(items = providers, key = { it.id }) { provider ->
-            ProviderCard(
-                provider = provider,
-                onContactarClick = { onContactarClick(provider) },
-                onViewProfileClick = { onViewProfileClick(provider) },
+    Column(modifier = Modifier.fillMaxSize()) {
+        ProviderListControls(
+            sortOrder = state.sortOrder,
+            minimumRating = state.minimumRating,
+            onSortOrderChange = actions.onSortOrderChange,
+            onMinimumRatingChange = actions.onMinimumRatingChange,
+            onClearRatingFilter = actions.onClearRatingFilter,
+        )
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(vertical = 8.dp),
+        ) {
+            items(items = state.providers, key = { it.id }) { provider ->
+                ProviderCard(
+                    provider = provider,
+                    onContactarClick = { actions.onContact(provider) },
+                    onViewProfileClick = { actions.onViewProfile(provider) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilteredEmptyView(
+    state: ProfessionalsUiState.FilteredEmpty,
+    actions: ProfessionalsScreenActions,
+) {
+    Column(modifier = Modifier.fillMaxSize()) {
+        ProviderListControls(
+            sortOrder = state.sortOrder,
+            minimumRating = state.minimumRating,
+            onSortOrderChange = actions.onSortOrderChange,
+            onMinimumRatingChange = actions.onMinimumRatingChange,
+            onClearRatingFilter = actions.onClearRatingFilter,
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(R.string.professionals_filtered_empty_title),
+                style = MaterialTheme.typography.titleMedium,
+                textAlign = TextAlign.Center,
             )
+            Spacer(Modifier.height(8.dp))
+            Text(
+                text = stringResource(R.string.professionals_filtered_empty_body),
+                color = SubtitleGray,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(16.dp))
+            TextButton(
+                onClick = actions.onClearRatingFilter,
+                modifier = Modifier.testTag(PROVIDER_RATING_CLEAR_FILTER_TAG),
+            ) {
+                Text(stringResource(R.string.professionals_clear_filters))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProviderListControls(
+    sortOrder: ProviderSortOrder,
+    minimumRating: Double?,
+    onSortOrderChange: (ProviderSortOrder) -> Unit,
+    onMinimumRatingChange: (Double?) -> Unit,
+    onClearRatingFilter: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.professionals_sort_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = SubtitleGray,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterChip(
+                selected = sortOrder == ProviderSortOrder.RatingDescending,
+                onClick = {
+                    onSortOrderChange(
+                        if (sortOrder == ProviderSortOrder.RatingDescending) {
+                            ProviderSortOrder.Default
+                        } else {
+                            ProviderSortOrder.RatingDescending
+                        },
+                    )
+                },
+                label = {
+                    Text(stringResource(R.string.professionals_sort_rating))
+                },
+                modifier = Modifier.testTag(PROVIDER_RATING_SORT_TAG),
+            )
+        }
+        Text(
+            text = stringResource(R.string.professionals_filter_rating_label),
+            style = MaterialTheme.typography.labelLarge,
+            color = SubtitleGray,
+        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            FilterChip(
+                selected = minimumRating == 4.0,
+                onClick = {
+                    onMinimumRatingChange(if (minimumRating == 4.0) null else 4.0)
+                },
+                label = {
+                    Text(stringResource(R.string.professionals_filter_rating_four))
+                },
+                modifier = Modifier.testTag(PROVIDER_RATING_FILTER_FOUR_TAG),
+            )
+            FilterChip(
+                selected = minimumRating == 5.0,
+                onClick = {
+                    onMinimumRatingChange(if (minimumRating == 5.0) null else 5.0)
+                },
+                label = {
+                    Text(stringResource(R.string.professionals_filter_rating_five))
+                },
+                modifier = Modifier.testTag(PROVIDER_RATING_FILTER_FIVE_TAG),
+            )
+            if (minimumRating != null) {
+                TextButton(
+                    onClick = onClearRatingFilter,
+                    modifier = Modifier.testTag(PROVIDER_RATING_CLEAR_FILTER_TAG),
+                ) {
+                    Text(stringResource(R.string.professionals_clear_filters))
+                }
+            }
         }
     }
 }
@@ -275,6 +412,7 @@ private fun ProviderCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = SubtitleGray,
                 )
+                ProviderRatingSummary(provider)
             }
             Column(horizontalAlignment = Alignment.End) {
                 TextButton(
@@ -291,6 +429,49 @@ private fun ProviderCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ProviderRatingSummary(provider: Provider) {
+    if (provider.ratingCount == 0) {
+        Text(
+            text = stringResource(R.string.professionals_provider_no_rating),
+            color = SubtitleGray,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.testTag(
+                PROVIDER_CARD_RATING_TAG_PREFIX + provider.id,
+            ),
+        )
+        return
+    }
+
+    Row(
+        modifier = Modifier.testTag(PROVIDER_CARD_RATING_TAG_PREFIX + provider.id),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        repeat(5) { index ->
+            Icon(
+                imageVector = if (index < provider.ratingAverage) {
+                    Icons.Filled.Star
+                } else {
+                    Icons.Outlined.Star
+                },
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(14.dp),
+            )
+        }
+        Text(
+            text = stringResource(
+                R.string.professionals_provider_rating,
+                provider.ratingAverage,
+                provider.ratingCount,
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = SubtitleGray,
+        )
     }
 }
 
@@ -462,6 +643,11 @@ private val LOCAL_PROFILE_PHOTO_HOSTS = setOf(
  * of whether the photo loaded.
  */
 const val PROVIDER_AVATAR_TAG: String = "provider-avatar"
+const val PROVIDER_CARD_RATING_TAG_PREFIX: String = "provider-card-rating-"
+const val PROVIDER_RATING_SORT_TAG: String = "provider-rating-sort"
+const val PROVIDER_RATING_FILTER_FOUR_TAG: String = "provider-rating-filter-four"
+const val PROVIDER_RATING_FILTER_FIVE_TAG: String = "provider-rating-filter-five"
+const val PROVIDER_RATING_CLEAR_FILTER_TAG: String = "provider-rating-clear-filter"
 
 /**
  * Compose testTag for the inner image painted by Coil when a photo

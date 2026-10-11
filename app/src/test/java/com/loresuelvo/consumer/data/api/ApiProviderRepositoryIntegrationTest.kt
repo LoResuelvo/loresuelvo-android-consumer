@@ -67,7 +67,10 @@ class ApiProviderRepositoryIntegrationTest {
                         "name": "Agustina",
                         "surname": "Molina",
                         "category_name": "Electricidad",
-                        "profile_photo_url": "http://x/p1.webp"
+                        "profile_photo_url": "http://x/p1.webp",
+                        "rating_average": 4.8,
+                        "rating_count": 12,
+                        "identity_verified": true
                       },
                       {
                         "id": 32,
@@ -95,6 +98,9 @@ class ApiProviderRepositoryIntegrationTest {
         assertEquals(92, success.providers[0].id)
         assertEquals("Agustina", success.providers[0].name)
         assertEquals("Molina", success.providers[0].surname)
+        assertEquals(4.8, success.providers[0].ratingAverage, 0.0)
+        assertEquals(12, success.providers[0].ratingCount)
+        assertTrue(success.providers[0].identityVerified)
         // `category_id` is injected from the query parameter because
         // the wire response does not echo it back.
         assertEquals(2, success.providers[0].categoryId)

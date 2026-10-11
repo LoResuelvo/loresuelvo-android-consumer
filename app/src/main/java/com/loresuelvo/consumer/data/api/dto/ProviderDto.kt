@@ -15,7 +15,10 @@ import kotlinx.serialization.Serializable
  *   "name": "Carlos",
  *   "surname": "López",
  *   "category_name": "Plomería",
- *   "profile_photo_url": "http://minio.localhost:9000/.../provider-0043.webp"
+ *   "profile_photo_url": "http://minio.localhost:9000/.../provider-0043.webp",
+ *   "rating_average": 4.5,
+ *   "rating_count": 2,
+ *   "identity_verified": true
  * }
  * ```
  *
@@ -39,5 +42,7 @@ data class ProviderDto(
     @SerialName("category_name") val categoryName: String,
     @SerialName("category_id") val categoryId: Int? = null,
     @SerialName("profile_photo_url") val profilePhotoUrl: String? = null,
+    @SerialName("rating_average") val ratingAverage: Double = 0.0,
+    @SerialName("rating_count") val ratingCount: Int = 0,
     @SerialName("identity_verified") val identityVerified: Boolean = false,
 )

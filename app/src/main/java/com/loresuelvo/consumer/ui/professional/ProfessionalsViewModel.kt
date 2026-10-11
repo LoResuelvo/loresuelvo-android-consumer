@@ -34,6 +34,11 @@ class ProfessionalsViewModel @Inject constructor(
     @Suppress("unused") private val getCategories: GetCategoriesUseCase,
 ) : ViewModel() {
 
+    private var loadedProviders: List<Provider> = emptyList()
+    private var loadedCategoryName: String = ""
+    private var sortOrder: ProviderSortOrder = ProviderSortOrder.Default
+    private var minimumRating: Double? = null
+
     private val _uiState = MutableStateFlow<ProfessionalsUiState>(
         ProfessionalsUiState.Loading(categoryName = ""),
     )
@@ -49,18 +54,72 @@ class ProfessionalsViewModel @Inject constructor(
             _uiState.update { ProfessionalsUiState.Loading(categoryName) }
             val next = when (val outcome = getProviders(categoryId)) {
                 is ProvidersOutcome.Success ->
-                    if (outcome.providers.isEmpty()) {
-                        ProfessionalsUiState.Empty(categoryName)
-                    } else {
-                        ProfessionalsUiState.Ready(
-                            categoryName = categoryName,
-                            providers = outcome.providers,
-                        )
+                    outcome.providers.let { providers ->
+                        loadedProviders = providers
+                        loadedCategoryName = categoryName
+                        sortOrder = ProviderSortOrder.Default
+                        minimumRating = null
+                        stateForCurrentFilters()
                     }
                 is ProvidersOutcome.Failure ->
                     ProfessionalsUiState.Error(categoryName)
             }
             _uiState.update { next }
+        }
+    }
+
+    fun onSortOrderChanged(nextSortOrder: ProviderSortOrder) {
+        sortOrder = nextSortOrder
+        _uiState.update { stateForCurrentFilters() }
+    }
+
+    fun onMinimumRatingChanged(nextMinimumRating: Double?) {
+        minimumRating = nextMinimumRating
+        _uiState.update { stateForCurrentFilters() }
+    }
+
+    fun clearRatingFilter() {
+        onMinimumRatingChanged(null)
+    }
+
+    private fun stateForCurrentFilters(): ProfessionalsUiState {
+        if (loadedProviders.isEmpty()) {
+            return ProfessionalsUiState.Empty(loadedCategoryName)
+        }
+
+        val filteredProviders = loadedProviders
+            .asSequence()
+            .filter { provider ->
+                minimumRating == null || (
+                    provider.ratingCount > 0 &&
+                        provider.ratingAverage >= minimumRating!!
+                    )
+            }
+            .let { providers ->
+                when (sortOrder) {
+                    ProviderSortOrder.Default -> providers
+                    ProviderSortOrder.RatingDescending -> providers.sortedWith(
+                        compareByDescending<Provider> { it.ratingAverage }
+                            .thenByDescending { it.ratingCount }
+                            .thenBy { it.id },
+                    )
+                }
+            }
+            .toList()
+
+        return if (filteredProviders.isEmpty()) {
+            ProfessionalsUiState.FilteredEmpty(
+                categoryName = loadedCategoryName,
+                sortOrder = sortOrder,
+                minimumRating = requireNotNull(minimumRating),
+            )
+        } else {
+            ProfessionalsUiState.Ready(
+                categoryName = loadedCategoryName,
+                providers = filteredProviders,
+                sortOrder = sortOrder,
+                minimumRating = minimumRating,
+            )
         }
     }
 }

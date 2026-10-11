@@ -5,11 +5,8 @@ import com.loresuelvo.consumer.domain.provider.Provider
 
 /**
  * DTO -> domain translation for providers. The wire shape does
- * NOT echo `category_id` (verified against the real backend on
- * 2026-07-27: `GET /providers?category_id=X` returns objects with
- * `id`, `name`, `surname`, `category_name`, `profile_photo_url`
- * only). The queried [categoryId] is therefore passed explicitly to
- * the mapper and threaded into every mapped
+ * NOT echo `category_id`. The queried [categoryId] is therefore
+ * passed explicitly to the mapper and threaded into every mapped
  * [com.loresuelvo.consumer.domain.provider.Provider].
  *
  * Keeping the field nullable in the DTO while non-null in the
@@ -27,6 +24,8 @@ internal fun ProviderDto.toDomain(categoryId: Int): Provider = Provider(
     categoryId = categoryId,
     categoryName = categoryName,
     profilePhotoUrl = profilePhotoUrl,
+    ratingAverage = ratingAverage,
+    ratingCount = ratingCount,
     identityVerified = identityVerified,
 )
 

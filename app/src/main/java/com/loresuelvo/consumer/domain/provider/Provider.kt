@@ -23,5 +23,7 @@ data class Provider(
     val categoryId: Int,
     val categoryName: String,
     val profilePhotoUrl: String?,
+    val ratingAverage: Double = 0.0,
+    val ratingCount: Int = 0,
     val identityVerified: Boolean = false,
 )

@@ -356,6 +356,9 @@ private fun ProfessionalsRoute(
         actions = com.loresuelvo.consumer.ui.screens.professional.ProfessionalsScreenActions(
             onRetry = { viewModel.loadProviders(categoryId, categoryName) },
             onContact = contactViewModel::onOpenContact,
+            onSortOrderChange = viewModel::onSortOrderChanged,
+            onMinimumRatingChange = viewModel::onMinimumRatingChanged,
+            onClearRatingFilter = viewModel::clearRatingFilter,
             onViewProfile = { provider ->
                 navController.navigate(Route.ProviderProfile.buildPath(provider.id))
             },
