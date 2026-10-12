@@ -1,11 +1,14 @@
 package com.loresuelvo.consumer.ui.screens.home
 
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState
 
 /** Non-rendering configuration required by the home screen. */
 data class HomeScreenConfig(
     val displayName: String? = null,
     val detailState: ProposalDetailUiState = ProposalDetailUiState.Loading,
+    val workOrderDetailState: WorkOrderDetailUiState? = null,
 )
 
 /** User interactions grouped by the home screen sections. */
@@ -26,7 +29,16 @@ data class HomeScreenActions(
     data class Turnos(
         val onSeeAll: () -> Unit = {},
         val onCardClick: (String) -> Unit = {},
-    )
+        val detail: Detail = Detail(),
+    ) {
+        data class Detail(
+            val onRetry: () -> Unit = {},
+            val onPayNow: () -> Unit = {},
+            val onDismiss: () -> Unit = {},
+            val review: WorkOrderDetailActions.ReviewActions =
+                WorkOrderDetailActions.ReviewActions(),
+        )
+    }
 
     data class Proposals(
         val onSeeAll: () -> Unit = {},

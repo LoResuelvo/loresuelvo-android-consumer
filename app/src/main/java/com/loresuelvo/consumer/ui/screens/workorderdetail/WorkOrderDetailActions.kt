@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.ui.screens.workorderdetail
 
 /** User interactions exposed by the work-order detail screen. */
 data class WorkOrderDetailActions(
+    val onDismiss: () -> Unit = {},
     val onRetry: () -> Unit = {},
     val onPayNow: () -> Unit = {},
     val review: ReviewActions = ReviewActions(),

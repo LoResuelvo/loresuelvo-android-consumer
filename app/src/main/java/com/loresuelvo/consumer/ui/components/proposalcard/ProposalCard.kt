@@ -1,29 +1,28 @@
 package com.loresuelvo.consumer.ui.components.proposalcard
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.draw.clip
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
@@ -31,6 +30,7 @@ import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
+import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 
 @Composable
 fun ProposalCard(
@@ -38,64 +38,82 @@ fun ProposalCard(
     onViewClicked: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onViewClicked)
-            .padding(8.dp)
             .testTag(PROPOSAL_CARD_TAG_PREFIX + proposal.id),
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            ProviderAvatar(
-                name = proposal.counterpart.name,
-                profilePhotoUrl = proposal.counterpart.profilePhotoUrl,
-                size = 56.dp,
-                testTag = PROPOSAL_CARD_AVATAR_TAG_PREFIX + proposal.counterpart.name,
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(
-                        text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    if (proposal.counterpart.identityVerified) {
-                        ProviderVerificationBadge()
-                    }
-                }
-                Text(
-                    text = proposal.counterpart.categoryName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SubtitleGray,
+                ProviderAvatar(
+                    name = proposal.counterpart.name,
+                    profilePhotoUrl = proposal.counterpart.profilePhotoUrl,
+                    size = 56.dp,
+                    testTag = PROPOSAL_CARD_AVATAR_TAG_PREFIX + proposal.counterpart.name,
                 )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = "${proposal.counterpart.name} ${proposal.counterpart.surname}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (proposal.counterpart.identityVerified) {
+                            ProviderVerificationBadge()
+                        }
+                    }
+                    Text(
+                        text = proposal.counterpart.categoryName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SubtitleGray,
+                    )
+                }
+                StatusBadge(status = proposal.status)
             }
-            StatusBadge(status = proposal.status)
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-        ) {
             Text(
-                text = CurrencyFormatter.formatAmount(proposal.amountCents),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold,
+                text = proposal.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
-            ViewRequestCta(onClick = onViewClicked, proposalId = proposal.id)
+            Text(
+                text = ScheduledDateFormatter.formatScheduled(proposal.scheduledOnEpochMillis),
+                style = MaterialTheme.typography.bodySmall,
+                color = SubtitleGray,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = CurrencyFormatter.formatAmount(proposal.amountCents),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                ViewRequestCta(onClick = onViewClicked, proposalId = proposal.id)
+            }
         }
     }
 }

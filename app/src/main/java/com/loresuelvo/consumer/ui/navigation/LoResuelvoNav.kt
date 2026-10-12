@@ -15,6 +15,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -396,10 +397,17 @@ private fun HomeRoute(
 
     val detailViewModel: com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel =
         hiltViewModel()
+    val workOrderDetailViewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
+        hiltViewModel()
     val context = LocalContext.current
     val sessionState by sessionViewModel.uiState.collectAsStateWithLifecycle()
     val homeState by homeViewModel.uiState.collectAsStateWithLifecycle()
     val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
+    val workOrderDetailState by workOrderDetailViewModel.uiState.collectAsStateWithLifecycle()
+    var selectedWorkOrderId by remember { mutableStateOf<String?>(null) }
+    var selectedWorkOrderProvider by remember {
+        mutableStateOf<com.loresuelvo.consumer.domain.workorder.WorkOrderDetailCounterpart?>(null)
+    }
 
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -431,11 +439,20 @@ private fun HomeRoute(
         }
     }
 
+    LaunchedEffect(workOrderDetailViewModel) {
+        workOrderDetailViewModel.checkoutUrl.collect { url ->
+            CustomTabsIntent.Builder()
+                .build()
+                .launchUrl(context, Uri.parse(url))
+        }
+    }
+
     HomeScreen(
         state = homeState,
         config = HomeScreenConfig(
             displayName = sessionState.session?.user?.firstName,
             detailState = detailState,
+            workOrderDetailState = workOrderDetailState.takeIf { selectedWorkOrderId != null },
         ),
         actions = HomeScreenActions(
             categories = HomeScreenActions.Categories(
@@ -460,8 +477,35 @@ private fun HomeRoute(
                             profilePhotoUrl = counterpart.profilePhotoUrl,
                         )
                     }
-                    navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
+                    if (turno != null) {
+                        selectedWorkOrderId = turnoId
+                        selectedWorkOrderProvider = provider
+                        workOrderDetailViewModel.load(turnoId, provider)
+                    }
                 },
+                detail = HomeScreenActions.Turnos.Detail(
+                    onRetry = {
+                        val selectedId = selectedWorkOrderId
+                        if (selectedId != null) {
+                            workOrderDetailViewModel.load(selectedId, selectedWorkOrderProvider)
+                        }
+                    },
+                    onPayNow = {
+                        val selectedId = selectedWorkOrderId
+                        if (selectedId != null) workOrderDetailViewModel.payNow(selectedId)
+                    },
+                    onDismiss = {
+                        selectedWorkOrderId = null
+                        selectedWorkOrderProvider = null
+                    },
+                    review = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions.ReviewActions(
+                        onOpen = workOrderDetailViewModel::openReviewComposer,
+                        onRatingChange = workOrderDetailViewModel::onRatingChange,
+                        onDescriptionChange = workOrderDetailViewModel::onDescriptionChange,
+                        onSubmit = workOrderDetailViewModel::submitReview,
+                        onCancel = workOrderDetailViewModel::cancelReviewComposer,
+                    ),
+                ),
             ),
             proposals = HomeScreenActions.Proposals(
                 onSeeAll = { navController.navigate(Route.MisServicios.path) },
@@ -555,6 +599,7 @@ private fun MisServiciosRoute(
         actions = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions(
             filters = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions.Filters(
                 onSelected = viewModel::onFilterSelected,
+                onQueryChanged = viewModel::onSearchQueryChanged,
             ),
             proposals = com.loresuelvo.consumer.ui.screens.misservicios.MisServiciosScreenActions.Proposals(
                 onRetry = viewModel::load,

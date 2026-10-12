@@ -5,10 +5,13 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
@@ -47,6 +50,7 @@ import com.loresuelvo.consumer.testdi.FakeTurnosRepository
 import com.loresuelvo.consumer.ui.components.turnocard.TURNO_CARD_TAG_PREFIX
 import com.loresuelvo.consumer.ui.screens.home.HOME_TURNOS_LINK_TAG
 import com.loresuelvo.consumer.ui.screens.turnos.TURNOS_SCREEN_TAG
+import com.loresuelvo.consumer.ui.screens.turnos.TURNOS_LIST_TAG
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -148,13 +152,17 @@ class MisTurnosScreenInstrumentedTest {
             .assertCountEquals(1)
 
         // Each seeded turno lands on its own `TurnoCard`. The
-        // card testTag is keyed by the turno id; `assertCountEquals`
-        // here too because cards below the first may scroll out
-        // of the viewport once the LazyColumn grows.
+        // card testTag is keyed by the turno id. Scroll the lazy
+        // list to each card before asserting it, because the cards
+        // below the first may not have a semantics node until they
+        // enter the viewport.
         SEED_TURNOS.forEach { turno ->
             composeTestRule
-                .onAllNodesWithTag(TURNO_CARD_TAG_PREFIX + turno.id)
-                .assertCountEquals(1)
+                .onNodeWithTag(TURNOS_LIST_TAG)
+                .performScrollToNode(hasTestTag(TURNO_CARD_TAG_PREFIX + turno.id))
+            composeTestRule
+                .onNodeWithTag(TURNO_CARD_TAG_PREFIX + turno.id)
+                .assertIsDisplayed()
         }
     }
 

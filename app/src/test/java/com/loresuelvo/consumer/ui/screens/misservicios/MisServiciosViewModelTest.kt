@@ -263,6 +263,47 @@ class MisServiciosViewModelTest {
     }
 
     @Test
+    fun search_filters_loaded_proposals_by_provider_or_description_and_can_be_cleared() = runTest {
+        val proposals = listOf(
+            proposal(id = "plumbing").copy(
+                description = "Reparar pérdida de agua",
+            ),
+            proposal(id = "painting").copy(
+                counterpart = ServiceProposalCounterpart(
+                    id = "2",
+                    name = "Ana",
+                    surname = "Gómez",
+                    categoryName = "Pintura",
+                    profilePhotoUrl = null,
+                ),
+                description = "Pintar habitación",
+            ),
+        )
+        coEvery { serviceProposalRepository.getServiceProposals() } returns
+            ServiceProposalsOutcome.Success(proposals)
+
+        val viewModel = buildViewModel()
+
+        viewModel.onSearchQueryChanged("ana")
+        assertEquals(
+            listOf("painting"),
+            (viewModel.uiState.value as MisServiciosUiState.Ready).proposals.map { it.id },
+        )
+
+        viewModel.onSearchQueryChanged("pérdida")
+        assertEquals(
+            listOf("plumbing"),
+            (viewModel.uiState.value as MisServiciosUiState.Ready).proposals.map { it.id },
+        )
+
+        viewModel.onSearchQueryChanged("")
+        assertEquals(
+            listOf("plumbing", "painting"),
+            (viewModel.uiState.value as MisServiciosUiState.Ready).proposals.map { it.id },
+        )
+    }
+
+    @Test
     fun filter_persists_across_retry() = runTest {
         // Three responses so each VM-initiated round trip is
         // deterministic: init.load() → Success, filter change →

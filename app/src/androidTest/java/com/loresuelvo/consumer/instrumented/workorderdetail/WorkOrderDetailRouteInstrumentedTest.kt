@@ -6,11 +6,14 @@ import android.content.SharedPreferences
 import androidx.activity.compose.setContent
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.loresuelvo.consumer.MainActivity
@@ -46,6 +49,7 @@ import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_RATE_COMPOS
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_RATE_CTA_TAG
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_RATE_STAR_TAG_PREFIX
 import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_RATE_SUBMIT_TAG
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WORK_ORDER_READY_TAG
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.EntryPoint
@@ -128,7 +132,13 @@ class WorkOrderDetailRouteInstrumentedTest {
         // assertion races against recomposition instead of failing
         // immediately on a fixed wait.
         WirePinHarness.waitForTag(composeTestRule, WORK_ORDER_RATE_CTA_TAG)
-        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(WORK_ORDER_READY_TAG)
+            .performScrollToNode(hasTestTag(WORK_ORDER_RATE_CTA_TAG))
+        composeTestRule
+            .onNodeWithTag(WORK_ORDER_RATE_CTA_TAG)
+            .assertHasClickAction()
+            .performClick()
 
         // The actual regression pin: this tap MUST reach the VM.
         // If the route's `onOpenReviewForm` defaults to `{}`, the
@@ -137,8 +147,9 @@ class WorkOrderDetailRouteInstrumentedTest {
         // `WorkOrderDetailRoute.onOpenReviewForm = { ... }` —
         // exactly the line that commit `b1cc0eb` fixed in
         // isolation by hand.
-        composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).performClick()
-
+        composeTestRule
+            .onNodeWithTag(WORK_ORDER_READY_TAG)
+            .performScrollToNode(hasTestTag(WORK_ORDER_RATE_COMPOSER_TAG))
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_COMPOSER_TAG).assertIsDisplayed()
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_SUBMIT_TAG).assertIsDisplayed()
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CANCEL_TAG).assertIsDisplayed()
@@ -166,6 +177,9 @@ class WorkOrderDetailRouteInstrumentedTest {
 
         // Same poll pattern as the CTA test.
         WirePinHarness.waitForTag(composeTestRule, WORK_ORDER_RATE_CTA_TAG)
+        composeTestRule
+            .onNodeWithTag(WORK_ORDER_READY_TAG)
+            .performScrollToNode(hasTestTag(WORK_ORDER_RATE_CTA_TAG))
         composeTestRule.onNodeWithTag(WORK_ORDER_RATE_CTA_TAG).performClick()
 
         // Tap the 5-star button. The composer rating row carries

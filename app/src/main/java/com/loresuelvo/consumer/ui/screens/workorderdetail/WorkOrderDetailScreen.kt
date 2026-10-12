@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.workorderdetail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -9,7 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -21,16 +25,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,7 @@ import com.loresuelvo.consumer.domain.workorder.CompletionReportPhoto
 import com.loresuelvo.consumer.domain.workorder.WorkOrderDetail
 import com.loresuelvo.consumer.domain.workorder.WorkOrderReview
 import com.loresuelvo.consumer.ui.components.images.FullScreenImageViewer
+import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
 import com.loresuelvo.consumer.ui.util.CurrencyFormatter
 import com.loresuelvo.consumer.ui.util.EstimatedDurationFormatter
@@ -59,35 +62,20 @@ fun WorkOrderDetailScreen(
     actions: WorkOrderDetailActions = WorkOrderDetailActions(),
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize().testTag(WORK_ORDER_SCREEN_TAG),
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.work_order_title),
-                        modifier = Modifier.testTag(WORK_ORDER_TITLE_TAG),
-                    )
-                },
-            )
-        },
-    ) { padding ->
-        // so it survives recomposition + process death (the
-        // config-change / rotate case). When the photo is set
-        // the overlay renders on top of the regular surface.
-        //
-        // `remember` (not `rememberSaveable`) so the Compose UI
-        // test rig can drive the click → state mutation without
-        // having to wire the Robolectric saved-state registry.
-        // The trade-off: the lightbox won't survive a process
-        // death in tests, which is acceptable since instrumented
-        // tests don't exercise process death.
-        var lightboxPhoto by androidx.compose.runtime.remember { mutableStateOf<CompletionReportPhoto?>(null) }
+    BackHandler(onBack = actions.onDismiss)
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = actions.onDismiss,
+        sheetState = sheetState,
+        modifier = modifier.testTag(WORK_ORDER_SCREEN_TAG),
+    ) {
+        var lightboxPhoto by remember { mutableStateOf<CompletionReportPhoto?>(null) }
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+            modifier = Modifier.fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             when (state) {
@@ -139,63 +127,48 @@ private fun ReadyState(
 ) {
     Column(
         modifier = Modifier
-            .fillMaxSize()
+            .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 16.dp)
             .testTag(WORK_ORDER_READY_TAG),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // is the primary action when the work order is in
-        // `awaiting_payment`. Renders above the counterpart row
-        // so it's the first thing the consumer sees; uses the
-        // filled `Button` tonal so it stands out from the rest
-        // of the surface.
-        if (workOrder.status == TurnoStatus.AwaitingPayment) {
-            Button(
-                onClick = actions.onPayNow,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(WORK_ORDER_PAY_NOW_TAG),
-            ) {
-                Text(stringResource(R.string.work_order_pay_now_cta))
-            }
-        }
-        // is the primary action when the work order is `paid`
-        // and the consumer has not yet filed a review. The
-        // composer is collapsed by default; tapping the CTA
-        // flips the VM state to [ReviewComposerState.Editing].
-        if (workOrder.status == TurnoStatus.Paid &&
-            workOrder.review == null &&
-            composer is ReviewComposerState.Hidden
+        Text(
+            text = stringResource(R.string.work_order_title),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.testTag(WORK_ORDER_TITLE_TAG),
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            OutlinedButton(
-                onClick = actions.review.onOpen,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag(WORK_ORDER_RATE_CTA_TAG),
-            ) {
-                Text(stringResource(R.string.work_order_rate_cta))
+            ProviderAvatar(
+                name = workOrder.provider.name,
+                profilePhotoUrl = workOrder.provider.profilePhotoUrl,
+                size = 56.dp,
+                testTag = WORK_ORDER_PROVIDER_AVATAR_TAG,
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${workOrder.provider.name} ${workOrder.provider.surname}",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.testTag(WORK_ORDER_PROVIDER_TAG),
+                )
+                Text(
+                    text = workOrder.provider.categoryName,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = SubtitleGray,
+                    modifier = Modifier.testTag(WORK_ORDER_CATEGORY_TAG),
+                )
             }
         }
-        // taps the CTA, the composer expands inline (between
-        // the pay-now CTA and the detail rows) so they can rate
-        // the provider without leaving the work-order surface.
-        if (composer is ReviewComposerState.Editing) {
-            ReviewComposerSection(
-                composer = composer,
-                actions = actions.review,
-            )
-        }
-        DetailRow(
-            label = stringResource(R.string.work_order_provider),
-            value = "${workOrder.provider.name} ${workOrder.provider.surname}",
-            valueTestTag = WORK_ORDER_PROVIDER_TAG,
-        )
-        DetailRow(
-            label = stringResource(R.string.work_order_category_name),
-            value = workOrder.provider.categoryName,
-            valueTestTag = WORK_ORDER_CATEGORY_TAG,
-        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
         DetailRow(
             label = stringResource(R.string.work_order_amount),
             value = CurrencyFormatter.formatAmount(workOrder.amountCents),
@@ -223,11 +196,6 @@ private fun ReadyState(
             value = statusLabel(workOrder.status),
             valueTestTag = WORK_ORDER_STATUS_TAG,
         )
-        // saldó el pago" row is only present once the consumer
-        // clears the remaining balance (state == `paid`). The
-        // `ScheduledDateFormatter` formats the same way the
-        // "Fecha y hora" row does, so the consumer reads them
-        // consistently.
         workOrder.paidOnEpochMillis?.let { paidOn ->
             DetailRow(
                 label = stringResource(R.string.work_order_paid_on),
@@ -235,14 +203,18 @@ private fun ReadyState(
                 valueTestTag = WORK_ORDER_PAID_ON_TAG,
             )
         }
-        // finalización" section only renders when the provider
-        // filed a completion report AND the work order has moved
-        // out of `Confirmed` into the post-service lifecycle
-        // the `Confirmed` exclusion — even when the domain
-        // carries a `completionReport` (which can happen on a
-        // legacy wire), the screen must ignore it for scheduled
-        // orders so the consumer does not see "evidence" for
-        // work the provider has not yet done.
+
+        if (workOrder.status == TurnoStatus.AwaitingPayment) {
+            Button(
+                onClick = actions.onPayNow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(WORK_ORDER_PAY_NOW_TAG),
+            ) {
+                Text(stringResource(R.string.work_order_pay_now_cta))
+            }
+        }
+
         if (workOrder.completionReport != null &&
             workOrder.status != TurnoStatus.Confirmed
         ) {
@@ -253,8 +225,28 @@ private fun ReadyState(
                 )
             }
         }
-        // only renders when the consumer filed a review
-        // (state == `paid`).
+
+        if (workOrder.status == TurnoStatus.Paid &&
+            workOrder.review == null &&
+            composer is ReviewComposerState.Hidden
+        ) {
+            OutlinedButton(
+                onClick = actions.review.onOpen,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(WORK_ORDER_RATE_CTA_TAG),
+            ) {
+                Text(stringResource(R.string.work_order_rate_cta))
+            }
+        }
+
+        if (composer is ReviewComposerState.Editing) {
+            ReviewComposerSection(
+                composer = composer,
+                actions = actions.review,
+            )
+        }
+
         workOrder.review?.let { review ->
             ReviewSection(review = review)
         }
@@ -554,6 +546,7 @@ const val WORK_ORDER_NOT_FOUND_TAG: String = "work-order-not-found"
 const val WORK_ORDER_ERROR_TAG: String = "work-order-error"
 const val WORK_ORDER_ERROR_RETRY_TAG: String = "work-order-error-retry"
 const val WORK_ORDER_PROVIDER_TAG: String = "work-order-provider"
+const val WORK_ORDER_PROVIDER_AVATAR_TAG: String = "work-order-provider-avatar"
 const val WORK_ORDER_CATEGORY_TAG: String = "work-order-category"
 const val WORK_ORDER_AMOUNT_TAG: String = "work-order-amount"
 const val WORK_ORDER_DATE_TAG: String = "work-order-date"

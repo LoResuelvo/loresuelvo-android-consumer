@@ -3,6 +3,10 @@ package com.loresuelvo.consumer.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
@@ -22,6 +26,11 @@ internal fun TurnosRoute(
 ) {
     val viewModel: TurnosViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val workOrderViewModel: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailViewModel =
+        hiltViewModel()
+    val workOrderState by workOrderViewModel.uiState.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var selectedWorkOrder by remember { mutableStateOf<WorkOrderSelection?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner, viewModel) {
@@ -32,9 +41,19 @@ internal fun TurnosRoute(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    LaunchedEffect(workOrderViewModel) {
+        workOrderViewModel.checkoutUrl.collect { url ->
+            androidx.browser.customtabs.CustomTabsIntent.Builder()
+                .build()
+                .launchUrl(context, android.net.Uri.parse(url))
+        }
+    }
+
     TurnosScreen(
         state = state,
         onRetryClick = viewModel::load,
+        onFilterSelected = viewModel::onFilterSelected,
+        onQueryChanged = viewModel::onSearchQueryChanged,
         onCalendarConnectionClick = {
             navController.navigate(Route.MyProfile.path) { launchSingleTop = true }
         },
@@ -52,10 +71,39 @@ internal fun TurnosRoute(
                     identityVerified = counterpart.identityVerified,
                 )
             }
-            navController.navigate(Route.WorkOrderDetail.buildPath(turnoId, provider))
+            if (turno != null) {
+                selectedWorkOrder = WorkOrderSelection(
+                    id = turnoId,
+                    provider = provider,
+                )
+                workOrderViewModel.load(turnoId, provider)
+            }
         },
     )
+
+    selectedWorkOrder?.let { selection ->
+        com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
+            state = workOrderState,
+            actions = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions(
+                onDismiss = { selectedWorkOrder = null },
+                onRetry = { workOrderViewModel.load(selection.id, selection.provider) },
+                onPayNow = { workOrderViewModel.payNow(selection.id) },
+                review = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions.ReviewActions(
+                    onOpen = workOrderViewModel::openReviewComposer,
+                    onRatingChange = workOrderViewModel::onRatingChange,
+                    onDescriptionChange = workOrderViewModel::onDescriptionChange,
+                    onSubmit = workOrderViewModel::submitReview,
+                    onCancel = workOrderViewModel::cancelReviewComposer,
+                ),
+            ),
+        )
+    }
 }
+
+private data class WorkOrderSelection(
+    val id: String,
+    val provider: WorkOrderDetailCounterpart?,
+)
 
 @Composable
 internal fun WorkOrderDetailRoute(
@@ -82,6 +130,7 @@ internal fun WorkOrderDetailRoute(
     com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen(
         state = state,
         actions = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions(
+            onDismiss = { navController.popBackStack() },
             onRetry = { viewModel.load(workOrderId, provider) },
             onPayNow = { viewModel.payNow(workOrderId) },
             review = com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions.ReviewActions(

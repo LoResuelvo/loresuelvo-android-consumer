@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.ui.screens.misservicios
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposal
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalStatus
 import com.loresuelvo.consumer.domain.serviceproposal.ServiceProposalsOutcome
 import com.loresuelvo.consumer.domain.usecase.serviceproposal.GetAcceptedServiceProposalsUseCase
@@ -34,6 +35,8 @@ class MisServiciosViewModel @Inject constructor(
      * the same filter active.
      */
     private var selectedStatusFilter: ServiceProposalStatus? = null
+    private var searchQuery: String = ""
+    private var loadedProposals: List<ServiceProposal> = emptyList()
 
     init {
         load()
@@ -59,15 +62,19 @@ class MisServiciosViewModel @Inject constructor(
             }
             _uiState.update {
                 when (next) {
-                    is ServiceProposalsOutcome.Success ->
+                    is ServiceProposalsOutcome.Success -> {
+                        loadedProposals = next.proposals
                         MisServiciosUiState.Ready(
-                            proposals = next.proposals,
+                            proposals = filteredProposals(next.proposals),
                             selectedStatusFilter = selectedStatusFilter,
+                            searchQuery = searchQuery,
                         )
+                    }
                     is ServiceProposalsOutcome.Failure ->
                         MisServiciosUiState.Error(
                             failure = next,
                             selectedStatusFilter = selectedStatusFilter,
+                            searchQuery = searchQuery,
                         )
                 }
             }
@@ -81,6 +88,36 @@ class MisServiciosViewModel @Inject constructor(
     fun onFilterSelected(filter: ServiceProposalStatus?) {
         selectedStatusFilter = filter
         load()
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        searchQuery = query
+        _uiState.update { current ->
+            when (current) {
+                is MisServiciosUiState.Ready -> current.copy(
+                    proposals = filteredProposals(loadedProposals),
+                    searchQuery = searchQuery,
+                )
+                is MisServiciosUiState.Error -> current.copy(searchQuery = searchQuery)
+                MisServiciosUiState.Loading -> current
+            }
+        }
+    }
+
+    private fun filteredProposals(
+        proposals: List<ServiceProposal>,
+    ): List<ServiceProposal> {
+        val normalizedQuery = searchQuery.trim()
+        if (normalizedQuery.isBlank()) return proposals
+
+        return proposals.filter { proposal ->
+            listOf(
+                proposal.counterpart.name,
+                proposal.counterpart.surname,
+                proposal.counterpart.categoryName,
+                proposal.description,
+            ).any { value -> value.contains(normalizedQuery, ignoreCase = true) }
+        }
     }
 
     private fun MisServiciosUiState.asLoading(): MisServiciosUiState = when (this) {

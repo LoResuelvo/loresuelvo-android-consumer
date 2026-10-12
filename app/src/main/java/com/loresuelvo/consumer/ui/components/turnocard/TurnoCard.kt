@@ -1,12 +1,13 @@
 package com.loresuelvo.consumer.ui.components.turnocard
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -35,89 +36,90 @@ fun TurnoCard(
     onDetailsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(8.dp)
             .testTag(TURNO_CARD_TAG_PREFIX + turno.id),
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            ProviderAvatar(
-                name = turno.counterpart.name,
-                profilePhotoUrl = turno.counterpart.profilePhotoUrl,
-                size = 56.dp,
-                testTag = TURNO_CARD_AVATAR_TAG_PREFIX + turno.counterpart.id,
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Text(
-                        text = "${turno.counterpart.name} ${turno.counterpart.surname}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        fontWeight = FontWeight.SemiBold,
-                    )
-                    if (turno.counterpart.identityVerified) {
-                        ProviderVerificationBadge()
-                    }
-                }
-                Text(
-                    text = turno.counterpart.categoryName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SubtitleGray,
-                )
-            }
-            TurnoStatusBadge(status = turno.status, scheduledOnEpochMillis = turno.scheduledOnEpochMillis)
-        }
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(
-                text = turno.description,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.testTag(TURNO_CARD_DESCRIPTION_TAG + turno.id),
-            )
-            Text(
-                text = CurrencyFormatter.formatAmount(turno.amountCents),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.testTag(TURNO_CARD_AMOUNT_TAG + turno.id),
-            )
-            // Date on the left + "Ver detalles" CTA aligned to the
-            // right — `Arrangement.SpaceBetween` parks the CTA in the
-            // bottom-right corner of the card without forcing a
-            // full-width button row (matches the
-            // [ProposalCard] bottom row pattern).
             Row(
-                modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                ProviderAvatar(
+                    name = turno.counterpart.name,
+                    profilePhotoUrl = turno.counterpart.profilePhotoUrl,
+                    size = 56.dp,
+                    testTag = TURNO_CARD_AVATAR_TAG_PREFIX + turno.counterpart.id,
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(
+                            text = "${turno.counterpart.name} ${turno.counterpart.surname}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (turno.counterpart.identityVerified) {
+                            ProviderVerificationBadge()
+                        }
+                    }
+                    Text(
+                        text = turno.counterpart.categoryName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SubtitleGray,
+                    )
+                }
+                TurnoStatusBadge(status = turno.status, scheduledOnEpochMillis = turno.scheduledOnEpochMillis)
+            }
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = ScheduledDateFormatter.formatScheduled(turno.scheduledOnEpochMillis),
+                    text = turno.description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.testTag(TURNO_CARD_DESCRIPTION_TAG + turno.id),
+                )
+                Text(
+                    text = CurrencyFormatter.formatAmount(turno.amountCents),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.testTag(TURNO_CARD_DATE_TAG + turno.id),
+                    modifier = Modifier.testTag(TURNO_CARD_AMOUNT_TAG + turno.id),
                 )
-                ViewRequestCta(
-                    onClick = onDetailsClick,
-                    turnId = turno.id,
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = ScheduledDateFormatter.formatScheduled(turno.scheduledOnEpochMillis),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.testTag(TURNO_CARD_DATE_TAG + turno.id),
+                    )
+                    ViewRequestCta(
+                        onClick = onDetailsClick,
+                        turnId = turno.id,
+                    )
+                }
             }
         }
     }

@@ -22,6 +22,8 @@ import androidx.compose.foundation.verticalScroll
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailScreen
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailUiState
 import com.loresuelvo.consumer.ui.screens.proposals.ProposalDetailViewModel
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailActions
+import com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailScreen
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -77,7 +79,7 @@ fun HomeScreen(
             .statusBarsPadding()
             .verticalScroll(scrollState)
             .padding(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         HomeHeader(
             displayName = config.displayName,
@@ -96,13 +98,14 @@ fun HomeScreen(
         when (val ap = state.awaitingPaymentTurnos) {
             is TurnosState.Ready -> {
                 if (ap.items.isNotEmpty()) {
-                    SectionTitle(
+                    HomeSection(
                         text = stringResource(R.string.home_section_pending_payments),
-                    )
-                    AwaitingPaymentRow(
-                        turnos = ap.items,
-                        onTurnoCardClick = actions.turnos.onCardClick,
-                    )
+                    ) {
+                        AwaitingPaymentRow(
+                            turnos = ap.items,
+                            onTurnoCardClick = actions.turnos.onCardClick,
+                        )
+                    }
                 }
                 // Loading / Error / empty: no fallback block — the
                 // section is simply absent. The dedicated Mis
@@ -114,17 +117,17 @@ fun HomeScreen(
             -> Unit
         }
 
-        SectionTitle(
+        HomeSection(
             text = stringResource(R.string.home_section_categories),
             link = stringResource(R.string.home_section_categories_link),
             onLinkClick = actions.categories.onSeeAll,
-        )
-
-        CategorySection(
-            state = state.categories,
-            onCategoryClick = actions.categories.onCategoryClick,
-            onRetryClick = actions.categories.onRetry,
-        )
+        ) {
+            CategorySection(
+                state = state.categories,
+                onCategoryClick = actions.categories.onCategoryClick,
+                onRetryClick = actions.categories.onRetry,
+            )
+        }
 
         // into the "Mis Turnos" surface. The SectionTitle's "Ver
         // todas" link routes to the full list screen
@@ -134,40 +137,41 @@ fun HomeScreen(
         // list is empty, loading, or errored, the shared
         // [EducationalEmptyCard] keeps the section visually
         // consistent so the user never sees a blank box.
-        SectionTitle(
+        HomeSection(
             text = stringResource(R.string.home_section_mis_turnos),
             link = stringResource(R.string.home_section_mis_turnos_link),
             linkTestTag = HOME_TURNOS_LINK_TAG,
             onLinkClick = actions.turnos.onSeeAll,
-        )
-        when (val t = state.turnos) {
-            is TurnosState.Ready -> {
-                if (t.items.isEmpty()) {
-                    EducationalEmptyCard(
-                        title = stringResource(R.string.home_turnos_empty_title),
-                        body = stringResource(R.string.home_turnos_empty_body),
-                        ctaText = stringResource(R.string.home_turnos_empty_cta),
-                        onCtaClick = actions.categories.onSeeAll,
-                    )
-                } else {
-                    TurnosRow(
-                        turnos = t.items,
-                        onTurnoCardClick = actions.turnos.onCardClick,
-                    )
+        ) {
+            when (val t = state.turnos) {
+                is TurnosState.Ready -> {
+                    if (t.items.isEmpty()) {
+                        EducationalEmptyCard(
+                            title = stringResource(R.string.home_turnos_empty_title),
+                            body = stringResource(R.string.home_turnos_empty_body),
+                            ctaText = stringResource(R.string.home_turnos_empty_cta),
+                            onCtaClick = actions.categories.onSeeAll,
+                        )
+                    } else {
+                        TurnosRow(
+                            turnos = t.items,
+                            onTurnoCardClick = actions.turnos.onCardClick,
+                        )
+                    }
                 }
+                // Loading and Error silently fall back to the empty
+                // card so the dashboard doesn't break on a failed
+                // `GET /work-orders`; the dedicated Mis Turnos
+                // screen renders the typed retry branch instead.
+                TurnosState.Loading,
+                TurnosState.Error,
+                -> EducationalEmptyCard(
+                    title = stringResource(R.string.home_turnos_empty_title),
+                    body = stringResource(R.string.home_turnos_empty_body),
+                    ctaText = stringResource(R.string.home_turnos_empty_cta),
+                    onCtaClick = actions.categories.onSeeAll,
+                )
             }
-            // Loading and Error silently fall back to the empty
-            // card so the dashboard doesn't break on a failed
-            // `GET /work-orders`; the dedicated Mis Turnos
-            // screen renders the typed retry branch instead.
-            TurnosState.Loading,
-            TurnosState.Error,
-            -> EducationalEmptyCard(
-                title = stringResource(R.string.home_turnos_empty_title),
-                body = stringResource(R.string.home_turnos_empty_body),
-                ctaText = stringResource(R.string.home_turnos_empty_cta),
-                onCtaClick = actions.categories.onSeeAll,
-            )
         }
 
         // Servicios" surface. The "Ver todas" link lands on a
@@ -178,31 +182,33 @@ fun HomeScreen(
         // when neither sub-state has items we fall back to the
         // shared `EducationalEmptyCard` so the dashboard never
         // leaves the user wondering "what is this empty box?".
-        SectionTitle(
+        HomeSection(
             text = stringResource(R.string.home_section_mis_servicios),
             link = stringResource(R.string.home_section_mis_servicios_link),
             linkTestTag = com.loresuelvo.consumer.ui.screens.home.components.HOME_MIS_SERVICIOS_LINK_TAG,
             onLinkClick = actions.proposals.onSeeAll,
-        )
-        MisServiciosRow(
-            pending = state.pendingServiceProposals,
-            upcoming = state.upcomingServiceProposals,
-            onCtaClick = actions.categories.onSeeAll,
-            onProposalClicked = actions.proposals.onSelected,
-        )
+        ) {
+            MisServiciosRow(
+                pending = state.pendingServiceProposals,
+                upcoming = state.upcomingServiceProposals,
+                onCtaClick = actions.categories.onSeeAll,
+                onProposalClicked = actions.proposals.onSelected,
+            )
+        }
 
-        SectionTitle(
+        HomeSection(
             text = stringResource(R.string.home_section_diagnoses),
             link = stringResource(R.string.home_section_diagnoses_link),
             linkTestTag = HOME_DIAGNOSTICS_LINK_TAG,
             onLinkClick = actions.diagnostics.onSeeAll,
-        )
-        RecentDiagnosticsSection(
-            state = state.recentAiConversations,
-            onConversationClick = actions.diagnostics.onConversationClick,
-            onRetry = actions.diagnostics.onRetry,
-            onStartDiagnosis = actions.diagnostics.onSend,
-        )
+        ) {
+            RecentDiagnosticsSection(
+                state = state.recentAiConversations,
+                onConversationClick = actions.diagnostics.onConversationClick,
+                onRetry = actions.diagnostics.onRetry,
+                onStartDiagnosis = actions.diagnostics.onSend,
+            )
+        }
 
         Spacer(Modifier.height(8.dp))
 
@@ -225,6 +231,11 @@ fun HomeScreen(
     ProposalDetailBottomSheet(
         detailState = config.detailState,
         actions = actions.proposals.detail,
+    )
+
+    WorkOrderDetailBottomSheet(
+        detailState = config.workOrderDetailState,
+        actions = actions.turnos.detail,
     )
 }
 
@@ -252,6 +263,46 @@ private fun ProposalDetailBottomSheet(
 }
 
 @Composable
+private fun WorkOrderDetailBottomSheet(
+    detailState: com.loresuelvo.consumer.ui.screens.workorderdetail.WorkOrderDetailUiState?,
+    actions: HomeScreenActions.Turnos.Detail,
+) {
+    if (detailState == null) return
+
+    WorkOrderDetailScreen(
+        state = detailState,
+        actions = WorkOrderDetailActions(
+            onDismiss = actions.onDismiss,
+            onRetry = actions.onRetry,
+            onPayNow = actions.onPayNow,
+            review = actions.review,
+        ),
+    )
+}
+
+@Composable
+private fun HomeSection(
+    text: String,
+    link: String? = null,
+    linkTestTag: String? = null,
+    onLinkClick: () -> Unit = {},
+    content: @Composable () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        SectionTitle(
+            text = text,
+            link = link,
+            linkTestTag = linkTestTag,
+            onLinkClick = onLinkClick,
+        )
+        content()
+    }
+}
+
+@Composable
 private fun CategorySection(
     state: CategoriesState,
     onCategoryClick: (categoryId: Int, categoryName: String) -> Unit,
@@ -271,7 +322,7 @@ private fun CategorySection(
             categories = state.items,
             onCategoryClick = onCategoryClick,
             modifier = Modifier
-                .height(280.dp)
+                .height(248.dp)
                 .fillMaxWidth(),
         )
 

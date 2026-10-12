@@ -135,6 +135,23 @@ class FakeTurnosInterceptor : Interceptor {
                   "category_name": "Gas",
                   "profile_photo_url": null
                 }
+              },
+              {
+                "id": 7,
+                "service_proposal_id": 107,
+                "amount_cents": 1250000,
+                "scheduled_on": "2026-10-10T11:00:00Z",
+                "description": "Reparación eléctrica finalizada (lista para reseñar)",
+                "status": "paid",
+                "accepted_on": "2026-10-01T10:30:00Z",
+                "counterpart": {
+                  "id": 17,
+                  "role": "provider",
+                  "name": "Tomás",
+                  "surname": "Ruiz",
+                  "category_name": "Electricidad",
+                  "profile_photo_url": null
+                }
               }
             ]
         """.trimIndent()

@@ -10,6 +10,7 @@ data class MisServiciosScreenActions(
 ) {
     data class Filters(
         val onSelected: (ServiceProposalStatus?) -> Unit = {},
+        val onQueryChanged: (String) -> Unit = {},
     )
 
     data class Proposals(

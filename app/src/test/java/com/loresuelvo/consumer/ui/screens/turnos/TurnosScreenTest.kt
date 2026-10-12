@@ -126,6 +126,53 @@ class TurnosScreenTest {
         assertTrue(clicked)
     }
 
+    @Test
+    fun ready_state_exposes_search_filter_and_dismissible_calendar_card() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                TurnosScreen(
+                    state = TurnosUiState.Ready(
+                        turnos = listOf(sampleTurno("1")),
+                        calendarConnectionStatus = CalendarConnectionStatus.DISCONNECTED,
+                    ),
+                    onRetryClick = {},
+                )
+            }
+        }
+
+        composeTestRule.onNodeWithTag(TURNOS_SEARCH_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(TURNOS_FILTER_BUTTON_TAG).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(CALENDAR_SYNC_DISMISS_TAG).performClick()
+        assertTrue(
+            composeTestRule
+                .onAllNodesWithTag(CALENDAR_SYNC_BANNER_TAG)
+                .fetchSemanticsNodes()
+                .isEmpty(),
+        )
+    }
+
+    @Test
+    fun connected_calendar_status_hides_connection_card() {
+        composeTestRule.setContent {
+            MaterialTheme {
+                TurnosScreen(
+                    state = TurnosUiState.Ready(
+                        turnos = listOf(sampleTurno("1")),
+                        calendarConnectionStatus = CalendarConnectionStatus.CONNECTED,
+                    ),
+                    onRetryClick = {},
+                )
+            }
+        }
+
+        assertTrue(
+            composeTestRule
+                .onAllNodesWithTag(CALENDAR_SYNC_BANNER_TAG)
+                .fetchSemanticsNodes()
+                .isEmpty(),
+        )
+    }
+
     private fun sampleTurno(id: String): Turno = Turno(
         id = id,
         serviceProposalId = "p-$id",

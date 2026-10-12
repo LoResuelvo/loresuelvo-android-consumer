@@ -18,6 +18,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -373,7 +374,10 @@ class ExactNavigationInstrumentedTest {
                     compose.onAllNodesWithTag(PROPOSAL_DETAIL_READY_TAG).fetchSemanticsNodes().isNotEmpty()
                 }
                 compose.onNodeWithTag(PROPOSAL_DETAIL_READY_TAG).assertIsDisplayed()
-                compose.onNodeWithText("Detalle actual de la propuesta 88").assertIsDisplayed()
+                compose.onAllNodes(
+                    hasText("Detalle actual de la propuesta 88")
+                        .and(hasAnyAncestor(hasTestTag(PROPOSAL_DETAIL_READY_TAG))),
+                ).assertCountEquals(1).onFirst().assertIsDisplayed()
                 compose.onAllNodes(
                     hasText("Detalle señuelo de la propuesta 99")
                         .and(hasAnyAncestor(hasTestTag(PROPOSAL_DETAIL_READY_TAG))),

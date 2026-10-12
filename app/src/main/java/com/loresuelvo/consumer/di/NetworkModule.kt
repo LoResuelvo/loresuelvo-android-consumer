@@ -5,7 +5,9 @@ import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.data.api.ApiConfig
 import com.loresuelvo.consumer.data.api.AuthInterceptor
 import com.loresuelvo.consumer.data.api.BackendApi
+import com.loresuelvo.consumer.data.api.FakeServiceProposalsInterceptor
 import com.loresuelvo.consumer.data.api.FakeTurnosInterceptor
+import com.loresuelvo.consumer.data.api.FakeWorkOrderDetailInterceptor
 import com.loresuelvo.consumer.data.api.RetryOn401Authenticator
 import com.loresuelvo.consumer.data.api.upload.FileUploader
 import com.loresuelvo.consumer.data.api.upload.OkHttpFileUploader
@@ -69,6 +71,12 @@ object NetworkModule {
             // production APK would be a security regression.
             if (BuildConfig.MOCK_TURNOS) {
                 it.addInterceptor(FakeTurnosInterceptor())
+            }
+            if (BuildConfig.MOCK_SERVICE_PROPOSALS) {
+                it.addInterceptor(FakeServiceProposalsInterceptor())
+            }
+            if (BuildConfig.MOCK_WORK_ORDER_DETAILS) {
+                it.addInterceptor(FakeWorkOrderDetailInterceptor())
             }
         }
         .authenticator(retryAuthenticator)
