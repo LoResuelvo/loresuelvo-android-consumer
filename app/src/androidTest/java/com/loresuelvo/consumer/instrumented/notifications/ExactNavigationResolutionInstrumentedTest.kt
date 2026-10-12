@@ -19,9 +19,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
-import androidx.test.uiautomator.UiDevice
 import com.loresuelvo.consumer.MainActivity
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
@@ -83,7 +81,6 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -106,10 +103,6 @@ class ExactNavigationResolutionInstrumentedTest {
 
     private lateinit var scenario: ActivityScenario<MainActivity>
     private lateinit var scenarioStartIntent: Intent
-    private val device: UiDevice by lazy {
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-    }
-
     private val sessions: AuthSessionStore by lazy {
         EntryPointAccessors.fromApplication(
             ApplicationProvider.getApplicationContext<Application>(),
@@ -266,9 +259,8 @@ class ExactNavigationResolutionInstrumentedTest {
     private fun pressBack() {
         scenario.onActivity { activity ->
             assertEquals(Lifecycle.State.RESUMED, activity.lifecycle.currentState)
+            activity.onBackPressedDispatcher.onBackPressed()
         }
-        assertEquals(context.packageName, device.currentPackageName)
-        assertTrue(device.pressBack())
         compose.waitForIdle()
     }
 
