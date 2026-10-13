@@ -43,6 +43,7 @@ import com.loresuelvo.consumer.domain.turno.TurnosOutcome
 import com.loresuelvo.consumer.domain.turno.TurnosRepository
 import com.loresuelvo.consumer.domain.usecase.conversation.GetConversationByIdUseCase
 import com.loresuelvo.consumer.domain.usecase.notifications.AuthorizeMessageNotificationUseCase
+import com.loresuelvo.consumer.domain.usecase.notifications.DismissConversationNotificationsUseCase
 import com.loresuelvo.consumer.domain.usecase.notifications.AuthorizeServiceNotificationUseCase
 import com.loresuelvo.consumer.domain.usecase.payment.StartServiceProposalCheckoutUseCase
 import com.loresuelvo.consumer.domain.usecase.payment.StartWorkOrderCheckoutUseCase
@@ -271,9 +272,16 @@ class ConsumerExactNavigationWorld {
         val serviceNavigation = ServiceNotificationNavigation(
             AuthorizeServiceNotificationUseCase(sessions, installations, clock),
         )
+        val conversationVisibility = VisibleConversationStore(sessions)
         return NavigationIntentViewModel(
             dispatcher = dispatcher,
-            conversationVisibility = VisibleConversationStore(sessions),
+            conversationVisibility = conversationVisibility,
+            dismissConversationNotifications = DismissConversationNotificationsUseCase(
+                sessions,
+                installations,
+                conversationVisibility,
+                com.loresuelvo.consumer.domain.notifications.NotificationDismissal {},
+            ),
             notifications = Provider { messageNavigation },
             serviceNotifications = Provider { serviceNavigation },
         )

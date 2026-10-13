@@ -41,14 +41,14 @@ class AndroidMessageNotificationPublisher internal constructor(
         val intent = MessageNotificationIntent().create(context, notification)
         val pending = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val publicVersion = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_notification_message).setContentTitle(context.getString(R.string.app_name)).build()
+            .setSmallIcon(R.drawable.ic_notification_loresuelvo).setContentTitle(context.getString(R.string.app_name)).build()
         val visible = NotificationCompat.Builder(context, channelId)
-            .setSmallIcon(R.drawable.ic_notification_message)
+            .setSmallIcon(R.drawable.ic_notification_loresuelvo)
             .setContentTitle(notification.title).setContentText(notification.body)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE).setPublicVersion(publicVersion)
             .setContentIntent(pending).setAutoCancel(true).setOnlyAlertOnce(true).build()
         if (!authorize(notification)) return false
-        manager.notify("${notification.bindingId}:${notification.eventId}", 0, visible)
+        manager.notify(MessageNotificationTag.forNotification(notification), 0, visible)
         return true
     }
 
@@ -64,4 +64,12 @@ class AndroidMessageNotificationPublisher internal constructor(
     }
 
     companion object { const val CHANNEL = "messages" }
+}
+
+internal object MessageNotificationTag {
+    fun forNotification(notification: MessageNotification): String =
+        forConversation(notification.bindingId, notification.conversationId) + notification.eventId
+
+    fun forConversation(bindingId: String, conversationId: Int): String =
+        "message:$bindingId:$conversationId:"
 }

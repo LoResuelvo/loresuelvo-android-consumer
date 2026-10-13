@@ -146,6 +146,7 @@ fun LoResuelvoNav() {
         currentNavRoute,
         backStackEntry?.arguments?.getString("conversationId"),
         sessionState.authenticated,
+        navigationIntents::dismissNotificationsForConversation,
     )
 
     val sessionRoute = SessionRouteMapper.routeFor(sessionState)

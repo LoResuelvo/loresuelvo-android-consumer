@@ -2,12 +2,14 @@ package com.loresuelvo.consumer.di
 
 import com.loresuelvo.consumer.domain.auth.AuthSessionStore
 import com.loresuelvo.consumer.domain.notifications.NotificationClock
+import com.loresuelvo.consumer.domain.notifications.NotificationDismissal
 import com.loresuelvo.consumer.domain.notifications.NotificationInstallationReader
 import com.loresuelvo.consumer.domain.notifications.ConversationVisibility
 import com.loresuelvo.consumer.domain.notifications.NotificationAvailability
 import com.loresuelvo.consumer.domain.notifications.NotificationEventStore
 import com.loresuelvo.consumer.domain.notifications.MessageNotificationPublisher
 import com.loresuelvo.consumer.domain.usecase.notifications.AuthorizeMessageNotificationUseCase
+import com.loresuelvo.consumer.domain.usecase.notifications.DismissConversationNotificationsUseCase
 import com.loresuelvo.consumer.domain.usecase.notifications.ReceiveMessageNotificationUseCase
 import dagger.Module
 import dagger.Provides
@@ -26,4 +28,11 @@ object MessageNotificationModule {
     fun provideReceiver(authorize: AuthorizeMessageNotificationUseCase, visibility: ConversationVisibility,
         availability: NotificationAvailability, events: NotificationEventStore, publisher: MessageNotificationPublisher) =
         ReceiveMessageNotificationUseCase(authorize, visibility, availability, events, publisher)
+    @Provides @Singleton
+    fun provideDismissConversationNotifications(
+        sessions: AuthSessionStore,
+        installation: NotificationInstallationReader,
+        visibility: ConversationVisibility,
+        dismissal: NotificationDismissal,
+    ) = DismissConversationNotificationsUseCase(sessions, installation, visibility, dismissal)
 }

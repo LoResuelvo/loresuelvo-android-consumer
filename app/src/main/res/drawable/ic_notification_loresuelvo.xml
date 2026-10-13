@@ -1,0 +1,12 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:left="-23.4dp"
+        android:top="-23dp"
+        android:right="-22.6dp"
+        android:bottom="-23dp">
+        <bitmap
+            android:src="@drawable/logo_sin_letras_launcher"
+            android:gravity="fill"
+            android:tint="#FFFFFFFF" />
+    </item>
+</layer-list>

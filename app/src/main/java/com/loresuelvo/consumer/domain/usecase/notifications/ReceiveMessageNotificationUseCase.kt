@@ -17,22 +17,26 @@ class ReceiveMessageNotificationUseCase(
     @Synchronized
     operator fun invoke(notification: MessageNotification): MessageNotificationOutcome {
         if (!authorize(notification) || !safeMessageText(notification)) return MessageNotificationOutcome.Invalid
-        if (events.contains(notification.bindingId, notification.eventId)) return MessageNotificationOutcome.Duplicate
-        if (!authorize(notification)) return MessageNotificationOutcome.Invalid
-        if (
-            visibility.requestRefreshIfVisible(
-                notification.conversationId,
-                notification.eventId,
-                notification.recipientId,
-            )
-        ) {
+        return synchronized(visibility) {
+            if (events.contains(notification.bindingId, notification.eventId)) {
+                return@synchronized MessageNotificationOutcome.Duplicate
+            }
+            if (!authorize(notification)) return@synchronized MessageNotificationOutcome.Invalid
+            if (
+                visibility.requestRefreshIfVisible(
+                    notification.conversationId,
+                    notification.eventId,
+                    notification.recipientId,
+                )
+            ) {
+                events.remember(notification.bindingId, notification.eventId)
+                return@synchronized MessageNotificationOutcome.VisibleConversation
+            }
+            if (!availability.messagesAllowed()) return@synchronized MessageNotificationOutcome.Unavailable
+            if (!publisher.publish(notification)) return@synchronized MessageNotificationOutcome.Unavailable
             events.remember(notification.bindingId, notification.eventId)
-            return MessageNotificationOutcome.VisibleConversation
+            MessageNotificationOutcome.Published
         }
-        if (!availability.messagesAllowed()) return MessageNotificationOutcome.Unavailable
-        if (!publisher.publish(notification)) return MessageNotificationOutcome.Unavailable
-        events.remember(notification.bindingId, notification.eventId)
-        return MessageNotificationOutcome.Published
     }
 
     private fun safeMessageText(notification: MessageNotification): Boolean =

@@ -5,6 +5,7 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import androidx.core.app.NotificationCompat
 import com.loresuelvo.consumer.data.auth.EncryptedAuthSessionStore
 import com.loresuelvo.consumer.data.api.mapper.toDomain
 import com.loresuelvo.consumer.data.installation.EncryptedInstallationStateStore
@@ -19,6 +20,9 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.runBlocking
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 import org.junit.Before
 import org.junit.Test
 import org.junit.Assert.*
@@ -72,7 +76,11 @@ class MessageNotificationsAndroidTest {
         val notification = shadowOf(manager).allNotifications.single()
         assertEquals(Notification.VISIBILITY_PRIVATE, notification.visibility)
         assertNotNull(notification.publicVersion)
-        assertNotEquals(0, notification.smallIcon.resId)
+        assertEquals(com.loresuelvo.consumer.R.drawable.ic_notification_loresuelvo, notification.smallIcon.resId)
+        assertEquals(
+            MessageNotificationTag.forNotification(MessageNotificationDecoder().decode(payload)!!.toDomain()),
+            manager.activeNotifications.single().tag,
+        )
         val pending = shadowOf(notification.contentIntent)
         val intent = pending.savedIntent
         assertTrue(pending.flags and android.app.PendingIntent.FLAG_IMMUTABLE != 0)
@@ -193,5 +201,126 @@ class MessageNotificationsAndroidTest {
             assertEquals(MessageNotificationOutcome.Unavailable, receiver.receive(payload))
             assertTrue(shadowOf(manager).allNotifications.isEmpty())
         }
+    }
+
+    @Test fun dismissing_a_conversation_clears_its_messages_only() {
+        val sameConversationPrefix = "message:${payload.getValue("binding_id")}:42:"
+        val otherConversationTag = "message:${payload.getValue("binding_id")}:99:message:99:17"
+        val otherBindingTag = "message:other-binding:42:message:51:29"
+        val serviceNoticeTag = "${payload.getValue("binding_id")}:service:proposal:51"
+        postSystemNotification("${sameConversationPrefix}message:51:17")
+        postSystemNotification("${sameConversationPrefix}message:52:17")
+        postSystemNotification(otherConversationTag)
+        postSystemNotification(otherBindingTag)
+        postSystemNotification(serviceNoticeTag)
+
+        AndroidNotificationDismissal(context).dismissConversation(payload.getValue("binding_id"), 42)
+
+        assertEquals(
+            setOf(otherConversationTag, otherBindingTag, serviceNoticeTag),
+            manager.activeNotifications.map { it.tag }.toSet(),
+        )
+    }
+
+    @Test fun dismiss_conversation_use_case_uses_only_the_confirmed_current_account_binding() {
+        var dismissed: Pair<String, Int>? = null
+        val dismissal = object : NotificationDismissal {
+            override fun dismissAll() = Unit
+            override fun dismissConversation(bindingId: String, conversationId: Int) {
+                dismissed = bindingId to conversationId
+            }
+        }
+        val useCase = DismissConversationNotificationsUseCase(sessions, installations, visibility, dismissal)
+
+        useCase(42)
+        assertEquals(installations.confirmedInstallation()!!.bindingId to 42, dismissed)
+
+        dismissed = null
+        sessions.saveSession(AuthSession(User("Other account", backendUserId = 29), "other-token"))
+        useCase(42)
+        assertNull(dismissed)
+
+        useCase(0)
+        assertNull(dismissed)
+    }
+
+    @Test fun entering_chat_waits_for_in_flight_message_publication_before_dismissing() {
+        val enteredVisibility = CoordinatedConversationVisibility()
+        val publicationStarted = CountDownLatch(1)
+        val allowPublication = CountDownLatch(1)
+        val platformPublisher = AndroidMessageNotificationPublisher(context, authorize)
+        assertTrue(platformPublisher.messagesAllowed())
+        val publisher = MessageNotificationPublisher { notification ->
+            publicationStarted.countDown()
+            allowPublication.await(2, TimeUnit.SECONDS) && platformPublisher.publish(notification)
+        }
+        val receive = ReceiveMessageNotificationUseCase(
+            authorize,
+            enteredVisibility,
+            NotificationAvailability { true },
+            StoredNotificationEvents(context.getSharedPreferences("message_installations", 0)),
+            publisher,
+        )
+        val dismiss = DismissConversationNotificationsUseCase(
+            sessions,
+            installations,
+            enteredVisibility,
+            AndroidNotificationDismissal(context),
+        )
+        val notification = MessageNotificationDecoder().decode(payload)!!.toDomain()
+        val outcome = AtomicReference<MessageNotificationOutcome>()
+        val receiveThread = Thread { outcome.set(receive(notification)) }
+        receiveThread.start()
+        assertTrue(publicationStarted.await(2, TimeUnit.SECONDS))
+
+        val entryThread = Thread {
+            enteredVisibility.show(42)
+            dismiss(42)
+        }
+        entryThread.start()
+        assertTrue(enteredVisibility.showAttempted.await(2, TimeUnit.SECONDS))
+        assertFalse(enteredVisibility.showCompleted.await(250, TimeUnit.MILLISECONDS))
+
+        allowPublication.countDown()
+        receiveThread.join(2_000)
+        entryThread.join(2_000)
+
+        assertFalse(receiveThread.isAlive)
+        assertFalse(entryThread.isAlive)
+        assertEquals(MessageNotificationOutcome.Published, outcome.get())
+        assertTrue(shadowOf(manager).allNotifications.isEmpty())
+    }
+
+    private fun postSystemNotification(tag: String) {
+        if (android.os.Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(TEST_CHANNEL) == null) {
+            manager.createNotificationChannel(
+                android.app.NotificationChannel(TEST_CHANNEL, "test", NotificationManager.IMPORTANCE_DEFAULT),
+            )
+        }
+        manager.notify(
+            tag,
+            0,
+            NotificationCompat.Builder(context, TEST_CHANNEL)
+                .setSmallIcon(com.loresuelvo.consumer.R.drawable.ic_notification_loresuelvo)
+                .build(),
+        )
+    }
+
+    private class CoordinatedConversationVisibility : ConversationVisibility {
+        val showAttempted = CountDownLatch(1)
+        val showCompleted = CountDownLatch(1)
+        private var conversationId: Int? = null
+
+        override fun visibleConversation(): Int? = synchronized(this) { conversationId }
+
+        override fun show(conversationId: Int?) {
+            showAttempted.countDown()
+            synchronized(this) { this.conversationId = conversationId }
+            showCompleted.countDown()
+        }
+    }
+
+    private companion object {
+        const val TEST_CHANNEL = "notification-test"
     }
 }

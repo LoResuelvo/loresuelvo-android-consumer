@@ -121,12 +121,12 @@ class DeduplicationAndExpirationInstrumentedTest {
 
         val firstOutcome = receiver.receive(payload)
         assertEquals(MessageNotificationOutcome.Published, firstOutcome)
-        val activeAfterFirst = manager.activeNotifications.filter { it.tag == "${binding.id}:message:200:17" }
+        val activeAfterFirst = manager.activeNotifications.filter { it.tag == "message:${binding.id}:42:message:200:17" }
         assertEquals(1, activeAfterFirst.size)
 
         val secondOutcome = receiver.receive(payload)
         assertEquals(MessageNotificationOutcome.Duplicate, secondOutcome)
-        val activeAfterSecond = manager.activeNotifications.filter { it.tag == "${binding.id}:message:200:17" }
+        val activeAfterSecond = manager.activeNotifications.filter { it.tag == "message:${binding.id}:42:message:200:17" }
         assertEquals("Duplicate must not add another notification to NotificationManager", 1, activeAfterSecond.size)
     }
 
@@ -290,7 +290,7 @@ class DeduplicationAndExpirationInstrumentedTest {
 
         val secondOutcome = secondReceiver.receive(payload)
         assertEquals("Recreated receiver must recognize persisted event as duplicate", MessageNotificationOutcome.Duplicate, secondOutcome)
-        val active = manager.activeNotifications.filter { it.tag == "${binding.id}:message:300:17" }
+        val active = manager.activeNotifications.filter { it.tag == "message:${binding.id}:42:message:300:17" }
         assertEquals(1, active.size)
     }
 }

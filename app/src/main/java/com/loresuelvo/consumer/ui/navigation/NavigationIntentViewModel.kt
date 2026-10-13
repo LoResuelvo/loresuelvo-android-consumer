@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.ui.navigation
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import com.loresuelvo.consumer.domain.notifications.ConversationVisibility
+import com.loresuelvo.consumer.domain.usecase.notifications.DismissConversationNotificationsUseCase
 import com.loresuelvo.consumer.platform.notifications.MessageNotificationIntent
 import com.loresuelvo.consumer.platform.notifications.MessageNotificationNavigation
 import com.loresuelvo.consumer.platform.notifications.NavigationIntentDispatcher
@@ -19,10 +20,21 @@ import javax.inject.Provider
 class NavigationIntentViewModel @Inject constructor(
     dispatcher: NavigationIntentDispatcher,
     val conversationVisibility: ConversationVisibility,
+    private val dismissConversationNotifications: DismissConversationNotificationsUseCase,
     private val notifications: Provider<MessageNotificationNavigation>,
     private val serviceNotifications: Provider<ServiceNotificationNavigation>,
 ) : ViewModel() {
     val events = dispatcher.events
+    fun dismissNotificationsForConversation(conversationId: Int) = try {
+        dismissConversationNotifications(conversationId)
+    } catch (_: IOException) {
+        Unit
+    } catch (_: GeneralSecurityException) {
+        Unit
+    } catch (_: SecurityException) {
+        Unit
+    }
+
     fun isMessageNotification(intent: Intent) = intent.action == MessageNotificationIntent.ACTION
     fun conversationId(intent: Intent): Int? = try { notifications.get().conversationId(intent) }
     catch (_: IOException) { null }

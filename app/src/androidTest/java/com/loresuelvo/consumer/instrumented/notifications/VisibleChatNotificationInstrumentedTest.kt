@@ -296,6 +296,7 @@ class VisibleChatNotificationInstrumentedTest {
         var currentRoute by mutableStateOf<String?>(Route.Conversation("").path)
         var currentConvId by mutableStateOf<String?>("42")
         var isAuthenticated by mutableStateOf(true)
+        val enteredConversations = mutableListOf<Int>()
 
         compose.setContent {
             ConversationNotificationVisibility(
@@ -303,10 +304,12 @@ class VisibleChatNotificationInstrumentedTest {
                 route = currentRoute,
                 conversationId = currentConvId,
                 authenticated = isAuthenticated,
+                onConversationEntered = { enteredConversations += it },
             )
         }
         compose.waitForIdle()
         assertEquals(42, visibility.visibleConversation())
+        assertEquals(listOf(42), enteredConversations)
 
         currentRoute = Route.Messages.path
         currentConvId = null
@@ -318,5 +321,6 @@ class VisibleChatNotificationInstrumentedTest {
         isAuthenticated = false
         compose.waitForIdle()
         assertNull(visibility.visibleConversation())
+        assertEquals(listOf(42), enteredConversations)
     }
 }
