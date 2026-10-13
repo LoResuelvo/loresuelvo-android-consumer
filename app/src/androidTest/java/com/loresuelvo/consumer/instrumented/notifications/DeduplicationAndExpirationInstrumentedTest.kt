@@ -3,6 +3,7 @@ package com.loresuelvo.consumer.instrumented.notifications
 import android.Manifest
 import android.app.NotificationManager
 import android.content.Context
+import android.os.SystemClock
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.SdkSuppress
@@ -121,12 +122,17 @@ class DeduplicationAndExpirationInstrumentedTest {
 
         val firstOutcome = receiver.receive(payload)
         assertEquals(MessageNotificationOutcome.Published, firstOutcome)
-        val activeAfterFirst = manager.activeNotifications.filter { it.tag == "message:${binding.id}:42:message:200:17" }
-        assertEquals(1, activeAfterFirst.size)
+        val notificationTag = "message:${binding.id}:42:message:200:17"
+        val activeAfterFirst = awaitActiveNotificationsWithTag(notificationTag)
+        assertEquals(
+            "Expected the message tag; active notifications were ${manager.activeNotifications.map { it.tag to it.id }}",
+            1,
+            activeAfterFirst.size,
+        )
 
         val secondOutcome = receiver.receive(payload)
         assertEquals(MessageNotificationOutcome.Duplicate, secondOutcome)
-        val activeAfterSecond = manager.activeNotifications.filter { it.tag == "message:${binding.id}:42:message:200:17" }
+        val activeAfterSecond = awaitActiveNotificationsWithTag(notificationTag)
         assertEquals("Duplicate must not add another notification to NotificationManager", 1, activeAfterSecond.size)
     }
 
@@ -290,7 +296,21 @@ class DeduplicationAndExpirationInstrumentedTest {
 
         val secondOutcome = secondReceiver.receive(payload)
         assertEquals("Recreated receiver must recognize persisted event as duplicate", MessageNotificationOutcome.Duplicate, secondOutcome)
-        val active = manager.activeNotifications.filter { it.tag == "message:${binding.id}:42:message:300:17" }
-        assertEquals(1, active.size)
+        val active = awaitActiveNotificationsWithTag("message:${binding.id}:42:message:300:17")
+        assertEquals(
+            "Recreated receiver must leave the posted message active; active tags were ${manager.activeNotifications.map { it.tag }}",
+            1,
+            active.size,
+        )
+    }
+
+    private fun awaitActiveNotificationsWithTag(tag: String) = run {
+        val deadline = SystemClock.elapsedRealtime() + 3_000L
+        var active = manager.activeNotifications.filter { it.tag == tag }
+        while (active.isEmpty() && SystemClock.elapsedRealtime() < deadline) {
+            SystemClock.sleep(50L)
+            active = manager.activeNotifications.filter { it.tag == tag }
+        }
+        active
     }
 }
