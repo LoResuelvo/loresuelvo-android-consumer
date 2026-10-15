@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.data.notifications.StoredNotificationPermission
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.notifications.NotificationPermissionStatus
@@ -109,7 +110,9 @@ class NotificationPermissionInstrumentedTest {
         compose.onNodeWithTag("consumer-profile-content")
             .performScrollToNode(hasTestTag("consumer-profile-notifications"))
         compose.onNodeWithTag("consumer-profile-notifications").assertIsDisplayed()
-        compose.onNodeWithTag("consumer-profile-notifications-title").assertIsDisplayed()
+        compose.onNodeWithText(
+            context.getString(R.string.consumer_profile_notifications_option_title),
+        ).assertIsDisplayed()
         compose.onNodeWithTag("consumer-profile-notifications-action")
             .assertHasClickAction()
             .performClick()
