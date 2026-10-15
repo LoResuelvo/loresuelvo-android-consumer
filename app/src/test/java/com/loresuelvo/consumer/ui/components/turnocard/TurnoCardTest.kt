@@ -100,11 +100,15 @@ class TurnoCardTest {
 
     @Test
     fun status_badge_renders_per_turno_status() {
+        val notToday = startOfTomorrowUtcMillis()
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
                     TurnoCard(
-                        turno = sampleTurno(id = "1"),
+                        turno = sampleTurno(
+                            id = "1",
+                            scheduledOnEpochMillis = notToday,
+                        ),
                         onDetailsClick = {},
                     )
                 }
@@ -146,7 +150,7 @@ class TurnoCardTest {
 
     @Test
     fun status_badge_keeps_Confirmado_label_when_turno_is_Confirmed_but_NOT_today() {
-        val notToday = startOfTodayUtcMillis() + 24 * 60 * 60 * 1000L
+        val notToday = startOfTomorrowUtcMillis()
         composeTestRule.setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.testTag("host")) {
@@ -286,3 +290,6 @@ private fun startOfTodayUtcMillis(): Long {
     cal.set(java.util.Calendar.MILLISECOND, 0)
     return cal.timeInMillis
 }
+
+private fun startOfTomorrowUtcMillis(): Long =
+    startOfTodayUtcMillis() + 24 * 60 * 60 * 1000L
