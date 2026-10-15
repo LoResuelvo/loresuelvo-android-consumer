@@ -2,10 +2,13 @@ package com.loresuelvo.consumer.ui.screens.profile
 
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
@@ -43,7 +46,9 @@ class ConsumerProfileScreenTest {
         composeTestRule.onNodeWithTag("consumer-profile-avatar").assertIsDisplayed()
         composeTestRule.onNodeWithTag("consumer-profile-name").assertIsDisplayed()
         composeTestRule.onNodeWithText("ana@example.com").assertExists()
-        composeTestRule.onNodeWithText("Tucuman 123").assertExists()
+        composeTestRule.onNodeWithTag("consumer-profile-content")
+            .performScrollToNode(hasText("Tucuman 123"))
+        composeTestRule.onNodeWithText("Tucuman 123").assertIsDisplayed()
     }
 
     @Test
@@ -94,7 +99,8 @@ class ConsumerProfileScreenTest {
         composeTestRule.onNodeWithTag("consumer-profile-content")
             .performScrollToNode(hasTestTag("consumer-profile-notifications"))
         composeTestRule.onNodeWithTag("consumer-profile-notifications").assertIsDisplayed()
-        composeTestRule.onNodeWithTag("consumer-profile-notifications-title").assertExists()
+        composeTestRule.onNodeWithText("Avisos del teléfono").assertExists()
+        composeTestRule.onAllNodesWithText("Notificaciones").assertCountEquals(1)
         composeTestRule.onNodeWithTag("consumer-profile-notifications-action")
             .assertHasClickAction()
             .performClick()

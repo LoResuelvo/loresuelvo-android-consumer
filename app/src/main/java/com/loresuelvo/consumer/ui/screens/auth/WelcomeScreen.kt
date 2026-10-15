@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -126,8 +127,10 @@ private fun welcomeErrorMessage(error: WelcomeError): String = when (error) {
 /**
  * Renders the illustrative service-category chips based on the
  * [WelcomeCategoriesUiState]: a slim progress indicator while
- * loading, the scrollable chip row when ready, or an error message
- * when the fetch fails or returns nothing.
+ * loading, the scrollable chip row when ready, or the bundled
+ * illustrative catalog when the pre-authenticated request fails.
+ * The latter keeps the marketing screen useful when the API requires
+ * authentication for categories.
  */
 @Composable
 private fun CategorySection(state: WelcomeCategoriesUiState) {
@@ -143,12 +146,8 @@ private fun CategorySection(state: WelcomeCategoriesUiState) {
             CategoryChipRow(categories = state.categories.map { it.name })
 
         WelcomeCategoriesUiState.Error ->
-            Text(
-                text = stringResource(R.string.welcome_categories_error),
-                style = MaterialTheme.typography.bodySmall,
-                color = SubtitleGray,
-                textAlign = TextAlign.Center,
-                lineHeight = 16.sp,
+            CategoryChipRow(
+                categories = stringArrayResource(R.array.welcome_categories).toList(),
                 modifier = Modifier.fillMaxWidth(),
             )
     }

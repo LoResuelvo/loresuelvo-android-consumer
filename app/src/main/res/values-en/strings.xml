@@ -91,7 +91,11 @@
     <string name="bottom_nav_mi_perfil">My profile</string>
     <string name="consumer_profile_title">My profile</string>
     <string name="consumer_profile_account_title">Account details</string>
+    <string name="consumer_profile_first_name_label">First name</string>
+    <string name="consumer_profile_last_name_label">Last name</string>
     <string name="consumer_profile_address_title">Address</string>
+    <string name="consumer_profile_address_label">Address</string>
+    <string name="consumer_profile_floor_unit_label">Floor and unit</string>
     <string name="consumer_profile_first_name">First name: %1$s</string>
     <string name="consumer_profile_last_name">Last name: %1$s</string>
     <string name="consumer_profile_email">Email: %1$s</string>
@@ -113,6 +117,7 @@
     <string name="consumer_profile_calendar_error_unauthorized">Your session expired. Please sign in again.</string>
     <string name="consumer_profile_calendar_error_server">We could not validate the Google Calendar account. Try again.</string>
     <string name="consumer_profile_notifications_title">Device notifications</string>
+    <string name="consumer_profile_notifications_option_title">Notifications</string>
     <string name="consumer_profile_notifications_enabled">Notifications are enabled on this device.</string>
     <string name="consumer_profile_notifications_disabled">Notifications are disabled. You can enable them in system settings.</string>
     <string name="consumer_profile_notifications_undecided">Get updates about your messages and services on this device.</string>

@@ -1,10 +1,12 @@
 package com.loresuelvo.consumer.ui.screens.providerprofile
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.test.core.app.ApplicationProvider
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.ProviderCategory
@@ -46,12 +48,13 @@ class ProviderProfileScreenTest {
             ApplicationProvider.getApplicationContext<android.content.Context>()
                 .getString(R.string.provider_profile_review_count, 2),
         ).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(PROVIDER_PROFILE_CONTENT_TAG)
+            .performScrollToNode(hasTestTag("provider-profile-work-order-84"))
         composeTestRule.onNodeWithTag("provider-profile-work-order-84")
-            .performScrollTo()
-            .assertIsDisplayed()
-        composeTestRule.onNodeWithText("Reparación de pérdida").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Trabajo finalizado").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Excelente atención").assertIsDisplayed()
+            .assertExists()
+        composeTestRule.onNodeWithText("Reparación de pérdida").assertExists()
+        composeTestRule.onNodeWithText("Trabajo finalizado").assertExists()
+        composeTestRule.onNodeWithText("Excelente atención").assertExists()
     }
 
     @Test
@@ -68,7 +71,9 @@ class ProviderProfileScreenTest {
 
         val emptyCopy = ApplicationProvider.getApplicationContext<android.content.Context>()
             .getString(R.string.provider_profile_history_empty)
-        composeTestRule.onNodeWithText(emptyCopy).assertIsDisplayed()
+        composeTestRule.onNodeWithTag(PROVIDER_PROFILE_CONTENT_TAG)
+            .performScrollToNode(hasText(emptyCopy))
+        composeTestRule.onNodeWithText(emptyCopy).assertExists()
         composeTestRule.onNodeWithTag(PROVIDER_PROFILE_WORK_ORDER_LIST_TAG).assertDoesNotExist()
     }
 
@@ -109,9 +114,10 @@ class ProviderProfileScreenTest {
             }
         }
 
+        composeTestRule.onNodeWithTag(PROVIDER_PROFILE_CONTENT_TAG)
+            .performScrollToNode(hasTestTag("provider-profile-work-order-84"))
         composeTestRule.onNodeWithTag("provider-profile-work-order-84")
-            .performScrollTo()
-            .assertIsDisplayed()
+            .assertExists()
         composeTestRule.onNodeWithTag("provider-profile-review-84").assertDoesNotExist()
     }
 

@@ -4,15 +4,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -26,10 +32,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
-import com.loresuelvo.consumer.domain.auth.RegisterConsumerAddress
 import com.loresuelvo.consumer.domain.auth.CalendarConnectionStatus
 import com.loresuelvo.consumer.domain.auth.User
 import com.loresuelvo.consumer.domain.notifications.NotificationPermissionStatus
+import com.loresuelvo.consumer.ui.components.profile.ProfileActionRow
+import com.loresuelvo.consumer.ui.components.profile.ProfileInfoRow
+import com.loresuelvo.consumer.ui.components.profile.ProfileSectionCard
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -99,66 +107,110 @@ private fun ReadyState(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                ),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     ProviderAvatar(
                         name = fullName,
                         profilePhotoUrl = user.profilePhotoUrl,
-                        size = 88.dp,
+                        size = 104.dp,
                         testTag = "consumer-profile-avatar",
                     )
-                    Column {
+                    Text(
+                        text = fullName,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.testTag("consumer-profile-name"),
+                    )
+                    user.email?.let { email ->
                         Text(
-                            text = fullName,
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.testTag("consumer-profile-name"),
+                            text = email,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.testTag("consumer-profile-email"),
                         )
-                        user.email?.let { email ->
-                            Text(
-                                text = email,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.testTag("consumer-profile-email"),
-                            )
-                        }
                     }
                 }
             }
         }
         item {
-            ProfileDataCard(
+            ProfileSectionCard(
                 title = stringResource(R.string.consumer_profile_account_title),
-                values = listOfNotNull(
-                    user.firstName?.let { stringResource(R.string.consumer_profile_first_name, it) },
-                    user.lastName?.let { stringResource(R.string.consumer_profile_last_name, it) },
-                    user.email?.let { stringResource(R.string.consumer_profile_email, it) },
-                ),
-            )
+                icon = Icons.Outlined.Person,
+            ) {
+                user.firstName?.let {
+                    ProfileInfoRow(
+                        icon = Icons.Outlined.Person,
+                        label = stringResource(R.string.consumer_profile_first_name_label),
+                        value = it,
+                    )
+                }
+                user.lastName?.let {
+                    ProfileInfoRow(
+                        icon = Icons.Outlined.Person,
+                        label = stringResource(R.string.consumer_profile_last_name_label),
+                        value = it,
+                    )
+                }
+            }
         }
         item {
-            ProfileDataCard(
+            ProfileSectionCard(
                 title = stringResource(R.string.consumer_profile_address_title),
-                values = user.address?.toDisplayValues().orEmpty().ifEmpty {
-                    listOf(stringResource(R.string.consumer_profile_address_missing))
-                },
-            )
+                icon = Icons.Outlined.LocationOn,
+            ) {
+                user.address?.let { address ->
+                    ProfileInfoRow(
+                        icon = Icons.Outlined.LocationOn,
+                        label = stringResource(R.string.consumer_profile_address_label),
+                        value = "${address.street} ${address.streetNumber}",
+                    )
+                    if (address.floor.isNotBlank() || address.unit.isNotBlank()) {
+                        ProfileInfoRow(
+                            icon = Icons.Outlined.LocationOn,
+                            label = stringResource(R.string.consumer_profile_floor_unit_label),
+                            value = listOfNotNull(
+                                address.floor.takeIf { it.isNotBlank() },
+                                address.unit.takeIf { it.isNotBlank() },
+                            ).joinToString(" · "),
+                        )
+                    }
+                } ?: Text(
+                    text = stringResource(R.string.consumer_profile_address_missing),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = com.loresuelvo.consumer.ui.theme.SubtitleGray,
+                )
+            }
         }
         item {
-            NotificationsCard(
-                status = notificationPermission,
-                onActionClick = onNotificationActionClick,
+            ProfileSectionCard(
+                title = stringResource(R.string.consumer_profile_notifications_title),
+                icon = Icons.Outlined.NotificationsNone,
             )
-        }
-        item {
-            CalendarConnectionCard(
-                status = user.calendarConnectionStatus,
-                actionState = calendarConnection,
-                onConnectClick = onCalendarConnectClick,
-            )
+            {
+                NotificationsCard(
+                    status = notificationPermission,
+                    onActionClick = onNotificationActionClick,
+                )
+                HorizontalDivider()
+                CalendarConnectionCard(
+                    status = user.calendarConnectionStatus,
+                    actionState = calendarConnection,
+                    onConnectClick = onCalendarConnectClick,
+                )
+            }
         }
     }
 }
@@ -168,7 +220,6 @@ private fun NotificationsCard(
     status: NotificationPermissionStatus,
     onActionClick: () -> Unit,
 ) {
-    val title = stringResource(R.string.consumer_profile_notifications_title)
     val description = when (status) {
         NotificationPermissionStatus.GRANTED ->
             stringResource(R.string.consumer_profile_notifications_enabled)
@@ -184,29 +235,21 @@ private fun NotificationsCard(
         NotificationPermissionStatus.DENIED ->
             stringResource(R.string.consumer_profile_notifications_settings)
     }
-    Card(modifier = Modifier.fillMaxWidth().testTag("consumer-profile-notifications")) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.testTag("consumer-profile-notifications-title"),
-            )
-            Text(
-                description,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.testTag("consumer-profile-notifications-description"),
-            )
-            Button(
-                onClick = onActionClick,
-                modifier = Modifier.testTag("consumer-profile-notifications-action"),
-            ) {
-                Text(buttonText)
-            }
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("consumer-profile-notifications"),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        ProfileActionRow(
+            icon = Icons.Outlined.NotificationsNone,
+            title = stringResource(R.string.consumer_profile_notifications_option_title),
+            description = description,
+            status = notificationStatusLabel(status),
+            onClick = onActionClick,
+            actionLabel = buttonText,
+            actionModifier = Modifier.testTag("consumer-profile-notifications-action"),
+        )
     }
 }
 
@@ -226,14 +269,13 @@ private fun CalendarConnectionCard(
         CalendarConnectionStatus.UNKNOWN,
         -> stringResource(R.string.consumer_profile_calendar_disconnected)
     }
-    Card(modifier = Modifier.fillMaxWidth().testTag("consumer-profile-calendar")) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Text(description, style = MaterialTheme.typography.bodyLarge)
-            when (actionState) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("consumer-profile-calendar"),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        when (actionState) {
                 CalendarConnectionUiState.Connecting -> {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -242,22 +284,22 @@ private fun CalendarConnectionCard(
                     )
                 }
                 else -> {
-                    if (status != CalendarConnectionStatus.CONNECTED) {
-                        Button(
-                            onClick = onConnectClick,
-                            modifier = Modifier.testTag("consumer-profile-calendar-connect"),
-                        ) {
-                            Text(
-                                stringResource(
-                                    if (status == CalendarConnectionStatus.ACTION_REQUIRED) {
-                                        R.string.consumer_profile_calendar_reconnect
-                                    } else {
-                                        R.string.consumer_profile_calendar_connect
-                                    },
-                                ),
-                            )
-                        }
-                    }
+                    ProfileActionRow(
+                        icon = Icons.Outlined.CalendarMonth,
+                        title = title,
+                        description = description,
+                        status = calendarStatusLabel(status),
+                        onClick = onConnectClick,
+                        actionLabel = stringResource(
+                            if (status == CalendarConnectionStatus.ACTION_REQUIRED) {
+                                R.string.consumer_profile_calendar_reconnect
+                            } else {
+                                R.string.consumer_profile_calendar_connect
+                            },
+                        ),
+                        actionEnabled = status != CalendarConnectionStatus.CONNECTED,
+                        actionModifier = Modifier.testTag("consumer-profile-calendar-connect"),
+                    )
                     val actionMessage = when (actionState) {
                         CalendarConnectionUiState.Cancelled ->
                             stringResource(R.string.consumer_profile_calendar_cancelled)
@@ -284,32 +326,21 @@ private fun CalendarConnectionCard(
                     }
                 }
             }
-        }
     }
 }
 
-@Composable
-private fun ProfileDataCard(
-    title: String,
-    values: List<String>,
-) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            values.forEach { value -> Text(value, style = MaterialTheme.typography.bodyLarge) }
-        }
-    }
+private fun notificationStatusLabel(status: NotificationPermissionStatus): String = when (status) {
+    NotificationPermissionStatus.GRANTED -> "Activo"
+    NotificationPermissionStatus.DENIED -> "Desactivado"
+    NotificationPermissionStatus.UNDECIDED -> "Pendiente"
 }
 
-private fun RegisterConsumerAddress.toDisplayValues(): List<String> = buildList {
-    add("$street $streetNumber")
-    if (floor.isNotBlank() || unit.isNotBlank()) {
-        add(listOfNotNull(floor.takeIf { it.isNotBlank() }, unit.takeIf { it.isNotBlank() })
-            .joinToString(" · "))
-    }
+private fun calendarStatusLabel(status: CalendarConnectionStatus): String = when (status) {
+    CalendarConnectionStatus.CONNECTED -> "Vinculado"
+    CalendarConnectionStatus.ACTION_REQUIRED -> "Requiere atención"
+    CalendarConnectionStatus.DISCONNECTED,
+    CalendarConnectionStatus.UNKNOWN,
+    -> "Sin vincular"
 }
 
 @Composable

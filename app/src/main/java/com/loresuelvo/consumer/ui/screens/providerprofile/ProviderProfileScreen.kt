@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Button
@@ -23,6 +25,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +45,8 @@ import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.ProviderProfile
 import com.loresuelvo.consumer.domain.provider.ProviderReview
 import com.loresuelvo.consumer.domain.provider.ProviderWorkOrder
+import com.loresuelvo.consumer.ui.components.profile.ProfileSectionHeader
+import com.loresuelvo.consumer.ui.components.profile.ProfileStatusChip
 import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 import com.loresuelvo.consumer.ui.theme.SubtitleGray
@@ -49,6 +54,7 @@ import com.loresuelvo.consumer.ui.util.ScheduledDateFormatter
 import java.util.Locale
 
 const val PROVIDER_PROFILE_RATING_STARS_TAG: String = "provider-profile-rating-stars"
+const val PROVIDER_PROFILE_CONTENT_TAG: String = "provider-profile-content"
 const val PROVIDER_PROFILE_WORK_ORDER_LIST_TAG: String = "provider-profile-work-order-list"
 const val PROVIDER_PROFILE_AMOUNT_TAG: String = "provider-profile-private-amount"
 const val PROVIDER_PROFILE_CLIENT_TAG: String = "provider-profile-private-client"
@@ -107,17 +113,16 @@ private fun ReadyState(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+            .background(MaterialTheme.colorScheme.background)
+            .testTag(PROVIDER_PROFILE_CONTENT_TAG),
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item { ProviderHeader(profile) }
-        item { ProviderReputation(profile) }
         item {
-            Text(
-                text = stringResource(R.string.provider_profile_history_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
+            ProfileSectionHeader(
+                title = stringResource(R.string.provider_profile_history_title),
+                icon = Icons.Outlined.CalendarMonth,
             )
         }
         if (profile.workOrders.isEmpty()) {
@@ -144,26 +149,35 @@ private fun ReadyState(
 
 @Composable
 private fun ProviderHeader(profile: ProviderProfile) {
-    Row(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
     ) {
-        ProviderAvatar(
-            name = profile.name,
-            profilePhotoUrl = profile.profilePhotoUrl,
-            size = 72.dp,
-            testTag = "provider-profile-avatar",
-        )
-        Spacer(Modifier.size(16.dp))
-        Column {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            ProviderAvatar(
+                name = profile.name,
+                profilePhotoUrl = profile.profilePhotoUrl,
+                size = 104.dp,
+                testTag = "provider-profile-avatar",
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = "${profile.name} ${profile.surname}".trim(),
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                 )
                 if (profile.identityVerified) {
                     ProviderVerificationBadge(showLabel = true)
@@ -172,45 +186,37 @@ private fun ProviderHeader(profile: ProviderProfile) {
             Text(
                 text = profile.category.name,
                 style = MaterialTheme.typography.bodyLarge,
-                color = SubtitleGray,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
+            ProviderReputation(profile)
         }
     }
 }
 
 @Composable
 private fun ProviderReputation(profile: ProviderProfile) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
+        RatingStars(
+            rating = profile.ratingAverage,
+            modifier = Modifier.testTag(PROVIDER_PROFILE_RATING_STARS_TAG),
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = stringResource(R.string.provider_profile_reputation_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                text = formatRating(profile.ratingAverage),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            RatingStars(
-                rating = profile.ratingAverage,
-                modifier = Modifier.testTag(PROVIDER_PROFILE_RATING_STARS_TAG),
+            Text(
+                text = stringResource(
+                    R.string.provider_profile_review_count,
+                    profile.ratingCount,
+                ),
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = formatRating(profile.ratingAverage),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(
-                        R.string.provider_profile_review_count,
-                        profile.ratingCount,
-                    ),
-                    color = SubtitleGray,
-                )
-            }
         }
     }
 }
@@ -221,31 +227,30 @@ private fun ProviderWorkOrderCard(workOrder: ProviderWorkOrder) {
         modifier = Modifier
             .fillMaxWidth()
             .testTag("provider-profile-work-order-${workOrder.id}"),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = stringResource(
-                    R.string.provider_profile_scheduled_date,
-                    ScheduledDateFormatter.formatScheduled(workOrder.scheduledOnEpochMillis),
-                ),
-                style = MaterialTheme.typography.labelLarge,
-                color = SubtitleGray,
+            ProfileStatusChip(
+                label = ScheduledDateFormatter.formatScheduled(workOrder.scheduledOnEpochMillis),
             )
             LabelledText(
                 label = stringResource(R.string.provider_profile_work_description),
                 value = workOrder.description,
             )
             workOrder.completionReport?.let { report ->
+                HorizontalDivider()
                 LabelledText(
                     label = stringResource(R.string.provider_profile_completion_report),
                     value = report.description,
                 )
             }
             workOrder.review?.let { review ->
+                HorizontalDivider()
                 ProviderReviewBlock(workOrder.id, review)
             }
         }

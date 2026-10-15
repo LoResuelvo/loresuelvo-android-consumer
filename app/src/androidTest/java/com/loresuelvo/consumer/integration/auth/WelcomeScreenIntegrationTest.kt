@@ -2,6 +2,7 @@ package com.loresuelvo.consumer.integration.auth
 
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
@@ -80,5 +81,24 @@ class WelcomeScreenIntegrationTest {
             .performClick()
 
         Assert.assertTrue(googleClicked)
+    }
+
+    @Test
+    fun shows_bundled_categories_when_remote_categories_are_unavailable() {
+        composeTestRule.setContent {
+            LoresuelvoTheme {
+                WelcomeScreen(
+                    categories = com.loresuelvo.consumer.ui.auth.WelcomeCategoriesUiState.Error,
+                )
+            }
+        }
+
+        val fallbackCategory = ApplicationProvider
+            .getApplicationContext<android.content.Context>()
+            .resources
+            .getStringArray(R.array.welcome_categories)
+            .first()
+
+        composeTestRule.onNodeWithText(fallbackCategory).assertIsDisplayed()
     }
 }

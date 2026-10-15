@@ -89,7 +89,11 @@
     <string name="bottom_nav_mi_perfil">Mi perfil</string>
     <string name="consumer_profile_title">Mi perfil</string>
     <string name="consumer_profile_account_title">Datos de cuenta</string>
+    <string name="consumer_profile_first_name_label">Nombre</string>
+    <string name="consumer_profile_last_name_label">Apellido</string>
     <string name="consumer_profile_address_title">Dirección</string>
+    <string name="consumer_profile_address_label">Domicilio</string>
+    <string name="consumer_profile_floor_unit_label">Piso y departamento</string>
     <string name="consumer_profile_first_name">Nombre: %1$s</string>
     <string name="consumer_profile_last_name">Apellido: %1$s</string>
     <string name="consumer_profile_email">Email: %1$s</string>
@@ -111,6 +115,7 @@
     <string name="consumer_profile_calendar_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
     <string name="consumer_profile_calendar_error_server">No pudimos validar la cuenta de Google Calendar. Intentá nuevamente.</string>
     <string name="consumer_profile_notifications_title">Avisos del teléfono</string>
+    <string name="consumer_profile_notifications_option_title">Notificaciones</string>
     <string name="consumer_profile_notifications_enabled">Los avisos están habilitados en este teléfono.</string>
     <string name="consumer_profile_notifications_disabled">Los avisos están desactivados. Podés habilitarlos desde los ajustes del sistema.</string>
     <string name="consumer_profile_notifications_undecided">Recibí novedades sobre tus mensajes y servicios en este teléfono.</string>
