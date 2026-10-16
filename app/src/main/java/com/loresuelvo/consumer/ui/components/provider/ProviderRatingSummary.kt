@@ -3,10 +3,8 @@ package com.loresuelvo.consumer.ui.components.provider
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
@@ -15,7 +13,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -71,17 +70,18 @@ private fun RatingStar(fillFraction: Float) {
             tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
             modifier = Modifier.size(14.dp),
         )
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(14.dp * fillFraction)
-                .clipToBounds(),
-        ) {
+        if (fillFraction > 0f) {
             Icon(
                 imageVector = Icons.Filled.Star,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(14.dp),
+                modifier = Modifier
+                    .size(14.dp)
+                    .drawWithContent {
+                        clipRect(right = size.width * fillFraction) {
+                            this@drawWithContent.drawContent()
+                        }
+                    },
             )
         }
     }

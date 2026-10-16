@@ -151,6 +151,7 @@ android {
             buildConfigField("boolean", "MOCK_TURNOS", "true")
             buildConfigField("boolean", "MOCK_SERVICE_PROPOSALS", "true")
             buildConfigField("boolean", "MOCK_WORK_ORDER_DETAILS", "true")
+            buildConfigField("boolean", "MOCK_PROVIDERS", "true")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme
@@ -183,6 +184,7 @@ android {
             buildConfigField("boolean", "MOCK_TURNOS", "false")
             buildConfigField("boolean", "MOCK_SERVICE_PROPOSALS", "false")
             buildConfigField("boolean", "MOCK_WORK_ORDER_DETAILS", "false")
+            buildConfigField("boolean", "MOCK_PROVIDERS", "false")
             buildConfigField("String", "PAYMENT_RETURN_HOST", "\"$paymentReturnHost\"")
             buildConfigField("String", "GOOGLE_CALENDAR_SERVER_CLIENT_ID", "\"$googleCalendarServerClientId\"")
 
@@ -215,6 +217,7 @@ android {
             buildConfigField("boolean", "MOCK_TURNOS", "false")
             buildConfigField("boolean", "MOCK_SERVICE_PROPOSALS", "false")
             buildConfigField("boolean", "MOCK_WORK_ORDER_DETAILS", "false")
+            buildConfigField("boolean", "MOCK_PROVIDERS", "false")
 
             manifestPlaceholders["auth0Domain"] = auth0Domain
             manifestPlaceholders["auth0Scheme"] = auth0Scheme

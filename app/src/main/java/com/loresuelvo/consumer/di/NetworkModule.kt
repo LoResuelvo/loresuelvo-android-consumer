@@ -8,6 +8,7 @@ import com.loresuelvo.consumer.data.api.BackendApi
 import com.loresuelvo.consumer.data.api.FakeServiceProposalsInterceptor
 import com.loresuelvo.consumer.data.api.FakeTurnosInterceptor
 import com.loresuelvo.consumer.data.api.FakeWorkOrderDetailInterceptor
+import com.loresuelvo.consumer.data.api.FakeProviderInterceptor
 import com.loresuelvo.consumer.data.api.RetryOn401Authenticator
 import com.loresuelvo.consumer.data.api.upload.FileUploader
 import com.loresuelvo.consumer.data.api.upload.OkHttpFileUploader
@@ -77,6 +78,9 @@ object NetworkModule {
             }
             if (BuildConfig.MOCK_WORK_ORDER_DETAILS) {
                 it.addInterceptor(FakeWorkOrderDetailInterceptor())
+            }
+            if (BuildConfig.MOCK_PROVIDERS) {
+                it.addInterceptor(FakeProviderInterceptor())
             }
         }
         .authenticator(retryAuthenticator)
