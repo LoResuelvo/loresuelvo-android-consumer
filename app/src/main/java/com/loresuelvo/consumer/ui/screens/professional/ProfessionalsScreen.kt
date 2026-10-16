@@ -19,9 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -53,6 +50,7 @@ import com.loresuelvo.consumer.BuildConfig
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
 import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
+import com.loresuelvo.consumer.ui.components.provider.ProviderRatingSummary
 import com.loresuelvo.consumer.ui.professional.ProfessionalsUiState
 import com.loresuelvo.consumer.ui.professional.ProviderSortOrder
 import com.loresuelvo.consumer.ui.theme.LoresuelvoTheme
@@ -412,7 +410,10 @@ private fun ProviderCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = SubtitleGray,
                 )
-                ProviderRatingSummary(provider)
+                ProviderRatingSummary(
+                    provider = provider,
+                    testTag = PROVIDER_CARD_RATING_TAG_PREFIX + provider.id,
+                )
             }
             Column(horizontalAlignment = Alignment.End) {
                 TextButton(
@@ -429,49 +430,6 @@ private fun ProviderCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ProviderRatingSummary(provider: Provider) {
-    if (provider.ratingCount == 0) {
-        Text(
-            text = stringResource(R.string.professionals_provider_no_rating),
-            color = SubtitleGray,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.testTag(
-                PROVIDER_CARD_RATING_TAG_PREFIX + provider.id,
-            ),
-        )
-        return
-    }
-
-    Row(
-        modifier = Modifier.testTag(PROVIDER_CARD_RATING_TAG_PREFIX + provider.id),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        repeat(5) { index ->
-            Icon(
-                imageVector = if (index < provider.ratingAverage) {
-                    Icons.Filled.Star
-                } else {
-                    Icons.Outlined.Star
-                },
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(14.dp),
-            )
-        }
-        Text(
-            text = stringResource(
-                R.string.professionals_provider_rating,
-                provider.ratingAverage,
-                provider.ratingCount,
-            ),
-            style = MaterialTheme.typography.bodySmall,
-            color = SubtitleGray,
-        )
     }
 }
 

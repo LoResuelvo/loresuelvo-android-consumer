@@ -258,7 +258,7 @@ private fun ReadyState(
         ) {
             Text(
                 text = stringResource(
-                    R.string.proposal_detail_pay_now,
+                    R.string.proposal_detail_pay_deposit,
                 ),
                 style = MaterialTheme.typography.labelLarge,
             )

@@ -8,6 +8,7 @@ data class PendingMedia(
     val bytes: ByteArray,
     val kind: PendingMediaKind = PendingMediaKind.IMAGE,
     val durationMillis: Long = 0L,
+    val waveform: List<Float> = emptyList(),
     val width: Int = 0,
     val height: Int = 0,
     val videoCodec: String = "",
@@ -23,6 +24,7 @@ data class PendingMedia(
             bytes.contentEquals(other.bytes) &&
             kind == other.kind &&
             durationMillis == other.durationMillis &&
+            waveform == other.waveform &&
             width == other.width &&
             height == other.height &&
             videoCodec == other.videoCodec &&
@@ -37,6 +39,7 @@ data class PendingMedia(
         result = 31 * result + bytes.contentHashCode()
         result = 31 * result + kind.hashCode()
         result = 31 * result + durationMillis.hashCode()
+        result = 31 * result + waveform.hashCode()
         result = 31 * result + width
         result = 31 * result + height
         result = 31 * result + videoCodec.hashCode()

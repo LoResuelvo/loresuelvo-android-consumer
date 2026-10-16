@@ -18,6 +18,8 @@ import androidx.navigation.NavHostController
 import com.loresuelvo.consumer.ui.screens.assistant.AssistantScreen
 import com.loresuelvo.consumer.ui.screens.assistant.AssistantViewModel
 import com.loresuelvo.consumer.ui.screens.messages.MessagesScreen
+import com.loresuelvo.consumer.ui.components.media.CameraPermissionDialog
+import com.loresuelvo.consumer.ui.components.media.openCameraPermissionSettings
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -120,6 +122,7 @@ internal fun ConversationRoute(
     }
 
     val sheetState = remember { mutableStateOf(false) }
+    val showCameraPermissionDialog = remember { mutableStateOf(false) }
     val showAttachSheet = sheetState.value
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -150,6 +153,17 @@ internal fun ConversationRoute(
         }
         cameraOutputUriState.value = null
         sheetState.value = false
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            val uri = createCameraOutputUri(context)
+            cameraOutputUriState.value = uri
+            cameraLauncher.launch(uri)
+        } else {
+            showCameraPermissionDialog.value = true
+        }
     }
 
     val audioPermissionLauncher = rememberLauncherForActivityResult(
@@ -210,9 +224,18 @@ internal fun ConversationRoute(
                     )
                 },
                 onCamera = {
-                    val uri = createCameraOutputUri(context)
-                    cameraOutputUriState.value = uri
-                    cameraLauncher.launch(uri)
+                    val hasPermission = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.CAMERA,
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    if (hasPermission) {
+                        val uri = createCameraOutputUri(context)
+                        cameraOutputUriState.value = uri
+                        cameraLauncher.launch(uri)
+                    } else {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
                 },
                 onConfirmSend = viewModel::onConfirmMediaSend,
                 onDiscard = viewModel::onDiscardMediaPreview,
@@ -235,6 +258,20 @@ internal fun ConversationRoute(
             ),
         ),
     )
+
+    if (showCameraPermissionDialog.value) {
+        CameraPermissionDialog(
+            onDismiss = { showCameraPermissionDialog.value = false },
+            onRetry = {
+                showCameraPermissionDialog.value = false
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            },
+            onOpenSettings = {
+                showCameraPermissionDialog.value = false
+                openCameraPermissionSettings(context)
+            },
+        )
+    }
 }
 
 private fun createCameraOutputUri(context: android.content.Context): android.net.Uri {

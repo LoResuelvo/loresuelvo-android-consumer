@@ -2,23 +2,26 @@ package com.loresuelvo.consumer.ui.screens.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.tappableElement
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,12 +39,9 @@ import com.loresuelvo.consumer.ui.screens.profile.components.errorToMessage
  * dispatcher. The host ([com.loresuelvo.consumer.MainActivity]) collects
  * the [CompleteProfileViewModel] state and forwards actions back.
  *
- * Layout uses [Scaffold] so the "Continuar" button and the
- * privacy note can pin to the bottom of the viewport via
- * `bottomBar` — they always stay reachable regardless of how the
- * form scrolls or where the soft keyboard lands. The rest of the
- * screen (step indicator + header + form) lives in the
- * scrollable `content`.
+ * The form scrolls independently from the fixed action area. The
+ * keyboard inset is represented by a dedicated spacer so the action
+ * area stays immediately above the keyboard without reserving it twice.
  */
 @Composable
 fun CompleteProfileScreen(
@@ -50,6 +50,12 @@ fun CompleteProfileScreen(
 ) {
     val errorMessage = state.error?.let { errorToMessage(it) }
     val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+    val imeBottomInset = WindowInsets.ime.getBottom(density)
+    val tappableBottomInset = WindowInsets.tappableElement.getBottom(density)
+    val keyboardSpacerHeight = with(density) {
+        (imeBottomInset - tappableBottomInset).coerceAtLeast(0).toDp() - 48.dp
+    }.coerceAtLeast(0.dp)
 
     LaunchedEffect(errorMessage) {
         if (errorMessage != null) {
@@ -57,14 +63,60 @@ fun CompleteProfileScreen(
         }
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    errorMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
+                    ProfileHeader()
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ProfilePhotoPicker(
+                        state = state,
+                        onAction = onAction,
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    ProfileForm(
+                        state = state,
+                        onAction = onAction,
+                    )
+                }
+            }
+
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .imePadding()
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -82,43 +134,8 @@ fun CompleteProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-        },
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .statusBarsPadding()
-                .verticalScroll(scrollState)
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            errorMessage?.let { message ->
-                Text(
-                    text = message,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
 
-            ProfileHeader()
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfilePhotoPicker(
-                state = state,
-                onAction = onAction,
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            ProfileForm(
-                state = state,
-                onAction = onAction,
-            )
+            Spacer(modifier = Modifier.height(keyboardSpacerHeight))
         }
     }
 

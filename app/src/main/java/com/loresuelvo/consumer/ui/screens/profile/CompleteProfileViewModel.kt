@@ -65,6 +65,7 @@ class CompleteProfileViewModel @Inject constructor(
             is CompleteProfileAction.FloorChanged -> onFloorChange(action.value)
             is CompleteProfileAction.UnitChanged -> onUnitChange(action.value)
             CompleteProfileAction.PickPhotoClicked -> Unit
+            CompleteProfileAction.CapturePhotoClicked -> Unit
             is CompleteProfileAction.ProfilePhotoCropConfirmed ->
                 onProfilePhotoCropConfirmed(action.photo)
             CompleteProfileAction.CancelProfilePhotoCropClicked -> cancelProfilePhotoCrop()

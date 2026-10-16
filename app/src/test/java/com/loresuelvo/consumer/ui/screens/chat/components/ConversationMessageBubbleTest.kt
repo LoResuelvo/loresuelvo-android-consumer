@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.performClick
@@ -297,6 +298,9 @@ class ConversationMessageBubbleTest {
         composeTestRule
             .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PROGRESS_TAG)
             .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_WAVEFORM_TAG)
+            .assertIsDisplayed()
     }
 
     @Test
@@ -458,7 +462,7 @@ class ConversationMessageBubbleTest {
     }
 
     @Test
-    fun audio_message_play_button_shows_pause_icon_when_playing() {
+    fun audio_message_play_button_shows_pause_action_when_playing() {
         composeTestRule.setContent {
             ConversationMessageBubble(
                 message = audioMessage(durationMillis = 10_000L),
@@ -473,12 +477,12 @@ class ConversationMessageBubbleTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
-            .assertTextEquals(PAUSE_ICON)
+            .onNodeWithContentDescription("Pausar audio")
+            .assertIsDisplayed()
     }
 
     @Test
-    fun audio_message_play_button_shows_play_icon_when_not_playing() {
+    fun audio_message_play_button_shows_play_action_when_not_playing() {
         composeTestRule.setContent {
             ConversationMessageBubble(
                 message = audioMessage(durationMillis = 10_000L),
@@ -493,8 +497,8 @@ class ConversationMessageBubbleTest {
         composeTestRule.waitForIdle()
 
         composeTestRule
-            .onNodeWithTag(CONVERSATION_MESSAGE_AUDIO_PLAY_TAG)
-            .assertTextEquals(PLAY_ICON)
+            .onNodeWithContentDescription("Reproducir audio")
+            .assertIsDisplayed()
     }
 
     @Test

@@ -15,6 +15,8 @@ import com.loresuelvo.consumer.domain.usecase.conversation.SendMessageUseCase
 import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.platform.media.AudioRecorder
 import com.loresuelvo.consumer.platform.media.AudioPlayer
+import com.loresuelvo.consumer.platform.media.AudioWaveformExtractor
+import com.loresuelvo.consumer.platform.media.NoOpAudioWaveformExtractor
 import com.loresuelvo.consumer.domain.conversation.MediaReference
 import com.loresuelvo.consumer.domain.conversation.validationError
 import com.loresuelvo.consumer.domain.realtime.RealtimeClient
@@ -43,6 +45,8 @@ class ConversationViewModel @Inject constructor(
     private val audioPlayer: AudioPlayer,
     private val webSocketClient: RealtimeClient,
     private val conversationVisibility: ConversationVisibility = ConversationVisibility.None,
+    private val audioWaveformExtractor: AudioWaveformExtractor =
+        NoOpAudioWaveformExtractor,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ConversationUiState>(
@@ -196,6 +200,9 @@ class ConversationViewModel @Inject constructor(
             }
             if (activeConversationId != conversationId) return@launch
             _uiState.update { next }
+            if (next is ConversationUiState.Ready) {
+                loadMissingAudioWaveforms(conversationId)
+            }
             val pendingRefresh = pendingRefreshRequest
             if (
                 pendingRefresh?.conversationId?.toString() == conversationId &&
@@ -436,6 +443,7 @@ class ConversationViewModel @Inject constructor(
                         mimeType = baseMedia.mimeType,
                         originalName = baseMedia.originalName,
                         durationMillis = duration,
+                        waveform = baseMedia.waveform,
                     )
                 } else {
                     // Defensive: the system's voice recorder always
@@ -636,6 +644,7 @@ class ConversationViewModel @Inject constructor(
                 bytes = media.bytes,
                 kind = PendingMediaKind.AUDIO,
                 durationMillis = media.durationMillis,
+                waveform = media.waveform,
             )
             is MediaUpload.Video -> PendingMedia(
                 localUri = sourceUri?.toString(),
@@ -751,6 +760,7 @@ class ConversationViewModel @Inject constructor(
                         mimeType = entry.mimeType,
                         originalName = entry.originalName,
                         durationMillis = entry.durationMillis,
+                        waveform = entry.waveform,
                     )
 
                     PendingMediaKind.VIDEO -> MediaUpload.Video(
@@ -788,19 +798,67 @@ class ConversationViewModel @Inject constructor(
     private fun applyMediaServerResponse(sentMessage: ConversationMessage) {
         _uiState.update { state ->
             if (state is ConversationUiState.Ready) {
+                val waveform = state.pendingMedia
+                    .firstOrNull { it.kind == PendingMediaKind.AUDIO }
+                    ?.waveform
+                    .orEmpty()
                 state.copy(
                     sendingMedia = false,
                     promptInput = "",
                     pendingMedia = emptyList(),
                     transientMediaError = null,
                     detail = state.detail.copy(
-                        messages = state.detail.messages + sentMessage,
+                        messages = state.detail.messages + sentMessage.withWaveform(waveform),
                     ),
                 )
             } else {
                 state
             }
         }
+    }
+
+    private fun loadMissingAudioWaveforms(conversationId: String) {
+        viewModelScope.launch {
+            val state = _uiState.value as? ConversationUiState.Ready
+                ?: return@launch
+            val enrichedMessages = state.detail.messages.map { message ->
+                val audio = message.media as? MediaReference.Audio
+                    ?: return@map message
+                if (audio.waveform.isNotEmpty()) return@map message
+
+                val waveform = audioWaveformExtractor.extract(
+                    url = audio.url,
+                    durationMillis = audio.durationMillis,
+                )
+                if (waveform.isEmpty()) {
+                    message
+                } else {
+                    message.copy(media = audio.copy(waveform = waveform))
+                }
+            }
+
+            _uiState.update { current ->
+                if (
+                    current is ConversationUiState.Ready &&
+                    current.detail.id == conversationId
+                ) {
+                    current.copy(
+                        detail = current.detail.copy(messages = enrichedMessages),
+                    )
+                } else {
+                    current
+                }
+            }
+        }
+    }
+
+    private fun ConversationMessage.withWaveform(
+        waveform: List<Float>,
+    ): ConversationMessage {
+        val audio = media as? MediaReference.Audio
+            ?: return this
+        if (waveform.isEmpty()) return this
+        return copy(media = audio.copy(waveform = waveform))
     }
 
     private fun applyMediaSendFailure(failure: SendMessageOutcome.Failure) {

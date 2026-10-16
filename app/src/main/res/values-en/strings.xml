@@ -48,6 +48,11 @@
     <string name="complete_profile_photo_preview">Profile photo preview</string>
     <string name="complete_profile_photo_add">Add photo</string>
     <string name="complete_profile_photo_change">Change photo</string>
+    <string name="complete_profile_photo_camera">Take photo</string>
+    <string name="camera_permission_title">Camera permission</string>
+    <string name="camera_permission_message">Camera access is needed to take a photo. You can retry or enable it in Settings.</string>
+    <string name="camera_permission_retry">Retry</string>
+    <string name="camera_permission_settings">Open Settings</string>
     <string name="complete_profile_photo_remove">Remove photo</string>
     <string name="complete_profile_photo_crop_title">Adjust your photo</string>
     <string name="complete_profile_photo_crop_hint">Move the image and pinch to choose the circular crop.</string>
@@ -189,8 +194,12 @@
     <string name="conversation_media_preview_video_content_description">Video attachment preview</string>
     <string name="conversation_media_preview_video_metadata">%1$s · %2$d×%3$d</string>
     <string name="conversation_media_preview_file_name_format">%1$s · %2$s</string>
+    <string name="conversation_media_preview_audio_ready">Audio ready to send · %1$s</string>
+    <string name="conversation_audio_play_content_description">Play audio</string>
+    <string name="conversation_audio_pause_content_description">Pause audio</string>
     <string name="conversation_record_audio_content_description">Record audio</string>
     <string name="conversation_stop_audio_recording_content_description">Stop recording</string>
+    <string name="conversation_audio_recording_duration">Recording %1$s</string>
     <string name="conversation_fullscreen_image_close_hint">Tap to close</string>
     <string name="conversation_video_play">Play video</string>
     <string name="conversation_video_close">Close video</string>
@@ -292,7 +301,7 @@
     <string name="proposal_detail_error_retry">Retry</string>
     <string name="proposal_detail_unavailable">This proposal is no longer available.</string>
     <string name="proposal_detail_back">Back</string>
-    <string name="proposal_detail_pay_now">Pay now</string>
+    <string name="proposal_detail_pay_deposit">Pay deposit</string>
     <string name="work_order_title">Work order</string>
     <string name="work_order_provider">Provider</string>
     <string name="work_order_category_name">Category</string>

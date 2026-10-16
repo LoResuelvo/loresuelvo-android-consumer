@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -21,9 +23,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
 import com.loresuelvo.consumer.R
 
 /**
@@ -65,31 +70,38 @@ fun MediaPreviewCard(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // The preview uses a lightweight media-type icon and
-            // metadata instead of decoding the pending bytes again.
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface)
+            if (pendingMedia.kind == PendingMediaKind.AUDIO) {
+                AudioPreviewIcon()
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface)
                     .testTag(MEDIA_PREVIEW_THUMBNAIL_TAG),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = if (pendingMedia.kind == PendingMediaKind.VIDEO) {
-                        Icons.Filled.VideoLibrary
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val localUri = pendingMedia.localUri
+                    if (pendingMedia.kind == PendingMediaKind.IMAGE &&
+                        !localUri.isNullOrBlank()
+                    ) {
+                        SubcomposeAsyncImage(
+                            model = localUri,
+                            contentDescription = stringResource(
+                                R.string.conversation_media_preview_image_content_description,
+                            ),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                            error = {
+                                MediaTypeIcon(
+                                    pendingMedia = pendingMedia,
+                                )
+                            },
+                        )
                     } else {
-                        Icons.Filled.Image
-                    },
-                    contentDescription = stringResource(
-                        if (pendingMedia.kind == PendingMediaKind.VIDEO) {
-                            R.string.conversation_media_preview_video_content_description
-                        } else {
-                            R.string.conversation_media_preview_image_content_description
-                        },
-                    ),
-                    tint = MaterialTheme.colorScheme.onSurface,
-                )
+                        MediaTypeIcon(pendingMedia = pendingMedia)
+                    }
+                }
             }
             Column(
                 modifier = Modifier.weight(1f),
@@ -99,9 +111,21 @@ fun MediaPreviewCard(
                     text = pendingMedia.originalName,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.testTag(MEDIA_PREVIEW_NAME_TAG),
                 )
-                if (pendingMedia.kind == PendingMediaKind.VIDEO) {
+                if (pendingMedia.kind == PendingMediaKind.AUDIO) {
+                    Text(
+                        text = stringResource(
+                            R.string.conversation_media_preview_audio_ready,
+                            formatAudioDuration(pendingMedia.durationMillis),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.testTag(MEDIA_PREVIEW_AUDIO_METADATA_TAG),
+                    )
+                } else if (pendingMedia.kind == PendingMediaKind.VIDEO) {
                     Text(
                         text = stringResource(
                             R.string.conversation_media_preview_video_metadata,
@@ -138,6 +162,45 @@ fun MediaPreviewCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun MediaTypeIcon(pendingMedia: PendingMedia) {
+    Icon(
+        imageVector = if (pendingMedia.kind == PendingMediaKind.VIDEO) {
+            Icons.Filled.VideoLibrary
+        } else {
+            Icons.Filled.Image
+        },
+        contentDescription = stringResource(
+            if (pendingMedia.kind == PendingMediaKind.VIDEO) {
+                R.string.conversation_media_preview_video_content_description
+            } else {
+                R.string.conversation_media_preview_image_content_description
+            },
+        ),
+        tint = MaterialTheme.colorScheme.onSurface,
+    )
+}
+
+@Composable
+private fun AudioPreviewIcon() {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.primary)
+            .testTag(MEDIA_PREVIEW_AUDIO_ICON_TAG),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Mic,
+            contentDescription = stringResource(
+                R.string.conversation_audio_play_content_description,
+            ),
+            tint = MaterialTheme.colorScheme.onPrimary,
+        )
     }
 }
 
@@ -192,6 +255,11 @@ private fun formatVideoDuration(durationMillis: Long): String {
     return "%d:%02d".format(totalSeconds / 60, totalSeconds % 60)
 }
 
+private fun formatAudioDuration(durationMillis: Long): String {
+    val totalSeconds = durationMillis / 1000
+    return "%d:%02d".format(totalSeconds / 60, totalSeconds % 60)
+}
+
 const val MEDIA_PREVIEW_CARD_TAG: String = "media-preview-card"
 const val MEDIA_PREVIEW_THUMBNAIL_TAG: String = "media-preview-thumbnail"
 const val MEDIA_PREVIEW_NAME_TAG: String = "media-preview-name"
@@ -199,3 +267,5 @@ const val MEDIA_PREVIEW_SEND_TAG: String = "media-preview-send"
 const val MEDIA_PREVIEW_DISCARD_TAG: String = "media-preview-discard"
 const val MEDIA_PREVIEW_SPINNER_TAG: String = "media-preview-spinner"
 const val MEDIA_PREVIEW_VIDEO_METADATA_TAG: String = "media-preview-video-metadata"
+const val MEDIA_PREVIEW_AUDIO_METADATA_TAG: String = "media-preview-audio-metadata"
+const val MEDIA_PREVIEW_AUDIO_ICON_TAG: String = "media-preview-audio-icon"

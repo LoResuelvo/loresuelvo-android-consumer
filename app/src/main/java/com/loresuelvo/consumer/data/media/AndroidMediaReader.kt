@@ -7,6 +7,8 @@ import android.provider.OpenableColumns
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
 import com.loresuelvo.consumer.platform.media.MediaMetadataRetrieverReader
 import com.loresuelvo.consumer.platform.media.MediaReader
+import com.loresuelvo.consumer.platform.media.AudioWaveformExtractor
+import com.loresuelvo.consumer.platform.media.NoOpAudioWaveformExtractor
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -40,11 +42,14 @@ import kotlinx.coroutines.withContext
 class AndroidMediaReader @Inject constructor(
     @ApplicationContext private val context: Context,
     private val metadataReader: MediaMetadataRetrieverReader,
+    private val waveformExtractor: AudioWaveformExtractor =
+        NoOpAudioWaveformExtractor,
 ) : MediaReader {
 
     constructor(context: Context) : this(
         context,
         AndroidMediaMetadataRetrieverReader(context),
+        AndroidAudioWaveformExtractor(context),
     )
 
     private val resolver: ContentResolver get() = context.contentResolver
@@ -65,12 +70,22 @@ class AndroidMediaReader @Inject constructor(
                 mimeType = mimeType,
                 originalName = displayName,
             )
-            mimeType.startsWith("audio/") -> MediaUpload.Audio(
-                bytes = bytes,
-                mimeType = mimeType,
-                originalName = displayName,
-                durationMillis = 0L,
-            )
+            mimeType.startsWith("audio/") -> {
+                val durationMillis = metadataReader
+                    .extractDurationMillis(uri)
+                    ?: 0L
+                MediaUpload.Audio(
+                    bytes = bytes,
+                    mimeType = mimeType,
+                    originalName = displayName,
+                    durationMillis = durationMillis,
+                    waveform = waveformExtractor.extract(
+                        bytes = bytes,
+                        mimeType = mimeType,
+                        durationMillis = durationMillis,
+                    ),
+                )
+            }
             mimeType.startsWith("video/") -> {
                 val metadata = metadataReader.extractVideoMetadata(uri)
                     ?: throw VideoMetadataUnavailableException(uri)

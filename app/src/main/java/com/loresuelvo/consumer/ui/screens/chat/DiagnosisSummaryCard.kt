@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
 import com.loresuelvo.consumer.domain.provider.Provider
+import com.loresuelvo.consumer.ui.components.provider.ProviderRatingSummary
 import com.loresuelvo.consumer.ui.components.provider.ProviderVerificationBadge
 import com.loresuelvo.consumer.ui.screens.professional.ProviderAvatar
 
@@ -238,6 +239,12 @@ private fun RecommendedProviderCard(
                         testTag = "$CHAT_DIAGNOSIS_PROVIDER_ROW_TAG-${provider.id}-verified",
                     )
                 }
+            }
+            if (provider.ratingCount > 0) {
+                ProviderRatingSummary(
+                    provider = provider,
+                    testTag = "$CHAT_DIAGNOSIS_PROVIDER_ROW_TAG-${provider.id}-rating",
+                )
             }
             Spacer(Modifier.height(2.dp))
             Row(

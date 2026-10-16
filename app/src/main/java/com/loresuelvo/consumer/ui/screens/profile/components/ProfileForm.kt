@@ -11,7 +11,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.runtime.remember
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -41,10 +43,14 @@ fun ProfileForm(
     modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
+    val firstNameFocusRequester = remember { FocusRequester() }
+    val lastNameFocusRequester = remember { FocusRequester() }
+    val streetFocusRequester = remember { FocusRequester() }
+    val streetNumberFocusRequester = remember { FocusRequester() }
+    val floorFocusRequester = remember { FocusRequester() }
+    val unitFocusRequester = remember { FocusRequester() }
+
     val nextFieldKeyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-    val nextFieldKeyboardActions = KeyboardActions(
-        onNext = { focusManager.moveFocus(FocusDirection.Down) },
-    )
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -57,9 +63,12 @@ fun ProfileForm(
                 value = state.firstName,
                 label = stringResource(R.string.complete_profile_field_first_name),
                 onValueChange = { onAction(CompleteProfileAction.FirstNameChanged(it)) },
+                modifier = Modifier.focusRequester(firstNameFocusRequester),
                 testTag = "first-name",
                 keyboardOptions = nextFieldKeyboardOptions,
-                keyboardActions = nextFieldKeyboardActions,
+                keyboardActions = KeyboardActions(
+                    onNext = { lastNameFocusRequester.requestFocus() },
+                ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -68,9 +77,12 @@ fun ProfileForm(
                 value = state.lastName,
                 label = stringResource(R.string.complete_profile_field_last_name),
                 onValueChange = { onAction(CompleteProfileAction.LastNameChanged(it)) },
+                modifier = Modifier.focusRequester(lastNameFocusRequester),
                 testTag = "last-name",
                 keyboardOptions = nextFieldKeyboardOptions,
-                keyboardActions = nextFieldKeyboardActions,
+                keyboardActions = KeyboardActions(
+                    onNext = { streetFocusRequester.requestFocus() },
+                ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -79,9 +91,12 @@ fun ProfileForm(
                 value = state.street,
                 label = stringResource(R.string.complete_profile_field_street),
                 onValueChange = { onAction(CompleteProfileAction.StreetChanged(it)) },
+                modifier = Modifier.focusRequester(streetFocusRequester),
                 testTag = "street",
                 keyboardOptions = nextFieldKeyboardOptions,
-                keyboardActions = nextFieldKeyboardActions,
+                keyboardActions = KeyboardActions(
+                    onNext = { streetNumberFocusRequester.requestFocus() },
+                ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -90,9 +105,12 @@ fun ProfileForm(
                 value = state.streetNumber,
                 label = stringResource(R.string.complete_profile_field_street_number),
                 onValueChange = { onAction(CompleteProfileAction.StreetNumberChanged(it)) },
+                modifier = Modifier.focusRequester(streetNumberFocusRequester),
                 testTag = "street-number",
                 keyboardOptions = nextFieldKeyboardOptions,
-                keyboardActions = nextFieldKeyboardActions,
+                keyboardActions = KeyboardActions(
+                    onNext = { floorFocusRequester.requestFocus() },
+                ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -101,9 +119,12 @@ fun ProfileForm(
                 value = state.floor,
                 label = stringResource(R.string.complete_profile_field_floor),
                 onValueChange = { onAction(CompleteProfileAction.FloorChanged(it)) },
+                modifier = Modifier.focusRequester(floorFocusRequester),
                 testTag = "floor",
                 keyboardOptions = nextFieldKeyboardOptions,
-                keyboardActions = nextFieldKeyboardActions,
+                keyboardActions = KeyboardActions(
+                    onNext = { unitFocusRequester.requestFocus() },
+                ),
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -112,6 +133,7 @@ fun ProfileForm(
                 value = state.unit,
                 label = stringResource(R.string.complete_profile_field_unit),
                 onValueChange = { onAction(CompleteProfileAction.UnitChanged(it)) },
+                modifier = Modifier.focusRequester(unitFocusRequester),
                 testTag = "unit",
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(

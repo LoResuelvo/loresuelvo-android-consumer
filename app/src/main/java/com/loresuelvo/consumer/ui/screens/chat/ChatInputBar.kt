@@ -1,5 +1,6 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -31,6 +37,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.loresuelvo.consumer.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 /**
  * Bottom-of-screen prompt composer for the chat screen.
@@ -58,6 +66,22 @@ fun ChatInputBar(
     actions: ChatInputBarActions = ChatInputBarActions(),
     modifier: Modifier = Modifier,
 ) {
+    var recordingElapsedMillis by remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(state.recordingAudio) {
+        if (!state.recordingAudio) {
+            recordingElapsedMillis = 0L
+            return@LaunchedEffect
+        }
+
+        val recordingStartedAt = SystemClock.elapsedRealtime()
+        while (isActive) {
+            recordingElapsedMillis =
+                SystemClock.elapsedRealtime() - recordingStartedAt
+            delay(RECORDING_TIMER_UPDATE_INTERVAL_MILLIS)
+        }
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -97,45 +121,51 @@ fun ChatInputBar(
             }
         }
 
-        BasicTextField(
-            value = state.promptInput,
-            onValueChange = actions.onPromptChange,
-            enabled = !state.recordingAudio,
-            modifier = Modifier
-                .weight(1f)
-                .background(
-                    color = MaterialTheme.colorScheme.surface,
-                    shape = RoundedCornerShape(24.dp),
-                )
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 12.dp,
-                )
-                .verticalScroll(rememberScrollState())
-                .testTag(CHAT_INPUT_FIELD_TAG),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-            ),
-            cursorBrush = SolidColor(
-                MaterialTheme.colorScheme.primary,
-            ),
-            maxLines = CHAT_INPUT_MAX_LINES,
-            singleLine = false,
-            decorationBox = { inner ->
-                if (state.promptInput.isEmpty()) {
-                    Text(
-                        text = stringResource(
-                            R.string.chat_input_placeholder,
-                        ),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Start,
+        if (state.recordingAudio) {
+            RecordingStatus(
+                elapsedMillis = recordingElapsedMillis,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            BasicTextField(
+                value = state.promptInput,
+                onValueChange = actions.onPromptChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .background(
+                        color = MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(24.dp),
                     )
-                }
+                    .padding(
+                        horizontal = 16.dp,
+                        vertical = 12.dp,
+                    )
+                    .verticalScroll(rememberScrollState())
+                    .testTag(CHAT_INPUT_FIELD_TAG),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(
+                    MaterialTheme.colorScheme.primary,
+                ),
+                maxLines = CHAT_INPUT_MAX_LINES,
+                singleLine = false,
+                decorationBox = { inner ->
+                    if (state.promptInput.isEmpty()) {
+                        Text(
+                            text = stringResource(
+                                R.string.chat_input_placeholder,
+                            ),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Start,
+                        )
+                    }
 
-                inner()
-            },
-        )
+                    inner()
+                },
+            )
+        }
 
         when {
 
@@ -168,6 +198,46 @@ fun ChatInputBar(
             }
         }
     }
+}
+
+@Composable
+private fun RecordingStatus(
+    elapsedMillis: Long,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .background(
+                color = MaterialTheme.colorScheme.surface,
+                shape = RoundedCornerShape(24.dp),
+            )
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .testTag(RECORDING_TIMER_TAG),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.error,
+                    shape = CircleShape,
+                ),
+        )
+        Text(
+            text = stringResource(
+                R.string.conversation_audio_recording_duration,
+                formatRecordingDuration(elapsedMillis),
+            ),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+private fun formatRecordingDuration(elapsedMillis: Long): String {
+    val totalSeconds = elapsedMillis / 1_000L
+    return "%d:%02d".format(totalSeconds / 60L, totalSeconds % 60L)
 }
 
 /**
@@ -351,6 +421,11 @@ const val STOP_AUDIO_RECORDING_BUTTON_TAG: String =
  */
 const val STOP_AUDIO_RECORDING_ICON_TAG: String =
     "chat-stop-audio-recording-icon"
+
+/** Compose testTag for the elapsed audio recording indicator. */
+const val RECORDING_TIMER_TAG: String = "chat-recording-timer"
+
+private const val RECORDING_TIMER_UPDATE_INTERVAL_MILLIS: Long = 250L
 
 /**
  * Compose testTag for the chat input divider.

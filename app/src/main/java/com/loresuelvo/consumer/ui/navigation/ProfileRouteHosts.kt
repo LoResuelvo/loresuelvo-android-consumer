@@ -9,9 +9,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.core.content.ContextCompat
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.common.api.Scope
@@ -23,6 +25,8 @@ import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileAction
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.CompleteProfileViewModel
 import android.Manifest
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
@@ -33,6 +37,9 @@ import com.loresuelvo.consumer.platform.notifications.NotificationSettingsIntent
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileUiState
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileScreen
 import com.loresuelvo.consumer.ui.screens.profile.ConsumerProfileViewModel
+import com.loresuelvo.consumer.ui.screens.chat.CameraOutputUriFactoryHolder
+import com.loresuelvo.consumer.ui.components.media.CameraPermissionDialog
+import com.loresuelvo.consumer.ui.components.media.openCameraPermissionSettings
 
 /** Route hosts for authentication and consumer/provider profiles. */
 
@@ -58,9 +65,34 @@ internal fun CompleteProfileRoute(
 ) {
     val viewModel: CompleteProfileViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showCameraPermissionDialog by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf(false)
+    }
+    val cameraOutputUriFactory = hiltViewModel<CameraOutputUriFactoryHolder>().factory
     val photoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri -> uri?.let(viewModel::onProfilePhotoSelected) }
+    var cameraOutputUri by androidx.compose.runtime.remember {
+        androidx.compose.runtime.mutableStateOf<Uri?>(null)
+    }
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { success ->
+        cameraOutputUri?.takeIf { success }?.let(viewModel::onProfilePhotoSelected)
+        cameraOutputUri = null
+    }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            val uri = cameraOutputUriFactory.createCameraOutputUri()
+            cameraOutputUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            showCameraPermissionDialog = true
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -85,11 +117,37 @@ internal fun CompleteProfileRoute(
                         ActivityResultContracts.PickVisualMedia.ImageOnly,
                     ),
                 )
+            } else if (action == CompleteProfileAction.CapturePhotoClicked) {
+                if (ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.CAMERA,
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    val uri = cameraOutputUriFactory.createCameraOutputUri()
+                    cameraOutputUri = uri
+                    cameraLauncher.launch(uri)
+                } else {
+                    cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                }
             } else {
                 viewModel.onAction(action)
             }
         },
     )
+
+    if (showCameraPermissionDialog) {
+        CameraPermissionDialog(
+            onDismiss = { showCameraPermissionDialog = false },
+            onRetry = {
+                showCameraPermissionDialog = false
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            },
+            onOpenSettings = {
+                showCameraPermissionDialog = false
+                openCameraPermissionSettings(context)
+            },
+        )
+    }
 }
 
 @Composable

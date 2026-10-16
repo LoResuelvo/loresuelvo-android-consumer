@@ -48,6 +48,11 @@
     <string name="complete_profile_photo_preview">Vista previa de la foto de perfil</string>
     <string name="complete_profile_photo_add">Agregar foto</string>
     <string name="complete_profile_photo_change">Cambiar foto</string>
+    <string name="complete_profile_photo_camera">Tomar foto</string>
+    <string name="camera_permission_title">Permiso de cámara</string>
+    <string name="camera_permission_message">Necesitamos acceso a la cámara para tomar una foto. Podés reintentar o habilitarlo desde Ajustes.</string>
+    <string name="camera_permission_retry">Reintentar</string>
+    <string name="camera_permission_settings">Abrir Ajustes</string>
     <string name="complete_profile_photo_remove">Quitar foto</string>
     <string name="complete_profile_photo_crop_title">Ajustá tu foto</string>
     <string name="complete_profile_photo_crop_hint">Mové la imagen y pellizcá para elegir el encuadre circular.</string>
@@ -186,6 +191,7 @@
     <string name="conversation_media_preview_send">Enviar</string>
     <string name="conversation_media_preview_discard">Descartar</string>
     <string name="conversation_stop_audio_recording_content_description">Detener grabación de audio</string>
+    <string name="conversation_audio_recording_duration">Grabando %1$s</string>
     <string name="conversation_fullscreen_image_close_hint">Toca para cerrar</string>
     <string name="conversation_video_play">Reproducir video</string>
     <string name="conversation_video_close">Cerrar video</string>
@@ -195,6 +201,9 @@
     <string name="conversation_media_preview_video_content_description">Vista previa del video adjunto</string>
     <string name="conversation_media_preview_video_metadata">%1$s · %2$d×%3$d</string>
     <string name="conversation_media_preview_file_name_format">%1$s · %2$s</string>
+    <string name="conversation_media_preview_audio_ready">Audio listo para enviar · %1$s</string>
+    <string name="conversation_audio_play_content_description">Reproducir audio</string>
+    <string name="conversation_audio_pause_content_description">Pausar audio</string>
     <string name="conversation_transient_media_error_network">No pudimos enviar el archivo. Revisá tu conexión.</string>
     <string name="conversation_transient_media_error_server">No pudimos enviar el archivo. Reintentá.</string>
     <string name="conversation_transient_media_error_unauthorized">Tu sesión expiró. Volvé a iniciar sesión.</string>
@@ -287,7 +296,7 @@
     <string name="proposal_detail_reason">Motivo de la visita</string>
     <string name="proposal_detail_status">Estado</string>
     <string name="proposal_detail_view_conversation">Ver conversación</string>
-    <string name="proposal_detail_pay_now">Pagar ahora</string>
+    <string name="proposal_detail_pay_deposit">Pagar seña</string>
     <string name="proposal_detail_loading">Cargando propuesta…</string>
     <string name="proposal_detail_error_network">No pudimos conectarnos. Revisá tu conexión.</string>
     <string name="proposal_detail_error_server">No pudimos cargar la propuesta. Reintentá.</string>

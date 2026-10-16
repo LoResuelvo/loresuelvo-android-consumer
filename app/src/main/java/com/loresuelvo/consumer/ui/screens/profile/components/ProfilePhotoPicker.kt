@@ -76,6 +76,14 @@ fun ProfilePhotoPicker(
             )
         }
 
+        OutlinedButton(
+            onClick = { onAction(CompleteProfileAction.CapturePhotoClicked) },
+            enabled = !state.loading && !state.photoLoading,
+            modifier = Modifier.testTag("profile-photo-camera"),
+        ) {
+            Text(stringResource(R.string.complete_profile_photo_camera))
+        }
+
         if (state.profilePhoto != null) {
             OutlinedButton(
                 onClick = { onAction(CompleteProfileAction.RemovePhotoClicked) },

@@ -62,6 +62,7 @@ sealed interface MediaReference {
         override val mimeType: String,
         override val originalName: String,
         val durationMillis: Long,
+        val waveform: List<Float> = emptyList(),
     ) : MediaReference
 
     data class Video(

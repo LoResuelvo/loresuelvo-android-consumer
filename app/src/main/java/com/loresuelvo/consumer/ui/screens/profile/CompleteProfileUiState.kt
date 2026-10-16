@@ -43,6 +43,7 @@ sealed interface CompleteProfileAction {
     data class FloorChanged(val value: String) : CompleteProfileAction
     data class UnitChanged(val value: String) : CompleteProfileAction
     data object PickPhotoClicked : CompleteProfileAction
+    data object CapturePhotoClicked : CompleteProfileAction
     data class ProfilePhotoCropConfirmed(val photo: MediaUpload.Image) : CompleteProfileAction
     data object CancelProfilePhotoCropClicked : CompleteProfileAction
     data object RemovePhotoClicked : CompleteProfileAction

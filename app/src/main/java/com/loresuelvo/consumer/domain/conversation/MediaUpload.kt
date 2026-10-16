@@ -65,6 +65,7 @@ sealed interface MediaUpload {
         override val mimeType: String,
         override val originalName: String,
         val durationMillis: Long,
+        val waveform: List<Float> = emptyList(),
     ) : MediaUpload {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -72,7 +73,8 @@ sealed interface MediaUpload {
             return bytes.contentEquals(other.bytes) &&
                 mimeType == other.mimeType &&
                 originalName == other.originalName &&
-                durationMillis == other.durationMillis
+                durationMillis == other.durationMillis &&
+                waveform == other.waveform
         }
 
         override fun hashCode(): Int {
@@ -80,6 +82,7 @@ sealed interface MediaUpload {
             result = 31 * result + mimeType.hashCode()
             result = 31 * result + originalName.hashCode()
             result = 31 * result + durationMillis.hashCode()
+            result = 31 * result + waveform.hashCode()
             return result
         }
     }

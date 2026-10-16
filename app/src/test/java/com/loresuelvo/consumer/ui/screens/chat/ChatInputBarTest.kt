@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
@@ -270,6 +271,12 @@ class ChatInputBarTest {
         composeTestRule
             .onNodeWithTag(STOP_AUDIO_RECORDING_BUTTON_TAG)
             .assertIsDisplayed()
+        composeTestRule
+            .onNodeWithTag(RECORDING_TIMER_TAG)
+            .assertExists()
+        composeTestRule
+            .onNodeWithText("Grabando 0:00")
+            .assertExists()
     }
 
     @Test

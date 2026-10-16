@@ -1,5 +1,7 @@
 package com.loresuelvo.consumer.ui.screens.chat
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -11,9 +13,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.loresuelvo.consumer.ui.navigation.Route
+import com.loresuelvo.consumer.ui.components.media.CameraPermissionDialog
+import com.loresuelvo.consumer.ui.components.media.openCameraPermissionSettings
 
 /**
  * Compose bridge for the AI diagnostic chat screen. Resolves the
@@ -48,6 +54,8 @@ fun ChatRoute(
     val viewModel: ChatViewModel = hiltViewModel()
     val aiContactViewModel: AiDiagnosisContactViewModel = hiltViewModel()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var showCameraPermissionDialog by remember { mutableStateOf(false) }
 
     var sheetVisible by remember { mutableStateOf(false) }
 
@@ -90,6 +98,17 @@ fun ChatRoute(
         cameraOutputUri = null
         sheetVisible = false
     }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            val uri = cameraOutputUriFactory.createCameraOutputUri()
+            cameraOutputUri = uri
+            cameraLauncher.launch(uri)
+        } else {
+            showCameraPermissionDialog = true
+        }
+    }
 
     ChatScreen(
         state = state,
@@ -122,9 +141,17 @@ fun ChatRoute(
                     )
                 },
                 onCamera = {
-                    val uri = cameraOutputUriFactory.createCameraOutputUri()
-                    cameraOutputUri = uri
-                    cameraLauncher.launch(uri)
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.CAMERA,
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        val uri = cameraOutputUriFactory.createCameraOutputUri()
+                        cameraOutputUri = uri
+                        cameraLauncher.launch(uri)
+                    } else {
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
                 },
                 onConfirmSend = { index ->
 
@@ -142,4 +169,18 @@ fun ChatRoute(
             ),
         ),
     )
+
+    if (showCameraPermissionDialog) {
+        CameraPermissionDialog(
+            onDismiss = { showCameraPermissionDialog = false },
+            onRetry = {
+                showCameraPermissionDialog = false
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            },
+            onOpenSettings = {
+                showCameraPermissionDialog = false
+                openCameraPermissionSettings(context)
+            },
+        )
+    }
 }

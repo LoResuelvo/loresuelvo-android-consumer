@@ -158,7 +158,14 @@ class ServiceNotificationInstrumentedTest {
 
     @Test fun tapping_proposal_notification_opens_exact_proposal_detail() {
         assertEquals(ServiceNotificationOutcome.Published, receiver.receive(proposalPayload))
-        val notification = context.getSystemService(NotificationManager::class.java).activeNotifications.single().notification
+        val notificationManager = context.getSystemService(NotificationManager::class.java)
+        val notificationTag = "${proposalPayload.getValue("binding_id")}:${proposalPayload.getValue("event_id")}"
+        compose.waitUntil(10_000) {
+            notificationManager.activeNotifications.any { it.tag == notificationTag }
+        }
+        val notification = notificationManager.activeNotifications
+            .single { it.tag == notificationTag }
+            .notification
         assertTrue(notification.contentIntent.isImmutable)
         scenario.onActivity { activity ->
             activity.startIntentSender(notification.contentIntent.intentSender, null, 0, 0, 0)
