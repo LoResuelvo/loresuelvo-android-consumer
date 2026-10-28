@@ -1,6 +1,10 @@
 package com.loresuelvo.consumer.bdd.diagnosis
 
+import android.net.Uri
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
+import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.Diagnosis
+import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisAssessment
 import com.loresuelvo.consumer.domain.diagnosis.DiagnosisRepository
 import com.loresuelvo.consumer.domain.diagnosis.SendDiagnosisPromptOutcome
@@ -32,6 +36,7 @@ import com.loresuelvo.consumer.domain.diagnosis.usecase.UploadAttachmentsAndSend
 import com.loresuelvo.consumer.ui.screens.chat.errorLiteral
 import com.loresuelvo.consumer.ui.screens.chat.ChatError
 import io.mockk.coEvery
+import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -81,6 +86,7 @@ class AiDiagnosisWorld : AutoCloseable {
     private var lastTypedPrompt: String = ""
 
     private var chatWithAiIntentIssued: Boolean = false
+    private var savedImageDiagnosis: Diagnosis? = null
 
     fun startScenario() {
         if (started) return
@@ -609,6 +615,69 @@ class AiDiagnosisWorld : AutoCloseable {
                     "state=$state",
             )
         }
+        state.sentAttachments.forEach { assertMessageImageVisible(it.originalName) }
+    }
+
+    fun delayImageResponse() {
+        fakeRepo.enqueueHangingResponse()
+    }
+
+    fun seedImageResponse(filename: String) {
+        val diagnosis = Diagnosis(
+            conversationId = "image-conversation",
+            messages = listOf(
+                ChatMessage(
+                    id = "consumer-image",
+                    sender = Sender.Consumer,
+                    content = "",
+                    sentAtEpochMillis = 1L,
+                    images = listOf(
+                        ChatImage("file-1", "https://images.test/file-1.jpg", filename, "image/jpeg"),
+                    ),
+                ),
+                ChatMessage("assistant-image", Sender.Assistant, "Veo la pérdida de agua.", 2L),
+            ),
+        )
+        savedImageDiagnosis = diagnosis
+        fakeRepo.enqueueOutcome(SendDiagnosisPromptOutcome.Success(diagnosis))
+    }
+
+    fun assertImageStartsNewConversation() {
+        check(fakeRepo.lastImageFileIdsSnapshot().isNotEmpty())
+        check(fakeRepo.lastExistingConversationId == null) {
+            "The first image must create a conversation, not append to '${fakeRepo.lastExistingConversationId}'"
+        }
+    }
+
+    fun assertMessageImageVisible(filename: String) {
+        check(lastUiState().messages.any { message ->
+            message.sender == Sender.Consumer && message.images.any {
+                it.originalName == filename && it.url.isNotBlank()
+            }
+        }) { "Expected '$filename' in the consumer message, not just in the attachment queue" }
+    }
+
+    fun reopenImageConversation() {
+        val diagnosis = checkNotNull(savedImageDiagnosis)
+        fakeRepo.enqueueLoadOutcome(LoadAiConversationOutcome.Success(diagnosis))
+        viewModel = ChatViewModel(sendDiagnosisPrompt, loadAiConversation, mediaReader, uploadAttachmentsAndSend)
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            viewModel.uiState.collect { observedUiStates += it }
+        }
+        viewModel.loadExisting(checkNotNull(diagnosis.conversationId))
+        scheduler.advanceUntilIdle()
+    }
+
+    fun retryImageWithoutText() {
+        seedFileRepositorySuccess()
+        delayImageResponse()
+        simulateRetry()
+    }
+
+    fun assertSingleImageMessage() {
+        check(lastUiState().messages.count { it.sender == Sender.Consumer } == 1) {
+            "Retrying an image must not append another consumer message"
+        }
     }
 
     fun assertTransientErrorIsServiceUnavailable() {
@@ -751,7 +820,10 @@ class AiDiagnosisWorld : AutoCloseable {
             mimeType = "image/jpeg",
             originalName = filename,
         )
-        viewModel.onAttachMedia(media, sourceUri = null)
+        val sourceUri = mockk<Uri>(relaxed = true).also {
+            every { it.toString() } returns "content://diagnosis/images/$filename"
+        }
+        viewModel.onAttachMedia(media, sourceUri = sourceUri)
         scheduler.advanceUntilIdle()
     }
 

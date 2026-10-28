@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.loresuelvo.consumer.platform.media.MediaReader
 import com.loresuelvo.consumer.domain.conversation.MediaUpload
+import com.loresuelvo.consumer.domain.diagnosis.ChatImage
 import com.loresuelvo.consumer.domain.diagnosis.ChatMessage
 import com.loresuelvo.consumer.domain.diagnosis.LoadAiConversationOutcome
 import com.loresuelvo.consumer.domain.diagnosis.Sender
@@ -44,41 +45,29 @@ class ChatViewModel @Inject constructor(
     fun onSendClick() {
         val state = _uiState.value
         val prompt = state.promptInput.trim()
-        // Either prompt text OR at least one staged attachment
-        // is required — the AI diagnostic endpoint accepts
-        // `content=""` when `image_file_ids[]` is non-empty
-        // (mirrors the WhatsApp-style send-photo-without-text
-        // UX the consumer asked for).
         if (state.sending) return
         if (prompt.isEmpty() && state.pendingAttachments.isEmpty()) return
 
-        // orchestrator when there are staged attachments. The
-        // orchestrator runs the presign → upload → confirm
-        // pipeline per attachment and then dispatches the prompt
-        // with the joined `image_file_ids[]`.
-        if (state.pendingAttachments.isNotEmpty()) {
-            fireSendWithAttachments(prompt, state.pendingAttachments, state.conversationId)
-            return
-        }
-
-        val snapshot = state
         _uiState.update {
             it.copy(
-                messages = snapshot.messages + optimisticMessage(prompt),
+                messages = it.messages + optimisticMessage(prompt, state.pendingAttachments),
                 promptInput = "",
                 sending = true,
                 transientError = null,
                 lastAttemptedPrompt = prompt,
             )
         }
-        fireSend(prompt, snapshot.conversationId)
+        if (state.pendingAttachments.isNotEmpty()) {
+            fireSendWithAttachments(prompt, state.pendingAttachments, state.conversationId)
+        } else {
+            fireSend(prompt, state.conversationId)
+        }
     }
 
     fun onRetryClick() {
         val state = _uiState.value
-        val prompt = state.lastAttemptedPrompt
-
-        if (prompt.isNullOrBlank() || state.sending) return
+        val prompt = state.lastAttemptedPrompt ?: return
+        if (state.sending) return
 
         _uiState.update {
             it.copy(
@@ -230,23 +219,10 @@ class ChatViewModel @Inject constructor(
         attachments: List<PendingMedia>,
         conversationId: String?,
     ) {
-        val snapshot = _uiState.value
-
-        _uiState.update {
-            it.copy(
-                messages = snapshot.messages + optimisticMessage(prompt),
-                promptInput = "",
-                sending = true,
-                transientError = null,
-                lastAttemptedPrompt = prompt,
-                pendingAttachments = attachments,
-            )
-        }
-
         viewModelScope.launch {
             val outcome = uploadAttachmentsAndSend(
                 prompt = prompt,
-                conversationId = conversationId ?: "",
+                conversationId = conversationId,
                 attachments = attachments,
             )
             applyOutcome(
@@ -375,12 +351,25 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun optimisticMessage(prompt: String): ChatMessage = ChatMessage(
-        id = USER_MESSAGE_ID_PREFIX + UUID.randomUUID(),
-        sender = Sender.Consumer,
-        content = prompt,
-        sentAtEpochMillis = System.currentTimeMillis(),
-    )
+    private fun optimisticMessage(prompt: String, attachments: List<PendingMedia>): ChatMessage {
+        val messageId = USER_MESSAGE_ID_PREFIX + UUID.randomUUID()
+        return ChatMessage(
+            id = messageId,
+            sender = Sender.Consumer,
+            content = prompt,
+            sentAtEpochMillis = System.currentTimeMillis(),
+            images = attachments.mapIndexedNotNull { index, attachment ->
+                val localUri = attachment.localUri?.takeIf { it.isNotBlank() }
+                    ?: return@mapIndexedNotNull null
+                ChatImage(
+                    id = "$messageId-image-$index",
+                    url = localUri,
+                    originalName = attachment.originalName,
+                    mimeType = attachment.mimeType,
+                )
+            },
+        )
+    }
 
     private companion object {
         const val USER_MESSAGE_ID_PREFIX = "user-"

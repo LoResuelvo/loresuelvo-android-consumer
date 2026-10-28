@@ -19,7 +19,7 @@ class UploadAttachmentsAndSendUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(
         prompt: String,
-        conversationId: String,
+        conversationId: String?,
         attachments: List<PendingMedia>,
     ): SendDiagnosisPromptOutcome {
         // Pair each uploaded result with its source attachment

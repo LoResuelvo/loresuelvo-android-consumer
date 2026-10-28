@@ -94,3 +94,34 @@ Escenario: 03-AIP Adjuntar múltiples imágenes en una misma consulta
     Entonces se vuelve a procesar el mensaje enviado
     Y no se vuelve a subir la imagen
     Y veo una respuesta del asistente en la conversación
+
+  Escenario: 12-AIP Mostrar la foto en el mensaje mientras responde la IA
+    Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
+    Y la subida de archivos está disponible
+    Y la IA tarda en responder a la consulta con imágenes
+    Cuando escribo "Tengo una gotera en el baño"
+    Y presiono "Diagnosticar"
+    Entonces veo la imagen "gotera-baño.jpg" dentro de mi mensaje
+    Y veo un indicador de carga
+
+  Escenario: 13-AIP Conservar la foto al recibir la respuesta y reabrir la conversación
+    Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
+    Y la subida de archivos está disponible
+    Y la IA devuelve una conversación con la imagen "gotera-baño.jpg"
+    Cuando presiono "Diagnosticar"
+    Entonces la consulta con imagen inicia una conversación nueva
+    Y veo la imagen "gotera-baño.jpg" dentro de mi mensaje
+    Y no tengo imágenes pendientes de envío
+    Cuando vuelvo a abrir la conversación con la imagen
+    Entonces veo la imagen "gotera-baño.jpg" dentro de mi mensaje
+
+  Escenario: 14-AIP Reintentar una foto sin texto sin duplicar el mensaje
+    Dado que tengo la imagen "gotera-baño.jpg" pendiente de envío
+    Y la subida de la imagen falla por un error de red
+    Cuando presiono "Diagnosticar"
+    Entonces veo un error al subir la imagen
+    Y veo la imagen "gotera-baño.jpg" dentro de mi mensaje
+    Cuando reintento el envío de la foto sin agregar texto
+    Entonces veo un indicador de carga
+    Y veo la imagen "gotera-baño.jpg" dentro de mi mensaje
+    Y mi consulta con la imagen aparece una sola vez

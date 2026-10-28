@@ -9,6 +9,27 @@ class AiDiagnosisSteps {
 
     private val world: AiDiagnosisWorld = AiDiagnosisWorld()
 
+    @Given("la IA tarda en responder a la consulta con imágenes")
+    fun delayImageResponse() = world.delayImageResponse()
+
+    @Given("la IA devuelve una conversación con la imagen {string}")
+    fun seedImageResponse(filename: String) = world.seedImageResponse(filename)
+
+    @Then("veo la imagen {string} dentro de mi mensaje")
+    fun assertImageInMessage(filename: String) = world.assertMessageImageVisible(filename)
+
+    @Then("la consulta con imagen inicia una conversación nueva")
+    fun assertNewImageConversation() = world.assertImageStartsNewConversation()
+
+    @When("vuelvo a abrir la conversación con la imagen")
+    fun reopenImageConversation() = world.reopenImageConversation()
+
+    @When("reintento el envío de la foto sin agregar texto")
+    fun retryImageWithoutText() = world.retryImageWithoutText()
+
+    @Then("mi consulta con la imagen aparece una sola vez")
+    fun assertSingleImageMessage() = world.assertSingleImageMessage()
+
     @Given("estoy autenticado como consumidor")
     fun estoyAutenticadoComoConsumidor() {
         world.startScenario()

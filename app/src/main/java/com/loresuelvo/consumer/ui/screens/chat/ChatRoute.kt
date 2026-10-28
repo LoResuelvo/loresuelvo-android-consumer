@@ -153,10 +153,7 @@ fun ChatRoute(
                         cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
                     }
                 },
-                onConfirmSend = { index ->
-
-                    @Suppress("UNUSED_PARAMETER") index
-                },
+                onConfirmSend = { viewModel.onSendClick() },
                 onDiscard = viewModel::onRemoveAttachment,
                 showAttachSheet = sheetVisible,
                 onAttachSheetDismiss = { sheetVisible = false },

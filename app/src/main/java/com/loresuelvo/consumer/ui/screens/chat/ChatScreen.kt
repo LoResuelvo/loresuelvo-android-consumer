@@ -84,7 +84,7 @@ fun ChatScreen(
                     modifier = Modifier.testTag(CHAT_INPUT_DIVIDER_TAG)
                                 .padding(horizontal = 16.dp),
                 )
-                if (state.pendingAttachments.isNotEmpty()) {
+                if (!state.sending && state.pendingAttachments.isNotEmpty()) {
                     state.pendingAttachments.forEachIndexed { index, attachment ->
                         MediaPreviewCard(
                             pendingMedia = attachment,

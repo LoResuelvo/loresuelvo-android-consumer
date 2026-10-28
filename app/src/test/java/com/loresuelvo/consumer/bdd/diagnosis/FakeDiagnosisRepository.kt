@@ -11,6 +11,8 @@ class FakeDiagnosisRepository : DiagnosisRepository {
     private val nextLoadOutcomeRef = AtomicReference<LoadAiConversationOutcome?>(null)
     private val hangModeRef = AtomicReference(false)
     private var lastImageFileIds: List<String> = emptyList()
+    var lastExistingConversationId: String? = null
+        private set
 
     /**
      * Enqueue the next outcome to be returned by [sendPrompt].
@@ -41,6 +43,7 @@ class FakeDiagnosisRepository : DiagnosisRepository {
         imageFileIds: List<String>,
     ): SendDiagnosisPromptOutcome {
         lastImageFileIds = imageFileIds
+        lastExistingConversationId = existingConversationId
         if (hangModeRef.getAndSet(false)) {
             kotlinx.coroutines.awaitCancellation()
         }

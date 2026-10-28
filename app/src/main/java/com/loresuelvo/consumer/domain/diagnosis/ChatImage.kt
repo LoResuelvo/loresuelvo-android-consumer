@@ -1,10 +1,11 @@
 package com.loresuelvo.consumer.domain.diagnosis
 
 /**
- * Server-issued image attached to an AI diagnostic chat message.
+ * Image attached to an AI diagnostic chat message.
  *
- * The URL may be private and short-lived; it is consumed directly by
- * the presentation layer and is never persisted by the app.
+ * While sending, the URL can reference the selected local file. A
+ * successful response replaces it with the server's private, short-lived
+ * URL. These references are never persisted by the app.
  */
 data class ChatImage(
     val id: String,

@@ -291,6 +291,36 @@ class ChatScreenTest {
     }
 
     @Test
+    fun sending_a_photo_shows_it_in_the_message_and_hides_the_composer_preview() {
+        val attachment = PendingMedia(
+            localUri = "content://gallery/photo.jpg",
+            mimeType = "image/jpeg",
+            originalName = "photo.jpg",
+            sizeBytes = 3,
+            bytes = byteArrayOf(1, 2, 3),
+        )
+        val message = ChatMessage(
+            id = "sending-photo",
+            sender = Sender.Consumer,
+            content = "",
+            sentAtEpochMillis = 0L,
+            images = listOf(ChatImage("local-photo", attachment.localUri!!, "photo.jpg", "image/jpeg")),
+        )
+        composeTestRule.setContent {
+            ChatScreen(
+                state = ChatUiState(
+                    messages = listOf(message),
+                    sending = true,
+                    pendingAttachments = listOf(attachment),
+                ),
+            )
+        }
+
+        composeTestRule.onNodeWithTag(chatMessageImageTag(message.id, 0)).assertExists()
+        composeTestRule.onNodeWithTag("$CHAT_ATTACHMENT_CARD_TAG_PREFIX-0").assertDoesNotExist()
+    }
+
+    @Test
     fun message_image_opens_and_dismisses_fullscreen_viewer() {
         val message = ChatMessage(
             id = "consumer-2",
