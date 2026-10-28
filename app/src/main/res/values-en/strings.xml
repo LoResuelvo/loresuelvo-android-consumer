@@ -55,7 +55,8 @@
     <string name="camera_permission_settings">Open Settings</string>
     <string name="complete_profile_photo_remove">Remove photo</string>
     <string name="complete_profile_photo_crop_title">Adjust your photo</string>
-    <string name="complete_profile_photo_crop_hint">Move the image and pinch to choose the circular crop.</string>
+    <string name="complete_profile_photo_crop_hint">Move, zoom and rotate the image to choose the circular crop.</string>
+    <string name="complete_profile_photo_crop_rotate">Rotate 90°</string>
     <string name="complete_profile_photo_crop_cancel">Cancel</string>
     <string name="complete_profile_photo_crop_confirm">Use this photo</string>
 

@@ -1,6 +1,5 @@
 package com.loresuelvo.consumer.ui.screens.profile.components
 
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
@@ -33,7 +32,7 @@ fun ProfilePhotoPicker(
     modifier: Modifier = Modifier,
 ) {
     val bitmap = remember(state.profilePhoto) {
-        state.profilePhoto?.bytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }?.asImageBitmap()
+        state.profilePhoto?.bytes?.let(::decodeProfilePhotoBitmap)?.asImageBitmap()
     }
 
     Column(

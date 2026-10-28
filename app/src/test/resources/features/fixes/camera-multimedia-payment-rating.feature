@@ -108,3 +108,26 @@ Característica: Mejorar cámara, multimedia, pagos y ratings de prestadores
     Entonces veo la recomendación de "Pedro Díaz"
     Y no se muestran estrellas completas engañosas
     Y veo un estado neutro para la calificación
+
+  @wip
+  Escenario: 14-CMPR Respetar la orientación de una foto al completar el perfil
+    Dado que estoy completando mi perfil
+    Y capturé una foto cuya orientación está registrada por la cámara
+    Cuando abro el recorte de la foto
+    Entonces veo la foto con la orientación correcta
+    Y la orientación se conserva al confirmar el recorte
+
+  @wip
+  Escenario: 15-CMPR Girar la foto antes de confirmar el recorte
+    Dado que estoy ajustando una foto de perfil
+    Cuando toco "Girar 90°"
+    Entonces la foto gira un cuarto de vuelta
+    Y puedo volver a ajustar el encuadre circular
+    Y la orientación elegida se conserva al confirmar
+
+  @wip
+  Escenario: 16-CMPR Cargar una foto grande sin zonas vacías
+    Dado que seleccioné una foto de cámara de alta resolución
+    Cuando abro el recorte de la foto
+    Entonces se decodifica una versión adecuada para el editor
+    Y todas las zonas de la foto están disponibles para elegir el encuadre

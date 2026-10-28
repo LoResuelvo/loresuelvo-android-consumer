@@ -55,7 +55,8 @@
     <string name="camera_permission_settings">Abrir Ajustes</string>
     <string name="complete_profile_photo_remove">Quitar foto</string>
     <string name="complete_profile_photo_crop_title">Ajustá tu foto</string>
-    <string name="complete_profile_photo_crop_hint">Mové la imagen y pellizcá para elegir el encuadre circular.</string>
+    <string name="complete_profile_photo_crop_hint">Mové la imagen, ajustá el zoom y girala para elegir el encuadre circular.</string>
+    <string name="complete_profile_photo_crop_rotate">Girar 90°</string>
     <string name="complete_profile_photo_crop_cancel">Cancelar</string>
     <string name="complete_profile_photo_crop_confirm">Usar esta foto</string>
     <string name="complete_profile_error_missing_first_name">El nombre es obligatorio</string>

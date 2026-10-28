@@ -289,6 +289,7 @@ dependencies {
     // Image loading (added for provider photos in Professionals screen)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.androidx.exifinterface)
 
     // Checkout Pro URL in the user's default browser so the back
     // navigation lands back in our app via the App Link.

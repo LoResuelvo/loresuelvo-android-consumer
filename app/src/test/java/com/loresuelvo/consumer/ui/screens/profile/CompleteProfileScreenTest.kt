@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.io.ByteArrayOutputStream
 
 /**
@@ -162,6 +163,8 @@ class CompleteProfileScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "es-rAR-w411dp-h891dp", sdk = [34])
+    @GraphicsMode(GraphicsMode.Mode.NATIVE)
     fun pending_profile_photo_shows_circular_crop_editor() {
         setProfileContent(
             state = completeState().copy(
